@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/pkg/grpc";
+
+package grpc;
+
+message GetDeviceDefinitionRequest {
+	string id = 1;
+}
+
+message GetDeviceDefinitionResponse {
+	string device_definition_id = 1;
+    string model = 2;
+    int32 year = 3;
+}
+
+service DeviceDefinitionService {
+	rpc GetDeviceDefinitionById(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+}

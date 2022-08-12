@@ -1,0 +1,12 @@
+output = "internal/infrastructure/db/models"
+no-tests = true
+
+[psql]  
+dbname = "device_definitions_api"
+blacklist = ["migrations"]
+host   = "localhost"
+port   = 5432
+user   = "dimo"
+pass   = "dimo"
+schema = "device_definitions_api"
+sslmode= "disable"

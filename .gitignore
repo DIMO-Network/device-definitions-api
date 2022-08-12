@@ -13,3 +13,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# ignore settings file as it could contain secrets
+settings.yaml

@@ -1,0 +1,21 @@
+# db for local dev
+version: '3.9'
+
+services:
+  postgresql:
+    image: postgres:12.9-alpine # matches version used on aws environments
+    container_name: poc-dimo-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=dimo
+      - POSTGRES_PASSWORD=dimo
+      - POSTGRES_DB=device_definitions_api
+      
+  jaeger:
+    image: jaegertracing/all-in-one:1.22.0
+    platform: linux/amd64
+    container_name: jaeger
+    ports:
+      - 14268:14268 # jaeger-collector HTTP server (tracer provider)
+      - 16686:16686 # HTTP server (browser UI)

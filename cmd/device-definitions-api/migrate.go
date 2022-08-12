@@ -1,0 +1,35 @@
+package main
+
+import (
+	"log"
+
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
+	intshared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
+	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
+)
+
+func migrateDatabase(s intshared.Settings, args []string) {
+	command := "up"
+	if len(args) > 2 {
+		command = args[2]
+		if command == "down-to" || command == "up-to" {
+			command = command + " " + args[3]
+		}
+	}
+
+	sqlDb := db.Connection(s)
+
+	if command == "" {
+		command = "up"
+	}
+
+	_, err := sqlDb.Exec("CREATE SCHEMA IF NOT EXISTS device_definitions_api;")
+	if err != nil {
+		log.Fatal("could not create schema: $s", err)
+	}
+	goose.SetTableName("device_definitions_api.migrations")
+	if err := goose.Run(command, sqlDb, "internal/infrastructure/db/migrations"); err != nil {
+		log.Fatal("failed to apply go code migrations: $s", err)
+	}
+}

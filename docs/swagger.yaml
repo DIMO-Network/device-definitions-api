@@ -1,0 +1,48 @@
+definitions:
+  common.ProblemDetails:
+    properties:
+      detail: {}
+      status:
+        type: integer
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  queries.GetByIdQueryResult:
+    properties:
+      deviceDefinitionId:
+        type: string
+      model:
+        type: string
+      year:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /device-definitions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition
+      operationId: GetById
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/queries.GetByIdQueryResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ProblemDetails'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ProblemDetails'
+      summary: gets a device definition
+      tags:
+      - device-definitions
+swagger: "2.0"
