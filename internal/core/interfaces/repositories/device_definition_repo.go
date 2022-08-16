@@ -9,4 +9,7 @@ import (
 
 type IDeviceDefinitionRepository interface {
 	GetById(ctx context.Context, id string) (*models.DeviceDefinition, error)
+	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
+	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 }

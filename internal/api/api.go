@@ -59,6 +59,7 @@ func Run(s intShared.Settings) {
 	})
 
 	RegisterUserDeviceRoutes(app, *m)
+	RegisterIntegrationRoutes(app, *m)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 

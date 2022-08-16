@@ -35,6 +35,21 @@ func (m *MockIDeviceDefinitionRepository) EXPECT() *MockIDeviceDefinitionReposit
 	return m.recorder
 }
 
+// GetAll mocks base method.
+func (m *MockIDeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll", ctx)
+	ret0, _ := ret[0].([]*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockIDeviceDefinitionRepositoryMockRecorder) GetAll(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockIDeviceDefinitionRepository)(nil).GetAll), ctx)
+}
+
 // GetById mocks base method.
 func (m *MockIDeviceDefinitionRepository) GetById(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
@@ -48,4 +63,34 @@ func (m *MockIDeviceDefinitionRepository) GetById(ctx context.Context, id string
 func (mr *MockIDeviceDefinitionRepositoryMockRecorder) GetById(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockIDeviceDefinitionRepository)(nil).GetById), ctx, id)
+}
+
+// GetByMakeModelAndYears mocks base method.
+func (m *MockIDeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByMakeModelAndYears", ctx, make, model, year, loadIntegrations)
+	ret0, _ := ret[0].(*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByMakeModelAndYears indicates an expected call of GetByMakeModelAndYears.
+func (mr *MockIDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx, make, model, year, loadIntegrations interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMakeModelAndYears", reflect.TypeOf((*MockIDeviceDefinitionRepository)(nil).GetByMakeModelAndYears), ctx, make, model, year, loadIntegrations)
+}
+
+// GetWithIntegrations mocks base method.
+func (m *MockIDeviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWithIntegrations", ctx, id)
+	ret0, _ := ret[0].(*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWithIntegrations indicates an expected call of GetWithIntegrations.
+func (mr *MockIDeviceDefinitionRepositoryMockRecorder) GetWithIntegrations(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithIntegrations", reflect.TypeOf((*MockIDeviceDefinitionRepository)(nil).GetWithIntegrations), ctx, id)
 }
