@@ -6,16 +6,16 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/common"
-	interfaces "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/interfaces/repositories"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/null/v8"
 )
 
-type GetByDeviceDefinitionIntegationIdQuery struct {
+type GetDeviceDefinitionWithRelsQuery struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId" validate:"required"`
 }
 
-type GetByDeviceDefinitionIntegrationIdQueryResult struct {
+type GetDeviceDefinitionWithRelsQueryResult struct {
 	ID           string          `json:"id"`
 	Type         string          `json:"type"`
 	Style        string          `json:"style"`
@@ -25,23 +25,23 @@ type GetByDeviceDefinitionIntegrationIdQueryResult struct {
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 
-func (*GetByDeviceDefinitionIntegationIdQuery) Key() string {
-	return "GetByDeviceDefinitionIntegationIdQuery"
+func (*GetDeviceDefinitionWithRelsQuery) Key() string {
+	return "GetDeviceDefinitionWithRelsQuery"
 }
 
-type GetByDeviceDefinitionIntegrationIdQueryHandler struct {
-	Repository interfaces.IDeviceDefinitionRepository
+type GetDeviceDefinitionWithRelsQueryHandler struct {
+	Repository repositories.DeviceDefinitionRepository
 }
 
-func NewGetByDeviceDefinitionIntegrationIdQueryHandler(repository interfaces.IDeviceDefinitionRepository) GetByDeviceDefinitionIntegrationIdQueryHandler {
-	return GetByDeviceDefinitionIntegrationIdQueryHandler{
+func NewGetDeviceDefinitionWithRelsQueryHandler(repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionWithRelsQueryHandler {
+	return GetDeviceDefinitionWithRelsQueryHandler{
 		Repository: repository,
 	}
 }
 
-func (ch GetByDeviceDefinitionIntegrationIdQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetByDeviceDefinitionIntegationIdQuery)
+	qry := query.(*GetDeviceDefinitionWithRelsQuery)
 
 	dd, _ := ch.Repository.GetWithIntegrations(ctx, qry.DeviceDefinitionID)
 
@@ -52,10 +52,10 @@ func (ch GetByDeviceDefinitionIntegrationIdQueryHandler) Handle(ctx context.Cont
 	}
 
 	// build object for integrations that have all the info
-	var integrations []GetByDeviceDefinitionIntegrationIdQueryResult
+	var integrations []GetDeviceDefinitionWithRelsQueryResult
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			integrations = append(integrations, GetByDeviceDefinitionIntegrationIdQueryResult{
+			integrations = append(integrations, GetDeviceDefinitionWithRelsQueryResult{
 				ID:           di.R.Integration.ID,
 				Type:         di.R.Integration.Type,
 				Style:        di.R.Integration.Style,

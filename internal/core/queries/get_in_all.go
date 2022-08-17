@@ -11,29 +11,29 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type GetAllQuery struct {
+type GetAllIntegrationQuery struct {
 }
 
-type GetAllQueryResult struct {
+type GetAllIntegrationQueryResult struct {
 	ID     string `json:"id"`
 	Type   string `json:"type"`
 	Style  string `json:"style"`
 	Vendor string `json:"vendor"`
 }
 
-func (*GetAllQuery) Key() string { return "GetAllQuery" }
+func (*GetAllIntegrationQuery) Key() string { return "GetAllIntegrationQuery" }
 
-type GetAllQueryHandler struct {
+type GetAllIntegrationQueryHandler struct {
 	Db *sql.DB
 }
 
-func NewGetAllQueryHandler(db *sql.DB) GetAllQueryHandler {
-	return GetAllQueryHandler{
+func NewGetAllIntegrationQueryHandler(db *sql.DB) GetAllIntegrationQueryHandler {
+	return GetAllIntegrationQueryHandler{
 		Db: db,
 	}
 }
 
-func (ch GetAllQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	all, err := models.Integrations(qm.Limit(100)).All(ctx, ch.Db)
 	if err != nil {
@@ -42,9 +42,9 @@ func (ch GetAllQueryHandler) Handle(ctx context.Context, query mediator.Message)
 		}
 	}
 
-	var result []GetAllQueryResult
+	var result []GetAllIntegrationQueryResult
 	for _, v := range all {
-		result = append(result, GetAllQueryResult{
+		result = append(result, GetAllIntegrationQueryResult{
 			ID:     v.ID,
 			Type:   v.Type,
 			Style:  v.Style,

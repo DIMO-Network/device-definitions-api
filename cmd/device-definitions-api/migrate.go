@@ -3,13 +3,13 @@ package main
 import (
 	"log"
 
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
-	intshared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
 
-func migrateDatabase(s intshared.Settings, args []string) {
+func migrateDatabase(s config.Settings, args []string) {
 	command := "up"
 	if len(args) > 2 {
 		command = args[2]

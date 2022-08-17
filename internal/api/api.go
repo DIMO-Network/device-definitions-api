@@ -5,20 +5,20 @@ import (
 	"log"
 
 	i_grpc "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api/grpc"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries"
 
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api/common"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/features/device_definition/queries"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/trace"
-	intShared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-func Run(s intShared.Settings) {
+func Run(s config.Settings) {
 
 	//db
 	sqlDb := db.Connection(s)
@@ -27,6 +27,7 @@ func Run(s intShared.Settings) {
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(sqlDb)
+	makeRepository := repositories.NewDeviceMakeRepository(sqlDb)
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
@@ -45,7 +46,11 @@ func Run(s intShared.Settings) {
 		mediator.WithBehaviour(common.LoggingBehavior{}),
 		mediator.WithBehaviour(common.ValidationBehavior{}),
 		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
-		mediator.WithHandler(&queries.GetByIdQuery{}, queries.NewGetByIdQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIdQuery{}, queries.NewGetDeviceDefinitionByIdQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(sqlDb)),
 	)
 
 	//fiber
@@ -58,7 +63,7 @@ func Run(s intShared.Settings) {
 		return c.Send([]byte("Welcome dimo api!"))
 	})
 
-	RegisterUserDeviceRoutes(app, *m)
+	RegisterDeviceDefinitionsRoutes(app, *m)
 	RegisterIntegrationRoutes(app, *m)
 
 	app.Get("/docs/*", swagger.HandlerDefault)

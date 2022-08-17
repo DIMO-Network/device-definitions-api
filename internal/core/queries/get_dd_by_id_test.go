@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/interfaces/repositories/mocks"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -17,12 +17,12 @@ type GetByIdQueryHandlerSuite struct {
 	*require.Assertions
 
 	ctrl            *gomock.Controller
-	mock_Repository *mocks.MockIDeviceDefinitionRepository
+	mock_Repository *mocks.MockDeviceDefinitionRepository
 
-	queryHandler GetByIdQueryHandler
+	queryHandler GetDeviceDefinitionByIdQueryHandler
 }
 
-func TestAddWithDeviceIdCommandHandlerSuite(t *testing.T) {
+func TestGetDeviceDefinitionByIdQueryHandler(t *testing.T) {
 	suite.Run(t, new(GetByIdQueryHandlerSuite))
 }
 
@@ -30,9 +30,9 @@ func (s *GetByIdQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mock_Repository = mocks.NewMockIDeviceDefinitionRepository(s.ctrl)
+	s.mock_Repository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.queryHandler = NewGetByIdQueryHandler(s.mock_Repository)
+	s.queryHandler = NewGetDeviceDefinitionByIdQueryHandler(s.mock_Repository)
 }
 
 func (s *GetByIdQueryHandlerSuite) TearDownTest() {
@@ -51,10 +51,10 @@ func (s *GetByIdQueryHandlerSuite) TestGetById_Success() {
 
 	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetByIdQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
-	result := qryResult.(*GetByIdQueryResult)
+	result := qryResult.(*GetDeviceDefinitionByIdQueryResult)
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitionID, dd.ID)
@@ -68,7 +68,7 @@ func (s *GetByIdQueryHandlerSuite) TestGetById_Fail() {
 
 	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(nil, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetByIdQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
 

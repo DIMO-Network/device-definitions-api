@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/features/integrations/queries"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,7 +19,7 @@ import (
 func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		query := &queries.GetByDeviceDefinitionIntegationIdQuery{DeviceDefinitionID: id}
+		query := &queries.GetDeviceDefinitionWithRelsQuery{DeviceDefinitionID: id}
 
 		result, _ := m.Send(c.UserContext(), query)
 
@@ -40,7 +40,7 @@ func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 func GetIntegrations(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
-		query := &queries.GetAllQuery{}
+		query := &queries.GetAllIntegrationQuery{}
 
 		result, _ := m.Send(c.UserContext(), query)
 

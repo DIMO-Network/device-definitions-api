@@ -5,17 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	interfaces "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/interfaces/repositories"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-type GetByMakeModelYearQuery struct {
+type GetDeviceDefinitionByMakeModelYearQuery struct {
 	Make  string `json:"make" validate:"required"`
 	Model string `json:"model" validate:"required"`
 	Year  int    `json:"year" validate:"required"`
 }
 
-type GetByMakeModelYearQueryResult struct {
+type GetDeviceDefinitionByMakeModelYearQueryResult struct {
 	DeviceDefinitionID string  `json:"deviceDefinitionId"`
 	Name               string  `json:"name"`
 	ImageURL           *string `json:"imageUrl"`
@@ -62,29 +62,31 @@ type DeviceType struct {
 	SubModels []string `json:"subModels"`
 }
 
-func (*GetByMakeModelYearQuery) Key() string { return "GetByMakeModelYearQuery" }
-
-type GetByMakeModelYearQueryHandler struct {
-	Repository interfaces.IDeviceDefinitionRepository
+func (*GetDeviceDefinitionByMakeModelYearQuery) Key() string {
+	return "GetDeviceDefinitionByMakeModelYearQuery"
 }
 
-func NewGetByMakeModelYearQueryHandler(repository interfaces.IDeviceDefinitionRepository) GetByMakeModelYearQueryHandler {
-	return GetByMakeModelYearQueryHandler{
+type GetDeviceDefinitionByMakeModelYearQueryHandler struct {
+	Repository repositories.DeviceDefinitionRepository
+}
+
+func NewGetDeviceDefinitionByMakeModelYearQueryHandler(repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionByMakeModelYearQueryHandler {
+	return GetDeviceDefinitionByMakeModelYearQueryHandler{
 		Repository: repository,
 	}
 }
 
-func (ch GetByMakeModelYearQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetByMakeModelYearQuery)
+	qry := query.(*GetDeviceDefinitionByMakeModelYearQuery)
 
 	dd, _ := ch.Repository.GetByMakeModelAndYears(ctx, qry.Make, qry.Model, qry.Year, true)
 
 	if dd == nil {
-		return &GetByMakeModelYearQueryResult{}, nil
+		return &GetDeviceDefinitionByMakeModelYearQueryResult{}, nil
 	}
 
-	rp := GetByMakeModelYearQueryResult{
+	rp := GetDeviceDefinitionByMakeModelYearQueryResult{
 		DeviceDefinitionID:     dd.ID,
 		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:               dd.ImageURL.Ptr(),
@@ -104,6 +106,13 @@ func (ch GetByMakeModelYearQueryHandler) Handle(ctx context.Context, query media
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
 		rp.VehicleInfo = vi["vehicle_info"]
 	}
+
+	// if dd.R != nil {
+	// 	// compatible integrations
+	// 	rp.CompatibleIntegrations = DeviceCompatibilityFromDB(dd.R.DeviceIntegrations)
+	// 	// sub_models
+	// 	rp.Type.SubModels = services.SubModelsFromStylesDB(dd.R.DeviceStyles)
+	// }
 
 	return rp, nil
 }

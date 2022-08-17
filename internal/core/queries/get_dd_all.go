@@ -3,19 +3,19 @@ package queries
 import (
 	"context"
 
-	interfaces "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/interfaces/repositories"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-type GetAllQuery struct {
+type GetAllDeviceDefinitionQuery struct {
 }
 
-type GetAllQueryResult struct {
+type GetAllDeviceDefinitionQueryResult struct {
 	Make   string            `json:"make"`
 	Models []GetDeviceModels `json:"models"`
 }
 
-func (*GetAllQuery) Key() string { return "GetAllQuery" }
+func (*GetAllDeviceDefinitionQuery) Key() string { return "GetAllDeviceDefinitionQuery" }
 
 type GetDeviceModels struct {
 	Model string               `json:"model"`
@@ -27,24 +27,24 @@ type GetDeviceModelYear struct {
 	DeviceDefinitionID string `json:"id"`
 }
 
-type GetAllQueryHandler struct {
-	Repository     interfaces.IDeviceDefinitionRepository
-	MakeRepository interfaces.IDeviceMakeRepository
+type GetAllDeviceDefinitionQueryHandler struct {
+	Repository     repositories.DeviceDefinitionRepository
+	MakeRepository repositories.DeviceMakeRepository
 }
 
-func NewGetAllQueryHandler(repository interfaces.IDeviceDefinitionRepository, makeRepository interfaces.IDeviceMakeRepository) GetAllQueryHandler {
-	return GetAllQueryHandler{
+func NewGetAllDeviceDefinitionQueryHandler(repository repositories.DeviceDefinitionRepository, makeRepository repositories.DeviceMakeRepository) GetAllDeviceDefinitionQueryHandler {
+	return GetAllDeviceDefinitionQueryHandler{
 		Repository:     repository,
 		MakeRepository: makeRepository,
 	}
 }
 
-func (ch GetAllQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllDeviceDefinitionQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	all, _ := ch.Repository.GetAll(ctx)
+	all, _ := ch.Repository.GetAll(ctx, true)
 	allMakes, _ := ch.MakeRepository.GetAll(ctx)
 
-	var result []GetAllQueryResult
+	var result []GetAllDeviceDefinitionQueryResult
 	for _, dd := range all {
 		makeName := ""
 		for _, mk := range allMakes {
@@ -56,7 +56,7 @@ func (ch GetAllQueryHandler) Handle(ctx context.Context, query mediator.Message)
 		idx := indexOfMake(result, makeName)
 		// append make if not found
 		if idx == -1 {
-			result = append(result, GetAllQueryResult{
+			result = append(result, GetAllDeviceDefinitionQueryResult{
 				Make:   makeName,
 				Models: []GetDeviceModels{{Model: dd.Model, Years: []GetDeviceModelYear{{Year: dd.Year, DeviceDefinitionID: dd.ID}}}},
 			})
@@ -79,7 +79,7 @@ func (ch GetAllQueryHandler) Handle(ctx context.Context, query mediator.Message)
 	return result, nil
 }
 
-func indexOfMake(makes []GetAllQueryResult, make string) int {
+func indexOfMake(makes []GetAllDeviceDefinitionQueryResult, make string) int {
 	for i, root := range makes {
 		if root.Make == make {
 			return i

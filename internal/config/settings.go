@@ -1,4 +1,4 @@
-package shared
+package config
 
 type Settings struct {
 	Environment          string `yaml:"ENVIRONMENT"`

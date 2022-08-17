@@ -1,3 +1,5 @@
+//go:generate mockgen -source device_definition_repo.go -destination mocks/device_definition_repo_mock.go -package mocks
+
 package repositories
 
 import (
@@ -5,27 +7,31 @@ import (
 	"database/sql"
 	"errors"
 
-	interfaces "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/interfaces/repositories"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type DeviceDefinitionRepository struct {
+type DeviceDefinitionRepository interface {
+	GetById(ctx context.Context, id string) (*models.DeviceDefinition, error)
+	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
+	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
+}
+
+type deviceDefinitionRepository struct {
 	Db *sql.DB
 }
 
-func NewDeviceDefinitionRepository(db *sql.DB) interfaces.IDeviceDefinitionRepository {
-	return &DeviceDefinitionRepository{
-		Db: db,
-	}
+func NewDeviceDefinitionRepository(db *sql.DB) DeviceDefinitionRepository {
+	return &deviceDefinitionRepository{Db: db}
 }
 
-func (r *DeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_makes dm on dm.id = device_definitions.device_make_id"),
 		qm.Where("dm.name ilike ?", make),
 		qm.And("model ilike ?", model),
-		models.DeviceDefinitionWhere.Year.EQ(12),
+		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 	}
 	if loadIntegrations {
@@ -39,11 +45,15 @@ func (r *DeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	return dd, nil
 }
 
-func (r *DeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
-	dd, err := models.DeviceDefinitions().All(ctx, r.Db)
+func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error) {
+
+	dd, err := models.DeviceDefinitions(qm.Where("verified = true"),
+		qm.OrderBy("device_make_id, model, year")).All(ctx, r.Db)
+
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +61,7 @@ func (r *DeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.Devi
 	return dd, err
 }
 
-func (r *DeviceDefinitionRepository) GetById(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetById(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
 		qm.Where("id = ?", id),
@@ -74,7 +84,7 @@ func (r *DeviceDefinitionRepository) GetById(ctx context.Context, id string) (*m
 	return dd, nil
 }
 
-func (r *DeviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
 		qm.Where("id = ?", id),

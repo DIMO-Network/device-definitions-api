@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log"
 
-	intshared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
 	_ "github.com/lib/pq"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-func Connection(s intshared.Settings) *sql.DB {
+func Connection(s config.Settings) *sql.DB {
 	db, err := sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable",
 		s.DBUser,
 		s.DBPassword,

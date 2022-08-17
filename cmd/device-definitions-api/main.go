@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/docs"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api"
-	intshared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 )
 
@@ -17,7 +17,7 @@ func main() {
 		arg = os.Args[1]
 	}
 
-	settings, err := shared.LoadConfig[intshared.Settings]("settings.yaml")
+	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)
 	}

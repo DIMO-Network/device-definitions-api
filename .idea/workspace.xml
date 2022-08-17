@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8ac66842-2e07-4b5b-8727-49c842b9da64" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/cmd/device-definitions-api/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/device-definitions-api/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/device-definitions-api/migrate.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/device-definitions-api/migrate.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/api.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/api.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/grpc/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/grpc/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/grpc/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/grpc/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/handlers/device_definition_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/device_definition_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/handlers/integration_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/handlers/integration_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/api/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/api/routes.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/device_definition/queries/get_all_qry.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/device_definition/queries/get_by_id_qry.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/device_definition/queries/get_by_id_qry_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/device_definition/queries/get_by_make_model_year_qry.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/integrations/queries/get_all_qry.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/features/integrations/queries/get_device_definition_by_id_qry.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/interfaces/repositories/device_definition_repo.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/interfaces/repositories/device_make_repo.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/interfaces/repositories/mocks/device_definition_repo_mock.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/interfaces/repositories/mocks/device_make_repo_mock.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/core/interfaces/trace/trace_service.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/infrastructure/db/connect.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/infrastructure/db/connect.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/infrastructure/db/repositories/device_definition_repo.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/infrastructure/db/repositories/device_definition_repo.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/infrastructure/db/repositories/device_make_repo.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/infrastructure/db/repositories/device_make_repo.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/infrastructure/trace/trace_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/infrastructure/trace/trace_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/shared/settings.go" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///opt/homebrew/Cellar/go/1.18.4/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2DSt1iBn0ya0HBT08dlbsoCH1cb" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.format.on.save.advertiser.fired": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "RunOnceActivity.go.watchers.conflict.with.on.save.actions.check.performed": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "/Users/ricardo/Projects/DIMO/device-definitions-api",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm"
+  }
+}]]></component>
+  <component name="RunManager" selected="Go Test.TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="GetAllDeviceDefinitionQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetAll_Success|TestGetAll_Fail$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetAllDeviceDefinitionQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="GetByIdQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetById_Success|TestGetById_Fail$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetDeviceDefinitionByIdQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetAll_Success$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetAllDeviceDefinitionQueryHandler\E$/^\QTestGetAll_Success\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestGetDeviceDefinitionByIdQueryHandler in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetDeviceDefinitionByIdQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.GetAllDeviceDefinitionQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.GetByIdQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.TestGetDeviceDefinitionByIdQueryHandler in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/internal/infrastructure/db/repositories/device_make_repo.go</url>
+          <line>27</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/internal/core/queries/get_dd_all_test.go</url>
+          <line>64</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
