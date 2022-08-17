@@ -1,0 +1,57 @@
+replicaCount: 2
+image:
+  repository: dimozone/device-definitions-api
+  pullPolicy: IfNotPresent
+  tag: latest
+cronJob:
+  enabled: false
+  schedule: 0 0 * * 0
+env:
+  ENVIRONMENT: prod
+  PORT: '8080'
+  LOG_LEVEL: info
+  DB_PORT: '5432'
+  DB_NAME: device_definitions_api
+  DB_MAX_OPEN_CONNECTIONS: '50'
+  DB_MAX_IDLE_CONNECTIONS: '15'
+  SERVICE_NAME: device-definitions-api
+  JWT_KEY_SET_URL: https://auth.dimo.zone/keys
+  DEPLOYMENT_BASE_URL: https://device-definitions-api.dimo.zone
+  TOR_PROXY_URL: socks5://tor.p2p:9050
+  REDIS_USER: default
+  REDIS_CLUSTER_MODE: true
+  REDIS_TLS: true
+  KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dimo.zone
+    nginx.ingress.kubernetes.io/limit-rps: '9'
+    external-dns.alpha.kubernetes.io/hostname: device-definitions-api.dimo.zone
+  hosts:
+    - host: device-definitions-api.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podDisruptionBudget:
+  minAvailable: 1

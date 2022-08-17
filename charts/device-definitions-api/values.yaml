@@ -1,0 +1,109 @@
+replicaCount: 2
+image:
+  repository: dimozone/device-definitions-api
+  pullPolicy: IfNotPresent
+  tag: latest
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ''
+podAnnotations: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1001
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - all
+cronJob:
+  enabled: false
+  schedule: 0 0 * * 0
+env:
+  ENVIRONMENT: dev
+  PORT: '8080'
+  LOG_LEVEL: info
+  DB_PORT: '5432'
+  DB_NAME: device_definitions_api
+  DB_MAX_OPEN_CONNECTIONS: '10'
+  DB_MAX_IDLE_CONNECTIONS: '3'
+  SERVICE_NAME: device-definitions-api
+  JWT_KEY_SET_URL: https://auth.dev.dimo.zone/keys
+  DEPLOYMENT_BASE_URL: https://device-definitions-api.dev.dimo.zone
+  TOR_PROXY_URL: socks5://tor.p2p:9050
+  REDIS_USER: default
+  REDIS_PORT: '6379'
+  REDIS_TLS: true
+  KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
+  AWS_REGION: us-east-2
+  GRPC_PORT: 8086
+  IPFS_NODE_ENDPOINT: http://cluster-ipfs-cluster.web3.svc.cluster.local:9094
+  DRIVLY_VIN_API_URL: https://vin-git-fc.dev.driv.ly
+  DRIVLY_OFFER_API_URL: https://offers.dev.driv.ly
+service:
+  type: ClusterIP
+  ports:
+    mon-http:
+      port: 8888
+      targetPort: mon-http
+      protocol: TCP
+    http:
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    grpc:
+      port: 8086
+      targetPort: grpc
+      protocol: TCP
+ports:
+  - name: mon-http
+    containerPort: 8888
+    protocol: TCP
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+  - name: grpc
+    containerPort: 8086
+    protocol: TCP
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dev.dimo.zone
+    nginx.ingress.kubernetes.io/limit-rps: '3'
+    external-dns.alpha.kubernetes.io/hostname: device-definitions-api.dev.dimo.zone
+  hosts:
+    - host: device-definitions-api.dev.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+resources:
+  limits:
+    cpu: 250m
+    memory: 384Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podDisruptionBudget:
+  minAvailable: 0
+serviceMonitor:
+  enabled: true
+  path: /metrics
+  port: mon-http
+  interval: 30s

@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "device-definitions-api.fullname" . }}-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "device-definitions-api.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+    {{- include "device-definitions-api.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+  - port: {{ .Values.serviceMonitor.port }}
+    {{- if .Values.serviceMonitor.interval }}
+    interval: {{ .Values.serviceMonitor.interval }}
+    {{- end }}
+    path: {{ .Values.serviceMonitor.path | quote }}
+{{- end }}
