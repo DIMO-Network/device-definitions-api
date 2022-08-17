@@ -1,0 +1,38 @@
+name: gotest
+
+on:
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get dependencies
+        run: |
+          go get -v -t ./...
+          go install gotest.tools/gotestsum@latest
+
+      - name: modVerify
+        run: go mod verify
+
+      - name: modTidy
+        run: go mod tidy
+
+      - name: Run Tests with go testsum
+        run: gotestsum --format pkgname --jsonfile test.json
+
+      - name: Annotate tests
+        if: always()
+        uses: guyarb/golang-test-annotations@v0.6.0
+        with:
+          test-results: test.json
