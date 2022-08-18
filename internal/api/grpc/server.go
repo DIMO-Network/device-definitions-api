@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartGrpcServer(s config.Settings, m mediator.Mediator) {
+func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
 	lis, err := net.Listen("tcp", ":"+s.GRPC_Port)
 	if err != nil {
 		log.Fatalf("Failed to listen on port %v: %v", s.GRPC_Port, err)

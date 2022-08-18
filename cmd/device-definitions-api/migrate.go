@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
@@ -9,7 +10,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func migrateDatabase(s config.Settings, args []string) {
+func migrateDatabase(ctx context.Context, s *config.Settings, args []string) {
 	command := "up"
 	if len(args) > 2 {
 		command = args[2]
@@ -18,18 +19,18 @@ func migrateDatabase(s config.Settings, args []string) {
 		}
 	}
 
-	sqlDb := db.Connection(s)
+	sqlDb := db.NewDbConnectionFromSettings(ctx, s, true)
 
 	if command == "" {
 		command = "up"
 	}
 
-	_, err := sqlDb.Exec("CREATE SCHEMA IF NOT EXISTS device_definitions_api;")
+	_, err := sqlDb.DBS().Writer.Exec("CREATE SCHEMA IF NOT EXISTS device_definitions_api;")
 	if err != nil {
 		log.Fatal("could not create schema: $s", err)
 	}
 	goose.SetTableName("device_definitions_api.migrations")
-	if err := goose.Run(command, sqlDb, "internal/infrastructure/db/migrations"); err != nil {
+	if err := goose.Run(command, sqlDb.DBS().Writer.DB, "internal/infrastructure/db/migrations"); err != nil {
 		log.Fatal("failed to apply go code migrations: $s", err)
 	}
 }

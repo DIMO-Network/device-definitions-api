@@ -4,8 +4,8 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -15,17 +15,17 @@ type DeviceMakeRepository interface {
 }
 
 type deviceMakeRepository struct {
-	Db *sql.DB
+	DBS func() *db.DBReaderWriter
 }
 
-func NewDeviceMakeRepository(db *sql.DB) DeviceMakeRepository {
+func NewDeviceMakeRepository(dbs func() *db.DBReaderWriter) DeviceMakeRepository {
 	return &deviceMakeRepository{
-		Db: db,
+		DBS: dbs,
 	}
 }
 
 func (r *deviceMakeRepository) GetAll(ctx context.Context) ([]*models.DeviceMake, error) {
-	makes, err := models.DeviceMakes(qm.OrderBy(models.DeviceMakeColumns.Name)).All(ctx, r.Db)
+	makes, err := models.DeviceMakes(qm.OrderBy(models.DeviceMakeColumns.Name)).All(ctx, r.DBS().Reader)
 
 	if err != nil {
 		return nil, err

@@ -18,16 +18,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-func Run(s config.Settings) {
+func Run(ctx context.Context, s *config.Settings) {
 
 	//db
-	sqlDb := db.Connection(s)
+	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
 	//infra
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(sqlDb)
-	makeRepository := repositories.NewDeviceMakeRepository(sqlDb)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
@@ -50,7 +50,7 @@ func Run(s config.Settings) {
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdQuery{}, queries.NewGetDeviceDefinitionByIdQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(sqlDb)),
+		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 	)
 
 	//fiber

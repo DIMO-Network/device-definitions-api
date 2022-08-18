@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/golang/mock/gomock"
@@ -40,63 +42,50 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAll_Success() {
+func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	model := "Hummer"
 	makeId := "1"
-	make := "Toyota"
+	mk := "Toyota"
 
-	var dd []models.DeviceDefinition
-	dd = append(dd, models.DeviceDefinition{
+	var dd []*models.DeviceDefinition
+	dd = append(dd, &models.DeviceDefinition{
 		ID:           deviceDefinitionID,
 		Model:        model,
 		Year:         2000,
 		DeviceMakeID: makeId,
 	})
 
-	var makes []models.DeviceMake
-	makes = append(makes, models.DeviceMake{
+	var makes []*models.DeviceMake
+	makes = append(makes, &models.DeviceMake{
 		ID:   makeId,
-		Name: make,
+		Name: mk,
 	})
 
 	s.mock_MakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
 	s.mock_Repository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
-	result := qryResult.(*GetAllDeviceDefinitionQueryResult)
+	result := qryResult.([]GetAllDeviceDefinitionQueryResult)
 
 	s.NoError(err)
-	s.Equal(result.Make, make)
+	s.Len(result, 1)
+	assert.Equal(s.T(), mk, result[0].Make)
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAll_Fail() {
+func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_Empty() {
 	ctx := context.Background()
-	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
-	model := "Hummer"
-	makeId := "1"
-	make := "Toyota"
 
-	var dd []models.DeviceDefinition
-	dd = append(dd, models.DeviceDefinition{
-		ID:           deviceDefinitionID,
-		Model:        model,
-		Year:         2000,
-		DeviceMakeID: makeId,
-	})
+	var dd []*models.DeviceDefinition
+	var makes []*models.DeviceMake
 
-	var makes []models.DeviceMake
-	makes = append(makes, models.DeviceMake{
-		ID:   makeId,
-		Name: make,
-	})
-
-	s.mock_Repository.EXPECT().GetAll(ctx, true).Return(dd, nil).Times(1)
 	s.mock_MakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
+	s.mock_Repository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
+	result := qryResult.([]GetAllDeviceDefinitionQueryResult)
 
-	s.Nil(qryResult)
-	s.Error(err)
+	s.NoError(err)
+	s.Len(result, 0)
 }

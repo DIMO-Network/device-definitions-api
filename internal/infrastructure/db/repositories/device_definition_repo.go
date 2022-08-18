@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -19,11 +20,11 @@ type DeviceDefinitionRepository interface {
 }
 
 type deviceDefinitionRepository struct {
-	Db *sql.DB
+	DBS func() *db.DBReaderWriter
 }
 
-func NewDeviceDefinitionRepository(db *sql.DB) DeviceDefinitionRepository {
-	return &deviceDefinitionRepository{Db: db}
+func NewDeviceDefinitionRepository(dbs func() *db.DBReaderWriter) DeviceDefinitionRepository {
+	return &deviceDefinitionRepository{DBS: dbs}
 }
 
 func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
@@ -41,7 +42,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 	}
 
 	query := models.DeviceDefinitions(qms...)
-	dd, err := query.One(ctx, r.Db)
+	dd, err := query.One(ctx, r.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(qm.Where("verified = true"),
-		qm.OrderBy("device_make_id, model, year")).All(ctx, r.Db)
+		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func (r *deviceDefinitionRepository) GetById(ctx context.Context, id string) (*m
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
-		One(ctx, r.Db)
+		One(ctx, r.DBS().Reader)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -91,7 +92,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load("DeviceIntegrations.Integration")).
-		One(ctx, r.Db)
+		One(ctx, r.DBS().Reader)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetByIdQueryHandlerSuite struct {
+type GetDeviceDefinitionByIdQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
@@ -23,10 +23,10 @@ type GetByIdQueryHandlerSuite struct {
 }
 
 func TestGetDeviceDefinitionByIdQueryHandler(t *testing.T) {
-	suite.Run(t, new(GetByIdQueryHandlerSuite))
+	suite.Run(t, new(GetDeviceDefinitionByIdQueryHandlerSuite))
 }
 
-func (s *GetByIdQueryHandlerSuite) SetupTest() {
+func (s *GetDeviceDefinitionByIdQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
@@ -35,11 +35,11 @@ func (s *GetByIdQueryHandlerSuite) SetupTest() {
 	s.queryHandler = NewGetDeviceDefinitionByIdQueryHandler(s.mock_Repository)
 }
 
-func (s *GetByIdQueryHandlerSuite) TearDownTest() {
+func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *GetByIdQueryHandlerSuite) TestGetById_Success() {
+func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
@@ -62,7 +62,7 @@ func (s *GetByIdQueryHandlerSuite) TestGetById_Success() {
 	s.Equal(result.Year, dd.Year)
 }
 
-func (s *GetByIdQueryHandlerSuite) TestGetById_Fail() {
+func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-
+	ctx := context.Background()
 	arg := ""
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
@@ -24,8 +25,8 @@ func main() {
 
 	switch arg {
 	case "migrate":
-		migrateDatabase(settings, os.Args)
+		migrateDatabase(ctx, &settings, os.Args)
 	default:
-		api.Run(settings)
+		api.Run(ctx, &settings)
 	}
 }
