@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8ac66842-2e07-4b5b-8727-49c842b9da64" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/device-definitions-api.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///opt/homebrew/Cellar/go/1.18.4/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2DSt1iBn0ya0HBT08dlbsoCH1cb" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.format.on.save.advertiser.fired&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.watchers.conflict.with.on.save.actions.check.performed&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/ricardo/Projects/DIMO/device-definitions-api&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Go Test.TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries">
+    <configuration name="GetAllDeviceDefinitionQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetAll_Success|TestGetAll_Fail$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetAllDeviceDefinitionQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="GetByIdQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetById_Success|TestGetById_Fail$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetDeviceDefinitionByIdQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <parameters value=" -testify.m ^TestGetAll_Success$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetAllDeviceDefinitionQueryHandler\E$/^\QTestGetAll_Success\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestGetDeviceDefinitionByIdQueryHandler in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="device-definitions-api" />
+      <working_directory value="$PROJECT_DIR$/internal/core/queries" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestGetDeviceDefinitionByIdQueryHandler\E$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.TestGetAll_Success in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.GetAllDeviceDefinitionQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.GetByIdQueryHandlerSuite in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+        <item itemvalue="Go Test.TestGetDeviceDefinitionByIdQueryHandler in github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/internal/infrastructure/db/repositories/device_make_repo.go</url>
+          <line>27</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/internal/core/queries/get_dd_all_test.go</url>
+          <line>64</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

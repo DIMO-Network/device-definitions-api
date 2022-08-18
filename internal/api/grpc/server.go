@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api/common"
-	intShared "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/shared"
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
 	pkggrpc "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartGrpcServer(s intShared.Settings, m mediator.Mediator) {
+func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
 	lis, err := net.Listen("tcp", ":"+s.GRPC_Port)
 	if err != nil {
 		log.Fatalf("Failed to listen on port %v: %v", s.GRPC_Port, err)
