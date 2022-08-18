@@ -1,0 +1,27 @@
+name: golangci-lint
+on:
+  pull_request:
+    branches: [ '**' ]
+env:
+  GOPRIVATE: github.com/DIMO-Network
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  golangci:
+    runs-on: ubuntu-latest
+
+    name: lint
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          only-new-issues: false
+          args: --modules-download-mode=readonly -E prealloc -E revive -E goimports -E deadcode -E errcheck -E gosimple -E govet -E ineffassign -E staticcheck -E structcheck -E typecheck -E unused -E varcheck --timeout=5m

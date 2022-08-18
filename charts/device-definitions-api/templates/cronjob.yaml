@@ -1,0 +1,36 @@
+{{- if .Values.cronJob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "device-definitions-api.fullname" . }}-load-dd
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "device-definitions-api.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJob.schedule | quote}}
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+          {{- with .Values.podAnnotations }}
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          labels:
+            {{- include "device-definitions-api.selectorLabels" . | nindent 12 }}
+        spec:
+          containers:
+          - name: edmunds-vehicles-sync
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            command: ['/bin/sh']
+            args: ['-c', '/device-definitions-api edmunds-vehicles-sync && /device-definitions-api smartcar-sync && /device-definitions-api search-sync-dds; CODE=$?; echo "edmunds-vehicles-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
+            envFrom:
+            - configMapRef:
+                name: {{ include "device-definitions-api.fullname" . }}-config
+            - secretRef:
+                name: {{ include "device-definitions-api.fullname" . }}-secret
+          restartPolicy: OnFailure
+{{ end }}          

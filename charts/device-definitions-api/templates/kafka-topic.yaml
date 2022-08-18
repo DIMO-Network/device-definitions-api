@@ -1,0 +1,19 @@
+{{- if .Values.kafka.topics -}}
+{{- range $item := .Values.kafka.topics }}
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ $item.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    strimzi.io/cluster: {{$.Values.kafka.clusterName}}
+    {{- include "device-definitions-api.labels" $ | nindent 4 }}
+spec:
+  config:
+    {{- range $key, $val := $item.config }}
+    {{ $key }} : {{ $val }}
+    {{- end}}
+  topicName: {{ $item.name }}
+---
+{{- end}}
+{{- end}}

@@ -1,0 +1,41 @@
+name: buildpushdev
+on:
+  push:
+    branches:
+      - main
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build_test:
+    # The type of runner that the job will run on
+    name: buildpushdev
+    runs-on: self-hosted
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Get short SHA
+        id: slug
+        run: echo "::set-output name=sha7::$(echo ${GITHUB_SHA} | cut -c1-7)"
+        
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./resources/docker/Dockerfile
+          push: true
+          tags: dimozone/device-definitions-api:${{ steps.slug.outputs.sha7 }}, dimozone/device-definitions-api:latest
+
+      - name: Update Image Version in the related HelmChart values.yaml
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          valueFile: 'charts/device-definitions-api/values.yaml'
+          propertyPath: 'image.tag'
+          value: ${{ steps.slug.outputs.sha7 }}
+          branch: main
+          message: 'Update Image Version to ${{ steps.slug.outputs.sha7 }}'
