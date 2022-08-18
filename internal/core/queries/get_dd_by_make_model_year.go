@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
+	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
@@ -107,12 +109,50 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 		rp.VehicleInfo = vi["vehicle_info"]
 	}
 
-	// if dd.R != nil {
-	// 	// compatible integrations
-	// 	rp.CompatibleIntegrations = DeviceCompatibilityFromDB(dd.R.DeviceIntegrations)
-	// 	// sub_models
-	// 	rp.Type.SubModels = services.SubModelsFromStylesDB(dd.R.DeviceStyles)
-	// }
+	if dd.R != nil {
+		// compatible integrations
+		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
+		// sub_models
+		rp.Type.SubModels = subModelsFromStylesDB(dd.R.DeviceStyles)
+	}
 
 	return rp, nil
+}
+
+// DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
+func deviceCompatibilityFromDB(dbDIS models.DeviceIntegrationSlice) []GetDeviceCompatibility {
+	if len(dbDIS) == 0 {
+		return []GetDeviceCompatibility{}
+	}
+	compatibilities := make([]GetDeviceCompatibility, len(dbDIS))
+	for i, di := range dbDIS {
+		compatibilities[i] = GetDeviceCompatibility{
+			ID:           di.IntegrationID,
+			Type:         di.R.Integration.Type,
+			Style:        di.R.Integration.Style,
+			Vendor:       di.R.Integration.Vendor,
+			Region:       di.Region,
+			Capabilities: jsonOrDefault(di.Capabilities),
+		}
+	}
+	return compatibilities
+}
+
+// SubModelsFromStylesDB gets the unique style.SubModel from the styles slice, deduping sub_model
+func subModelsFromStylesDB(styles models.DeviceStyleSlice) []string {
+	items := map[string]string{}
+	for _, style := range styles {
+		if _, ok := items[style.SubModel]; !ok {
+			items[style.SubModel] = style.Name
+		}
+	}
+
+	sm := make([]string, len(items))
+	i := 0
+	for key := range items {
+		sm[i] = key
+		i++
+	}
+	sort.Strings(sm)
+	return sm
 }
