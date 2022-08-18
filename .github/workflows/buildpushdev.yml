@@ -8,7 +8,7 @@ jobs:
   build_test:
     # The type of runner that the job will run on
     name: buildpushdev
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
