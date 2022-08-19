@@ -1,4 +1,4 @@
-module github.com/DIMO-Network/poc-dimo-api/device-definitions-api
+module github.com/DIMO-Network/device-definitions-api
 
 go 1.18
 
