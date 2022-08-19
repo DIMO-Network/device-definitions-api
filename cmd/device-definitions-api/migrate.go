@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -23,6 +25,10 @@ func migrateDatabase(ctx context.Context, s *config.Settings, args []string) {
 
 	if command == "" {
 		command = "up"
+	}
+	if !sqlDb.IsReady() {
+		time.Sleep(1 * time.Second)
+		fmt.Println("db not ready, retrying in 1s")
 	}
 
 	_, err := sqlDb.DBS().Writer.Exec("CREATE SCHEMA IF NOT EXISTS device_definitions_api;")
