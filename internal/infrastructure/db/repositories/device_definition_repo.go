@@ -7,8 +7,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/queries"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 )

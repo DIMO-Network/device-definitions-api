@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
-	test_db_helper "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/pkg/dbtest"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	test_db_helper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/testcontainers/testcontainers-go"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

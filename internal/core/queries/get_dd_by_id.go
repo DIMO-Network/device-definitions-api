@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 

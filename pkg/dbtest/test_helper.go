@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )

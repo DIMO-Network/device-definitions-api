@@ -4,9 +4,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api/common"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
-	pkggrpc "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/pkg/grpc"
+	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	pkggrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"

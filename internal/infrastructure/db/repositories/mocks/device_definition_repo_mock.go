@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
+	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	gomock "github.com/golang/mock/gomock"
 )
 

@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/DIMO-Network/poc-dimo-api/device-definitions-api/docs"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/api"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/config"
+	_ "github.com/DIMO-Network/device-definitions-api/docs"
+	"github.com/DIMO-Network/device-definitions-api/internal/api"
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 )
 
