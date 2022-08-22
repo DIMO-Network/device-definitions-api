@@ -23,3 +23,13 @@ protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     pkg/grpc/device_definition.proto
 ```
+
+## Linting
+
+`brew install golangci-lint`
+
+`golangci-lint run`
+
+This should use the settings from `.golangci.yml`, which you can override.
+
+If brew version does not work, download from https://github.com/golangci/golangci-lint/releases (darwin arm64 if M1), then copy to /usr/local/bin and sudo xattr -c golangci-lint
