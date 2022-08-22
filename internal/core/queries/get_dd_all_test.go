@@ -17,9 +17,9 @@ type GetAllDeviceDefinitionQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                *gomock.Controller
-	mock_Repository     *mocks.MockDeviceDefinitionRepository
-	mock_MakeRepository *mocks.MockDeviceMakeRepository
+	ctrl               *gomock.Controller
+	mockRepository     *mocks.MockDeviceDefinitionRepository
+	mockMakeRepository *mocks.MockDeviceMakeRepository
 
 	queryHandler GetAllDeviceDefinitionQueryHandler
 }
@@ -32,10 +32,10 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mock_Repository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
-	s.mock_MakeRepository = mocks.NewMockDeviceMakeRepository(s.ctrl)
+	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockMakeRepository = mocks.NewMockDeviceMakeRepository(s.ctrl)
 
-	s.queryHandler = NewGetAllDeviceDefinitionQueryHandler(s.mock_Repository, s.mock_MakeRepository)
+	s.queryHandler = NewGetAllDeviceDefinitionQueryHandler(s.mockRepository, s.mockMakeRepository)
 }
 
 func (s *GetAllDeviceDefinitionQueryHandlerSuite) TearDownTest() {
@@ -46,7 +46,7 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuer
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	model := "Hummer"
-	makeId := "1"
+	makeID := "1"
 	mk := "Toyota"
 
 	var dd []*models.DeviceDefinition
@@ -54,17 +54,17 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuer
 		ID:           deviceDefinitionID,
 		Model:        model,
 		Year:         2000,
-		DeviceMakeID: makeId,
+		DeviceMakeID: makeID,
 	})
 
 	var makes []*models.DeviceMake
 	makes = append(makes, &models.DeviceMake{
-		ID:   makeId,
+		ID:   makeID,
 		Name: mk,
 	})
 
-	s.mock_MakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
-	s.mock_Repository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
+	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
 	result := qryResult.([]GetAllDeviceDefinitionQueryResult)
@@ -80,8 +80,8 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuer
 	var dd []*models.DeviceDefinition
 	var makes []*models.DeviceMake
 
-	s.mock_MakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
-	s.mock_Repository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
+	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
 	result := qryResult.([]GetAllDeviceDefinitionQueryResult)

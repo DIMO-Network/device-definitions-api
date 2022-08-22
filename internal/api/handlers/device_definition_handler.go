@@ -9,7 +9,7 @@ import (
 )
 
 // @Summary gets a device definition
-// @ID GetById
+// @ID GetByID
 // @Description gets a device definition
 // @Tags device-definitions
 // @Accept json

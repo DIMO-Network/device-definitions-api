@@ -13,7 +13,7 @@ import (
 )
 
 type DeviceDefinitionRepository interface {
-	GetById(ctx context.Context, id string) (*models.DeviceDefinition, error)
+	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
@@ -62,7 +62,7 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) 
 	return dd, err
 }
 
-func (r *deviceDefinitionRepository) GetById(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
 		qm.Where("id = ?", id),

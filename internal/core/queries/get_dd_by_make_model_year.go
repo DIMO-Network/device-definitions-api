@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/common"
 	"sort"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -133,7 +133,7 @@ func deviceCompatibilityFromDB(dbDIS models.DeviceIntegrationSlice) []GetDeviceC
 			Style:        di.R.Integration.Style,
 			Vendor:       di.R.Integration.Vendor,
 			Region:       di.Region,
-			Capabilities: common.JsonOrDefault(di.Capabilities),
+			Capabilities: common.JSONOrDefault(di.Capabilities),
 		}
 	}
 	return compatibilities

@@ -14,7 +14,7 @@ type GetDeviceDefinitionByIdQuery struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId" validate:"required"`
 }
 
-type GetDeviceDefinitionByIdQueryResult struct {
+type GetDeviceDefinitionByIDQueryResult struct {
 	DeviceDefinitionID     string                               `json:"deviceDefinitionId"`
 	Name                   string                               `json:"name"`
 	ImageURL               *string                              `json:"imageUrl"`
@@ -52,7 +52,7 @@ func (ch GetDeviceDefinitionByIdQueryHandler) Handle(ctx context.Context, query 
 
 	qry := query.(*GetDeviceDefinitionByIdQuery)
 
-	dd, _ := ch.Repository.GetById(ctx, qry.DeviceDefinitionID)
+	dd, _ := ch.Repository.GetByID(ctx, qry.DeviceDefinitionID)
 
 	if dd == nil {
 		return nil, &common.NotFoundError{
@@ -60,7 +60,7 @@ func (ch GetDeviceDefinitionByIdQueryHandler) Handle(ctx context.Context, query 
 		}
 	}
 
-	rp := GetDeviceDefinitionByIdQueryResult{
+	rp := GetDeviceDefinitionByIDQueryResult{
 		DeviceDefinitionID:     dd.ID,
 		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:               dd.ImageURL.Ptr(),
@@ -99,7 +99,7 @@ func (ch GetDeviceDefinitionByIdQueryHandler) Handle(ctx context.Context, query 
 				Style:        di.R.Integration.Style,
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
-				Capabilities: common.JsonOrDefault(di.Capabilities),
+				Capabilities: common.JSONOrDefault(di.Capabilities),
 			})
 		}
 	}

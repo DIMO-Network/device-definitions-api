@@ -40,7 +40,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 		}
 	}
 
-	var result []GetAllIntegrationQueryResult
+	result := make([]GetAllIntegrationQueryResult, len(all))
 	for _, v := range all {
 		result = append(result, GetAllIntegrationQueryResult{
 			ID:     v.ID,

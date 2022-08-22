@@ -14,9 +14,9 @@ import (
 )
 
 func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
-	lis, err := net.Listen("tcp", ":"+s.GRPC_Port)
+	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
-		log.Fatalf("Failed to listen on port %v: %v", s.GRPC_Port, err)
+		log.Fatalf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
 	opts := []grpc_recovery.Option{
@@ -33,6 +33,6 @@ func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
 	pkggrpc.RegisterDeviceDefinitionServiceServer(server, service)
 
 	if err := server.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve over port %v: %v", s.GRPC_Port, err)
+		log.Fatalf("Failed to serve over port %v: %v", s.GRPCPort, err)
 	}
 }

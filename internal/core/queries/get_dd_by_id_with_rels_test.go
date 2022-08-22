@@ -17,8 +17,8 @@ type GetDeviceDefinitionWithRelsQuerySuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl            *gomock.Controller
-	mock_Repository *mocks.MockDeviceDefinitionRepository
+	ctrl           *gomock.Controller
+	mockRepository *mocks.MockDeviceDefinitionRepository
 
 	queryHandler GetDeviceDefinitionWithRelsQueryHandler
 }
@@ -31,9 +31,9 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mock_Repository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.queryHandler = NewGetDeviceDefinitionWithRelsQueryHandler(s.mock_Repository)
+	s.queryHandler = NewGetDeviceDefinitionWithRelsQueryHandler(s.mockRepository)
 }
 
 func (s *GetDeviceDefinitionWithRelsQuerySuite) TearDownTest() {
@@ -64,7 +64,7 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
 
-	s.mock_Repository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionWithRelsQuery{DeviceDefinitionID: deviceDefinitionID})
 	result := qryResult.([]GetDeviceDefinitionWithRelsQueryResult)
@@ -85,7 +85,7 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 		Year:  2000,
 	}
 
-	s.mock_Repository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionWithRelsQuery{DeviceDefinitionID: deviceDefinitionID})
 	result := qryResult.([]GetDeviceDefinitionWithRelsQueryResult)
@@ -98,7 +98,7 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
-	s.mock_Repository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(nil, nil).Times(1)
+	s.mockRepository.EXPECT().GetWithIntegrations(ctx, gomock.Any()).Return(nil, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionWithRelsQuery{
 		DeviceDefinitionID: deviceDefinitionID,

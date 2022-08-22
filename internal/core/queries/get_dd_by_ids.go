@@ -3,10 +3,11 @@ package queries
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/poc-dimo-api/device-definitions-api/pkg/grpc"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
@@ -33,7 +34,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 	response := grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range qry.DeviceDefinitionID {
-		dd, _ := ch.Repository.GetById(ctx, v)
+		dd, _ := ch.Repository.GetByID(ctx, v)
 
 		if dd == nil {
 			fmt.Printf("Not found")
@@ -78,7 +79,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 					Style:        di.R.Integration.Style,
 					Vendor:       di.R.Integration.Vendor,
 					Region:       di.Region,
-					Capabilities: string(common.JsonOrDefault(di.Capabilities)),
+					Capabilities: string(common.JSONOrDefault(di.Capabilities)),
 				})
 			}
 		}
@@ -102,7 +103,7 @@ func buildDeviceCompatibility(dbDIS models.DeviceIntegrationSlice) []*grpc.GetDe
 			Style:        di.R.Integration.Style,
 			Vendor:       di.R.Integration.Vendor,
 			Region:       di.Region,
-			Capabilities: string(common.JsonOrDefault(di.Capabilities)),
+			Capabilities: string(common.JSONOrDefault(di.Capabilities)),
 		}
 	}
 	return compatibilities

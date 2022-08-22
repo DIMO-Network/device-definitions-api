@@ -45,7 +45,7 @@ func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl-INT"
 	vendor := "AutoPI"
 	style := ""
-	makeId := "1"
+	makeID := "1"
 	mk := "Toyota"
 	model := "Hummer"
 
@@ -65,14 +65,14 @@ func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_S
 
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
-	dd.R.DeviceMake = &models.DeviceMake{ID: makeId, Name: mk}
+	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
 
 	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
-	result := qryResult.(GetDeviceDefinitionByIdQueryResult)
+	result := qryResult.(GetDeviceDefinitionByIDQueryResult)
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
