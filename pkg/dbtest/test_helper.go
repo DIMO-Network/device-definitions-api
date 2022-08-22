@@ -1,4 +1,4 @@
-package test_db_helper
+package dbtest
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 )
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
-func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.DbStore, testcontainers.Container) {
+func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.Store, testcontainers.Container) {
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
@@ -105,7 +105,7 @@ func getTestDbSettings(dbName string) config.Settings {
 	return settings
 }
 
-func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.DbStore, testcontainers.Container) {
+func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.Store, testcontainers.Container) {
 	if err != nil {
 		fmt.Println("start container error: " + err.Error())
 		if container != nil {
@@ -113,7 +113,7 @@ func handleContainerStartErr(ctx context.Context, err error, container testconta
 		}
 		t.Fatal(err)
 	}
-	return db.DbStore{}, container
+	return db.Store{}, container
 }
 
 // TruncateTables truncates tables for the test db, useful to run as teardown at end of each DB dependent test.

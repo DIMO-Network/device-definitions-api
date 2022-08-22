@@ -12,22 +12,22 @@ import (
 const databaseDriver = "postgres"
 
 // instance holds a single instance of the database
-var instance *DBReaderWriter
+var instance *ReaderWriter
 
 var ready bool
 
 // once is used to ensure that there is only a single instance of the database
 var once sync.Once
 
-// DbStore holds the database connection and other stuff.
-type DbStore struct {
+// Store holds the database connection and other stuff.
+type Store struct {
 	db    func() *sql.DB
-	dbs   *DBReaderWriter
+	dbs   *ReaderWriter
 	ready *bool
 }
 
 // NewDbConnectionFromSettings sets up a db connection from the settings, only once
-func NewDbConnectionFromSettings(ctx context.Context, settings *config.Settings, withSearchPath bool) DbStore {
+func NewDbConnectionFromSettings(ctx context.Context, settings *config.Settings, withSearchPath bool) Store {
 	once.Do(func() {
 		instance = NewDbConnection(
 			ctx,
@@ -55,21 +55,21 @@ func NewDbConnectionFromSettings(ctx context.Context, settings *config.Settings,
 		)
 	})
 
-	return DbStore{db: instance.GetWriterConn, dbs: instance, ready: &ready}
+	return Store{db: instance.GetWriterConn, dbs: instance, ready: &ready}
 }
 
 // IsReady returns if db is ready to connect to
-func (store *DbStore) IsReady() bool {
+func (store *Store) IsReady() bool {
 	return *store.ready
 }
 
 // DBS returns the reader and writer databases to connect to
-func (store *DbStore) DBS() *DBReaderWriter {
+func (store *Store) DBS() *ReaderWriter {
 	return store.dbs
 }
 
 // NewDbConnectionForTest use this for tests as we have multiple sessions in parallel and don't want synced one
-func NewDbConnectionForTest(ctx context.Context, settings config.Settings, withSearchPath bool) DbStore {
+func NewDbConnectionForTest(ctx context.Context, settings config.Settings, withSearchPath bool) Store {
 	localReady := false
 	dbConnection := NewDbConnection(
 		ctx,
@@ -95,5 +95,5 @@ func NewDbConnectionForTest(ctx context.Context, settings config.Settings, withS
 			DriverName:         databaseDriver,
 		},
 	)
-	return DbStore{db: dbConnection.GetWriterConn, dbs: dbConnection, ready: &localReady}
+	return Store{db: dbConnection.GetWriterConn, dbs: dbConnection, ready: &localReady}
 }

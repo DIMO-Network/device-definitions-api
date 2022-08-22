@@ -45,11 +45,11 @@ message GetDeviceDefinitionItemResponse {
 		string fuel_type = 1;
 		string driven_wheels = 2;
 		string number_of_doors = 3;
-		uint32 base_msrp = 4;
-		string epa_class = 5;
+		uint32 base_MSRP = 4;
+		string EPA_class = 5;
 		string vehicle_type = 6;
-		string mpg_highway = 7;
-		string mpg_city = 8;
+		string MPG_highway = 7;
+		string MPG_city = 8;
 		string fuel_tank_capacity_gal = 9;
 	}
 
@@ -65,5 +65,5 @@ message GetDeviceDefinitionItemResponse {
 }
 
 service DeviceDefinitionService {
-	rpc GetDeviceDefinitionById(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 }

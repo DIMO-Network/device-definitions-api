@@ -16,8 +16,8 @@ type GetDeviceDefinitionByMakeModelYearQuerySuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl            *gomock.Controller
-	mock_Repository *mocks.MockDeviceDefinitionRepository
+	ctrl           *gomock.Controller
+	mockRepository *mocks.MockDeviceDefinitionRepository
 
 	queryHandler GetDeviceDefinitionByMakeModelYearQueryHandler
 }
@@ -30,9 +30,9 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mock_Repository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.queryHandler = NewGetDeviceDefinitionByMakeModelYearQueryHandler(s.mock_Repository)
+	s.queryHandler = NewGetDeviceDefinitionByMakeModelYearQueryHandler(s.mockRepository)
 }
 
 func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TearDownTest() {
@@ -43,7 +43,7 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	model := "Hummer"
-	makeId := "1"
+	makeID := "1"
 	mk := "Toyota"
 	year := 2020
 
@@ -51,13 +51,13 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 		ID:           deviceDefinitionID,
 		Model:        model,
 		Year:         int16(year),
-		DeviceMakeID: makeId,
+		DeviceMakeID: makeID,
 		Verified:     true,
 	}
 	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &models.DeviceMake{ID: makeId, Name: mk}
+	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
 
-	s.mock_Repository.EXPECT().GetByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByMakeModelYearQuery{
 		Make:  mk,

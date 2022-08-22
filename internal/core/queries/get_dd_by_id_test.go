@@ -12,34 +12,34 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetDeviceDefinitionByIdQueryHandlerSuite struct {
+type GetDeviceDefinitionByIDQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl            *gomock.Controller
-	mock_Repository *mocks.MockDeviceDefinitionRepository
+	ctrl           *gomock.Controller
+	mockRepository *mocks.MockDeviceDefinitionRepository
 
-	queryHandler GetDeviceDefinitionByIdQueryHandler
+	queryHandler GetDeviceDefinitionByIDQueryHandler
 }
 
 func TestGetDeviceDefinitionByIdQueryHandler(t *testing.T) {
-	suite.Run(t, new(GetDeviceDefinitionByIdQueryHandlerSuite))
+	suite.Run(t, new(GetDeviceDefinitionByIDQueryHandlerSuite))
 }
 
-func (s *GetDeviceDefinitionByIdQueryHandlerSuite) SetupTest() {
+func (s *GetDeviceDefinitionByIDQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mock_Repository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.queryHandler = NewGetDeviceDefinitionByIdQueryHandler(s.mock_Repository)
+	s.queryHandler = NewGetDeviceDefinitionByIDQueryHandler(s.mockRepository)
 }
 
-func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TearDownTest() {
+func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
+func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl-INT"
@@ -67,9 +67,9 @@ func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
 	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
 
-	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
 	result := qryResult.(GetDeviceDefinitionByIDQueryResult)
@@ -80,13 +80,13 @@ func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	s.Equal(result.Type.Make, mk)
 }
 
-func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {
+func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
-	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(nil, nil).Times(1)
+	s.mockRepository.EXPECT().GetById(ctx, gomock.Any()).Return(nil, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
 

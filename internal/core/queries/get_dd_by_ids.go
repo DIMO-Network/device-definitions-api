@@ -31,7 +31,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 
 	qry := query.(*GetDeviceDefinitionByIdsQuery)
 
-	response := grpc.GetDeviceDefinitionResponse{}
+	response := &grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range qry.DeviceDefinitionID {
 		dd, _ := ch.Repository.GetByID(ctx, v)
@@ -58,8 +58,19 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 
 		// vehicle info
 		var vi map[string]GetDeviceVehicleInfo
+
 		if err := dd.Metadata.Unmarshal(&vi); err == nil {
-			//rp.VehicleInfo = vi["vehicle_info"]
+			rp.VehicleData = &grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
+				FuelType:            vi["vehicle_info"].FuelType,
+				DrivenWheels:        vi["vehicle_info"].DrivenWheels,
+				NumberOfDoors:       vi["vehicle_info"].NumberOfDoors,
+				Base_MSRP:           uint32(vi["vehicle_info"].BaseMSRP),
+				EPAClass:            vi["vehicle_info"].EPAClass,
+				VehicleType:         vi["vehicle_info"].VehicleType,
+				MPGHighway:          vi["vehicle_info"].MPGHighway,
+				MPGCity:             vi["vehicle_info"].MPGCity,
+				FuelTankCapacityGal: vi["vehicle_info"].FuelTankCapacityGal,
+			}
 		}
 
 		if dd.R != nil {

@@ -10,7 +10,7 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-type GetDeviceDefinitionByIdQuery struct {
+type GetDeviceDefinitionByIDQuery struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId" validate:"required"`
 }
 
@@ -36,21 +36,21 @@ type GetDeviceDefinitionIntegrationList struct {
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 
-func (*GetDeviceDefinitionByIdQuery) Key() string { return "GetDeviceDefinitionByIdQuery" }
+func (*GetDeviceDefinitionByIDQuery) Key() string { return "GetDeviceDefinitionByIdQuery" }
 
-type GetDeviceDefinitionByIdQueryHandler struct {
+type GetDeviceDefinitionByIDQueryHandler struct {
 	Repository repositories.DeviceDefinitionRepository
 }
 
-func NewGetDeviceDefinitionByIdQueryHandler(repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionByIdQueryHandler {
-	return GetDeviceDefinitionByIdQueryHandler{
+func NewGetDeviceDefinitionByIDQueryHandler(repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionByIDQueryHandler {
+	return GetDeviceDefinitionByIDQueryHandler{
 		Repository: repository,
 	}
 }
 
-func (ch GetDeviceDefinitionByIdQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetDeviceDefinitionByIdQuery)
+	qry := query.(*GetDeviceDefinitionByIDQuery)
 
 	dd, _ := ch.Repository.GetByID(ctx, qry.DeviceDefinitionID)
 

@@ -33,19 +33,19 @@ type Tx struct {
 	*sql.Tx
 }
 
-// DBReaderWriter wraps db reader and writer
-type DBReaderWriter struct {
+// ReaderWriter wraps db reader and writer
+type ReaderWriter struct {
 	Reader *DB
 	Writer *DB
 }
 
-var dbs *DBReaderWriter
+var dbs *ReaderWriter
 
 // NewDbConnection connects to the reader and writer per passed in options, with retries, returning a DBReaderWriter object that contains sql.DB connection
-func NewDbConnection(ctx context.Context, ready *bool, ro ConnectOptions, wo ConnectOptions) *DBReaderWriter {
-	dbs = &DBReaderWriter{Reader: &DB{}, Writer: &DB{}}
+func NewDbConnection(ctx context.Context, ready *bool, ro ConnectOptions, wo ConnectOptions) *ReaderWriter {
+	dbs = &ReaderWriter{Reader: &DB{}, Writer: &DB{}}
 
-	go func(ctx context.Context, ready *bool, dbs *DBReaderWriter) {
+	go func(ctx context.Context, ready *bool, dbs *ReaderWriter) {
 		errCh := make(chan error)
 		defer close(errCh)
 
@@ -164,11 +164,11 @@ func connect(opts ConnectOptions) (*sql.DB, error) {
 }
 
 // GetReaderConn returns connection to reader
-func (dbs *DBReaderWriter) GetReaderConn() *sql.DB {
+func (dbs *ReaderWriter) GetReaderConn() *sql.DB {
 	return dbs.Reader.DB
 }
 
 // GetWriterConn returns connection to writer
-func (dbs *DBReaderWriter) GetWriterConn() *sql.DB {
+func (dbs *ReaderWriter) GetWriterConn() *sql.DB {
 	return dbs.Writer.DB
 }

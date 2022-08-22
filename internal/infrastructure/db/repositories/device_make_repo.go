@@ -15,10 +15,10 @@ type DeviceMakeRepository interface {
 }
 
 type deviceMakeRepository struct {
-	DBS func() *db.DBReaderWriter
+	DBS func() *db.ReaderWriter
 }
 
-func NewDeviceMakeRepository(dbs func() *db.DBReaderWriter) DeviceMakeRepository {
+func NewDeviceMakeRepository(dbs func() *db.ReaderWriter) DeviceMakeRepository {
 	return &deviceMakeRepository{
 		DBS: dbs,
 	}

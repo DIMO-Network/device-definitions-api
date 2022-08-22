@@ -2,10 +2,10 @@ package queries
 
 import (
 	"context"
+	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	test_db_helper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -28,7 +28,7 @@ type GetAllIntegrationQueryHandlerSuite struct {
 	*require.Assertions
 
 	ctrl      *gomock.Controller
-	pdb       db.DbStore
+	pdb       db.Store
 	container testcontainers.Container
 	ctx       context.Context
 
@@ -43,13 +43,13 @@ func (s *GetAllIntegrationQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.pdb, s.container = test_db_helper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
+	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.queryHandler = NewGetAllIntegrationQueryHandler(s.pdb.DBS)
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) TearDownTest() {
-	test_db_helper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
 }
 
@@ -68,7 +68,7 @@ func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_Wit
 	assert.Equal(s.T(), vendor, result[0].Vendor)
 }
 
-func initialData(t *testing.T, vendor string, pdb db.DbStore) models.Integration {
+func initialData(t *testing.T, vendor string, pdb db.Store) models.Integration {
 	dm := models.Integration{
 		ID:     ksuid.New().String(),
 		Type:   "Test",

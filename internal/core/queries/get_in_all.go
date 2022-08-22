@@ -24,10 +24,10 @@ type GetAllIntegrationQueryResult struct {
 func (*GetAllIntegrationQuery) Key() string { return "GetAllIntegrationQuery" }
 
 type GetAllIntegrationQueryHandler struct {
-	DBS func() *db.DBReaderWriter
+	DBS func() *db.ReaderWriter
 }
 
-func NewGetAllIntegrationQueryHandler(dbs func() *db.DBReaderWriter) GetAllIntegrationQueryHandler {
+func NewGetAllIntegrationQueryHandler(dbs func() *db.ReaderWriter) GetAllIntegrationQueryHandler {
 	return GetAllIntegrationQueryHandler{DBS: dbs}
 }
 

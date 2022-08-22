@@ -20,10 +20,10 @@ type DeviceDefinitionRepository interface {
 }
 
 type deviceDefinitionRepository struct {
-	DBS func() *db.DBReaderWriter
+	DBS func() *db.ReaderWriter
 }
 
-func NewDeviceDefinitionRepository(dbs func() *db.DBReaderWriter) DeviceDefinitionRepository {
+func NewDeviceDefinitionRepository(dbs func() *db.ReaderWriter) DeviceDefinitionRepository {
 	return &deviceDefinitionRepository{DBS: dbs}
 }
 

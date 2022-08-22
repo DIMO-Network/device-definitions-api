@@ -21,7 +21,7 @@ import (
 func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		query := &queries.GetDeviceDefinitionByIdQuery{DeviceDefinitionID: id}
+		query := &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: id}
 
 		result, _ := m.Send(c.UserContext(), query)
 
