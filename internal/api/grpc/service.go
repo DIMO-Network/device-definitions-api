@@ -27,7 +27,5 @@ func (s *GrpcService) GetDeviceDefinitionById(ctx context.Context, in *p_grpc.Ge
 
 	return &p_grpc.GetDeviceDefinitionResponse{
 		DeviceDefinitionId: result.DeviceDefinitionID,
-		Model:              result.Model,
-		Year:               int32(result.Year),
 	}, nil
 }

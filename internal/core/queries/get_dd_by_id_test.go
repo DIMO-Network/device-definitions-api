@@ -42,24 +42,42 @@ func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TearDownTest() {
 func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
+	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl-INT"
+	vendor := "AutoPI"
+	style := ""
+	makeId := "1"
+	mk := "Toyota"
+	model := "Hummer"
 
 	dd := &models.DeviceDefinition{
 		ID:    deviceDefinitionID,
-		Model: "Hummer",
+		Model: model,
 		Year:  2000,
 	}
+
+	di := &models.DeviceIntegration{
+		DeviceDefinitionID: deviceDefinitionID,
+		IntegrationID:      integrationID,
+		Region:             "east-us",
+	}
+	di.R = di.R.NewStruct()
+	di.R.Integration = &models.Integration{ID: "1", Type: "", Style: style, Vendor: vendor}
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
+	dd.R.DeviceMake = &models.DeviceMake{ID: makeId, Name: mk}
 
 	s.mock_Repository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
-	result := qryResult.(*GetDeviceDefinitionByIdQueryResult)
+	result := qryResult.(GetDeviceDefinitionByIdQueryResult)
 
 	s.NoError(err)
-	s.Equal(result.DeviceDefinitionID, dd.ID)
-	s.Equal(result.Model, dd.Model)
-	s.Equal(result.Year, dd.Year)
+	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
+	s.Equal(result.Type.Model, model)
+	s.Equal(result.Type.Make, mk)
 }
 
 func (s *GetDeviceDefinitionByIdQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {

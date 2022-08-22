@@ -10,8 +10,53 @@ message GetDeviceDefinitionRequest {
 
 message GetDeviceDefinitionResponse {
 	string device_definition_id = 1;
-    string model = 2;
-    int32 year = 3;
+	string name = 2;
+	int32 image_url = 3;
+	repeated  CompatibleIntegrations compatible_integrations = 4;
+	Type type = 5;
+	VehicleInfo vehicle_data = 6;
+	bool  verified = 7;
+	repeated  DeviceIntegrations device_integrations = 8;
+
+	message CompatibleIntegrations {
+		string id = 1;
+		string  type = 2;
+		string  style = 3;
+		string  vendor = 4;
+		string  region = 5;
+		string  country = 6;
+		string  capabilities = 7;
+	}
+
+	message Type {
+		string type = 1;
+		string  make = 2;
+		string  model = 3;
+		uint32 year = 4;
+		repeated string sub_models = 5;
+	}
+
+	message VehicleInfo {
+		string fuel_type = 1;
+		string driven_wheels = 2;
+		string number_of_doors = 3;
+		uint32 base_msrp = 4;
+		string epa_class = 5;
+		string vehicle_type = 6;
+		string mpg_highway = 7;
+		string mpg_city = 8;
+		string fuel_tank_capacity_gal = 9;
+	}
+
+	message DeviceIntegrations {
+		string id = 1;
+		string type = 2;
+		string style = 3;
+		string vendor = 4;
+		string region = 5;
+		string country = 6;
+		string capabilities = 7;
+	}
 }
 
 service DeviceDefinitionService {
