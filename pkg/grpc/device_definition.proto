@@ -5,7 +5,7 @@ option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 package grpc;
 
 message GetDeviceDefinitionRequest {
-	string id = 1;
+	repeated string id = 1;
 }
 
 message GetDeviceDefinitionResponse {
