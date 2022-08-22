@@ -2,20 +2,18 @@ package queries
 
 import (
 	"context"
-	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
-	"github.com/testcontainers/testcontainers-go"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 const (
