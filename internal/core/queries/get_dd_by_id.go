@@ -99,7 +99,7 @@ func (ch GetDeviceDefinitionByIdQueryHandler) Handle(ctx context.Context, query 
 				Style:        di.R.Integration.Style,
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
-				Capabilities: jsonOrDefault(di.Capabilities),
+				Capabilities: common.JsonOrDefault(di.Capabilities),
 			})
 		}
 	}

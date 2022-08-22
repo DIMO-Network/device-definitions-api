@@ -9,14 +9,19 @@ message GetDeviceDefinitionRequest {
 }
 
 message GetDeviceDefinitionResponse {
+	repeated GetDeviceDefinitionItemResponse device_definitions = 1;
+}
+
+message GetDeviceDefinitionItemResponse {
 	string device_definition_id = 1;
 	string name = 2;
-	int32 image_url = 3;
+	string image_url = 3;
 	repeated  CompatibleIntegrations compatible_integrations = 4;
 	Type type = 5;
 	VehicleInfo vehicle_data = 6;
 	bool  verified = 7;
 	repeated  DeviceIntegrations device_integrations = 8;
+	string metadata = 9;
 
 	message CompatibleIntegrations {
 		string id = 1;
