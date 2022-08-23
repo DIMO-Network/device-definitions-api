@@ -1,4 +1,4 @@
-package grpc
+package api
 
 import (
 	"context"
@@ -8,16 +8,16 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-type Service struct {
+type GrpcService struct {
 	p_grpc.UnimplementedDeviceDefinitionServiceServer
 	Mediator mediator.Mediator
 }
 
 func NewGrpcService(mediator mediator.Mediator) p_grpc.DeviceDefinitionServiceServer {
-	return &Service{Mediator: mediator}
+	return &GrpcService{Mediator: mediator}
 }
 
-func (s *Service) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+func (s *GrpcService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIdsQuery{
 		DeviceDefinitionID: in.Id,

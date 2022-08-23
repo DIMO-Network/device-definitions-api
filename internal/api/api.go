@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	i_grpc "github.com/DIMO-Network/device-definitions-api/internal/api/grpc"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 
@@ -69,7 +68,7 @@ func Run(ctx context.Context, s *config.Settings) {
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
-	go i_grpc.StartGrpcServer(s, *m)
+	go StartGrpcServer(s, *m)
 
 	log.Fatal(app.Listen(":" + s.Port))
 }
