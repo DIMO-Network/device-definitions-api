@@ -14,6 +14,7 @@ go run ./cmd/devices-api
 ## Generating client and server code
 1. Install the protocol compiler plugins for Go using the following commands
 ```bash
+brew install protobuf
 go install google.golang.org/protobuf/cmd/protoc-gen-go
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 ```

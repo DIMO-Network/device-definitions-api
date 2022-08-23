@@ -20,7 +20,7 @@ func NewGrpcService(mediator mediator.Mediator) p_grpc.DeviceDefinitionServiceSe
 func (s *GrpcService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIdsQuery{
-		DeviceDefinitionID: in.Id,
+		DeviceDefinitionID: in.Ids,
 	})
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
