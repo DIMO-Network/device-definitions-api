@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	dbName               = "device_definition_api"
+	dbName               = "device_definitions_api"
 	migrationsDirRelPath = "../../infrastructure/db/migrations"
 )
 
@@ -38,6 +38,7 @@ func TestGetAllIntegrationQueryHandler(t *testing.T) {
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) SetupTest() {
+	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
@@ -54,26 +55,25 @@ func (s *GetAllIntegrationQueryHandlerSuite) TearDownTest() {
 func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items() {
 	ctx := context.Background()
 
-	vendor := "AutoPI"
-
-	initialData(s.T(), vendor, s.pdb)
+	integration := setupCreateSmartCarIntegration(s.T(), s.pdb)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllIntegrationQuery{})
 	result := qryResult.([]GetAllIntegrationQueryResult)
 
 	s.NoError(err)
 	s.Len(result, 1)
-	assert.Equal(s.T(), vendor, result[0].Vendor)
+	assert.Equal(s.T(), integration.Vendor, result[0].Vendor)
 }
 
-func initialData(t *testing.T, vendor string, pdb db.Store) models.Integration {
-	dm := models.Integration{
-		ID:     ksuid.New().String(),
-		Type:   "Test",
-		Style:  "Test",
-		Vendor: vendor,
+func setupCreateSmartCarIntegration(t *testing.T, pdb db.Store) models.Integration {
+	integration := models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeAPI,
+		Style:            models.IntegrationStyleWebhook,
+		Vendor:           "SmartCar",
+		RefreshLimitSecs: 1800,
 	}
-	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "no db error expected")
-	return dm
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
 }
