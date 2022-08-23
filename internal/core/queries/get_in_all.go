@@ -24,10 +24,10 @@ type GetAllIntegrationQueryResult struct {
 func (*GetAllIntegrationQuery) Key() string { return "GetAllIntegrationQuery" }
 
 type GetAllIntegrationQueryHandler struct {
-	DBS func() *db.DBReaderWriter
+	DBS func() *db.ReaderWriter
 }
 
-func NewGetAllIntegrationQueryHandler(dbs func() *db.DBReaderWriter) GetAllIntegrationQueryHandler {
+func NewGetAllIntegrationQueryHandler(dbs func() *db.ReaderWriter) GetAllIntegrationQueryHandler {
 	return GetAllIntegrationQueryHandler{DBS: dbs}
 }
 
@@ -40,14 +40,14 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 		}
 	}
 
-	var result []GetAllIntegrationQueryResult
-	for _, v := range all {
-		result = append(result, GetAllIntegrationQueryResult{
+	result := make([]GetAllIntegrationQueryResult, len(all))
+	for i, v := range all {
+		result[i] = GetAllIntegrationQueryResult{
 			ID:     v.ID,
 			Type:   v.Type,
 			Style:  v.Style,
 			Vendor: v.Vendor,
-		})
+		}
 	}
 
 	return result, nil

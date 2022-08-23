@@ -51,9 +51,9 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAll(ctx, verified inter
 }
 
 // GetById mocks base method.
-func (m *MockDeviceDefinitionRepository) GetById(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetById", ctx, id)
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -62,7 +62,7 @@ func (m *MockDeviceDefinitionRepository) GetById(ctx context.Context, id string)
 // GetById indicates an expected call of GetById.
 func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetById(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetById), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByID), ctx, id)
 }
 
 // GetByMakeModelAndYears mocks base method.

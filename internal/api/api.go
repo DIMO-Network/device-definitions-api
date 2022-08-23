@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	i_grpc "github.com/DIMO-Network/device-definitions-api/internal/api/grpc"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 
@@ -47,7 +46,8 @@ func Run(ctx context.Context, s *config.Settings) {
 		mediator.WithBehaviour(common.ValidationBehavior{}),
 		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIdQuery{}, queries.NewGetDeviceDefinitionByIdQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
@@ -68,7 +68,7 @@ func Run(ctx context.Context, s *config.Settings) {
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
-	go i_grpc.StartGrpcServer(s, *m)
+	go StartGrpcServer(s, *m)
 
 	log.Fatal(app.Listen(":" + s.Port))
 }

@@ -4,7 +4,7 @@ version: '3.9'
 services:
   postgresql:
     image: postgres:12.9-alpine # matches version used on aws environments
-    container_name: poc-dimo-db
+    container_name: pg-device-definitions
     ports:
       - "5432:5432"
     environment:
@@ -15,7 +15,7 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:1.22.0
     platform: linux/amd64
-    container_name: jaeger
+    container_name: jaeger-device-definitions
     ports:
       - 14268:14268 # jaeger-collector HTTP server (tracer provider)
       - 16686:16686 # HTTP server (browser UI)

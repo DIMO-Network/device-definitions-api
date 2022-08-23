@@ -23,6 +23,15 @@ func migrateDatabase(ctx context.Context, s *config.Settings, args []string) {
 
 	sqlDb := db.NewDbConnectionFromSettings(ctx, s, true)
 
+	totalTime := 0
+	for !sqlDb.IsReady() {
+		if totalTime > 30 {
+			fmt.Println("could not connect to postgres after 30 seconds")
+		}
+		time.Sleep(time.Second)
+		totalTime++
+	}
+
 	if command == "" {
 		command = "up"
 	}

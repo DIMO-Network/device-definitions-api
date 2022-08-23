@@ -15,7 +15,7 @@ type Settings struct {
 	DBMaxIdleConnections int    `yaml:"DB_MAX_IDLE_CONNECTIONS"`
 	ServiceName          string `yaml:"SERVICE_NAME"`
 	ServiceVersion       string `yaml:"SERVICE_VERSION"`
-	GRPC_Port            string `yaml:"GRPC_PORT"`
+	GRPCPort             string `yaml:"GRPC_PORT"`
 	TraceMonitorView     string `yaml:"TRACE_MONITOR_VIEW"`
 }
 

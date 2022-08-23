@@ -29,7 +29,7 @@ const docTemplate = `{
                     "device-definitions"
                 ],
                 "summary": "gets a device definition",
-                "operationId": "GetById",
+                "operationId": "GetByID",
                 "responses": {
                     "200": {
                         "description": "OK",

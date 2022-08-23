@@ -4,22 +4,20 @@ import (
 	"context"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	test_db_helper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
-	"github.com/testcontainers/testcontainers-go"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 const (
-	dbName               = "device_definition_api"
+	dbName               = "device_definitions_api"
 	migrationsDirRelPath = "../../infrastructure/db/migrations"
 )
 
@@ -28,7 +26,7 @@ type GetAllIntegrationQueryHandlerSuite struct {
 	*require.Assertions
 
 	ctrl      *gomock.Controller
-	pdb       db.DbStore
+	pdb       db.Store
 	container testcontainers.Container
 	ctx       context.Context
 
@@ -40,42 +38,42 @@ func TestGetAllIntegrationQueryHandler(t *testing.T) {
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) SetupTest() {
+	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.pdb, s.container = test_db_helper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
+	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.queryHandler = NewGetAllIntegrationQueryHandler(s.pdb.DBS)
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) TearDownTest() {
-	test_db_helper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
+	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items() {
 	ctx := context.Background()
 
-	vendor := "AutoPI"
-
-	initialData(s.T(), vendor, s.pdb)
+	integration := setupCreateSmartCarIntegration(s.T(), s.pdb)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllIntegrationQuery{})
 	result := qryResult.([]GetAllIntegrationQueryResult)
 
 	s.NoError(err)
 	s.Len(result, 1)
-	assert.Equal(s.T(), vendor, result[0].Vendor)
+	assert.Equal(s.T(), integration.Vendor, result[0].Vendor)
 }
 
-func initialData(t *testing.T, vendor string, pdb db.DbStore) models.Integration {
-	dm := models.Integration{
-		ID:     ksuid.New().String(),
-		Type:   "Test",
-		Style:  "Test",
-		Vendor: vendor,
+func setupCreateSmartCarIntegration(t *testing.T, pdb db.Store) models.Integration {
+	integration := models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeAPI,
+		Style:            models.IntegrationStyleWebhook,
+		Vendor:           "SmartCar",
+		RefreshLimitSecs: 1800,
 	}
-	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "no db error expected")
-	return dm
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
 }

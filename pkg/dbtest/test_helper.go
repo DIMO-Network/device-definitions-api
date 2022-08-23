@@ -1,4 +1,4 @@
-package test_db_helper
+package dbtest
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 )
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
-func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.DbStore, testcontainers.Container) {
+func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.Store, testcontainers.Container) {
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
@@ -52,36 +52,36 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	}
 	// can't connect to db, dsn=user=postgres password=postgres dbname=devices_api host=localhost port=49395 sslmode=disable search_path=devices_api, err=EOF
 	// error happens when calling here
-	_, err = pdb.DBS().Writer.Exec(`
+	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 		grant usage on schema public to public;
 		grant create on schema public to public;
-		CREATE SCHEMA IF NOT EXISTS devices_api;
-		ALTER USER postgres SET search_path = devices_api, public;
-		SET search_path = devices_api, public;
-		`)
+		CREATE SCHEMA IF NOT EXISTS %s;
+		ALTER USER postgres SET search_path = %s, public;
+		SET search_path = %s, public;
+		`, dbName, dbName, dbName))
 	if err != nil {
 		return handleContainerStartErr(ctx, errors.Wrapf(err, "failed to apply schema. session: %s, port: %s",
 			pgContainer.SessionID(), mappedPort.Port()), pgContainer, t)
 	}
 	// add truncate tables func
-	_, err = pdb.DBS().Writer.Exec(`
+	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
 DECLARE
     statements CURSOR FOR
         SELECT tablename FROM pg_tables
-        WHERE schemaname = 'devices_api' and tablename != 'migrations';
+        WHERE schemaname = '%s' and tablename != 'migrations';
 BEGIN
     FOR stmt IN statements LOOP
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-`)
+`, dbName))
 	if err != nil {
 		return handleContainerStartErr(ctx, errors.Wrap(err, "failed to create truncate func"), pgContainer, t)
 	}
 
-	goose.SetTableName("devices_api.migrations")
+	goose.SetTableName(dbName + ".migrations")
 	if err := goose.Run("up", pdb.DBS().Writer.DB, migrationsDirRelPath); err != nil {
 		return handleContainerStartErr(ctx, errors.Wrap(err, "failed to apply goose migrations for test"), pgContainer, t)
 	}
@@ -100,12 +100,12 @@ func getTestDbSettings(dbName string) config.Settings {
 		DBPassword:           "postgres",
 		DBMaxOpenConnections: 2,
 		DBMaxIdleConnections: 2,
-		ServiceName:          "devices-api",
+		ServiceName:          "device-definitions-api",
 	}
 	return settings
 }
 
-func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.DbStore, testcontainers.Container) {
+func handleContainerStartErr(ctx context.Context, err error, container testcontainers.Container, t *testing.T) (db.Store, testcontainers.Container) {
 	if err != nil {
 		fmt.Println("start container error: " + err.Error())
 		if container != nil {
@@ -113,7 +113,7 @@ func handleContainerStartErr(ctx context.Context, err error, container testconta
 		}
 		t.Fatal(err)
 	}
-	return db.DbStore{}, container
+	return db.Store{}, container
 }
 
 // TruncateTables truncates tables for the test db, useful to run as teardown at end of each DB dependent test.

@@ -8,7 +8,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
-	"github.com/volatiletech/null/v8"
 )
 
 type GetDeviceDefinitionWithRelsQuery struct {
@@ -61,17 +60,10 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 				Style:        di.R.Integration.Style,
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
-				Capabilities: jsonOrDefault(di.Capabilities),
+				Capabilities: common.JSONOrDefault(di.Capabilities),
 			})
 		}
 	}
 
 	return integrations, nil
-}
-
-func jsonOrDefault(j null.JSON) json.RawMessage {
-	if !j.Valid || len(j.JSON) == 0 {
-		return []byte(`{}`)
-	}
-	return j.JSON
 }
