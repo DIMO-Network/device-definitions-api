@@ -41,13 +41,13 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 	}
 
 	result := make([]GetAllIntegrationQueryResult, len(all))
-	for _, v := range all {
-		result = append(result, GetAllIntegrationQueryResult{
+	for i, v := range all {
+		result[i] = GetAllIntegrationQueryResult{
 			ID:     v.ID,
 			Type:   v.Type,
 			Style:  v.Style,
 			Vendor: v.Vendor,
-		})
+		}
 	}
 
 	return result, nil
