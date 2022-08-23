@@ -35,7 +35,6 @@ func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc gateways
 
 func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	//metaEngineName := ""
 	existingEngines, err := ch.esSvc.GetEngines()
 	if err != nil {
 		return nil, err

@@ -10,12 +10,13 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/TheFellow/go-mediator/mediator"
+	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
 )
 
-func searchSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
@@ -37,6 +38,12 @@ func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 	pdb.WaitForDB(logger)
+	m.Send(ctx, &commands.SyncSearchDataCommand{})
+}
+
+func ipfs_sync_data(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+	//db
+	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
 	//commands
 	m, _ := mediator.New(

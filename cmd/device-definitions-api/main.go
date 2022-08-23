@@ -35,13 +35,13 @@ func main() {
 	case "migrate":
 		migrateDatabase(ctx, logger, &settings, os.Args)
 	case "search-sync-dds":
-		searchSyncData(ctx, &settings, logger)
+		search_sync_dds(ctx, &settings, logger)
 	case "ipfs-sync-data":
-		ipfsSyncData(ctx, &settings, logger)
+		ipfs_sync_data(ctx, &settings, logger)
 	case "smartcar-compatibility":
-		smartCarCompatibility(ctx, &settings, logger)
+		smartcar_compatibility(ctx, &settings, logger)
 	case "smartcar-sync":
-		smartCarSync(ctx, &settings, logger)
+		smartcar_sync(ctx, &settings, logger)
 	default:
 		api.Run(ctx, logger, &settings)
 	}
