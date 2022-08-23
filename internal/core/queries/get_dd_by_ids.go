@@ -77,7 +77,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			// compatible integrations
 			rp.CompatibleIntegrations = buildDeviceCompatibility(dd.R.DeviceIntegrations)
 			// sub_models
-			rp.Type.SubModels = subModelsFromStylesDB(dd.R.DeviceStyles)
+			rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
 		}
 
 		// build object for integrations that have all the info

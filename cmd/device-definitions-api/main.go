@@ -9,14 +9,24 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/api"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
+	"github.com/rs/zerolog"
 )
 
 func main() {
+	gitSha1 := os.Getenv("GIT_SHA1")
 	ctx := context.Background()
 	arg := ""
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
 	}
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "devices-api").
+		Str("git-sha1", gitSha1).
+		Logger()
+
+	config.SetupMachineryLogging(&logger)
 
 	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
@@ -26,6 +36,14 @@ func main() {
 	switch arg {
 	case "migrate":
 		migrateDatabase(ctx, &settings, os.Args)
+	case "search-sync-dds":
+		search_sync_dds(ctx, &settings, logger)
+	case "ipfs-sync-data":
+		ipfs_sync_data(ctx, &settings, logger)
+	case "smartcar-compatibility":
+		smartcar_compatibility(ctx, &settings, logger)
+	case "smartcar-sync":
+		smartcar_sync(ctx, &settings, logger)
 	default:
 		api.Run(ctx, &settings)
 	}
