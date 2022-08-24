@@ -22,7 +22,7 @@ func main() {
 
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
-		Str("app", "devices-api").
+		Str("app", "device-definitions-api").
 		Str("git-sha1", gitSha1).
 		Logger()
 
@@ -33,7 +33,7 @@ func main() {
 
 	switch arg {
 	case "migrate":
-		migrateDatabase(ctx, &settings, os.Args)
+		migrateDatabase(ctx, logger, &settings, os.Args)
 	case "search-sync-dds":
 		search_sync_dds(ctx, &settings, logger)
 	case "ipfs-sync-data":

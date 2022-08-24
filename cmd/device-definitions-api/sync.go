@@ -37,6 +37,7 @@ func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Log
 func ipfs_sync_data(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb.WaitForDB(logger)
 
 	//commands
 	m, _ := mediator.New(
