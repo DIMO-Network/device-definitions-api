@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"time"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -53,6 +50,7 @@ func ipfs_sync_data(ctx context.Context, s *config.Settings, logger zerolog.Logg
 func smartcar_compatibility(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb.WaitForDB(logger)
 
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
@@ -75,15 +73,7 @@ func smartcar_sync(ctx context.Context, s *config.Settings, logger zerolog.Logge
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
-
-	totalTime := 0
-	for !pdb.IsReady() {
-		if totalTime > 30 {
-			fmt.Println("could not connect to postgres after 30 seconds")
-		}
-		time.Sleep(time.Second)
-		totalTime++
-	}
+	pdb.WaitForDB(logger)
 
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
