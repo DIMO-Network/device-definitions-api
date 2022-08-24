@@ -36,7 +36,7 @@ type smartCarService struct {
 	log     zerolog.Logger
 }
 
-func NewSmartCarService(dbs func() *db.ReaderWriter, logger zerolog.Logger, settings *config.Settings) SmartCarService {
+func NewSmartCarService(dbs func() *db.ReaderWriter, logger zerolog.Logger) SmartCarService {
 	return &smartCarService{
 		baseURL: "https://api.smartcar.com/v2.0/",
 		DBS:     dbs,
