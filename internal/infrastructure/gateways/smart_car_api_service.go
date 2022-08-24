@@ -1,3 +1,5 @@
+//go:generate mockgen -source smart_car_api_service.go -destination mocks/smart_car_api_service_mock.go -package mocks
+
 package gateways
 
 import (
@@ -10,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/pkg/errors"
@@ -35,7 +36,7 @@ type smartCarService struct {
 	log     zerolog.Logger
 }
 
-func NewSmartCarService(dbs func() *db.ReaderWriter, logger zerolog.Logger, settings *config.Settings) SmartCarService {
+func NewSmartCarService(dbs func() *db.ReaderWriter, logger zerolog.Logger) SmartCarService {
 	return &smartCarService{
 		baseURL: "https://api.smartcar.com/v2.0/",
 		DBS:     dbs,

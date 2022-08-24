@@ -1,3 +1,5 @@
+//go:generate mockgen -source elastic_search_api_service.go -destination mocks/elastic_search_api_service_mock.go -package mocks
+
 package gateways
 
 import (
@@ -24,6 +26,7 @@ type ElasticSearchService interface {
 	CreateDocuments(docs []DeviceDefinitionSearchDoc, engineName string) ([]CreateDocsResp, error)
 	CreateDocumentsBatched(docs []DeviceDefinitionSearchDoc, engineName string) error
 	UpdateSearchSettingsForDeviceDefs(engineName string) error
+	GetMetaEngineName() string
 }
 
 type elasticSearchService struct {
@@ -45,6 +48,11 @@ func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (
 		httpClient:     netClient,
 		log:            logger,
 	}, nil
+}
+
+// Use for testing
+func (d *elasticSearchService) GetMetaEngineName() string {
+	return d.MetaEngineName
 }
 
 func (d *elasticSearchService) LoadDeviceDefinitions() error {

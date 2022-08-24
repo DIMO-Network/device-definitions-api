@@ -26,8 +26,6 @@ func main() {
 		Str("git-sha1", gitSha1).
 		Logger()
 
-	config.SetupMachineryLogging(&logger)
-
 	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)

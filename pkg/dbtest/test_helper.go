@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/segmentio/ksuid"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -14,6 +17,7 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
@@ -123,4 +127,63 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 		fmt.Println("truncating tables failed.")
 		t.Fatal(err)
 	}
+}
+
+func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
+	dd := &models.DeviceDefinition{
+		ID:           ksuid.New().String(),
+		DeviceMakeID: dm.ID,
+		Model:        model,
+		Year:         int16(year),
+		Verified:     true,
+	}
+	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return dd
+}
+
+func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
+	dm := models.DeviceMake{
+		ID:   ksuid.New().String(),
+		Name: mk,
+	}
+	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "no db error expected")
+	return dm
+}
+
+func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, pdb db.Store) models.DeviceStyle {
+	ds := models.DeviceStyle{
+		ID:                 ksuid.New().String(),
+		Name:               name,
+		DeviceDefinitionID: deviceDefinitionID,
+		Source:             "Source",
+		SubModel:           "sub-model",
+	}
+	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "no db error expected")
+	return ds
+}
+
+func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	integration := &models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeAPI,
+		Style:            models.IntegrationStyleWebhook,
+		Vendor:           "SmartCar",
+		RefreshLimitSecs: 1800,
+	}
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
+}
+
+func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) {
+	di := models.DeviceIntegration{
+		DeviceDefinitionID: dd.ID,
+		IntegrationID:      integrationID,
+		Region:             "Americas",
+	}
+	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
 }
