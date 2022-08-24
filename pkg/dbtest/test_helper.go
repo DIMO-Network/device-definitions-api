@@ -55,8 +55,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	settings.DBPort = mappedPort.Port()
 	pdb := db.NewDbConnectionForTest(ctx, settings, false)
 	pdb.WaitForDB(logger)
-	// can't connect to db, dsn=user=postgres password=postgres dbname=devices_api host=localhost port=49395 sslmode=disable search_path=devices_api, err=EOF
-	// error happens when calling here
+
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 		grant usage on schema public to public;
 		grant create on schema public to public;
@@ -68,6 +67,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 		return handleContainerStartErr(ctx, errors.Wrapf(err, "failed to apply schema. session: %s, port: %s",
 			pgContainer.SessionID(), mappedPort.Port()), pgContainer, t)
 	}
+	logger.Info().Msgf("set default search_path for user postgres to %s", dbName)
 	// add truncate tables func
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$

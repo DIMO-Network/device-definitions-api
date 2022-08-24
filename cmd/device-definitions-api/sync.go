@@ -63,7 +63,8 @@ func smartcar_compatibility(ctx context.Context, s *config.Settings, logger zero
 		mediator.WithBehaviour(common.LoggingBehavior{}),
 		mediator.WithBehaviour(common.ValidationBehavior{}),
 		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
-		mediator.WithHandler(&commands.SyncSmartCartForwardCompatibilityCommand{}, commands.NewSyncSmartCartForwardCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
+		mediator.WithHandler(&commands.SyncSmartCartForwardCompatibilityCommand{},
+			commands.NewSyncSmartCartForwardCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
 
 	m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
