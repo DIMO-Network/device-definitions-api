@@ -45,6 +45,7 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 		return nil, err
 	}
 
+	// for testing
 	xxxx, err := models.DeviceIntegrations(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	zzzz, err := models.DeviceDefinitions(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	yyyy, err := models.Integrations(qm.Limit(100)).All(ctx, ch.DBS().Reader)
@@ -52,6 +53,7 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 	fmt.Printf("found %d device definitions with smartcar integration\n", len(xxxx))
 	fmt.Printf("found %d device definitions with smartcar integration\n", len(zzzz))
 	fmt.Printf("found %d device definitions with smartcar integration\n", len(yyyy))
+	// end for testing
 
 	deviceDefs, err := models.DeviceDefinitions(
 		qm.InnerJoin("device_integrations di on di.device_definition_id = device_definitions.id"),

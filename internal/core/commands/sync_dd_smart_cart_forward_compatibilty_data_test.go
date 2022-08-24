@@ -68,6 +68,8 @@ func (s *SyncSmartCartForwardCompatibilityCommandHandlerSuite) TestSyncSmartCart
 	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(integration.ID, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncSearchDataCommand{})
+	require.NoError(s.T(), err)
+	require.NotNilf(s.T(), qryResult, "query result cannot be nil")
 	result := qryResult.(SyncSmartCartForwardCompatibilityCommandResult)
 
 	s.NoError(err)

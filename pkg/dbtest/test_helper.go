@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 
@@ -22,6 +24,7 @@ import (
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
 func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.Store, testcontainers.Container) {
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
@@ -51,9 +54,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 
 	settings.DBPort = mappedPort.Port()
 	pdb := db.NewDbConnectionForTest(ctx, settings, false)
-	for !pdb.IsReady() {
-		time.Sleep(500 * time.Millisecond)
-	}
+	pdb.WaitForDB(logger)
 	// can't connect to db, dsn=user=postgres password=postgres dbname=devices_api host=localhost port=49395 sslmode=disable search_path=devices_api, err=EOF
 	// error happens when calling here
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`

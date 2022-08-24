@@ -43,6 +43,6 @@ func main() {
 	case "smartcar-sync":
 		smartcar_sync(ctx, &settings, logger)
 	default:
-		api.Run(ctx, &settings)
+		api.Run(ctx, logger, &settings)
 	}
 }
