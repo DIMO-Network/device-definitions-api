@@ -13,7 +13,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/TheFellow/go-mediator/mediator"
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
 )
 
 func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
