@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -63,9 +64,19 @@ func (s *SyncSmartCartForwardCompatibilityCommandHandlerSuite) TestSyncSmartCart
 	mk := "Toyota"
 	year := 2020
 
-	integration := setupDeviceDefinitionForSmartCarForwardCompatibility(s.T(), s.pdb, mk, model, year)
+	dd := setupDeviceDefinitionForSmartCarForwardCompatibility(s.T(), s.pdb, mk, model, year)
+	integration := setupIntegrationForSmartCarForwardCompatibility(s.T(), s.pdb)
+	deviceIntegration := setupDeviceDefinitionIntegrationForSmartCarForwardCompatibility(s.T(), s.pdb, dd, integration)
 
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{deviceIntegration}
 	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(integration.ID, nil).Times(1)
+	s.mockRepository.EXPECT().GetByMakeModelAndYears(
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncSearchDataCommand{})
 	require.NoError(s.T(), err)
@@ -73,13 +84,21 @@ func (s *SyncSmartCartForwardCompatibilityCommandHandlerSuite) TestSyncSmartCart
 	result := qryResult.(SyncSmartCartForwardCompatibilityCommandResult)
 
 	s.NoError(err)
-	s.Len(result, 1)
+	assert.Equal(s.T(), result.Status, true)
 }
 
-func setupDeviceDefinitionForSmartCarForwardCompatibility(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.Integration {
+func setupDeviceDefinitionForSmartCarForwardCompatibility(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+	return dd
+}
+
+func setupIntegrationForSmartCarForwardCompatibility(t *testing.T, pdb db.Store) *models.Integration {
 	i := dbtesthelper.SetupCreateSmartCarIntegration(t, pdb)
-	dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
 	return i
+}
+
+func setupDeviceDefinitionIntegrationForSmartCarForwardCompatibility(t *testing.T, pdb db.Store, dd *models.DeviceDefinition, i *models.Integration) *models.DeviceIntegration {
+	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
+	return di
 }

@@ -21,6 +21,7 @@ type SyncSmartCartForwardCompatibilityCommand struct {
 }
 
 type SyncSmartCartForwardCompatibilityCommandResult struct {
+	Status bool
 }
 
 func (*SyncSmartCartForwardCompatibilityCommand) Key() string {
@@ -127,5 +128,5 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 		funcLastValues(dd)
 	}
 
-	return SyncSmartCartForwardCompatibilityCommandResult{}, nil
+	return SyncSmartCartForwardCompatibilityCommandResult{Status: true}, nil
 }

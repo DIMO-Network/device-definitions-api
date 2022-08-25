@@ -2,8 +2,10 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	_ "embed"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
@@ -15,6 +17,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 )
+
+//go:embed test_smart_data.json
+var smart_data_sample []byte
 
 type SyncSmartCartCompatibilityCommandHandlerSuite struct {
 	suite.Suite
@@ -67,6 +72,8 @@ func (s *SyncSmartCartCompatibilityCommandHandlerSuite) TestSyncSmartCartCompati
 	_ = setupDeviceDefinitionForSearchData(s.T(), s.pdb, mk, model, year)
 
 	smartCarCompatibilityData := &gateways.SmartCarCompatibilityData{}
+
+	json.Unmarshal(smart_data_sample, smartCarCompatibilityData)
 
 	s.mockSmartCarService.EXPECT().GetSmartCarVehicleData().Return(smartCarCompatibilityData, nil).Times(1)
 	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(gomock.Any(), nil).Times(1)

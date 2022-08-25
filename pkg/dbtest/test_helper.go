@@ -179,12 +179,13 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 	return integration
 }
 
-func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) {
-	di := models.DeviceIntegration{
+func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) *models.DeviceIntegration {
+	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
 		IntegrationID:      integrationID,
 		Region:             "Americas",
 	}
 	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
+	return di
 }

@@ -19,6 +19,7 @@ type SyncSearchDataCommand struct {
 }
 
 type SyncSearchDataCommandResult struct {
+	Status bool
 }
 
 func (*SyncSearchDataCommand) Key() string { return "SyncSearchDataCommand" }
@@ -136,5 +137,5 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	}
 	fmt.Printf("completed load ok")
 
-	return SyncSearchDataCommandResult{}, nil
+	return SyncSearchDataCommandResult{true}, nil
 }

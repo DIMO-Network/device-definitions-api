@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -78,7 +79,7 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand() {
 	result := qryResult.(SyncSearchDataCommandResult)
 
 	s.NoError(err)
-	s.NotNil(result)
+	assert.Equal(s.T(), result.Status, true)
 }
 
 func setupDeviceDefinitionForSearchData(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
