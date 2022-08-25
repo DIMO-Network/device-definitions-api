@@ -54,7 +54,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	if len(all) == 0 {
 		return nil, errors.New("0 items found to index, stopping")
 	}
-
+	metaEngineName := ch.esSvc.GetMetaEngineName()
 	docs := make([]gateways.DeviceDefinitionSearchDoc, len(all))
 	for i, definition := range all {
 		sd := fmt.Sprintf("%d %s %s", definition.Year, definition.R.DeviceMake.Name, definition.Model)
@@ -73,7 +73,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		}
 	}
 
-	tempEngineName := fmt.Sprintf("%s-%s", ch.esSvc.GetMetaEngineName(), time.Now().Format("2006-01-02t15-04"))
+	tempEngineName := fmt.Sprintf("%s-%s", metaEngineName, time.Now().Format("2006-01-02t15-04"))
 	tempEngine, err := ch.esSvc.CreateEngine(tempEngineName, nil)
 	if err != nil {
 		return nil, err
@@ -89,35 +89,35 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	var previousTempEngines []string
 	// look for existing meta engine, and any previous core engines that should be removed.
 	for _, result := range existingEngines.Results {
-		if result.Name == ch.esSvc.GetMetaEngineName() && *result.Type == "meta" {
+		if result.Name == metaEngineName && *result.Type == "meta" {
 			metaEngine = &result
 			fmt.Printf("found existing meta engine: %+v", *metaEngine)
 		}
-		if strings.Contains(result.Name, ch.esSvc.GetMetaEngineName()+"-") && *result.Type == "default" {
+		if strings.Contains(result.Name, metaEngineName+"-") && *result.Type == "default" {
 			previousTempEngines = append(previousTempEngines, result.Name)
 			fmt.Printf("found previous device defs engine: %s. It will be removed", result.Name)
 		}
 	}
 	if metaEngine == nil {
-		_, err = ch.esSvc.CreateEngine(ch.esSvc.GetMetaEngineName(), &tempEngineName)
+		_, err = ch.esSvc.CreateEngine(metaEngineName, &tempEngineName)
 		if err != nil {
 			return nil, err
 		}
 		fmt.Printf("created meta engine with temp engine assigned.")
 	} else {
-		_, err = ch.esSvc.AddSourceEngineToMetaEngine(tempEngineName, ch.esSvc.GetMetaEngineName())
+		_, err = ch.esSvc.AddSourceEngineToMetaEngine(tempEngineName, metaEngineName)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("added source %s to meta engine %s", tempEngine.Name, ch.esSvc.GetMetaEngineName())
+		fmt.Printf("added source %s to meta engine %s", tempEngine.Name, metaEngineName)
 		for _, prev := range previousTempEngines {
 			// loop over all previous ones
 			if common.Contains(metaEngine.SourceEngines, prev) {
-				_, err = ch.esSvc.RemoveSourceEngine(prev, ch.esSvc.GetMetaEngineName())
+				_, err = ch.esSvc.RemoveSourceEngine(prev, metaEngineName)
 				if err != nil {
 					return nil, err
 				}
-				fmt.Printf("removed previous source engine %s from %s", prev, ch.esSvc.GetMetaEngineName())
+				fmt.Printf("removed previous source engine %s from %s", prev, metaEngineName)
 			}
 
 			err = ch.esSvc.DeleteEngine(prev)
@@ -131,7 +131,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	if err != nil {
 		return nil, err
 	}
-	err = ch.esSvc.UpdateSearchSettingsForDeviceDefs(ch.esSvc.GetMetaEngineName())
+	err = ch.esSvc.UpdateSearchSettingsForDeviceDefs(metaEngineName)
 	if err != nil {
 		return nil, err
 	}

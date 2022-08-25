@@ -70,7 +70,7 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand() {
 	s.mockElasticSearch.EXPECT().GetEngines().Return(getEnginesResp, nil).Times(1)
 
 	s.mockElasticSearch.EXPECT().CreateEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(2)
-	s.mockElasticSearch.EXPECT().GetMetaEngineName().Return(metaEngineName).Times(10)
+	s.mockElasticSearch.EXPECT().GetMetaEngineName().Return(metaEngineName).Times(1)
 	s.mockElasticSearch.EXPECT().CreateDocumentsBatched(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 	s.mockElasticSearch.EXPECT().AddSourceEngineToMetaEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(1)
 	s.mockElasticSearch.EXPECT().UpdateSearchSettingsForDeviceDefs(gomock.Any()).Return(nil).Times(2)
