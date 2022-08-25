@@ -3,11 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
-	"github.com/rs/zerolog"
+
 	"sync"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/rs/zerolog"
 )
 
 const databaseDriver = "postgres"

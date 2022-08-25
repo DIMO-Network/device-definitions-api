@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+
+	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -9,11 +13,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/TheFellow/go-mediator/mediator"
-	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
 )
 
-func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func searchSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
@@ -28,10 +30,10 @@ func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Log
 		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService)),
 	)
 
-	m.Send(ctx, &commands.SyncSearchDataCommand{})
+	_, _ = m.Send(ctx, &commands.SyncSearchDataCommand{})
 }
 
-func ipfs_sync_data(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 	pdb.WaitForDB(logger)
@@ -44,10 +46,10 @@ func ipfs_sync_data(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		mediator.WithHandler(&commands.SyncIPFSDataCommand{}, commands.NewSyncIPFSDataCommandHandler(pdb.DBS, s.IPFSNodeEndpoint)),
 	)
 
-	m.Send(ctx, &commands.SyncIPFSDataCommand{})
+	_, _ = m.Send(ctx, &commands.SyncIPFSDataCommand{})
 }
 
-func smartcar_compatibility(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 	pdb.WaitForDB(logger)
@@ -67,10 +69,10 @@ func smartcar_compatibility(ctx context.Context, s *config.Settings, logger zero
 			commands.NewSyncSmartCartForwardCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
 
-	m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
+	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
 }
 
-func smartcar_sync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
@@ -90,6 +92,6 @@ func smartcar_sync(ctx context.Context, s *config.Settings, logger zerolog.Logge
 		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{}, commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
 
-	m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
+	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
 
 }

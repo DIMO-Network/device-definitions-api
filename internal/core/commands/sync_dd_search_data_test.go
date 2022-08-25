@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -11,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"

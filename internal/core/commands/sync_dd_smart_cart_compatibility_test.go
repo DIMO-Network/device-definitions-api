@@ -2,11 +2,10 @@ package commands
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
-	_ "embed"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
@@ -14,13 +13,14 @@ import (
 	gatewayMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 )
 
 //go:embed test_smart_data.json
-var smart_data_sample []byte
+var smartDataSample []byte
 
 type SyncSmartCartCompatibilityCommandHandlerSuite struct {
 	suite.Suite
@@ -79,7 +79,7 @@ func (s *SyncSmartCartCompatibilityCommandHandlerSuite) TestSyncSmartCartCompati
 
 	smartCarCompatibilityData := &gateways.SmartCarCompatibilityData{}
 
-	json.Unmarshal(smart_data_sample, smartCarCompatibilityData)
+	_ = json.Unmarshal(smartDataSample, smartCarCompatibilityData)
 
 	s.mockSmartCarService.EXPECT().GetSmartCarVehicleData().Return(smartCarCompatibilityData, nil).Times(1)
 	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(integration.ID, nil).Times(1)

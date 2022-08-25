@@ -56,7 +56,7 @@ func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.
 	_, err = sh.FileList(basePath)
 
 	if err != nil && !strings.Contains(err.Error(), "invalid path") {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 		return nil, err
 	}
 
@@ -92,7 +92,7 @@ func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.
 
 		indexFilePath := fmt.Sprintf("%s/index.json", path)
 
-		fmt.Printf(indexFilePath)
+		fmt.Print(indexFilePath)
 
 		rb := sh.Request("files/write", indexFilePath)
 		rb.Option("create", "true")
@@ -130,7 +130,7 @@ func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.
 
 		indexFilePath := fmt.Sprintf("%s/index.json", path)
 
-		fmt.Printf(indexFilePath)
+		fmt.Print(indexFilePath)
 
 		rb := sh.Request("files/write", indexFilePath)
 		rb.Option("create", "true")
@@ -168,7 +168,7 @@ func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.
 
 		indexFilePath := fmt.Sprintf("%s/index.json", path)
 
-		fmt.Printf(indexFilePath)
+		fmt.Print(indexFilePath)
 
 		rb := sh.Request("files/write", indexFilePath)
 		rb.Option("create", "true")
@@ -179,7 +179,7 @@ func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.
 		}
 	}
 
-	fmt.Printf("Done !!")
+	fmt.Print("Done !!")
 
 	return SyncIPFSDataCommandResult{}, nil
 }

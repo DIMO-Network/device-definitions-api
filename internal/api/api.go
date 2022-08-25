@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"github.com/rs/zerolog"
+
 	"log"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -16,6 +16,7 @@ import (
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/rs/zerolog"
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
