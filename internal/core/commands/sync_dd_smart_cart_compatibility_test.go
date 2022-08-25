@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	_ "embed"
@@ -69,25 +70,39 @@ func (s *SyncSmartCartCompatibilityCommandHandlerSuite) TestSyncSmartCartCompati
 	mk := "Toyota"
 	year := 2020
 
-	_ = setupDeviceDefinitionForSearchData(s.T(), s.pdb, mk, model, year)
+	dd := setupDeviceDefinitionForSmartCarCompatibility(s.T(), s.pdb, mk, model, year)
+	integration := setupIntegrationForSmartCarCompatibility(s.T(), s.pdb)
+	deviceIntegration := setupDeviceDefinitionIntegrationForSmartCarCompatibility(s.T(), s.pdb, dd, integration)
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{deviceIntegration}
 
 	smartCarCompatibilityData := &gateways.SmartCarCompatibilityData{}
 
 	json.Unmarshal(smart_data_sample, smartCarCompatibilityData)
 
 	s.mockSmartCarService.EXPECT().GetSmartCarVehicleData().Return(smartCarCompatibilityData, nil).Times(1)
-	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(gomock.Any(), nil).Times(1)
+	s.mockSmartCarService.EXPECT().GetOrCreateSmartCarIntegration(gomock.Any()).Return(integration.ID, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncSearchDataCommand{})
-	result := qryResult.(SyncSearchDataCommandResult)
+	result := qryResult.(SyncSmartCartCompatibilityCommandResult)
 
 	s.NoError(err)
-	s.NotNil(result)
+	assert.Equal(s.T(), result.Status, true)
 }
 
 func setupDeviceDefinitionForSmartCarCompatibility(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
-
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
 	return dd
+}
+
+func setupIntegrationForSmartCarCompatibility(t *testing.T, pdb db.Store) *models.Integration {
+	i := dbtesthelper.SetupCreateSmartCarIntegration(t, pdb)
+	return i
+}
+
+func setupDeviceDefinitionIntegrationForSmartCarCompatibility(t *testing.T, pdb db.Store, dd *models.DeviceDefinition, i *models.Integration) *models.DeviceIntegration {
+	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
+	return di
 }

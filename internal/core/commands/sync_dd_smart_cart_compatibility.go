@@ -20,6 +20,7 @@ type SyncSmartCartCompatibilityCommand struct {
 }
 
 type SyncSmartCartCompatibilityCommandResult struct {
+	Status bool
 }
 
 func (*SyncSmartCartCompatibilityCommand) Key() string { return "SyncSmartCartCompatibilityCommand" }
@@ -133,5 +134,5 @@ func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, q
 
 	}
 
-	return SyncSmartCartCompatibilityCommandResult{}, nil
+	return SyncSmartCartCompatibilityCommandResult{Status: true}, nil
 }
