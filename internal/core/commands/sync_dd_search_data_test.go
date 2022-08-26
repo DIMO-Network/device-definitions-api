@@ -67,9 +67,9 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand() {
 
 	engineDetail := gateways.EngineDetail{Name: metaEngineName, Type: &engineType}
 	getEnginesResp := &gateways.GetEnginesResp{Results: []gateways.EngineDetail{engineDetail}}
-	s.mockElasticSearch.EXPECT().GetEngines().Return(getEnginesResp, nil).Times(1)
 
-	s.mockElasticSearch.EXPECT().CreateEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(2)
+	s.mockElasticSearch.EXPECT().GetEngines().Return(getEnginesResp, nil).Times(1)
+	s.mockElasticSearch.EXPECT().CreateEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(1)
 	s.mockElasticSearch.EXPECT().GetMetaEngineName().Return(metaEngineName).Times(1)
 	s.mockElasticSearch.EXPECT().CreateDocumentsBatched(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 	s.mockElasticSearch.EXPECT().AddSourceEngineToMetaEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(1)
