@@ -4,20 +4,27 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
+	"github.com/rs/zerolog"
+	"github.com/segmentio/ksuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
 func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.Store, testcontainers.Container) {
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
@@ -47,11 +54,8 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 
 	settings.DBPort = mappedPort.Port()
 	pdb := db.NewDbConnectionForTest(ctx, settings, false)
-	for !pdb.IsReady() {
-		time.Sleep(500 * time.Millisecond)
-	}
-	// can't connect to db, dsn=user=postgres password=postgres dbname=devices_api host=localhost port=49395 sslmode=disable search_path=devices_api, err=EOF
-	// error happens when calling here
+	pdb.WaitForDB(logger)
+
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 		grant usage on schema public to public;
 		grant create on schema public to public;
@@ -63,6 +67,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 		return handleContainerStartErr(ctx, errors.Wrapf(err, "failed to apply schema. session: %s, port: %s",
 			pgContainer.SessionID(), mappedPort.Port()), pgContainer, t)
 	}
+	logger.Info().Msgf("set default search_path for user postgres to %s", dbName)
 	// add truncate tables func
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
@@ -123,4 +128,64 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 		fmt.Println("truncating tables failed.")
 		t.Fatal(err)
 	}
+}
+
+func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
+	dd := &models.DeviceDefinition{
+		ID:           ksuid.New().String(),
+		DeviceMakeID: dm.ID,
+		Model:        model,
+		Year:         int16(year),
+		Verified:     true,
+	}
+	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return dd
+}
+
+func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
+	dm := models.DeviceMake{
+		ID:   ksuid.New().String(),
+		Name: mk,
+	}
+	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "no db error expected")
+	return dm
+}
+
+func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, pdb db.Store) models.DeviceStyle {
+	ds := models.DeviceStyle{
+		ID:                 ksuid.New().String(),
+		Name:               name,
+		DeviceDefinitionID: deviceDefinitionID,
+		Source:             "Source",
+		SubModel:           "sub-model",
+	}
+	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "no db error expected")
+	return ds
+}
+
+func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	integration := &models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeAPI,
+		Style:            models.IntegrationStyleWebhook,
+		Vendor:           "SmartCar",
+		RefreshLimitSecs: 1800,
+	}
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
+}
+
+func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) *models.DeviceIntegration {
+	di := &models.DeviceIntegration{
+		DeviceDefinitionID: dd.ID,
+		IntegrationID:      integrationID,
+		Region:             "Americas",
+	}
+	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err)
+	return di
 }

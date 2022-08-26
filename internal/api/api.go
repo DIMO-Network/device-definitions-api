@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"log"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -15,12 +16,14 @@ import (
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/rs/zerolog"
 )
 
-func Run(ctx context.Context, s *config.Settings) {
+func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
 
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, settings, true)
+	pdb.WaitForDB(logger)
 
 	//infra
 
@@ -30,13 +33,13 @@ func Run(ctx context.Context, s *config.Settings) {
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
-		JaegerEndpoint: s.TraceMonitorView,
-		ServiceName:    s.ServiceName,
-		ServiceVersion: s.ServiceVersion,
-		Environment:    s.Environment,
+		JaegerEndpoint: settings.TraceMonitorView,
+		ServiceName:    settings.ServiceName,
+		ServiceVersion: settings.ServiceVersion,
+		Environment:    settings.Environment,
 	})
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal().Err(err).Send()
 	}
 	defer prv.Close(context.Background())
 
@@ -68,7 +71,7 @@ func Run(ctx context.Context, s *config.Settings) {
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(s, *m)
+	go StartGrpcServer(settings, *m)
 
-	log.Fatal(app.Listen(":" + s.Port))
+	log.Fatal(app.Listen(":" + settings.Port))
 }

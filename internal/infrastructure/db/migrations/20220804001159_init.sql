@@ -2,7 +2,9 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
-CREATE TABLE IF NOT EXISTS device_definitions_api.device_makes
+SET search_path = device_definitions_api, public;
+
+CREATE TABLE IF NOT EXISTS device_makes
 (
     id character(27) COLLATE pg_catalog."default" NOT NULL,
     name text COLLATE pg_catalog."default" NOT NULL,
@@ -17,7 +19,7 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.device_makes
     CONSTRAINT device_makes_token_id_key UNIQUE (token_id)
 );
 
-CREATE TABLE IF NOT EXISTS device_definitions_api.device_definitions
+CREATE TABLE IF NOT EXISTS device_definitions
 (
     id character(27) COLLATE pg_catalog."default" NOT NULL,
     model character varying(100) COLLATE pg_catalog."default" NOT NULL,
@@ -33,12 +35,12 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.device_definitions
     CONSTRAINT device_definitions_pkey PRIMARY KEY (id),
     CONSTRAINT idx_device_make_id_model_year UNIQUE (device_make_id, model, year),
     CONSTRAINT fk_device_make_id FOREIGN KEY (device_make_id)
-        REFERENCES device_definitions_api.device_makes (id) MATCH SIMPLE
+        REFERENCES device_makes (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS device_definitions_api.device_styles
+CREATE TABLE IF NOT EXISTS device_styles
 (
     id character(27) COLLATE pg_catalog."default" NOT NULL,
     device_definition_id character(27) COLLATE pg_catalog."default" NOT NULL,
@@ -50,31 +52,31 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.device_styles
     sub_model text COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT device_styles_pkey PRIMARY KEY (id),
     CONSTRAINT fk_device_definition FOREIGN KEY (device_definition_id)
-        REFERENCES device_definitions_api.device_definitions (id) MATCH SIMPLE
+        REFERENCES device_definitions (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 );
 
 CREATE UNIQUE INDEX device_definition_name_sub_modelx
-    ON device_definitions_api.device_styles USING btree
+    ON device_styles USING btree
     (device_definition_id COLLATE pg_catalog."default" ASC NULLS LAST, source COLLATE pg_catalog."default" ASC NULLS LAST, name COLLATE pg_catalog."default" ASC NULLS LAST, sub_model COLLATE pg_catalog."default" ASC NULLS LAST);
 
 CREATE UNIQUE INDEX device_definition_style_idx
-    ON device_definitions_api.device_styles USING btree
+    ON device_styles USING btree
     (device_definition_id COLLATE pg_catalog."default" ASC NULLS LAST, source COLLATE pg_catalog."default" ASC NULLS LAST, external_style_id COLLATE pg_catalog."default" ASC NULLS LAST);
     
 
-CREATE TYPE device_definitions_api.integration_style AS ENUM
+CREATE TYPE integration_style AS ENUM
     ('Addon', 'OEM', 'Webhook');
 
-CREATE TYPE device_definitions_api.integration_type AS ENUM
+CREATE TYPE integration_type AS ENUM
     ('Hardware', 'API');
 
-CREATE TABLE IF NOT EXISTS device_definitions_api.integrations
+CREATE TABLE IF NOT EXISTS integrations
 (
     id character(27) COLLATE pg_catalog."default" NOT NULL,
-    type device_definitions_api.integration_type NOT NULL,
-    style device_definitions_api.integration_style NOT NULL,
+    type integration_type NOT NULL,
+    style integration_style NOT NULL,
     vendor character varying(50) COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,10 +86,10 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.integrations
     CONSTRAINT idx_integrations_vendor UNIQUE (vendor)
 );
 
-COMMENT ON COLUMN device_definitions_api.integrations.refresh_limit_secs
+COMMENT ON COLUMN integrations.refresh_limit_secs
     IS 'How often can integration be called in seconds';
 
-CREATE TABLE IF NOT EXISTS device_definitions_api.device_integrations
+CREATE TABLE IF NOT EXISTS device_integrations
 (
     device_definition_id character(27) COLLATE pg_catalog."default" NOT NULL,
     integration_id character(27) COLLATE pg_catalog."default" NOT NULL,
@@ -97,14 +99,14 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.device_integrations
     region text COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT pkey_device_region PRIMARY KEY (device_definition_id, integration_id, region),
     CONSTRAINT fk_device_definition FOREIGN KEY (device_definition_id)
-        REFERENCES device_definitions_api.device_definitions (id) MATCH SIMPLE
+        REFERENCES device_definitions (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE,
     CONSTRAINT fk_integration FOREIGN KEY (integration_id)
-        REFERENCES device_definitions_api.integrations (id) MATCH SIMPLE
+        REFERENCES integrations (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
+);
 
 -- +goose StatementEnd
 
@@ -112,17 +114,19 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.device_integrations
 -- +goose StatementBegin
 SELECT 'down SQL query';
 
-DROP TABLE device_definitions_api.device_integrations;
-DROP TABLE device_definitions_api.integrations;
+SET search_path = device_definitions_api, public;
 
-DROP TYPE device_definitions_api.integration_style;
-DROP TYPE device_definitions_api.integration_type;
+DROP TABLE device_integrations;
+DROP TABLE integrations;
 
-DROP INDEX device_definitions_api.device_definition_style_idx;
-DROP INDEX device_definitions_api.device_definition_name_sub_modelx;
+DROP TYPE integration_style;
+DROP TYPE integration_type;
 
-DROP TABLE device_definitions_api.device_styles;
-DROP TABLE device_definitions_api.device_definitions;
-DROP TABLE device_definitions_api.device_makes;
+DROP INDEX device_definition_style_idx;
+DROP INDEX device_definition_name_sub_modelx;
+
+DROP TABLE device_styles;
+DROP TABLE device_definitions;
+DROP TABLE device_makes;
 
 -- +goose StatementEnd

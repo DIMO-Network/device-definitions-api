@@ -3,10 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+
 	"sync"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/rs/zerolog"
 )
 
 const databaseDriver = "postgres"
@@ -96,4 +98,16 @@ func NewDbConnectionForTest(ctx context.Context, settings config.Settings, withS
 		},
 	)
 	return Store{db: dbConnection.GetWriterConn, dbs: dbConnection, ready: &localReady}
+}
+
+// WaitForDB waits 30 seconds for db to become available, and Fatal panic if can't connect.
+func (store *Store) WaitForDB(logger zerolog.Logger) {
+	totalTime := 0
+	for !store.IsReady() {
+		if totalTime > 30 {
+			logger.Fatal().Msg("could not connect to postgres after 30 seconds")
+		}
+		time.Sleep(time.Second)
+		totalTime++
+	}
 }

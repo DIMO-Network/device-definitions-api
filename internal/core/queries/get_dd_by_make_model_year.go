@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -114,7 +113,7 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 		// compatible integrations
 		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
 		// sub_models
-		rp.Type.SubModels = subModelsFromStylesDB(dd.R.DeviceStyles)
+		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
 	}
 
 	return rp, nil
@@ -137,23 +136,4 @@ func deviceCompatibilityFromDB(dbDIS models.DeviceIntegrationSlice) []GetDeviceC
 		}
 	}
 	return compatibilities
-}
-
-// SubModelsFromStylesDB gets the unique style.SubModel from the styles slice, deduping sub_model
-func subModelsFromStylesDB(styles models.DeviceStyleSlice) []string {
-	items := map[string]string{}
-	for _, style := range styles {
-		if _, ok := items[style.SubModel]; !ok {
-			items[style.SubModel] = style.Name
-		}
-	}
-
-	sm := make([]string, len(items))
-	i := 0
-	for key := range items {
-		sm[i] = key
-		i++
-	}
-	sort.Strings(sm)
-	return sm
 }
