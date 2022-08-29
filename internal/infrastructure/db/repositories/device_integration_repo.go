@@ -1,165 +1,123 @@
-//go:generate mockgen -source device_definition_repo.go -destination mocks/device_definition_repo_mock.go -package mocks
+//go:generate mockgen -source device_integration_repo.go -destination mocks/device_integration_repo_mock.go -package mocks
 
 package repositories
 
 import (
 	"context"
 	"database/sql"
-	"strings"
-
-	"github.com/volatiletech/null/v8"
+	"encoding/json"
+	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type DeviceDefinitionRepository interface {
-	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
-	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
-	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
+type DeviceIntegrationRepository interface {
+	Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string) (*models.DeviceIntegration, error)
 }
 
-type deviceDefinitionRepository struct {
+type deviceIntegrationRepository struct {
 	DBS func() *db.ReaderWriter
 }
 
-func NewDeviceDefinitionRepository(dbs func() *db.ReaderWriter) DeviceDefinitionRepository {
-	return &deviceDefinitionRepository{DBS: dbs}
+func NewDeviceIntegrationRepository(dbs func() *db.ReaderWriter) DeviceIntegrationRepository {
+	return &deviceIntegrationRepository{DBS: dbs}
 }
 
-func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
-	qms := []qm.QueryMod{
-		qm.InnerJoin("device_makes dm on dm.id = device_definitions.device_make_id"),
-		qm.Where("dm.name ilike ?", make),
-		qm.And("model ilike ?", model),
-		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-	}
-	if loadIntegrations {
-		qms = append(qms,
-			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
-	}
+const (
+	AutoPiVendor      = "AutoPi"
+	AutoPiWebhookPath = "/webhooks/autopi-command"
+)
 
-	query := models.DeviceDefinitions(qms...)
-	dd, err := query.One(ctx, r.DBS().Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return dd, nil
+// IntegrationsMetadata represents json stored in integrations table metadata jsonb column
+type IntegrationsMetadata struct {
+	AutoPiDefaultTemplateID      int                    `json:"autoPiDefaultTemplateId"`
+	AutoPiPowertrainToTemplateID map[PowertrainType]int `json:"autoPiPowertrainToTemplateId,omitempty"`
 }
 
-func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error) {
+type PowertrainType string
 
-	dd, err := models.DeviceDefinitions(qm.Where("verified = true"),
-		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
+const (
+	ICE  PowertrainType = "ICE"
+	HEV  PowertrainType = "HEV"
+	PHEV PowertrainType = "PHEV"
+	BEV  PowertrainType = "BEV"
+	FCEV PowertrainType = "FCEV"
+)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return dd, err
+func (p PowertrainType) String() string {
+	return string(p)
 }
 
-func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
-
-	dd, err := models.DeviceDefinitions(
-		qm.Where("id = ?", id),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
-		One(ctx, r.DBS().Reader)
-
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
-		}
-		return nil, nil
+func (p *PowertrainType) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
 	}
 
-	if dd.R == nil || dd.R.DeviceMake == nil {
-		return nil, errors.New("required DeviceMake relation is not set")
+	// Potentially an invalid value.
+	switch bv := PowertrainType(s); bv {
+	case ICE, HEV, PHEV, BEV, FCEV:
+		*p = bv
+		return nil
+	default:
+		return fmt.Errorf("unrecognized value: %s", s)
 	}
-
-	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error) {
+func (r *deviceIntegrationRepository) Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string) (*models.DeviceIntegration, error) {
 
-	dd, err := models.DeviceDefinitions(
-		qm.Where("id = ?", id),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load("DeviceIntegrations.Integration")).
-		One(ctx, r.DBS().Reader)
+	const (
+		autoPiType        = models.IntegrationTypeHardware
+		autoPiStyle       = models.IntegrationStyleAddon
+		defaultTemplateID = 10
+	)
 
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
-		}
-		return nil, nil
-	}
+	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(AutoPiVendor),
+		models.IntegrationWhere.Style.EQ(autoPiStyle), models.IntegrationWhere.Type.EQ(autoPiType)).
+		One(ctx, r.DBS().Writer)
 
-	return dd, nil
-}
-
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
-
-	qms := []qm.QueryMod{
-		qm.InnerJoin("device_makes dm on dm.id = device_definitions.device_make_id"),
-		qm.Where("dm.name ilike ?", make),
-		qm.And("model ilike ?", model),
-		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-	}
-
-	query := models.DeviceDefinitions(qms...)
-	dd, err := query.One(ctx, r.DBS().Reader)
-
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
-		}
-	}
-
-	if dd != nil {
-		return dd, nil
-	}
-
-	// Create device Make
-	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(make))).One(ctx, r.DBS().Writer)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// create
-			m = &models.DeviceMake{
-				ID:   ksuid.New().String(),
-				Name: make,
+			im := IntegrationsMetadata{AutoPiDefaultTemplateID: defaultTemplateID}
+			integration = &models.Integration{
+				ID:     ksuid.New().String(),
+				Vendor: AutoPiVendor,
+				Type:   autoPiType,
+				Style:  autoPiStyle,
 			}
-			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
+			_ = integration.Metadata.Marshal(im)
+			err = integration.Insert(ctx, r.DBS().Writer, boil.Infer())
 			if err != nil {
-				return nil, errors.Wrapf(err, "error inserting make: %s", make)
+				return nil, errors.Wrap(err, "error inserting autoPi integration")
 			}
 		}
 	}
 
-	dd = &models.DeviceDefinition{
-		ID:           ksuid.New().String(),
-		DeviceMakeID: m.ID,
-		Model:        model,
-		Year:         int16(year),
-		Source:       null.StringFrom(source),
-		Verified:     false,
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.Wrap(err, "error fetching autoPi integration from database")
 	}
-	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
-	if err != nil {
-		return nil, err
+
+	if integration.ID == integrationID {
+		// create device integ on the fly
+		di := &models.DeviceIntegration{
+			DeviceDefinitionID: deviceDefinitionID,
+			IntegrationID:      integrationID,
+			Region:             region,
+		}
+		err = di.Insert(ctx, r.DBS().Writer, boil.Infer())
+		if err != nil {
+			return nil, err
+		}
+
+		di.R = di.R.NewStruct()
+		di.R.Integration = integration
+		return di, nil
 	}
-	return dd, nil
+
+	return nil, nil
 }

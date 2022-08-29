@@ -111,10 +111,20 @@ message CreateDeviceDefinitionRequest {
  string model = 2;
  uint32 year = 3;
  string source = 4;
- bool verified = 5;
 }
 
 message CreateDeviceDefinitionResponse {
+	string id = 1;
+}
+
+
+message CreateDeviceIntegrationRequest {
+	string device_definition_id = 1;
+	string integration_id = 2;
+	string region = 3;
+}
+
+message CreateDeviceIntegrationResponse {
 	string id = 1;
 }
 
@@ -124,4 +134,5 @@ service DeviceDefinitionService {
 	rpc GetIntegrations(EmptyRequest) returns (GetIntegrationResponse);
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
 	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
+	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
 }

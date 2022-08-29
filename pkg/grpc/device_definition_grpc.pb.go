@@ -27,6 +27,7 @@ type DeviceDefinitionServiceClient interface {
 	GetIntegrations(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*GetIntegrationResponse, error)
 	GetDeviceDefinitionIntegration(ctx context.Context, in *GetDeviceDefinitionIntegrationRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionIntegrationResponse, error)
 	CreateDeviceDefinition(ctx context.Context, in *CreateDeviceDefinitionRequest, opts ...grpc.CallOption) (*CreateDeviceDefinitionResponse, error)
+	CreateDeviceIntegration(ctx context.Context, in *CreateDeviceIntegrationRequest, opts ...grpc.CallOption) (*CreateDeviceIntegrationResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -82,6 +83,15 @@ func (c *deviceDefinitionServiceClient) CreateDeviceDefinition(ctx context.Conte
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) CreateDeviceIntegration(ctx context.Context, in *CreateDeviceIntegrationRequest, opts ...grpc.CallOption) (*CreateDeviceIntegrationResponse, error) {
+	out := new(CreateDeviceIntegrationResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/CreateDeviceIntegration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type DeviceDefinitionServiceServer interface {
 	GetIntegrations(context.Context, *EmptyRequest) (*GetIntegrationResponse, error)
 	GetDeviceDefinitionIntegration(context.Context, *GetDeviceDefinitionIntegrationRequest) (*GetDeviceDefinitionIntegrationResponse, error)
 	CreateDeviceDefinition(context.Context, *CreateDeviceDefinitionRequest) (*CreateDeviceDefinitionResponse, error)
+	CreateDeviceIntegration(context.Context, *CreateDeviceIntegrationRequest) (*CreateDeviceIntegrationResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionIntegration
 }
 func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceDefinition(context.Context, *CreateDeviceDefinitionRequest) (*CreateDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDeviceDefinition not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceIntegration(context.Context, *CreateDeviceIntegrationRequest) (*CreateDeviceIntegrationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDeviceIntegration not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -217,6 +231,24 @@ func _DeviceDefinitionService_CreateDeviceDefinition_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_CreateDeviceIntegration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDeviceIntegrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).CreateDeviceIntegration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/CreateDeviceIntegration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).CreateDeviceIntegration(ctx, req.(*CreateDeviceIntegrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -243,6 +275,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateDeviceDefinition",
 			Handler:    _DeviceDefinitionService_CreateDeviceDefinition_Handler,
+		},
+		{
+			MethodName: "CreateDeviceIntegration",
+			Handler:    _DeviceDefinitionService_CreateDeviceIntegration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

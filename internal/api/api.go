@@ -31,6 +31,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
+	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
@@ -56,6 +57,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
 	)
 
 	//fiber
