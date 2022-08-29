@@ -67,7 +67,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
 	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
 
-	s.mockRepository.EXPECT().GetById(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetByID(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
@@ -84,7 +84,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_E
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
-	s.mockRepository.EXPECT().GetById(ctx, gomock.Any()).Return(nil, nil).Times(1)
+	s.mockRepository.EXPECT().GetByID(ctx, gomock.Any()).Return(nil, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,

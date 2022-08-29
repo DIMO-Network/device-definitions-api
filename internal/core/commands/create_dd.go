@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
@@ -14,7 +15,7 @@ type CreateDeviceDefinitionCommand struct {
 }
 
 type CreateDeviceDefinitionCommandResult struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 func (*CreateDeviceDefinitionCommand) Key() string { return "CreateDeviceDefinitionCommand" }
@@ -37,5 +38,5 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
-	return CreateDeviceDefinitionCommandResult{Id: dd.ID}, nil
+	return CreateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }

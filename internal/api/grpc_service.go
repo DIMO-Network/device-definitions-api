@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -131,18 +131,18 @@ func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.Cre
 
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
-	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.Id}, nil
+	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID}, nil
 }
 
 func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.CreateDeviceIntegrationResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceIntegrationCommand{
-		DeviceDefinitionId: in.DeviceDefinitionId,
-		IntegrationId:      in.IntegrationId,
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		IntegrationID:      in.IntegrationId,
 		Region:             in.Region,
 	})
 
 	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
 
-	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.Id}, nil
+	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.ID}, nil
 }

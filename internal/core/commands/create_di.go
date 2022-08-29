@@ -2,18 +2,19 @@ package commands
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type CreateDeviceIntegrationCommand struct {
-	DeviceDefinitionId string `json:"device_definition_id"`
-	IntegrationId      string `json:"integration_id"`
+	DeviceDefinitionID string `json:"device_definition_id"`
+	IntegrationID      string `json:"integration_id"`
 	Region             string `json:"region"`
 }
 
 type CreateDeviceIntegrationCommandResult struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 func (*CreateDeviceIntegrationCommand) Key() string { return "CreateDeviceIntegrationCommand" }
@@ -30,11 +31,11 @@ func (ch CreateDeviceIntegrationCommandHandler) Handle(ctx context.Context, quer
 
 	command := query.(*CreateDeviceIntegrationCommand)
 
-	di, err := ch.Repository.Create(ctx, command.DeviceDefinitionId, command.IntegrationId, command.Region)
+	di, err := ch.Repository.Create(ctx, command.DeviceDefinitionID, command.IntegrationID, command.Region)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return CreateDeviceIntegrationCommandResult{Id: di.IntegrationID}, nil
+	return CreateDeviceIntegrationCommandResult{ID: di.IntegrationID}, nil
 }

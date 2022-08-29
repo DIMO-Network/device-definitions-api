@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 
 	"log"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
