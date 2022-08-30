@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
