@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
@@ -11,11 +10,12 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-func search_sync_dds(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
