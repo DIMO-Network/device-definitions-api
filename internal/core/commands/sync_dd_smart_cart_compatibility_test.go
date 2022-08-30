@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
