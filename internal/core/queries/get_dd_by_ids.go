@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -50,7 +51,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 				Type:  "Vehicle",
 				Make:  dd.R.DeviceMake.Name,
 				Model: dd.Model,
-				Year:  uint32(dd.Year),
+				Year:  int32(dd.Year),
 			},
 			Metadata: string(dd.Metadata.JSON),
 			Verified: dd.Verified,
@@ -60,16 +61,22 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		var vi map[string]GetDeviceVehicleInfo
 
 		if err := dd.Metadata.Unmarshal(&vi); err == nil {
+
+			numberOfDoors, _ := strconv.ParseInt(vi["vehicle_info"].NumberOfDoors, 6, 12)
+			mpgHighway, _ := strconv.ParseFloat(vi["vehicle_info"].MPGHighway, 6)
+			mpgCity, _ := strconv.ParseFloat(vi["vehicle_info"].MPGCity, 6)
+			fuelTankCapacityGal, _ := strconv.ParseFloat(vi["vehicle_info"].FuelTankCapacityGal, 6)
+
 			rp.VehicleData = &grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
 				FuelType:            vi["vehicle_info"].FuelType,
 				DrivenWheels:        vi["vehicle_info"].DrivenWheels,
-				NumberOfDoors:       vi["vehicle_info"].NumberOfDoors,
-				Base_MSRP:           uint32(vi["vehicle_info"].BaseMSRP),
+				NumberOfDoors:       int32(numberOfDoors),
+				Base_MSRP:           int32(vi["vehicle_info"].BaseMSRP),
 				EPAClass:            vi["vehicle_info"].EPAClass,
 				VehicleType:         vi["vehicle_info"].VehicleType,
-				MPGHighway:          vi["vehicle_info"].MPGHighway,
-				MPGCity:             vi["vehicle_info"].MPGCity,
-				FuelTankCapacityGal: vi["vehicle_info"].FuelTankCapacityGal,
+				MPGHighway:          float32(mpgHighway),
+				MPGCity:             float32(mpgCity),
+				FuelTankCapacityGal: float32(fuelTankCapacityGal),
 			}
 		}
 

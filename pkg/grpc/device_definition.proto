@@ -37,20 +37,20 @@ message GetDeviceDefinitionItemResponse {
 		string type = 1;
 		string  make = 2;
 		string  model = 3;
-		uint32 year = 4;
+		int32 year = 4;
 		repeated string sub_models = 5;
 	}
 
 	message VehicleInfo {
 		string fuel_type = 1;
 		string driven_wheels = 2;
-		string number_of_doors = 3;
-		uint32 base_MSRP = 4;
+		int32 number_of_doors = 3;
+		int32 base_MSRP = 4;
 		string EPA_class = 5;
 		string vehicle_type = 6;
-		string MPG_highway = 7;
-		string MPG_city = 8;
-		string fuel_tank_capacity_gal = 9;
+		float MPG_highway = 7;
+		float MPG_city = 8;
+		float fuel_tank_capacity_gal = 9;
 	}
 
 	message DeviceIntegrations {
@@ -69,7 +69,7 @@ message GetDeviceDefinitionByMMYRequest {
 	string make = 1;
 	string makeID = 2;
 	string model = 3;
-	uint32 year = 4;
+	int32 year = 4;
 }
 
 message GetIntegrationResponse {
@@ -109,7 +109,7 @@ message GetDeviceDefinitionIntegrationRequest {
 message CreateDeviceDefinitionRequest {
  string make = 1;
  string model = 2;
- uint32 year = 3;
+ int32 year = 3;
  string source = 4;
 }
 

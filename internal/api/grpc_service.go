@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -39,6 +40,11 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 
 	dd := qryResult.(queries.GetDeviceDefinitionByMakeModelYearQueryResult)
 
+	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
+	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 6)
+	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 6)
+	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 6)
+
 	result := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: dd.DeviceDefinitionID,
 		Name:               dd.Name,
@@ -47,18 +53,18 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			Type:  dd.Type.Type,
 			Make:  dd.Type.Make,
 			Model: dd.Type.Model,
-			Year:  uint32(dd.Type.Year),
+			Year:  int32(dd.Type.Year),
 		},
 		VehicleData: &p_grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
 			FuelType:            dd.VehicleInfo.FuelType,
 			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
-			NumberOfDoors:       dd.VehicleInfo.NumberOfDoors,
-			Base_MSRP:           uint32(dd.VehicleInfo.BaseMSRP),
+			NumberOfDoors:       int32(numberOfDoors),
+			Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
 			EPAClass:            dd.VehicleInfo.EPAClass,
 			VehicleType:         dd.VehicleInfo.VehicleType,
-			MPGHighway:          dd.VehicleInfo.MPGHighway,
-			MPGCity:             dd.VehicleInfo.MPGCity,
-			FuelTankCapacityGal: dd.VehicleInfo.FuelTankCapacityGal,
+			MPGHighway:          float32(mpgHighway),
+			MPGCity:             float32(mpgCity),
+			FuelTankCapacityGal: float32(fuelTankCapacityGal),
 		},
 		Verified: dd.Verified,
 	}
