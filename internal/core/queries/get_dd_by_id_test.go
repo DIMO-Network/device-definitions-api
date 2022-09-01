@@ -72,7 +72,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
-	result := qryResult.(GetDeviceDefinitionByIDQueryResult)
+	result := qryResult.(GetDeviceDefinitionQueryResult)
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)

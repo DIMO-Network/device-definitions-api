@@ -64,7 +64,7 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 		Model: model,
 		Year:  year,
 	})
-	result := qryResult.(GetDeviceDefinitionByMakeModelYearQueryResult)
+	result := qryResult.(GetDeviceDefinitionQueryResult)
 
 	s.NoError(err)
 	assert.Equal(s.T(), deviceDefinitionID, result.DeviceDefinitionID)

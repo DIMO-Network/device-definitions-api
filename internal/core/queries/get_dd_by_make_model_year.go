@@ -2,7 +2,6 @@ package queries
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -15,53 +14,6 @@ type GetDeviceDefinitionByMakeModelYearQuery struct {
 	Make  string `json:"make" validate:"required"`
 	Model string `json:"model" validate:"required"`
 	Year  int    `json:"year" validate:"required"`
-}
-
-type GetDeviceDefinitionByMakeModelYearQueryResult struct {
-	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	Name               string `json:"name"`
-	ImageURL           string `json:"imageUrl"`
-	// CompatibleIntegrations has systems this vehicle can integrate with
-	CompatibleIntegrations []GetDeviceCompatibility `json:"compatibleIntegrations"`
-	Type                   DeviceType               `json:"type"`
-	// VehicleInfo will be empty if not a vehicle type
-	VehicleInfo GetDeviceVehicleInfo `json:"vehicleData,omitempty"`
-	Metadata    interface{}          `json:"metadata"`
-	Verified    bool                 `json:"verified"`
-}
-
-// DeviceCompatibility represents what systems we know this is compatible with
-type GetDeviceCompatibility struct {
-	ID           string          `json:"id"`
-	Type         string          `json:"type"`
-	Style        string          `json:"style"`
-	Vendor       string          `json:"vendor"`
-	Region       string          `json:"region"`
-	Country      string          `json:"country,omitempty"`
-	Capabilities json.RawMessage `json:"capabilities"`
-}
-
-// DeviceVehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
-type GetDeviceVehicleInfo struct {
-	FuelType            string `json:"fuel_type,omitempty"`
-	DrivenWheels        string `json:"driven_wheels,omitempty"`
-	NumberOfDoors       string `json:"number_of_doors,omitempty"`
-	BaseMSRP            int    `json:"base_msrp,omitempty"`
-	EPAClass            string `json:"epa_class,omitempty"`
-	VehicleType         string `json:"vehicle_type,omitempty"` // VehicleType PASSENGER CAR, from NHTSA
-	MPGHighway          string `json:"mpg_highway,omitempty"`
-	MPGCity             string `json:"mpg_city,omitempty"`
-	FuelTankCapacityGal string `json:"fuel_tank_capacity_gal,omitempty"`
-}
-
-// DeviceType whether it is a vehicle or other type and basic information
-type DeviceType struct {
-	// Type is eg. Vehicle, E-bike, roomba
-	Type      string   `json:"type"`
-	Make      string   `json:"make"`
-	Model     string   `json:"model"`
-	Year      int      `json:"year"`
-	SubModels []string `json:"subModels"`
 }
 
 func (*GetDeviceDefinitionByMakeModelYearQuery) Key() string {
@@ -85,14 +37,20 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 	dd, _ := ch.Repository.GetByMakeModelAndYears(ctx, qry.Make, qry.Model, qry.Year, true)
 
 	if dd == nil {
-		return &GetDeviceDefinitionByMakeModelYearQueryResult{}, nil
+		return &GetDeviceDefinitionQueryResult{}, nil
 	}
 
-	rp := GetDeviceDefinitionByMakeModelYearQueryResult{
+	rp := GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID:     dd.ID,
 		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:               dd.ImageURL.String,
 		CompatibleIntegrations: []GetDeviceCompatibility{},
+		DeviceMake: DeviceMake{
+			ID:              dd.R.DeviceMake.ID,
+			Name:            dd.R.DeviceMake.Name,
+			LogoURL:         dd.R.DeviceMake.LogoURL,
+			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
+		},
 		Type: DeviceType{
 			Type:  "Vehicle",
 			Make:  dd.R.DeviceMake.Name,
@@ -114,6 +72,22 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
 		// sub_models
 		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
+	}
+
+	// build object for integrations that have all the info
+	rp.DeviceIntegrations = []GetDeviceDefinitionIntegrationList{}
+	if dd.R != nil {
+		for _, di := range dd.R.DeviceIntegrations {
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, GetDeviceDefinitionIntegrationList{
+
+				ID:           di.R.Integration.ID,
+				Type:         di.R.Integration.Type,
+				Style:        di.R.Integration.Style,
+				Vendor:       di.R.Integration.Vendor,
+				Region:       di.Region,
+				Capabilities: common.JSONOrDefault(di.Capabilities),
+			})
+		}
 	}
 
 	return rp, nil

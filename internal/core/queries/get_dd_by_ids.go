@@ -67,7 +67,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			mpgCity, _ := strconv.ParseFloat(vi["vehicle_info"].MPGCity, 32)
 			fuelTankCapacityGal, _ := strconv.ParseFloat(vi["vehicle_info"].FuelTankCapacityGal, 32)
 
-			rp.VehicleData = &grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
+			rp.VehicleData = &grpc.VehicleInfo{
 				FuelType:            vi["vehicle_info"].FuelType,
 				DrivenWheels:        vi["vehicle_info"].DrivenWheels,
 				NumberOfDoors:       int32(numberOfDoors),
