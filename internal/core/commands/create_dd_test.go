@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/golang/mock/gomock"
@@ -20,7 +19,6 @@ type CreateDeviceDefinitionCommandHandlerSuite struct {
 	*require.Assertions
 
 	ctrl           *gomock.Controller
-	pdb            db.Store
 	mockRepository *repositoryMock.MockDeviceDefinitionRepository
 	ctx            context.Context
 
@@ -32,12 +30,6 @@ func TestCreateDeviceDefinitionCommandHandler(t *testing.T) {
 }
 
 func (s *CreateDeviceDefinitionCommandHandlerSuite) SetupTest() {
-
-	const (
-		dbName               = "device_definitions_api"
-		migrationsDirRelPath = "../../infrastructure/db/migrations"
-	)
-
 	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())

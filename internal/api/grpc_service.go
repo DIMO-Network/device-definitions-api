@@ -41,9 +41,9 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	dd := qryResult.(queries.GetDeviceDefinitionByMakeModelYearQueryResult)
 
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
-	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 6)
-	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 6)
-	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 6)
+	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
+	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
 
 	result := &p_grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: dd.DeviceDefinitionID,

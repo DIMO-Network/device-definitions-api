@@ -63,9 +63,9 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		if err := dd.Metadata.Unmarshal(&vi); err == nil {
 
 			numberOfDoors, _ := strconv.ParseInt(vi["vehicle_info"].NumberOfDoors, 6, 12)
-			mpgHighway, _ := strconv.ParseFloat(vi["vehicle_info"].MPGHighway, 6)
-			mpgCity, _ := strconv.ParseFloat(vi["vehicle_info"].MPGCity, 6)
-			fuelTankCapacityGal, _ := strconv.ParseFloat(vi["vehicle_info"].FuelTankCapacityGal, 6)
+			mpgHighway, _ := strconv.ParseFloat(vi["vehicle_info"].MPGHighway, 32)
+			mpgCity, _ := strconv.ParseFloat(vi["vehicle_info"].MPGCity, 32)
+			fuelTankCapacityGal, _ := strconv.ParseFloat(vi["vehicle_info"].FuelTankCapacityGal, 32)
 
 			rp.VehicleData = &grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
 				FuelType:            vi["vehicle_info"].FuelType,
