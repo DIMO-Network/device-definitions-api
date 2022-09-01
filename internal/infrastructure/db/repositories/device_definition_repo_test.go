@@ -63,6 +63,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.Year, year)
+	_, err = models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(mk)).One(s.ctx, s.pdb.DBS().Reader)
+	assert.NoError(s.T(), err)
 }
 
 func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists_Make_Success() {
@@ -90,7 +92,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Existing_Su
 	year := 2022
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
-
+	// current logic returns existing DD if duplicate
 	dd2, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
 
 	s.NoError(err)
