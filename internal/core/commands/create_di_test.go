@@ -10,12 +10,10 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
 )
 
 type CreateDeviceIntegrationCommandHandlerSuite struct {
@@ -24,7 +22,6 @@ type CreateDeviceIntegrationCommandHandlerSuite struct {
 
 	ctrl           *gomock.Controller
 	pdb            db.Store
-	container      testcontainers.Container
 	mockRepository *repositoryMock.MockDeviceIntegrationRepository
 	ctx            context.Context
 
@@ -47,13 +44,10 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockRepository = repositoryMock.NewMockDeviceIntegrationRepository(s.ctrl)
 
-	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-
 	s.queryHandler = NewCreateDeviceIntegrationCommandHandler(s.mockRepository)
 }
 
 func (s *CreateDeviceIntegrationCommandHandlerSuite) TearDownTest() {
-	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
 }
 
