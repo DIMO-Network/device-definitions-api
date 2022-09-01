@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	_ "embed"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
