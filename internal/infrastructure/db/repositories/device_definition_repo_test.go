@@ -62,7 +62,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
 
 	s.NoError(err)
-	assert.Equal(s.T(), dd.Year, year)
+	assert.Equal(s.T(), dd.Model, model)
 	_, err = models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(mk)).One(s.ctx, s.pdb.DBS().Reader)
 	assert.NoError(s.T(), err)
 }

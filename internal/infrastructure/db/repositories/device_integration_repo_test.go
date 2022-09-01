@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	_ "embed"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -50,15 +51,48 @@ func (s *DeviceIntegrationRepositorySuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration__Success() {
+func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration_Success() {
 	ctx := context.Background()
 
-	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
-	integrationID := "Hummer"
 	region := "es-Us"
 
-	di, err := s.repository.Create(ctx, deviceDefinitionID, integrationID, region)
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinitionForDeviceIntegration(s.T(), s.pdb, mk, model, year)
+	i := setupIntegrationForDeviceIntegration(s.T(), s.pdb)
+
+	di, err := s.repository.Create(ctx, dd.ID, i.ID, region)
 
 	s.NoError(err)
-	assert.Equal(s.T(), di.IntegrationID, integrationID)
+	assert.Equal(s.T(), di.IntegrationID, i.ID)
+}
+
+func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration_Exception() {
+	ctx := context.Background()
+
+	region := "es-Us"
+
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinitionForDeviceIntegration(s.T(), s.pdb, mk, model, year)
+
+	di, err := s.repository.Create(ctx, dd.ID, "integration-ID", region)
+
+	s.Nil(di)
+	s.Error(err)
+}
+
+func setupDeviceDefinitionForDeviceIntegration(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
+	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+	return dd
+}
+
+func setupIntegrationForDeviceIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	i := dbtesthelper.SetupCreateSmartCarIntegration(t, pdb)
+	return i
 }

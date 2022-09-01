@@ -113,7 +113,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
 
 	qms := []qm.QueryMod{
-		qm.InnerJoin("device_makes dm on dm.id = device_definitions.device_make_id"),
+		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		qm.Where("dm.name ilike ?", make),
 		qm.And("model ilike ?", model),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
