@@ -50,7 +50,7 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAll(ctx, verified inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetAll), ctx, verified)
 }
 
-// GetById mocks base method.
+// GetByID mocks base method.
 func (m *MockDeviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
@@ -59,8 +59,8 @@ func (m *MockDeviceDefinitionRepository) GetByID(ctx context.Context, id string)
 	return ret0, ret1
 }
 
-// GetById indicates an expected call of GetById.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetById(ctx, id interface{}) *gomock.Call {
+// GetByID indicates an expected call of GetByID.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByID), ctx, id)
 }
@@ -78,6 +78,21 @@ func (m *MockDeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Cont
 func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx, make, model, year, loadIntegrations interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByMakeModelAndYears), ctx, make, model, year, loadIntegrations)
+}
+
+// GetOrCreate mocks base method.
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int) (*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, make, model, year)
+	ret0, _ := ret[0].(*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrCreate indicates an expected call of GetOrCreate.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, source, make, model, year interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, source, make, model, year)
 }
 
 // GetWithIntegrations mocks base method.

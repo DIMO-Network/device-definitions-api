@@ -37,20 +37,20 @@ message GetDeviceDefinitionItemResponse {
 		string type = 1;
 		string  make = 2;
 		string  model = 3;
-		uint32 year = 4;
+		int32 year = 4;
 		repeated string sub_models = 5;
 	}
 
 	message VehicleInfo {
 		string fuel_type = 1;
 		string driven_wheels = 2;
-		string number_of_doors = 3;
-		uint32 base_MSRP = 4;
+		int32 number_of_doors = 3;
+		int32 base_MSRP = 4;
 		string EPA_class = 5;
 		string vehicle_type = 6;
-		string MPG_highway = 7;
-		string MPG_city = 8;
-		string fuel_tank_capacity_gal = 9;
+		float MPG_highway = 7;
+		float MPG_city = 8;
+		float fuel_tank_capacity_gal = 9;
 	}
 
 	message DeviceIntegrations {
@@ -64,6 +64,75 @@ message GetDeviceDefinitionItemResponse {
 	}
 }
 
+
+message GetDeviceDefinitionByMMYRequest {
+	string make = 1;
+	string makeID = 2;
+	string model = 3;
+	int32 year = 4;
+}
+
+message GetIntegrationResponse {
+	repeated GetIntegrationItemResponse integrations = 1;
+}
+
+message EmptyRequest
+{
+
+}
+
+message GetIntegrationItemResponse {
+	string id = 1;
+	string type = 2;
+	string style = 3;
+	string vendor = 4;
+}
+
+message GetDeviceDefinitionIntegrationResponse{
+	repeated GetDeviceDefinitionIntegrationItemResponse integrations = 1;
+}
+
+message GetDeviceDefinitionIntegrationItemResponse {
+	string id = 1;
+	string type = 2;
+	string style = 3;
+	string vendor = 4;
+	string region = 5;
+	string country = 6;
+	string capabilities = 7;
+}
+
+message GetDeviceDefinitionIntegrationRequest {
+	string id = 1;
+}
+
+message CreateDeviceDefinitionRequest {
+ string make = 1;
+ string model = 2;
+ int32 year = 3;
+ string source = 4;
+}
+
+message CreateDeviceDefinitionResponse {
+	string id = 1;
+}
+
+
+message CreateDeviceIntegrationRequest {
+	string device_definition_id = 1;
+	string integration_id = 2;
+	string region = 3;
+}
+
+message CreateDeviceIntegrationResponse {
+	string id = 1;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
+	rpc GetIntegrations(EmptyRequest) returns (GetIntegrationResponse);
+	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
+	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
+	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
 }

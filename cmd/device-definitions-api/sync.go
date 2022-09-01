@@ -15,7 +15,7 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-func searchSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 

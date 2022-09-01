@@ -35,7 +35,7 @@ func main() {
 	case "migrate":
 		migrateDatabase(ctx, logger, &settings, os.Args)
 	case "search-sync-dds":
-		searchSyncData(ctx, &settings, logger)
+		searchSyncDD(ctx, &settings, logger)
 	case "ipfs-sync-data":
 		ipfsSyncData(ctx, &settings, logger)
 	case "smartcar-compatibility":

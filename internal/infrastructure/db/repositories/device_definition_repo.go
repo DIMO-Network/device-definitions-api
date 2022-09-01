@@ -5,10 +5,15 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"strings"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/pkg/errors"
+	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -17,6 +22,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
 }
 
 type deviceDefinitionRepository struct {
@@ -101,5 +107,59 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 		return nil, nil
 	}
 
+	return dd, nil
+}
+
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
+
+	qms := []qm.QueryMod{
+		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
+		qm.Where("dm.name ilike ?", make),
+		qm.And("model ilike ?", model),
+		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+	}
+
+	query := models.DeviceDefinitions(qms...)
+	dd, err := query.One(ctx, r.DBS().Reader)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			panic(err)
+		}
+	}
+
+	if dd != nil {
+		return dd, nil
+	}
+
+	// Create device Make
+	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(make))).One(ctx, r.DBS().Writer)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// create
+			m = &models.DeviceMake{
+				ID:   ksuid.New().String(),
+				Name: make,
+			}
+			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
+			if err != nil {
+				return nil, errors.Wrapf(err, "error inserting make: %s", make)
+			}
+		}
+	}
+
+	dd = &models.DeviceDefinition{
+		ID:           ksuid.New().String(),
+		DeviceMakeID: m.ID,
+		Model:        model,
+		Year:         int16(year),
+		Source:       null.StringFrom(source),
+		Verified:     false,
+	}
+	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
+	if err != nil {
+		return nil, err
+	}
 	return dd, nil
 }

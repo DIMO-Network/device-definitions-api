@@ -18,9 +18,9 @@ type GetDeviceDefinitionByMakeModelYearQuery struct {
 }
 
 type GetDeviceDefinitionByMakeModelYearQueryResult struct {
-	DeviceDefinitionID string  `json:"deviceDefinitionId"`
-	Name               string  `json:"name"`
-	ImageURL           *string `json:"imageUrl"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	Name               string `json:"name"`
+	ImageURL           string `json:"imageUrl"`
 	// CompatibleIntegrations has systems this vehicle can integrate with
 	CompatibleIntegrations []GetDeviceCompatibility `json:"compatibleIntegrations"`
 	Type                   DeviceType               `json:"type"`
@@ -91,7 +91,7 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 	rp := GetDeviceDefinitionByMakeModelYearQueryResult{
 		DeviceDefinitionID:     dd.ID,
 		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:               dd.ImageURL.Ptr(),
+		ImageURL:               dd.ImageURL.String,
 		CompatibleIntegrations: []GetDeviceCompatibility{},
 		Type: DeviceType{
 			Type:  "Vehicle",
