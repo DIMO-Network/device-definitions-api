@@ -80,6 +80,10 @@ message GetDeviceDefinitionByMMYRequest {
 	int32 year = 4;
 }
 
+message GetDeviceDefinitionByVINRequest {
+	string vin = 1;
+}
+
 message GetIntegrationResponse {
 	repeated GetIntegrationItemResponse integrations = 1;
 }
@@ -153,4 +157,5 @@ service DeviceDefinitionService {
 	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionByVIN(GetDeviceDefinitionByVINRequest) returns (GetDeviceDefinitionItemResponse);
 }
