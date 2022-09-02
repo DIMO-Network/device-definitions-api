@@ -47,13 +47,18 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
 			ImageUrl:               dd.ImageURL.String,
 			CompatibleIntegrations: []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{},
+			Make: &grpc.GetDeviceDefinitionItemResponse_Make{
+				Id:              dd.R.DeviceMake.ID,
+				Name:            dd.R.DeviceMake.Name,
+				LogUrl:          dd.R.DeviceMake.LogoURL.String,
+				OemPlatformName: dd.R.DeviceMake.OemPlatformName.String,
+			},
 			Type: &grpc.GetDeviceDefinitionItemResponse_Type{
 				Type:  "Vehicle",
 				Make:  dd.R.DeviceMake.Name,
 				Model: dd.Model,
 				Year:  int32(dd.Year),
 			},
-			Metadata: string(dd.Metadata.JSON),
 			Verified: dd.Verified,
 		}
 
@@ -66,6 +71,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			mpgHighway, _ := strconv.ParseFloat(vi["vehicle_info"].MPGHighway, 32)
 			mpgCity, _ := strconv.ParseFloat(vi["vehicle_info"].MPGCity, 32)
 			fuelTankCapacityGal, _ := strconv.ParseFloat(vi["vehicle_info"].FuelTankCapacityGal, 32)
+			mpg, _ := strconv.ParseFloat(vi["vehicle_info"].MPG, 32)
 
 			rp.VehicleData = &grpc.VehicleInfo{
 				FuelType:            vi["vehicle_info"].FuelType,
@@ -77,6 +83,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 				MPGHighway:          float32(mpgHighway),
 				MPGCity:             float32(mpgCity),
 				FuelTankCapacityGal: float32(fuelTankCapacityGal),
+				MPG:                 float32(mpg),
 			}
 		}
 

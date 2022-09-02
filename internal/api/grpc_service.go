@@ -56,6 +56,12 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			Model: dd.Type.Model,
 			Year:  int32(dd.Type.Year),
 		},
+		Make: &p_grpc.GetDeviceDefinitionItemResponse_Make{
+			Id:              dd.DeviceMake.ID,
+			Name:            dd.DeviceMake.Name,
+			LogUrl:          dd.DeviceMake.LogoURL.String,
+			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
+		},
 		VehicleData: &p_grpc.VehicleInfo{
 			FuelType:            dd.VehicleInfo.FuelType,
 			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
