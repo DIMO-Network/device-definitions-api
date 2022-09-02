@@ -21,7 +21,7 @@ message GetDeviceDefinitionItemResponse {
 	VehicleInfo vehicle_data = 6;
 	bool  verified = 7;
 	repeated  DeviceIntegrations device_integrations = 8;
-	string metadata = 9;
+	Make make = 9;
 
 	message CompatibleIntegrations {
 		string id = 1;
@@ -49,6 +49,13 @@ message GetDeviceDefinitionItemResponse {
 		string region = 5;
 		string country = 6;
 		string capabilities = 7;
+	}
+
+	message Make {
+		string id = 1;
+		string name = 2;
+		string log_url = 3;
+		string oem_platform_name = 4;
 	}
 }
 
