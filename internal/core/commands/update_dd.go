@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -15,17 +13,8 @@ import (
 )
 
 type UpdateDeviceDefinitionCommand struct {
-	DeviceDefinitionID  string  `json:"deviceDefinitionId"`
-	FuelType            string  `json:"fuel_type"`
-	DrivenWheels        string  `json:"driven_wheels"`
-	NumberOfDoors       int32   `json:"number_of_doors"`
-	BaseMSRP            int32   `json:"base_msrp"`
-	EPAClass            string  `json:"epa_class"`
-	VehicleType         string  `json:"vehicle_type"` // VehicleType PASSENGER CAR, from NHTSA
-	MPGHighway          float32 `json:"mpg_highway"`
-	MPGCity             float32 `json:"mpg_city"`
-	FuelTankCapacityGal float32 `json:"fuel_tank_capacity_gal"`
-	MPG                 float32 `json:"mpg,omitempty"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	VehicleInfo        UpdateDeviceVehicleInfo
 }
 
 type UpdateDeviceVehicleInfo struct {
@@ -82,16 +71,16 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
 	if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
-		deviceVehicleInfoMetaData.FuelType = command.FuelType
-		deviceVehicleInfoMetaData.DrivenWheels = command.DrivenWheels
-		deviceVehicleInfoMetaData.NumberOfDoors = strconv.Itoa(int(command.NumberOfDoors))
-		deviceVehicleInfoMetaData.BaseMSRP = int(command.BaseMSRP)
-		deviceVehicleInfoMetaData.EPAClass = command.EPAClass
-		deviceVehicleInfoMetaData.VehicleType = command.VehicleType
-		deviceVehicleInfoMetaData.MPGCity = fmt.Sprintf("%f", command.MPGCity)
-		deviceVehicleInfoMetaData.MPGHighway = fmt.Sprintf("%f", command.MPGHighway)
-		deviceVehicleInfoMetaData.MPG = fmt.Sprintf("%f", command.MPG)
-		deviceVehicleInfoMetaData.FuelTankCapacityGal = fmt.Sprintf("%f", command.FuelTankCapacityGal)
+		deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
+		deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
+		deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
+		deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
+		deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
+		deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
+		deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
+		deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
+		deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
+		deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
 	}
 
 	err = dd.Metadata.Marshal(deviceVehicleInfoMetaData)

@@ -62,17 +62,19 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
-		DeviceDefinitionID:  dd.ID,
-		FuelType:            "test",
-		DrivenWheels:        "test",
-		NumberOfDoors:       4,
-		BaseMSRP:            1,
-		EPAClass:            "test",
-		VehicleType:         "test",
-		MPGHighway:          1,
-		MPGCity:             1,
-		FuelTankCapacityGal: 1,
-		MPG:                 1,
+		DeviceDefinitionID: dd.ID,
+		VehicleInfo: UpdateDeviceVehicleInfo{
+			FuelType:            "test",
+			DrivenWheels:        "test",
+			NumberOfDoors:       "4",
+			BaseMSRP:            1,
+			EPAClass:            "test",
+			VehicleType:         "test",
+			MPGHighway:          "1",
+			MPGCity:             "1",
+			FuelTankCapacityGal: "1",
+			MPG:                 "1",
+		},
 	})
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 

@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -38,7 +40,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Year:  int(in.Year),
 	})
 
-	dd := qryResult.(queries.GetDeviceDefinitionQueryResult)
+	dd := qryResult.(models.GetDeviceDefinitionQueryResult)
 
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
@@ -164,17 +166,19 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionCommand{
-		DeviceDefinitionID:  in.DeviceDefinitionId,
-		FuelType:            in.VehicleData.FuelType,
-		DrivenWheels:        in.VehicleData.DrivenWheels,
-		NumberOfDoors:       in.VehicleData.NumberOfDoors,
-		BaseMSRP:            in.VehicleData.Base_MSRP,
-		EPAClass:            in.VehicleData.EPAClass,
-		VehicleType:         in.VehicleData.VehicleType,
-		MPGHighway:          in.VehicleData.MPGHighway,
-		FuelTankCapacityGal: in.VehicleData.FuelTankCapacityGal,
-		MPGCity:             in.VehicleData.MPGCity,
-		MPG:                 in.VehicleData.MPG,
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		VehicleInfo: commands.UpdateDeviceVehicleInfo{
+			FuelType:            in.VehicleData.FuelType,
+			DrivenWheels:        in.VehicleData.DrivenWheels,
+			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
+			BaseMSRP:            int(in.VehicleData.Base_MSRP),
+			EPAClass:            in.VehicleData.EPAClass,
+			VehicleType:         in.VehicleData.VehicleType,
+			MPGHighway:          fmt.Sprintf("%f", in.VehicleData.MPGHighway),
+			FuelTankCapacityGal: fmt.Sprintf("%f", in.VehicleData.FuelTankCapacityGal),
+			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
+			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
+		},
 	})
 
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)

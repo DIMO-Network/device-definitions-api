@@ -23,6 +23,9 @@ type Settings struct {
 	DrivlyAPIKey                string `yaml:"DRIVLY_API_KEY"`
 	DrivlyVINAPIURL             string `yaml:"DRIVLY_VIN_API_URL"`
 	DrivlyOfferAPIURL           string `yaml:"DRIVLY_OFFER_API_URL"`
+	RedisURL                    string `yaml:"REDIS_URL"`
+	RedisPassword               string `yaml:"REDIS_PASSWORD"`
+	RedisTLS                    bool   `yaml:"REDIS_TLS"`
 }
 
 // GetWriterDSN builds the connection string to the db writer - for now same as reader
