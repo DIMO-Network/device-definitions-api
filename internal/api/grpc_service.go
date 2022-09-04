@@ -38,11 +38,12 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Year:  int(in.Year),
 	})
 
-	dd := qryResult.(queries.GetDeviceDefinitionByMakeModelYearQueryResult)
+	dd := qryResult.(queries.GetDeviceDefinitionQueryResult)
 
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
 	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
 	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
 
 	result := &p_grpc.GetDeviceDefinitionItemResponse{
@@ -55,7 +56,13 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			Model: dd.Type.Model,
 			Year:  int32(dd.Type.Year),
 		},
-		VehicleData: &p_grpc.GetDeviceDefinitionItemResponse_VehicleInfo{
+		Make: &p_grpc.GetDeviceDefinitionItemResponse_Make{
+			Id:              dd.DeviceMake.ID,
+			Name:            dd.DeviceMake.Name,
+			LogUrl:          dd.DeviceMake.LogoURL.String,
+			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
+		},
+		VehicleData: &p_grpc.VehicleInfo{
 			FuelType:            dd.VehicleInfo.FuelType,
 			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
 			NumberOfDoors:       int32(numberOfDoors),
@@ -65,6 +72,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			MPGHighway:          float32(mpgHighway),
 			MPGCity:             float32(mpgCity),
 			FuelTankCapacityGal: float32(fuelTankCapacityGal),
+			MPG:                 float32(mpg),
 		},
 		Verified: dd.Verified,
 	}
@@ -151,4 +159,25 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
 
 	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionCommand{
+		DeviceDefinitionID:  in.DeviceDefinitionId,
+		FuelType:            in.VehicleData.FuelType,
+		DrivenWheels:        in.VehicleData.DrivenWheels,
+		NumberOfDoors:       in.VehicleData.NumberOfDoors,
+		BaseMSRP:            in.VehicleData.Base_MSRP,
+		EPAClass:            in.VehicleData.EPAClass,
+		VehicleType:         in.VehicleData.VehicleType,
+		MPGHighway:          in.VehicleData.MPGHighway,
+		FuelTankCapacityGal: in.VehicleData.FuelTankCapacityGal,
+		MPGCity:             in.VehicleData.MPGCity,
+		MPG:                 in.VehicleData.MPG,
+	})
+
+	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
+
+	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
 }
