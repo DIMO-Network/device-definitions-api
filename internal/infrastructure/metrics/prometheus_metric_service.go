@@ -26,7 +26,7 @@ func (d *prometheusMetricService) Success() {
 		Help: "Total successful",
 	})
 
-	c.Inc()
+	defer c.Inc()
 }
 
 func (d *prometheusMetricService) InternalError() {
@@ -35,7 +35,7 @@ func (d *prometheusMetricService) InternalError() {
 		Help: "Total error",
 	})
 
-	c.Inc()
+	defer c.Inc()
 }
 
 func (d *prometheusMetricService) BadRequestError() {
@@ -44,5 +44,5 @@ func (d *prometheusMetricService) BadRequestError() {
 		Help: "Total error",
 	})
 
-	c.Inc()
+	defer c.Inc()
 }
