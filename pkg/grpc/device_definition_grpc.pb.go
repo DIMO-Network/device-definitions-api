@@ -29,6 +29,7 @@ type DeviceDefinitionServiceClient interface {
 	CreateDeviceDefinition(ctx context.Context, in *CreateDeviceDefinitionRequest, opts ...grpc.CallOption) (*CreateDeviceDefinitionResponse, error)
 	CreateDeviceIntegration(ctx context.Context, in *CreateDeviceIntegrationRequest, opts ...grpc.CallOption) (*CreateDeviceIntegrationResponse, error)
 	UpdateDeviceDefinition(ctx context.Context, in *UpdateDeviceDefinitionRequest, opts ...grpc.CallOption) (*UpdateDeviceDefinitionResponse, error)
+	GetDeviceDefinitionByVIN(ctx context.Context, in *GetDeviceDefinitionByVINRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -102,6 +103,15 @@ func (c *deviceDefinitionServiceClient) UpdateDeviceDefinition(ctx context.Conte
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByVIN(ctx context.Context, in *GetDeviceDefinitionByVINRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error) {
+	out := new(GetDeviceDefinitionItemResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionByVIN", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -113,6 +123,7 @@ type DeviceDefinitionServiceServer interface {
 	CreateDeviceDefinition(context.Context, *CreateDeviceDefinitionRequest) (*CreateDeviceDefinitionResponse, error)
 	CreateDeviceIntegration(context.Context, *CreateDeviceIntegrationRequest) (*CreateDeviceIntegrationResponse, error)
 	UpdateDeviceDefinition(context.Context, *UpdateDeviceDefinitionRequest) (*UpdateDeviceDefinitionResponse, error)
+	GetDeviceDefinitionByVIN(context.Context, *GetDeviceDefinitionByVINRequest) (*GetDeviceDefinitionItemResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -140,6 +151,9 @@ func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceIntegration(contex
 }
 func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceDefinition(context.Context, *UpdateDeviceDefinitionRequest) (*UpdateDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeviceDefinition not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByVIN(context.Context, *GetDeviceDefinitionByVINRequest) (*GetDeviceDefinitionItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByVIN not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -281,6 +295,24 @@ func _DeviceDefinitionService_UpdateDeviceDefinition_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceDefinitionByVIN_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceDefinitionByVINRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByVIN(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitionByVIN",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByVIN(ctx, req.(*GetDeviceDefinitionByVINRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -315,6 +347,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateDeviceDefinition",
 			Handler:    _DeviceDefinitionService_UpdateDeviceDefinition_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitionByVIN",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitionByVIN_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
