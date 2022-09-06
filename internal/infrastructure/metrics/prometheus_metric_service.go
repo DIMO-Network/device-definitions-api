@@ -16,8 +16,8 @@ type PrometheusMetricService interface {
 type prometheusMetricService struct {
 }
 
-func NewMetricService() (PrometheusMetricService, error) {
-	return &prometheusMetricService{}, nil
+func NewMetricService() PrometheusMetricService {
+	return &prometheusMetricService{}
 }
 
 func (d *prometheusMetricService) Success() {

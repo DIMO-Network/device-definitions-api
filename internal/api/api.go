@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"log"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -31,9 +32,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	redisCache := gateways.NewRedisCacheService(settings, 1)
 
 	//infra
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	metrics := metrics.NewMetricService()
 
 	//repos
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 
@@ -56,7 +58,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.LoggingBehavior{}),
 		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService)),
