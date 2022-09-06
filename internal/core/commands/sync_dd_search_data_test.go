@@ -54,7 +54,7 @@ func (s *SyncSearchDataCommandHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand() {
+func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand_Success() {
 	ctx := context.Background()
 
 	model := "Testla"

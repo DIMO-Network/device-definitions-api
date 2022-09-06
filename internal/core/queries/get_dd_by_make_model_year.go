@@ -2,9 +2,9 @@ package queries
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
-
 	"github.com/TheFellow/go-mediator/mediator"
 )
 

@@ -1,11 +1,15 @@
+//go:generate mockgen -source cache_dd.go -destination mocks/cache_dd_mock.go -package mocks
+
 package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"time"
 
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
@@ -15,6 +19,8 @@ import (
 type DeviceDefinitionCacheService interface {
 	GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
+	DeleteDeviceDefinitionCacheByID(ctx context.Context, id string)
+	DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int)
 }
 
 type deviceDefinitionCacheService struct {
@@ -26,34 +32,70 @@ func NewDeviceDefinitionCacheService(cache gateways.RedisCacheService, repositor
 	return &deviceDefinitionCacheService{Cache: cache, Repository: repository}
 }
 
+const (
+	cacheLenghtHours            = 48
+	cacheDeviceDefinitionKey    = "device-definition-by-id-"
+	cacheDeviceDefinitionMMYKey = "device-definition-by-mmy-"
+)
+
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
 
-	cache := fmt.Sprintf("device-definition-by-id-%s", id)
+	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionKey, id)
+
+	val, _ := c.Cache.Get(ctx, cache).Bytes()
+
+	rp := &models.GetDeviceDefinitionQueryResult{}
+	if val != nil {
+		_ = json.Unmarshal(val, rp)
+		return rp, nil
+	}
+
 	dd, _ := c.Repository.GetByID(ctx, id)
 
 	if dd == nil {
 		return nil, fmt.Errorf("could not find device definition id: %s", id)
 	}
 
-	rp := buildDeviceDefinitionResult(dd)
+	rp = buildDeviceDefinitionResult(dd)
 
-	c.Cache.Set(ctx, cache, rp, 48*time.Hour)
+	rpJSON, _ := json.Marshal(rp)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
 
 	return rp, nil
 }
 
+func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByID(ctx context.Context, id string) {
+	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionKey, id)
+	c.Cache.Del(ctx, cache)
+}
+
+func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int) {
+	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, make, model, year)
+	c.Cache.Del(ctx, cache)
+}
+
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
 
-	cache := fmt.Sprintf("device-definition-by-%s-%s-%d", make, model, year)
+	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, make, model, year)
+
+	val, _ := c.Cache.Get(ctx, cache).Bytes()
+
+	rp := &models.GetDeviceDefinitionQueryResult{}
+	if val != nil {
+		_ = json.Unmarshal(val, rp)
+		return rp, nil
+	}
+
 	dd, _ := c.Repository.GetByMakeModelAndYears(ctx, make, model, year, true)
 
 	if dd == nil {
 		return nil, nil
 	}
 
-	rp := buildDeviceDefinitionResult(dd)
+	rp = buildDeviceDefinitionResult(dd)
 
-	c.Cache.Set(ctx, cache, rp, 48*time.Hour)
+	rpJSON, _ := json.Marshal(rp)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
 
 	return rp, nil
 }

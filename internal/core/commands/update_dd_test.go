@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"testing"
 
+	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
@@ -19,10 +20,11 @@ type UpdateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl      *gomock.Controller
-	pdb       db.Store
-	container testcontainers.Container
-	ctx       context.Context
+	ctrl                      *gomock.Controller
+	pdb                       db.Store
+	container                 testcontainers.Container
+	ctx                       context.Context
+	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
 
 	commandHandler UpdateDeviceDefinitionCommandHandler
 }
@@ -41,10 +43,11 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
+	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.commandHandler = NewUpdateDeviceDefinitionCommandHandler(s.pdb.DBS)
+	s.commandHandler = NewUpdateDeviceDefinitionCommandHandler(s.pdb.DBS, s.mockDeviceDefinitionCache)
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
@@ -60,6 +63,9 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	year := 2020
 
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
+
+	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,

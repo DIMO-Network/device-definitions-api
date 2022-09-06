@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -37,11 +39,12 @@ type UpdateDeviceDefinitionCommandResult struct {
 func (*UpdateDeviceDefinitionCommand) Key() string { return "UpdateDeviceDefinitionCommand" }
 
 type UpdateDeviceDefinitionCommandHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS     func() *db.ReaderWriter
+	DDCache services.DeviceDefinitionCacheService
 }
 
-func NewUpdateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter) UpdateDeviceDefinitionCommandHandler {
-	return UpdateDeviceDefinitionCommandHandler{DBS: dbs}
+func NewUpdateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) UpdateDeviceDefinitionCommandHandler {
+	return UpdateDeviceDefinitionCommandHandler{DBS: dbs, DDCache: cache}
 }
 
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -89,6 +92,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: err,
 		}
 	}
+
+	// Remove Cache
+	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
+	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
