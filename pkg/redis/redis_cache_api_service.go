@@ -1,6 +1,6 @@
 //go:generate mockgen -source redis_cache_api_service.go -destination mocks/redis_cache_api_service_mock.go -package mocks
 
-package gateways
+package redis
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// RedisCacheService combines methods of redis client and redis clustered client to have one impl that works for both, reduced to only what we use
-type RedisCacheService interface {
+// CacheService combines methods of redis client and redis clustered client to have one impl that works for both, reduced to only what we use
+type CacheService interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Get(ctx context.Context, key string) *redis.StringCmd
 	FlushAll(ctx context.Context) *redis.StatusCmd
@@ -22,13 +22,13 @@ type RedisCacheService interface {
 }
 
 // NewRedisCacheService establishes connection to Redis and creates client. db is the 0-16 db instance to use from redis.
-func NewRedisCacheService(settings *config.Settings, db int) RedisCacheService {
+func NewRedisCacheService(settings *config.Settings, db int) CacheService {
 	var tlsConfig *tls.Config
 	if settings.RedisTLS {
 		tlsConfig = new(tls.Config)
 	}
 
-	var r RedisCacheService
+	var r CacheService
 	// handle redis cluster in prod
 	if settings.Environment == "prod" { // || settings.Environment == "dev"
 		cc := redis.NewClusterClient(&redis.ClusterOptions{

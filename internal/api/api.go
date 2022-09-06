@@ -2,19 +2,18 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"log"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
+	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
@@ -29,10 +28,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb.WaitForDB(logger)
 
 	// redis
-	redisCache := gateways.NewRedisCacheService(settings, 1)
+	redisCache := redis.NewRedisCacheService(settings, 1)
 
 	//infra
-	metrics := metrics.NewMetricService()
+	metrics := metrics.NewMetricService(settings.ServiceName)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)

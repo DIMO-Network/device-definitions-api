@@ -3,6 +3,8 @@
 package metrics
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -14,15 +16,16 @@ type PrometheusMetricService interface {
 }
 
 type prometheusMetricService struct {
+	svc string
 }
 
-func NewMetricService() PrometheusMetricService {
-	return &prometheusMetricService{}
+func NewMetricService(serviceName string) PrometheusMetricService {
+	return &prometheusMetricService{svc: serviceName}
 }
 
 func (d *prometheusMetricService) Success() {
 	c := promauto.NewCounter(prometheus.CounterOpts{
-		Name: "device_definitions_api_request_success_ops_total",
+		Name: fmt.Sprintf("%s_request_success_ops_total", d.svc),
 		Help: "Total successful",
 	})
 
@@ -31,7 +34,7 @@ func (d *prometheusMetricService) Success() {
 
 func (d *prometheusMetricService) InternalError() {
 	c := promauto.NewCounter(prometheus.CounterOpts{
-		Name: "device_definitions_api_request_error_ops_total",
+		Name: fmt.Sprintf("%s_api_request_error_ops_total", d.svc),
 		Help: "Total error",
 	})
 
@@ -40,7 +43,7 @@ func (d *prometheusMetricService) InternalError() {
 
 func (d *prometheusMetricService) BadRequestError() {
 	c := promauto.NewCounter(prometheus.CounterOpts{
-		Name: "device_definitions_api_request_bad_ops_total",
+		Name: fmt.Sprintf("%s_api_request_bad_ops_total", d.svc),
 		Help: "Total error",
 	})
 

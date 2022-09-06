@@ -6,9 +6,9 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,8 +65,8 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand_Success() 
 
 	_ = setupDeviceDefinitionForSearchData(s.T(), s.pdb, mk, model, year)
 
-	engineDetail := gateways.EngineDetail{Name: metaEngineName, Type: &engineType}
-	getEnginesResp := &gateways.GetEnginesResp{Results: []gateways.EngineDetail{engineDetail}}
+	engineDetail := elastic.EngineDetail{Name: metaEngineName, Type: &engineType}
+	getEnginesResp := &elastic.GetEnginesResp{Results: []elastic.EngineDetail{engineDetail}}
 
 	s.mockElasticSearch.EXPECT().GetEngines().Return(getEnginesResp, nil).Times(1)
 	s.mockElasticSearch.EXPECT().CreateEngine(gomock.Any(), gomock.Any()).Return(&engineDetail, nil).Times(1)

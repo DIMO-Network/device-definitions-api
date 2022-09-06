@@ -2,8 +2,8 @@ package common
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 )

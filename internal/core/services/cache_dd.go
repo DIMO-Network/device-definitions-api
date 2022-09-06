@@ -10,10 +10,9 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
-
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
 )
 
 type DeviceDefinitionCacheService interface {
@@ -24,11 +23,11 @@ type DeviceDefinitionCacheService interface {
 }
 
 type deviceDefinitionCacheService struct {
-	Cache      gateways.RedisCacheService
+	Cache      redis.CacheService
 	Repository repositories.DeviceDefinitionRepository
 }
 
-func NewDeviceDefinitionCacheService(cache gateways.RedisCacheService, repository repositories.DeviceDefinitionRepository) DeviceDefinitionCacheService {
+func NewDeviceDefinitionCacheService(cache redis.CacheService, repository repositories.DeviceDefinitionRepository) DeviceDefinitionCacheService {
 	return &deviceDefinitionCacheService{Cache: cache, Repository: repository}
 }
 

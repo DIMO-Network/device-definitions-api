@@ -5,9 +5,9 @@
 package mocks
 
 import (
-	gateways "github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	reflect "reflect"
 
+	elastic "github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,10 +35,10 @@ func (m *MockElasticSearchService) EXPECT() *MockElasticSearchServiceMockRecorde
 }
 
 // AddSourceEngineToMetaEngine mocks base method.
-func (m *MockElasticSearchService) AddSourceEngineToMetaEngine(sourceName, metaName string) (*gateways.EngineDetail, error) {
+func (m *MockElasticSearchService) AddSourceEngineToMetaEngine(sourceName, metaName string) (*elastic.EngineDetail, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddSourceEngineToMetaEngine", sourceName, metaName)
-	ret0, _ := ret[0].(*gateways.EngineDetail)
+	ret0, _ := ret[0].(*elastic.EngineDetail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -50,10 +50,10 @@ func (mr *MockElasticSearchServiceMockRecorder) AddSourceEngineToMetaEngine(sour
 }
 
 // CreateDocuments mocks base method.
-func (m *MockElasticSearchService) CreateDocuments(docs []gateways.DeviceDefinitionSearchDoc, engineName string) ([]gateways.CreateDocsResp, error) {
+func (m *MockElasticSearchService) CreateDocuments(docs []elastic.DeviceDefinitionSearchDoc, engineName string) ([]elastic.CreateDocsResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateDocuments", docs, engineName)
-	ret0, _ := ret[0].([]gateways.CreateDocsResp)
+	ret0, _ := ret[0].([]elastic.CreateDocsResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -65,7 +65,7 @@ func (mr *MockElasticSearchServiceMockRecorder) CreateDocuments(docs, engineName
 }
 
 // CreateDocumentsBatched mocks base method.
-func (m *MockElasticSearchService) CreateDocumentsBatched(docs []gateways.DeviceDefinitionSearchDoc, engineName string) error {
+func (m *MockElasticSearchService) CreateDocumentsBatched(docs []elastic.DeviceDefinitionSearchDoc, engineName string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateDocumentsBatched", docs, engineName)
 	ret0, _ := ret[0].(error)
@@ -79,10 +79,10 @@ func (mr *MockElasticSearchServiceMockRecorder) CreateDocumentsBatched(docs, eng
 }
 
 // CreateEngine mocks base method.
-func (m *MockElasticSearchService) CreateEngine(name string, metaSource *string) (*gateways.EngineDetail, error) {
+func (m *MockElasticSearchService) CreateEngine(name string, metaSource *string) (*elastic.EngineDetail, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateEngine", name, metaSource)
-	ret0, _ := ret[0].(*gateways.EngineDetail)
+	ret0, _ := ret[0].(*elastic.EngineDetail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -108,10 +108,10 @@ func (mr *MockElasticSearchServiceMockRecorder) DeleteEngine(name interface{}) *
 }
 
 // GetEngines mocks base method.
-func (m *MockElasticSearchService) GetEngines() (*gateways.GetEnginesResp, error) {
+func (m *MockElasticSearchService) GetEngines() (*elastic.GetEnginesResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEngines")
-	ret0, _ := ret[0].(*gateways.GetEnginesResp)
+	ret0, _ := ret[0].(*elastic.GetEnginesResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -151,10 +151,10 @@ func (mr *MockElasticSearchServiceMockRecorder) LoadDeviceDefinitions() *gomock.
 }
 
 // RemoveSourceEngine mocks base method.
-func (m *MockElasticSearchService) RemoveSourceEngine(sourceName, metaName string) (*gateways.EngineDetail, error) {
+func (m *MockElasticSearchService) RemoveSourceEngine(sourceName, metaName string) (*elastic.EngineDetail, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveSourceEngine", sourceName, metaName)
-	ret0, _ := ret[0].(*gateways.EngineDetail)
+	ret0, _ := ret[0].(*elastic.EngineDetail)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
