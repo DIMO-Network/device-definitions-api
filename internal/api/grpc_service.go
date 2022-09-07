@@ -185,16 +185,3 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 
 	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
 }
-
-func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.CreateDeviceIntegrationResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceIntegrationCommand{
-		DeviceDefinitionId: in.DeviceDefinitionId,
-		IntegrationId:      in.IntegrationId,
-		Region:             in.Region,
-	})
-
-	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
-
-	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.Id}, nil
-}

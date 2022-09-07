@@ -55,10 +55,11 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 }
 
 func (s *CacheDeviceDefinitionSuite) TearDownTest() {
+	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
 }
 
-func (s *CacheDeviceDefinitionSuite) TestCacheDeviceDefinition_Success() {
+func (s *CacheDeviceDefinitionSuite) TestCacheDeviceDefinitionByID_Success() {
 	ctx := context.Background()
 
 	model := "Hummer"
@@ -71,6 +72,24 @@ func (s *CacheDeviceDefinitionSuite) TestCacheDeviceDefinition_Success() {
 	s.mockRedis.EXPECT().Set(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	result, err := s.cache.GetDeviceDefinitionByID(ctx, dd.ID)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.DeviceDefinitionID, dd.ID)
+}
+
+func (s *CacheDeviceDefinitionSuite) TestCacheDeviceDefinitionByMMY_Success() {
+	ctx := context.Background()
+
+	model := "Hummer"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
+
+	s.mockRedis.EXPECT().Get(ctx, gomock.Any()).Times(1)
+	s.mockRedis.EXPECT().Set(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
+	result, err := s.cache.GetDeviceDefinitionByMakeModelAndYears(ctx, mk, model, year)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.DeviceDefinitionID, dd.ID)

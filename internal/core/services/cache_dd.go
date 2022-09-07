@@ -40,11 +40,12 @@ const (
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionKey, id)
-
-	val, _ := c.Cache.Get(ctx, cache).Bytes()
+	cacheData := c.Cache.Get(ctx, cache)
 
 	rp := &models.GetDeviceDefinitionQueryResult{}
-	if val != nil {
+
+	if cacheData != nil {
+		val, _ := cacheData.Bytes()
 		_ = json.Unmarshal(val, rp)
 		return rp, nil
 	}
@@ -76,11 +77,12 @@ func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndY
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, make, model, year)
-
-	val, _ := c.Cache.Get(ctx, cache).Bytes()
+	cacheData := c.Cache.Get(ctx, cache)
 
 	rp := &models.GetDeviceDefinitionQueryResult{}
-	if val != nil {
+
+	if cacheData != nil {
+		val, _ := cacheData.Bytes()
 		_ = json.Unmarshal(val, rp)
 		return rp, nil
 	}
