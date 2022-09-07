@@ -2,11 +2,10 @@ package queries
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -16,8 +15,8 @@ type GetDeviceDefinitionByIDQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl           *gomock.Controller
-	mockRepository *mocks.MockDeviceDefinitionRepository
+	ctrl                      *gomock.Controller
+	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
 
 	queryHandler GetDeviceDefinitionByIDQueryHandler
 }
@@ -30,9 +29,9 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
 
-	s.queryHandler = NewGetDeviceDefinitionByIDQueryHandler(s.mockRepository)
+	s.queryHandler = NewGetDeviceDefinitionByIDQueryHandler(s.mockDeviceDefinitionCache)
 }
 
 func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TearDownTest() {
@@ -42,37 +41,31 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TearDownTest() {
 func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
-	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl-INT"
-	vendor := "AutoPI"
-	style := ""
-	makeID := "1"
 	mk := "Toyota"
+	makeID := "1"
 	model := "Hummer"
+	year := 2020
 
-	dd := &models.DeviceDefinition{
-		ID:    deviceDefinitionID,
-		Model: model,
-		Year:  2000,
-	}
-
-	di := &models.DeviceIntegration{
+	dd := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: deviceDefinitionID,
-		IntegrationID:      integrationID,
-		Region:             "east-us",
+		DeviceMake: models.DeviceMake{
+			ID:   makeID,
+			Name: mk,
+		},
+		Type: models.DeviceType{
+			Model: model,
+			Year:  year,
+			Make:  mk,
+		},
+		Verified: true,
 	}
-	di.R = di.R.NewStruct()
-	di.R.Integration = &models.Integration{ID: "1", Type: "", Style: style, Vendor: vendor}
 
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
-	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
-
-	s.mockRepository.EXPECT().GetByID(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().GetDeviceDefinitionByID(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
 	})
-	result := qryResult.(GetDeviceDefinitionQueryResult)
+	result := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
@@ -84,7 +77,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_E
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
-	s.mockRepository.EXPECT().GetByID(ctx, gomock.Any()).Return(nil, nil).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().GetDeviceDefinitionByID(ctx, gomock.Any()).Return(nil, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
 		DeviceDefinitionID: deviceDefinitionID,
@@ -92,5 +85,4 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_E
 
 	s.Nil(qryResult)
 	s.Error(err)
-	s.EqualError(err, fmt.Sprintf("could not find device definition id: %s", deviceDefinitionID))
 }

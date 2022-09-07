@@ -11,6 +11,8 @@ services:
       - POSTGRES_USER=dimo
       - POSTGRES_PASSWORD=dimo
       - POSTGRES_DB=device_definitions_api
+    volumes:
+      - postgresdb:/var/lib/postgresql/data:delegated
       
   jaeger:
     image: jaegertracing/all-in-one:1.22.0
@@ -32,3 +34,21 @@ services:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:8081:8081"
       - "127.0.0.1:5001:5001"
+
+  redis:
+    image: redis:6.2 # latest version on ElastiCache
+    container_name: redis-devices-api
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data:delegated
+
+volumes:
+  postgresdb:
+    driver: local
+  redis:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge

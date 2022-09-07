@@ -1,6 +1,6 @@
 //go:generate mockgen -source elastic_search_api_service.go -destination mocks/elastic_search_api_service_mock.go -package mocks
 
-package gateways
+package elastic
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type ElasticSearchService interface {
+type SearchService interface {
 	LoadDeviceDefinitions() error
 	GetEngines() (*GetEnginesResp, error)
 	CreateEngine(name string, metaSource *string) (*EngineDetail, error)
@@ -37,7 +37,7 @@ type elasticSearchService struct {
 	log            zerolog.Logger
 }
 
-func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (ElasticSearchService, error) {
+func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (SearchService, error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 10,
 	}

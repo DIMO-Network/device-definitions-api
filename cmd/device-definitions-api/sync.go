@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 
@@ -20,7 +21,7 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
 
 	//infra
-	elasticSearchService, _ := gateways.NewElasticSearchService(s, logger)
+	elasticSearchService, _ := elastic.NewElasticSearchService(s, logger)
 
 	//commands
 	m, _ := mediator.New(

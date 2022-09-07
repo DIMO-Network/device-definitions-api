@@ -10,7 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -26,10 +26,10 @@ func (*SyncSearchDataCommand) Key() string { return "SyncSearchDataCommand" }
 
 type SyncSearchDataCommandHandler struct {
 	DBS   func() *db.ReaderWriter
-	esSvc gateways.ElasticSearchService
+	esSvc elastic.SearchService
 }
 
-func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc gateways.ElasticSearchService) SyncSearchDataCommandHandler {
+func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc elastic.SearchService) SyncSearchDataCommandHandler {
 	return SyncSearchDataCommandHandler{DBS: dbs, esSvc: esSvc}
 }
 
@@ -54,14 +54,14 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		return nil, errors.New("0 items found to index, stopping")
 	}
 	metaEngineName := ch.esSvc.GetMetaEngineName()
-	docs := make([]gateways.DeviceDefinitionSearchDoc, len(all))
+	docs := make([]elastic.DeviceDefinitionSearchDoc, len(all))
 	for i, definition := range all {
 		sd := fmt.Sprintf("%d %s %s", definition.Year, definition.R.DeviceMake.Name, definition.Model)
 		sm := common.SubModelsFromStylesDB(definition.R.DeviceStyles)
 		for i2, s := range sm {
 			sm[i2] = sd + " " + s
 		}
-		docs[i] = gateways.DeviceDefinitionSearchDoc{
+		docs[i] = elastic.DeviceDefinitionSearchDoc{
 			ID:            definition.ID,
 			SearchDisplay: sd,
 			Make:          definition.R.DeviceMake.Name,
@@ -84,7 +84,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	}
 	fmt.Printf("created documents in engine %s", tempEngine.Name)
 
-	var metaEngine *gateways.EngineDetail
+	var metaEngine *elastic.EngineDetail
 	var previousTempEngines []string
 	// look for existing meta engine, and any previous core engines that should be removed.
 	for _, result := range existingEngines.Results {

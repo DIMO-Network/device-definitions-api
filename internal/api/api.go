@@ -2,17 +2,18 @@ package api
 
 import (
 	"context"
-
 	"log"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
+	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
@@ -26,12 +27,19 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb := db.NewDbConnectionFromSettings(ctx, settings, true)
 	pdb.WaitForDB(logger)
 
+	// redis
+	redisCache := redis.NewRedisCacheService(settings, 1)
+
 	//infra
+	metrics := metrics.NewMetricService(settings.ServiceName)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
+
+	//cache services
+	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
@@ -49,16 +57,16 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.LoggingBehavior{}),
 		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
-		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(pdb.DBS, ddCacheService)),
 	)
 
 	//fiber

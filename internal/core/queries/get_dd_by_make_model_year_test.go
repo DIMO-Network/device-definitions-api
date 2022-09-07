@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,8 +16,8 @@ type GetDeviceDefinitionByMakeModelYearQuerySuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl           *gomock.Controller
-	mockRepository *mocks.MockDeviceDefinitionRepository
+	ctrl                      *gomock.Controller
+	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
 
 	queryHandler GetDeviceDefinitionByMakeModelYearQueryHandler
 }
@@ -30,9 +30,9 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
-	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
 
-	s.queryHandler = NewGetDeviceDefinitionByMakeModelYearQueryHandler(s.mockRepository)
+	s.queryHandler = NewGetDeviceDefinitionByMakeModelYearQueryHandler(s.mockDeviceDefinitionCache)
 }
 
 func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TearDownTest() {
@@ -47,24 +47,28 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 	mk := "Toyota"
 	year := 2020
 
-	dd := &models.DeviceDefinition{
-		ID:           deviceDefinitionID,
-		Model:        model,
-		Year:         int16(year),
-		DeviceMakeID: makeID,
-		Verified:     true,
+	dd := &models.GetDeviceDefinitionQueryResult{
+		DeviceDefinitionID: deviceDefinitionID,
+		DeviceMake: models.DeviceMake{
+			ID:   makeID,
+			Name: mk,
+		},
+		Type: models.DeviceType{
+			Model: model,
+			Year:  year,
+			Make:  mk,
+		},
+		Verified: true,
 	}
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &models.DeviceMake{ID: makeID, Name: mk}
 
-	s.mockRepository.EXPECT().GetByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().GetDeviceDefinitionByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByMakeModelYearQuery{
 		Make:  mk,
 		Model: model,
 		Year:  year,
 	})
-	result := qryResult.(GetDeviceDefinitionQueryResult)
+	result := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
 	s.NoError(err)
 	assert.Equal(s.T(), deviceDefinitionID, result.DeviceDefinitionID)
