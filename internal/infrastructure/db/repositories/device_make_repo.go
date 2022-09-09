@@ -5,11 +5,11 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
