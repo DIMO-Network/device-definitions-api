@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -63,7 +64,7 @@ func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message
 	r, err := next(ctx)
 	if err != nil {
 		// increment error metric
-		p.prometheusMetricService.InternalError()
+		p.prometheusMetricService.InternalError(msg.Key())
 		// msg.Key contains the property names, and msg contains the property values that were passed into the function to execute.
 		// this automatically logs any incoming properties for easy debugging. An improvement here could be to use reflection to map out the properties to the log context.
 		p.log.Error().
@@ -74,7 +75,7 @@ func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message
 	}
 	//reflect.TypeOf(next).Name() to get name of the method
 	// if no error, increment overall success metric
-	p.prometheusMetricService.Success()
+	p.prometheusMetricService.Success(msg.Key())
 
 	return r, nil
 }

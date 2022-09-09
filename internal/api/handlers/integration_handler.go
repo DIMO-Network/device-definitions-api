@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetDeviceIntegrationsByID godoc
 // @Summary gets all the available integrations for a device definition.
 // @ID GetDeviceIntegrationsByID
 // @Description gets all the available integrations for a device definition. Includes the capabilities of the device with the integration
@@ -27,6 +28,7 @@ func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 	}
 }
 
+// GetIntegrations godoc
 // @Summary gets list of integrations we have defined.
 // @ID GetDeviceIntegrationsByID
 // @Description gets list of integrations we have defined.

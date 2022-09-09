@@ -30,6 +30,7 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	}
 }
 
+// GetDeviceDefinitionAll godoc
 // @Summary gets all device definitions by Makes, models, and years
 // @ID GetDeviceDefinitionByMakeModelsAndYears
 // @Description gets a device definition
@@ -49,6 +50,7 @@ func GetDeviceDefinitionAll(m mediator.Mediator) fiber.Handler {
 	}
 }
 
+// GetDeviceDefinitionByMMY godoc
 // @Summary gets a specific device definition by make model and year.
 // @ID GetDeviceIntegrationsByID
 // @Description gets a specific device definition by make model and year.
