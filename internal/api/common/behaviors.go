@@ -65,7 +65,7 @@ func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message
 		// increment error metric
 		p.prometheusMetricService.InternalError()
 		// msg.Key contains the property names, and msg contains the property values that were passed into the function to execute.
-		// this automatically logs any incoming properties for easy debugging
+		// this automatically logs any incoming properties for easy debugging. An improvement here could be to use reflection to map out the properties to the log context.
 		p.log.Error().
 			Err(err).
 			Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
