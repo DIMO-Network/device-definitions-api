@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetDeviceDefinitionByID godoc
 // @Summary gets a device definition
 // @ID GetByID
 // @Description gets a device definition

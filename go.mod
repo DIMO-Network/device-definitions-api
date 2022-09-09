@@ -16,6 +16,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.6.1
+	github.com/prometheus/client_golang v1.13.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.8.0
 	github.com/swaggo/swag v1.8.1
@@ -57,7 +58,6 @@ require (
 	github.com/multiformats/go-multibase v0.0.3 // indirect
 	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect

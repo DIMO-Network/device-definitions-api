@@ -45,7 +45,7 @@ func FiberConfig() fiber.Config {
 	}
 }
 
-func GrpcConfig(p interface{}) (err error) {
+func GrpcConfig(p any) (err error) {
 
 	if e, ok := p.(*exceptions.ValidationError); ok {
 		return status.Errorf(codes.InvalidArgument, e.Error())
