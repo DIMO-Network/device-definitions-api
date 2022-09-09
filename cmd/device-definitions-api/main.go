@@ -16,20 +16,21 @@ func main() {
 	gitSha1 := os.Getenv("GIT_SHA1")
 	ctx := context.Background()
 	arg := ""
+
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
 	}
-
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("app", "device-definitions-api").
-		Str("git-sha1", gitSha1).
-		Logger()
 
 	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)
 	}
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", settings.ServiceName).
+		Str("git-sha1", gitSha1).
+		Logger()
 
 	switch arg {
 	case "migrate":

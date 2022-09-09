@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -60,14 +60,14 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &common.InternalError{
+			return nil, &exceptions.InternalError{
 				Err: err,
 			}
 		}
 	}
 
 	if err != nil {
-		return nil, &common.NotFoundError{
+		return nil, &exceptions.NotFoundError{
 			Err: fmt.Errorf("could not find device definition id: %s", command.DeviceDefinitionID),
 		}
 	}
@@ -88,7 +88,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	err = dd.Metadata.Marshal(deviceVehicleInfoMetaData)
 	if err != nil {
-		return nil, &common.InternalError{
+		return nil, &exceptions.InternalError{
 			Err: err,
 		}
 	}

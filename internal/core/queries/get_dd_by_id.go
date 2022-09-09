@@ -2,9 +2,9 @@ package queries
 
 import (
 	"context"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
@@ -30,9 +30,13 @@ func (ch GetDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context, query 
 
 	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID)
 
+	if err != nil {
+		return nil, err
+	}
+
 	if dd == nil {
-		return nil, &common.NotFoundError{
-			Err: err,
+		return nil, &exceptions.NotFoundError{
+			Err: fmt.Errorf("could not find device definition id: %s", qry.DeviceDefinitionID),
 		}
 	}
 

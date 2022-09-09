@@ -5,6 +5,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
@@ -34,7 +35,11 @@ func (r *deviceMakeRepository) GetAll(ctx context.Context) ([]*models.DeviceMake
 	makes, err := models.DeviceMakes(qm.OrderBy(models.DeviceMakeColumns.Name)).All(ctx, r.DBS().Reader)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*models.DeviceMake{}, err
+		}
+
+		return nil, &exceptions.InternalError{Err: err}
 	}
 
 	return makes, err
@@ -51,7 +56,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string)
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
-				return nil, errors.Wrapf(err, "error inserting make: %s", makeName)
+				return nil, &exceptions.InternalError{Err: errors.Wrapf(err, "error inserting make: %s", makeName)}
 			}
 			return m, nil
 		}

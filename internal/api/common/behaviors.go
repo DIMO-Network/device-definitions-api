@@ -2,28 +2,44 @@ package common
 
 import (
 	"context"
-
+	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 )
 
-type LoggingBehavior struct{}
+type LoggingBehavior struct {
+	log      *zerolog.Logger
+	settings *config.Settings
+}
+
+func NewLoggingBehavior(log *zerolog.Logger, settings *config.Settings) LoggingBehavior {
+	return LoggingBehavior{log: log, settings: settings}
+}
 
 func (p LoggingBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
-
-	// _, span := trace.NewSpan(ctx, fmt.Sprintf("dimo device-definitions-api request : %v - %+v", msg.Key(), msg))
-	// defer span.End()
+	p.log.Info().Msg(fmt.Sprintf("%s request logging : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
 
 	return next(ctx)
 }
 
-type ValidationBehavior struct{}
+type ValidationBehavior struct {
+	log      *zerolog.Logger
+	settings *config.Settings
+}
+
+func NewValidationBehavior(log *zerolog.Logger, settings *config.Settings) ValidationBehavior {
+	return ValidationBehavior{log: log, settings: settings}
+}
 
 func (p ValidationBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
 
 	valErrors := Validate(msg)
 	if valErrors != nil {
+		p.log.Error().Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
+
 		panic(fiber.NewError(400, valErrors[0].Field))
 	}
 	return next(ctx)
@@ -31,10 +47,12 @@ func (p ValidationBehavior) Process(ctx context.Context, msg mediator.Message, n
 
 type ErrorHandlingBehavior struct {
 	prometheusMetricService metrics.PrometheusMetricService
+	log                     *zerolog.Logger
+	settings                *config.Settings
 }
 
-func NewErrorHandlingBehavior(prometheusMetricService metrics.PrometheusMetricService) ErrorHandlingBehavior {
-	return ErrorHandlingBehavior{prometheusMetricService: prometheusMetricService}
+func NewErrorHandlingBehavior(prometheusMetricService metrics.PrometheusMetricService, log *zerolog.Logger, settings *config.Settings) ErrorHandlingBehavior {
+	return ErrorHandlingBehavior{prometheusMetricService: prometheusMetricService, log: log, settings: settings}
 }
 
 func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
@@ -42,6 +60,8 @@ func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message
 	r, err := next(ctx)
 	if err != nil {
 		p.prometheusMetricService.InternalError()
+		p.log.Error().Err(err)
+		p.log.Error().Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
 		panic(err)
 	}
 

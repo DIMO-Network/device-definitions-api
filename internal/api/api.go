@@ -31,7 +31,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	redisCache := redis.NewRedisCacheService(settings, 1)
 
 	//infra
-	metrics := metrics.NewMetricService(settings.ServiceName)
+	metrics := metrics.NewMetricService(settings.ServiceName, settings)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -55,9 +55,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics)),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics, &logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService)),
