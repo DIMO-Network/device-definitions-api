@@ -1,7 +1,7 @@
 package api
 
 import (
-	"log"
+	"github.com/rs/zerolog"
 	"net"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
@@ -13,10 +13,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
+func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Mediator) {
 	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
-		log.Fatalf("Failed to listen on port %v: %v", s.GRPCPort, err)
+		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
 	opts := []grpc_recovery.Option{
@@ -33,6 +33,7 @@ func StartGrpcServer(s *config.Settings, m mediator.Mediator) {
 	pkggrpc.RegisterDeviceDefinitionServiceServer(server, service)
 
 	if err := server.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve over port %v: %v", s.GRPCPort, err)
+		logger.Fatal().Msgf("Failed to serve over port %v: %v", s.GRPCPort, err)
 	}
+	logger.Info().Msgf("started grpc server on port: %d", s.GRPCPort)
 }

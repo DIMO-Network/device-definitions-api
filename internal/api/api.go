@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
-	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -32,7 +35,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	redisCache := redis.NewRedisCacheService(settings.Environment == "prod", settings.Redis)
 
 	//infra
-	metricsSvc := metrics.NewMetricService(settings.ServiceName, settings)
+	metricsSvc := metrics.NewMetricService(strings.ReplaceAll(settings.ServiceName, "-", "_"), settings)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -86,7 +89,20 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(settings, *m)
+	go StartGrpcServer(logger, settings, *m)
 
-	log.Fatal(app.Listen(":" + settings.Port))
+	// Start Server from a different go routine
+	go func() {
+		if err := app.Listen(":" + settings.Port); err != nil {
+			logger.Fatal().Err(err)
+		}
+	}()
+	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
+	<-c                                             // This blocks the main thread until an interrupt is received
+	logger.Info().Msg("Gracefully shutting down and running cleanup tasks...")
+	_ = ctx.Done()
+	_ = app.Shutdown()
+	_ = pdb.DBS().Writer.Close()
+	_ = pdb.DBS().Reader.Close()
 }

@@ -4,10 +4,11 @@ package metrics
 
 import (
 	"fmt"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"regexp"
+	"strings"
 )
 
 type PrometheusMetricService interface {
@@ -21,8 +22,12 @@ type prometheusMetricService struct {
 	settings *config.Settings
 }
 
-func NewMetricService(serviceName string, settings *config.Settings) PrometheusMetricService {
-	return &prometheusMetricService{svc: serviceName, settings: settings}
+func NewMetricService(metricPrefix string, settings *config.Settings) PrometheusMetricService {
+	match, _ := regexp.MatchString("^[a-zA-Z_:][a-zA-Z0-9_:]*", metricPrefix)
+	if !match || strings.Contains(metricPrefix, "-") { // go has issue with not matching hyphen in regex
+		panic("invalid metric name prefix")
+	}
+	return &prometheusMetricService{svc: metricPrefix, settings: settings}
 }
 
 func (d *prometheusMetricService) Success(label string) {
