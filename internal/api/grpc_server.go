@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/rs/zerolog"
 	"net"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
@@ -10,6 +9,7 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
 

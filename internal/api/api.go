@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/gofiber/adaptor/v2"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"os"
 	"os/signal"
 	"strings"
@@ -22,8 +20,10 @@ import (
 	"github.com/DIMO-Network/zflogger"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 )
 
