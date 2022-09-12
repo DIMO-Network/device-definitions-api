@@ -43,6 +43,10 @@ func main() {
 		smartCarCompatibility(ctx, &settings, logger)
 	case "smartcar-sync":
 		smartCarSync(ctx, &settings, logger)
+	case "create-tesla-integrations":
+		if err := createTeslaIntegrations(ctx, logger, &settings); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create Tesla integrations")
+		}
 	default:
 		api.Run(ctx, logger, &settings)
 	}

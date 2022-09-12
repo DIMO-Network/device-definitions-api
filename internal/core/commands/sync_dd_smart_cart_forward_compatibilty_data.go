@@ -39,7 +39,6 @@ func NewSyncSmartCartForwardCompatibilityCommandHandler(dbs func() *db.ReaderWri
 }
 
 func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-	AmericasRegion := "Americas"
 	integrationID, err := ch.scSvc.GetOrCreateSmartCarIntegration(ctx)
 
 	if err != nil {
@@ -86,8 +85,8 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 						diGap := models.DeviceIntegration{
 							DeviceDefinitionID: gapDd.ID,
 							IntegrationID:      integrationID,
-							Region:             AmericasRegion, // default
-							Capabilities:       null.JSON{},    // we'd need to copy from previous dd?
+							Region:             common.AmericasRegion.String(), // default
+							Capabilities:       null.JSON{},                    // we'd need to copy from previous dd?
 						}
 						err = diGap.Insert(ctx, ch.DBS().Writer, boil.Infer())
 						if err != nil {
@@ -115,8 +114,8 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 				diGap := models.DeviceIntegration{
 					DeviceDefinitionID: nextYearDd.ID,
 					IntegrationID:      integrationID,
-					Region:             AmericasRegion, // default
-					Capabilities:       null.JSON{},    // we'd need to copy from previous dd?
+					Region:             common.AmericasRegion.String(), // default
+					Capabilities:       null.JSON{},                    // we'd need to copy from previous dd?
 				}
 				err = diGap.Insert(ctx, ch.DBS().Writer, boil.Infer())
 				if err != nil {
