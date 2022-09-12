@@ -13,7 +13,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
-	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
+	"github.com/DIMO-Network/shared/redis"
+	"github.com/DIMO-Network/zflogger"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
@@ -28,10 +29,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb.WaitForDB(logger)
 
 	// redis
-	redisCache := redis.NewRedisCacheService(settings, 1)
+	redisCache := redis.NewRedisCacheService(settings.Environment == "prod", settings.Redis)
 
 	//infra
-	metrics := metrics.NewMetricService(settings.ServiceName, settings)
+	metricsSvc := metrics.NewMetricService(settings.ServiceName, settings)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -57,7 +58,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics, &logger, settings)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metricsSvc, &logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService)),
@@ -70,9 +71,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	)
 
 	//fiber
-	app := fiber.New(common.FiberConfig())
+	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
 
 	app.Use(recover.New())
+	app.Use(zflogger.New(logger, nil))
 
 	//routes
 	app.Get("/", func(c *fiber.Ctx) error {

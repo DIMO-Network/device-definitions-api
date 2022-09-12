@@ -7,8 +7,8 @@ Api for managing device definitions on the DIMO platform.
 ```bash
 cp settings.sample.yaml settings.yaml
 docker compose up -d
-go run ./cmd/devices-api migrate
-go run ./cmd/devices-api
+go run ./cmd/device-definitions-api migrate
+go run ./cmd/device-definitions-api
 ```
 
 ## Generating client and server code

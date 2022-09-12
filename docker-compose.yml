@@ -13,14 +13,6 @@ services:
       - POSTGRES_DB=device_definitions_api
     volumes:
       - postgresdb:/var/lib/postgresql/data:delegated
-      
-  jaeger:
-    image: jaegertracing/all-in-one:1.22.0
-    platform: linux/amd64
-    container_name: jaeger-device-definitions
-    ports:
-      - 14268:14268 # jaeger-collector HTTP server (tracer provider)
-      - 16686:16686 # HTTP server (browser UI)
 
   ipfs:
     image: ipfs/go-ipfs:latest
@@ -37,7 +29,7 @@ services:
 
   redis:
     image: redis:6.2 # latest version on ElastiCache
-    container_name: redis-devices-api
+    container_name: redis-device-definitions-api
     ports:
       - "6379:6379"
     volumes:

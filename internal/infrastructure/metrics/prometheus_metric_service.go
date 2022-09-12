@@ -26,35 +26,28 @@ func NewMetricService(serviceName string, settings *config.Settings) PrometheusM
 }
 
 func (d *prometheusMetricService) Success(label string) {
-	if d.settings.Environment == "prod" {
-		c := promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_request_success_ops_total", d.svc),
-			Help: "Total successful",
-		}, []string{"method"})
+	c := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_request_success_ops_total", d.svc),
+		Help: "Total successful",
+	}, []string{"method"})
 
-		defer c.With(prometheus.Labels{"method": label}).Inc()
-	}
+	defer c.With(prometheus.Labels{"method": label}).Inc()
 }
 
 func (d *prometheusMetricService) InternalError(label string) {
-	if d.settings.Environment == "prod" {
-		c := promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_api_request_error_ops_total", d.svc),
-			Help: "Total error",
-		}, []string{"method"})
+	c := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_api_request_error_ops_total", d.svc),
+		Help: "Total error",
+	}, []string{"method"})
 
-		defer c.With(prometheus.Labels{"method": label}).Inc()
-	}
-
+	defer c.With(prometheus.Labels{"method": label}).Inc()
 }
 
 func (d *prometheusMetricService) BadRequestError(label string) {
-	if d.settings.Environment == "prod" {
-		c := promauto.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_api_request_bad_ops_total", d.svc),
-			Help: "Total error",
-		}, []string{"method"})
+	c := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_api_request_bad_ops_total", d.svc),
+		Help: "Total error",
+	}, []string{"method"})
 
-		defer c.With(prometheus.Labels{"method": label}).Inc()
-	}
+	defer c.With(prometheus.Labels{"method": label}).Inc()
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
+	"github.com/DIMO-Network/shared/redis"
 )
 
 type DeviceDefinitionCacheService interface {

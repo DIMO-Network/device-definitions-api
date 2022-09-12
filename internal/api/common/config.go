@@ -7,8 +7,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func FiberConfig() fiber.Config {
+func FiberConfig(disableStartupMsg bool) fiber.Config {
 	return fiber.Config{
+		DisableStartupMessage: disableStartupMsg,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 
 			code := fiber.StatusInternalServerError
