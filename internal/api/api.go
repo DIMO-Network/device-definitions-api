@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/gofiber/adaptor/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"os"
 	"os/signal"
 	"strings"
@@ -97,6 +99,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 			logger.Fatal().Err(err)
 		}
 	}()
+	startMonitoringServer(logger)
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
 	<-c                                             // This blocks the main thread until an interrupt is received
@@ -105,4 +108,20 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	_ = app.Shutdown()
 	_ = pdb.DBS().Writer.Close()
 	_ = pdb.DBS().Reader.Close()
+}
+
+// startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
+func startMonitoringServer(logger zerolog.Logger) {
+	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
+
+	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	go func() {
+		// 8888 is our standard port for exposing metrics in DIMO infra
+		if err := monApp.Listen(":8888"); err != nil {
+			logger.Fatal().Err(err).Str("port", "8888").Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 }

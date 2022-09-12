@@ -29,11 +29,11 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 			grpc_recovery.UnaryServerInterceptor(opts...),
 		)),
 	)
-
 	pkggrpc.RegisterDeviceDefinitionServiceServer(server, service)
+
+	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 
 	if err := server.Serve(lis); err != nil {
 		logger.Fatal().Msgf("Failed to serve over port %v: %v", s.GRPCPort, err)
 	}
-	logger.Info().Msgf("started grpc server on port: %d", s.GRPCPort)
 }
