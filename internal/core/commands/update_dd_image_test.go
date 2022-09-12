@@ -16,7 +16,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 )
 
-type UpdateDeviceDefinitionCommandHandlerSuite struct {
+type UpdateDeviceDefinitionImageCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
@@ -26,14 +26,14 @@ type UpdateDeviceDefinitionCommandHandlerSuite struct {
 	ctx                       context.Context
 	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
 
-	commandHandler UpdateDeviceDefinitionCommandHandler
+	commandHandler UpdateDeviceDefinitionImageCommandHandler
 }
 
-func TestUpdateDeviceDefinitionCommandHandler(t *testing.T) {
-	suite.Run(t, new(UpdateDeviceDefinitionCommandHandlerSuite))
+func TestUpdateDeviceDefinitionImageCommandHandler(t *testing.T) {
+	suite.Run(t, new(UpdateDeviceDefinitionImageCommandHandlerSuite))
 }
 
-func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
+func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) SetupTest() {
 
 	const (
 		dbName               = "device_definitions_api"
@@ -47,40 +47,29 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.commandHandler = NewUpdateDeviceDefinitionCommandHandler(s.pdb.DBS, s.mockDeviceDefinitionCache)
+	s.commandHandler = NewUpdateDeviceDefinitionImageCommandHandler(s.pdb.DBS, s.mockDeviceDefinitionCache)
 }
 
-func (s *UpdateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
+func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) TearDownTest() {
 	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
 }
 
-func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_Success() {
+func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) TestUpdateDeviceDefinitionImageCommand_Success() {
 	ctx := context.Background()
 
 	model := "Testla"
 	mk := "Toyota"
 	year := 2020
 
-	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
+	dd := setupDeviceDefinitionForUpdateImage(s.T(), s.pdb, mk, model, year)
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
-	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
+	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionImageCommand{
 		DeviceDefinitionID: dd.ID,
-		VehicleInfo: UpdateDeviceVehicleInfo{
-			FuelType:            "test",
-			DrivenWheels:        "test",
-			NumberOfDoors:       "4",
-			BaseMSRP:            1,
-			EPAClass:            "test",
-			VehicleType:         "test",
-			MPGHighway:          "1",
-			MPGCity:             "1",
-			FuelTankCapacityGal: "1",
-			MPG:                 "1",
-		},
+		ImageURL:           "https://image.gif",
 	})
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
@@ -88,10 +77,10 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	assert.Equal(s.T(), result.ID, dd.ID)
 }
 
-func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_Exception() {
+func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) TestUpdateDeviceDefinitionImageCommand_Exception() {
 	ctx := context.Background()
 
-	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
+	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionImageCommand{
 		DeviceDefinitionID: "dd.ID",
 	})
 
@@ -99,7 +88,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	s.Error(err)
 }
 
-func setupDeviceDefinitionForUpdate(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
+func setupDeviceDefinitionForUpdateImage(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
 	return dd

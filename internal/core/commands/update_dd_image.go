@@ -11,51 +11,38 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type UpdateDeviceDefinitionCommand struct {
+type UpdateDeviceDefinitionImageCommand struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	VehicleInfo        UpdateDeviceVehicleInfo
+	ImageURL           string `json:"image_url"`
 }
 
-type UpdateDeviceVehicleInfo struct {
-	FuelType            string `json:"fuel_type,omitempty"`
-	DrivenWheels        string `json:"driven_wheels,omitempty"`
-	NumberOfDoors       string `json:"number_of_doors,omitempty"`
-	BaseMSRP            int    `json:"base_msrp,omitempty"`
-	EPAClass            string `json:"epa_class,omitempty"`
-	VehicleType         string `json:"vehicle_type,omitempty"` // VehicleType PASSENGER CAR, from NHTSA
-	MPGHighway          string `json:"mpg_highway,omitempty"`
-	MPGCity             string `json:"mpg_city,omitempty"`
-	FuelTankCapacityGal string `json:"fuel_tank_capacity_gal,omitempty"`
-	MPG                 string `json:"mpg,omitempty"`
-}
-
-type UpdateDeviceDefinitionCommandResult struct {
+type UpdateDeviceDefinitionImageCommandResult struct {
 	ID string `json:"id"`
 }
 
-func (*UpdateDeviceDefinitionCommand) Key() string { return "UpdateDeviceDefinitionCommand" }
+func (*UpdateDeviceDefinitionImageCommand) Key() string { return "UpdateDeviceDefinitionImageCommand" }
 
-type UpdateDeviceDefinitionCommandHandler struct {
+type UpdateDeviceDefinitionImageCommandHandler struct {
 	DBS     func() *db.ReaderWriter
 	DDCache services.DeviceDefinitionCacheService
 }
 
-func NewUpdateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) UpdateDeviceDefinitionCommandHandler {
-	return UpdateDeviceDefinitionCommandHandler{DBS: dbs, DDCache: cache}
+func NewUpdateDeviceDefinitionImageCommandHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) UpdateDeviceDefinitionImageCommandHandler {
+	return UpdateDeviceDefinitionImageCommandHandler{DBS: dbs, DDCache: cache}
 }
 
-func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	command := query.(*UpdateDeviceDefinitionCommand)
+	command := query.(*UpdateDeviceDefinitionImageCommand)
 
 	dd, err := models.DeviceDefinitions(
 		qm.Where("id = ?", command.DeviceDefinitionID),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
+		qm.Load(models.DeviceDefinitionRels.DeviceMake)).
 		One(ctx, ch.DBS().Reader)
 
 	if err != nil {
@@ -72,21 +59,9 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
-	if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
-		deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
-		deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
-		deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
-		deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
-		deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
-		deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
-		deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
-		deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
-		deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
-		deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
-	}
+	dd.ImageURL = null.StringFrom(command.ImageURL)
 
-	err = dd.Metadata.Marshal(deviceVehicleInfoMetaData)
+	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,

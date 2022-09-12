@@ -54,7 +54,7 @@ message GetDeviceDefinitionItemResponse {
 	message Make {
 		string id = 1;
 		string name = 2;
-		string log_url = 3;
+		string logo_url = 3;
 		string oem_platform_name = 4;
 	}
 }
@@ -145,6 +145,10 @@ message UpdateDeviceDefinitionResponse {
 	string id = 1;
 }
 
+message UpdateDeviceDefinitionImageRequest {
+	string device_definition_id = 1;
+	string image_url = 2;
+}
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -153,4 +157,5 @@ service DeviceDefinitionService {
 	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
+	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
 }
