@@ -12,7 +12,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
+	"github.com/DIMO-Network/shared/redis"
 )
 
 type DeviceDefinitionCacheService interface {
@@ -46,14 +46,22 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 
 	if cacheData != nil {
 		val, _ := cacheData.Bytes()
-		_ = json.Unmarshal(val, rp)
-		return rp, nil
+
+		if val != nil {
+			_ = json.Unmarshal(val, rp)
+			return rp, nil
+		}
+
 	}
 
-	dd, _ := c.Repository.GetByID(ctx, id)
+	dd, err := c.Repository.GetByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if dd == nil {
-		return nil, fmt.Errorf("could not find device definition id: %s", id)
+		return nil, nil
 	}
 
 	rp = buildDeviceDefinitionResult(dd)
@@ -83,11 +91,17 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 
 	if cacheData != nil {
 		val, _ := cacheData.Bytes()
-		_ = json.Unmarshal(val, rp)
-		return rp, nil
+		if val != nil {
+			_ = json.Unmarshal(val, rp)
+			return rp, nil
+		}
 	}
 
-	dd, _ := c.Repository.GetByMakeModelAndYears(ctx, make, model, year, true)
+	dd, err := c.Repository.GetByMakeModelAndYears(ctx, make, model, year, true)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if dd == nil {
 		return nil, nil

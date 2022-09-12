@@ -7,12 +7,12 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/volatiletech/null/v8"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -50,7 +50,11 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 	query := models.DeviceDefinitions(qms...)
 	dd, err := query.One(ctx, r.DBS().Reader)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{Err: err}
+		}
+
+		return nil, nil
 	}
 
 	return dd, nil
@@ -62,7 +66,11 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) 
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*models.DeviceDefinition{}, err
+		}
+
+		return nil, &exceptions.InternalError{Err: err}
 	}
 
 	return dd, err
@@ -79,13 +87,14 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
+			return nil, &exceptions.InternalError{Err: err}
 		}
+
 		return nil, nil
 	}
 
 	if dd.R == nil || dd.R.DeviceMake == nil {
-		return nil, errors.New("required DeviceMake relation is not set")
+		return nil, &exceptions.ConflictError{Err: errors.New("required DeviceMake relation is not set")}
 	}
 
 	return dd, nil
@@ -102,7 +111,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
+			return nil, &exceptions.InternalError{Err: err}
 		}
 		return nil, nil
 	}
@@ -125,7 +134,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			panic(err)
+			return nil, &exceptions.InternalError{Err: err}
 		}
 	}
 
@@ -144,7 +153,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
-				return nil, errors.Wrapf(err, "error inserting make: %s", make)
+				return nil, &exceptions.InternalError{
+					Err: errors.Wrapf(err, "error inserting make: %s", make),
+				}
 			}
 		}
 	}
@@ -159,7 +170,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	}
 	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 	if err != nil {
-		return nil, err
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
 	}
 	return dd, nil
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -35,7 +35,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 
 	all, err := models.Integrations(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	if err != nil {
-		return nil, &common.InternalError{
+		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get integrations"),
 		}
 	}

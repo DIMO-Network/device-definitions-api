@@ -7,6 +7,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
@@ -45,7 +46,7 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 	dd, _ := ch.Repository.GetWithIntegrations(ctx, qry.DeviceDefinitionID)
 
 	if dd == nil {
-		return nil, &common.NotFoundError{
+		return nil, &exceptions.NotFoundError{
 			Err: fmt.Errorf("could not find device definition id: %s", qry.DeviceDefinitionID),
 		}
 	}

@@ -1,4 +1,4 @@
-package common
+package exceptions
 
 type ValidationError struct {
 	Err error

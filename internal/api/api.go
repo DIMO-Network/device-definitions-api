@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
-	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -13,11 +16,14 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
-	"github.com/DIMO-Network/device-definitions-api/pkg/redis"
+	"github.com/DIMO-Network/shared/redis"
+	"github.com/DIMO-Network/zflogger"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 )
 
@@ -28,10 +34,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb.WaitForDB(logger)
 
 	// redis
-	redisCache := redis.NewRedisCacheService(settings, 1)
+	redisCache := redis.NewRedisCacheService(settings.Environment == "prod", settings.Redis)
 
 	//infra
-	metrics := metrics.NewMetricService(settings.ServiceName)
+	metricsSvc := metrics.NewMetricService(strings.ReplaceAll(settings.ServiceName, "-", "_"), settings)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -55,9 +61,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metrics)),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metricsSvc, &logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService)),
@@ -70,9 +76,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	)
 
 	//fiber
-	app := fiber.New(common.FiberConfig())
+	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
 
 	app.Use(recover.New())
+	app.Use(zflogger.New(logger, nil))
 
 	//routes
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -84,7 +91,37 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(settings, *m)
+	go StartGrpcServer(logger, settings, *m)
 
-	log.Fatal(app.Listen(":" + settings.Port))
+	// Start Server from a different go routine
+	go func() {
+		if err := app.Listen(":" + settings.Port); err != nil {
+			logger.Fatal().Err(err)
+		}
+	}()
+	startMonitoringServer(logger)
+	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
+	<-c                                             // This blocks the main thread until an interrupt is received
+	logger.Info().Msg("Gracefully shutting down and running cleanup tasks...")
+	_ = ctx.Done()
+	_ = app.Shutdown()
+	_ = pdb.DBS().Writer.Close()
+	_ = pdb.DBS().Reader.Close()
+}
+
+// startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
+func startMonitoringServer(logger zerolog.Logger) {
+	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
+
+	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	go func() {
+		// 8888 is our standard port for exposing metrics in DIMO infra
+		if err := monApp.Listen(":8888"); err != nil {
+			logger.Fatal().Err(err).Str("port", "8888").Msg("Failed to start monitoring web server.")
+		}
+	}()
+
+	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
 }

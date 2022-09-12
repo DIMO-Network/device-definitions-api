@@ -7,6 +7,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -31,7 +32,9 @@ func (r *deviceIntegrationRepository) Create(ctx context.Context, deviceDefiniti
 	}
 	err := di.Insert(ctx, r.DBS().Writer, boil.Infer())
 	if err != nil {
-		return nil, err
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
 	}
 
 	return di, nil
