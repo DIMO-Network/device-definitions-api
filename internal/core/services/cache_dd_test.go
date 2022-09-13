@@ -5,17 +5,16 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
-	"github.com/testcontainers/testcontainers-go"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 )
 
 type CacheDeviceDefinitionSuite struct {

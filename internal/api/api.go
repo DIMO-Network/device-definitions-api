@@ -12,10 +12,10 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
 	"github.com/DIMO-Network/zflogger"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -30,7 +30,7 @@ import (
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
 
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, settings, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	pdb.WaitForDB(logger)
 
 	// redis

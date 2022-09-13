@@ -6,9 +6,9 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
@@ -22,7 +22,7 @@ var teslaRegions = []string{common.AmericasRegion.String(), common.EuropeRegion.
 // Tesla device definitions in our supported countries. This behaves well if some of these records
 // already exist.
 func createTeslaIntegrations(ctx context.Context, logger zerolog.Logger, settings *config.Settings) error {
-	pdb := db.NewDbConnectionFromSettings(ctx, settings, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	pdb.WaitForDB(logger)
 
 	tx, err := pdb.DBS().Writer.BeginTx(ctx, nil)

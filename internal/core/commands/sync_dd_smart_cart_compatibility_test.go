@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	gatewayMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

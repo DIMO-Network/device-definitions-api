@@ -3,18 +3,19 @@ module github.com/DIMO-Network/device-definitions-api
 go 1.18
 
 require (
-	github.com/DIMO-Network/shared v0.4.1
+	github.com/DIMO-Network/shared v0.4.3
 	github.com/DIMO-Network/zflogger v1.0.0-beta
 	github.com/TheFellow/go-mediator v0.0.0-20211104172412-746952fa0611
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/docker/go-connections v0.4.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/gofiber/adaptor/v2 v2.1.27
 	github.com/gofiber/fiber/v2 v2.37.1
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-ipfs-files v0.0.9
-	github.com/lib/pq v1.10.6
+	github.com/lib/pq v1.10.7
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.6.1
 	github.com/prometheus/client_golang v1.13.0
@@ -39,7 +40,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/gofiber/adaptor/v2 v2.1.27 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect

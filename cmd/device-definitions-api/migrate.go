@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
+	"github.com/DIMO-Network/shared/db"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
@@ -19,7 +19,7 @@ func migrateDatabase(ctx context.Context, logger zerolog.Logger, s *config.Setti
 		}
 	}
 
-	sqlDb := db.NewDbConnectionFromSettings(ctx, s, true)
+	sqlDb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	sqlDb.WaitForDB(logger)
 
 	if command == "" {
