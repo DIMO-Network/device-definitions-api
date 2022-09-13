@@ -103,7 +103,7 @@ affinity: {}
 podDisruptionBudget:
   minAvailable: 0
 serviceMonitor:
-  enabled: false
+  enabled: true
   path: /metrics
   port: mon-http
   interval: 30s
