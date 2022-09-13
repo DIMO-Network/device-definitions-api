@@ -62,8 +62,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1MRDJM=
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/DIMO-Network/shared v0.4.2 h1:zyDVi+VKgWH7NfWT2CXw6HwtCvcp16yVtHp3eNuRlCI=
-github.com/DIMO-Network/shared v0.4.2/go.mod h1:klPVntUChpkuE2Z9pSFLofGl8HFOaKSZzJzxasdhIU0=
+github.com/DIMO-Network/shared v0.4.3 h1:kg1+coGcIIa94HTKpiOmF+C2uqTXBYbtSDrVXEB4gHY=
+github.com/DIMO-Network/shared v0.4.3/go.mod h1:klPVntUChpkuE2Z9pSFLofGl8HFOaKSZzJzxasdhIU0=
 github.com/DIMO-Network/zflogger v1.0.0-beta h1:SlXZmahk4tZqprjHzp14mbLQFMrOcyJ9jpLJLQk8bhw=
 github.com/DIMO-Network/zflogger v1.0.0-beta/go.mod h1:JZX9lQhjzPs9auqY+oNruiWsvhBufEopRRLWraSi148=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
