@@ -28,11 +28,11 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
-		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.DBUser, settings.DB.DBPassword, port.Port(), settings.DB.DBName)
+		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.User, settings.DB.Password, port.Port(), settings.DB.Name)
 	}
 	cr := testcontainers.ContainerRequest{
 		Image:        "postgres:12.9-alpine",
-		Env:          map[string]string{"POSTGRES_USER": settings.DB.DBUser, "POSTGRES_PASSWORD": settings.DB.DBPassword, "POSTGRES_DB": settings.DB.DBName},
+		Env:          map[string]string{"POSTGRES_USER": settings.DB.User, "POSTGRES_PASSWORD": settings.DB.Password, "POSTGRES_DB": settings.DB.Name},
 		ExposedPorts: []string{pgPort},
 		Cmd:          []string{"postgres", "-c", "fsync=off"},
 		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL).Timeout(time.Second * 15),
@@ -52,7 +52,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	fmt.Printf("postgres container session %s ready and running at port: %s \n", pgContainer.SessionID(), mappedPort)
 	//defer pgContainer.Terminate(ctx) // this should be done by the caller
 
-	settings.DB.DBPort = mappedPort.Port()
+	settings.DB.Port = mappedPort.Port()
 	pdb := db.NewDbConnectionForTest(ctx, &settings.DB, false)
 	pdb.WaitForDB(logger)
 
@@ -99,13 +99,13 @@ func getTestDbSettings(dbName string) config.Settings {
 	settings := config.Settings{
 		LogLevel: "info",
 		DB: db.Settings{
-			DBName:               dbName,
-			DBHost:               "localhost",
-			DBPort:               "6669",
-			DBUser:               "postgres",
-			DBPassword:           "postgres",
-			DBMaxOpenConnections: 2,
-			DBMaxIdleConnections: 2,
+			Name:               dbName,
+			Host:               "localhost",
+			Port:               "6669",
+			User:               "postgres",
+			Password:           "postgres",
+			MaxOpenConnections: 2,
+			MaxIdleConnections: 2,
 		},
 		ServiceName: "device-definitions-api",
 	}
