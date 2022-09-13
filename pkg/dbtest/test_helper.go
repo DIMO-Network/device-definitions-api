@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
@@ -28,11 +28,11 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
 	dbURL := func(port nat.Port) string {
-		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DBUser, settings.DBPassword, port.Port(), settings.DBName)
+		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.DBUser, settings.DB.DBPassword, port.Port(), settings.DB.DBName)
 	}
 	cr := testcontainers.ContainerRequest{
 		Image:        "postgres:12.9-alpine",
-		Env:          map[string]string{"POSTGRES_USER": settings.DBUser, "POSTGRES_PASSWORD": settings.DBPassword, "POSTGRES_DB": settings.DBName},
+		Env:          map[string]string{"POSTGRES_USER": settings.DB.DBUser, "POSTGRES_PASSWORD": settings.DB.DBPassword, "POSTGRES_DB": settings.DB.DBName},
 		ExposedPorts: []string{pgPort},
 		Cmd:          []string{"postgres", "-c", "fsync=off"},
 		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL).Timeout(time.Second * 15),
@@ -52,8 +52,8 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	fmt.Printf("postgres container session %s ready and running at port: %s \n", pgContainer.SessionID(), mappedPort)
 	//defer pgContainer.Terminate(ctx) // this should be done by the caller
 
-	settings.DBPort = mappedPort.Port()
-	pdb := db.NewDbConnectionForTest(ctx, settings, false)
+	settings.DB.DBPort = mappedPort.Port()
+	pdb := db.NewDbConnectionForTest(ctx, &settings.DB, false)
 	pdb.WaitForDB(logger)
 
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
@@ -97,15 +97,17 @@ $$ LANGUAGE plpgsql;
 // getTestDbSettings builds test db config.Settings object
 func getTestDbSettings(dbName string) config.Settings {
 	settings := config.Settings{
-		LogLevel:             "info",
-		DBName:               dbName,
-		DBHost:               "localhost",
-		DBPort:               "6669",
-		DBUser:               "postgres",
-		DBPassword:           "postgres",
-		DBMaxOpenConnections: 2,
-		DBMaxIdleConnections: 2,
-		ServiceName:          "device-definitions-api",
+		LogLevel: "info",
+		DB: db.Settings{
+			DBName:               dbName,
+			DBHost:               "localhost",
+			DBPort:               "6669",
+			DBUser:               "postgres",
+			DBPassword:           "postgres",
+			DBMaxOpenConnections: 2,
+			DBMaxIdleConnections: 2,
+		},
+		ServiceName: "device-definitions-api",
 	}
 	return settings
 }

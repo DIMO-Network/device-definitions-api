@@ -3,22 +3,21 @@ package main
 import (
 	"context"
 
-	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
-	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
+	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
 )
 
 func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 
 	//infra
 	elasticSearchService, _ := elastic.NewElasticSearchService(s, logger)
@@ -36,7 +35,7 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
 	//commands
@@ -52,7 +51,7 @@ func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
 	//infra
@@ -76,7 +75,7 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 
 	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, s, true)
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
 	//infra

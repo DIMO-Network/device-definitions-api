@@ -5,9 +5,9 @@ package repositories
 import (
 	"context"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 

@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
 	"github.com/gosimple/slug"
 	shell "github.com/ipfs/go-ipfs-api"
 	files "github.com/ipfs/go-ipfs-files"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type SyncIPFSDataCommand struct {
