@@ -41,9 +41,9 @@ func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, 
 	command := query.(*UpdateDeviceDefinitionImageCommand)
 
 	dd, err := models.DeviceDefinitions(
-		qm.Where("id = ?", command.DeviceDefinitionID),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake)).
-		One(ctx, ch.DBS().Reader)
+		models.DeviceDefinitionWhere.ID.EQ(command.DeviceDefinitionID),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+	).One(ctx, ch.DBS().Writer)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
