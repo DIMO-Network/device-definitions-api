@@ -11,6 +11,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -87,6 +88,13 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	err = dd.Metadata.Marshal(deviceVehicleInfoMetaData)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
+	}
+
+	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,

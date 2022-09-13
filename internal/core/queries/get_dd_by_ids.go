@@ -49,7 +49,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			Make: &grpc.GetDeviceDefinitionItemResponse_Make{
 				Id:              dd.DeviceMake.ID,
 				Name:            dd.DeviceMake.Name,
-				LogUrl:          dd.DeviceMake.LogoURL.String,
+				LogoUrl:         dd.DeviceMake.LogoURL.String,
 				OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 			},
 			Type: &grpc.GetDeviceDefinitionItemResponse_Type{

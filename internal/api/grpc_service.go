@@ -61,7 +61,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Make: &p_grpc.GetDeviceDefinitionItemResponse_Make{
 			Id:              dd.DeviceMake.ID,
 			Name:            dd.DeviceMake.Name,
-			LogUrl:          dd.DeviceMake.LogoURL.String,
+			LogoUrl:         dd.DeviceMake.LogoURL.String,
 			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 		},
 		VehicleData: &p_grpc.VehicleInfo{
@@ -179,6 +179,18 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
 			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
 		},
+	})
+
+	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
+
+	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionImageRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionImageCommand{
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		ImageURL:           in.ImageUrl,
 	})
 
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)

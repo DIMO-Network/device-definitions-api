@@ -79,7 +79,7 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) 
 func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
-		qm.Where("id = ?", id),
+		models.DeviceDefinitionWhere.ID.EQ(id),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
