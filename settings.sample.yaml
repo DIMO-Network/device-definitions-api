@@ -1,6 +1,9 @@
 ENVIRONMENT: local
-PORT: 3000
 LOG_LEVEL: info
+PORT: 3000
+GRPC_PORT: 9000
+SERVICE_NAME: device-definitions-api
+SERVICE_VERSION: "1.0.0"
 DB:
   USER: dimo
   PASSWORD: dimo
@@ -9,9 +12,11 @@ DB:
   NAME: device_definitions_api
   MAX_OPEN_CONNECTIONS: 5
   MAX_IDLE_CONNECTIONS: 5
-SERVICE_NAME: device-definitions-api
-SERVICE_VERSION: "1.0.0"
-GRPC_PORT: 9000
+REDIS:
+  URL: localhost:6379
+  PASSWORD:
+  TLS: false
+  KEY_PREFIX: definitions-api
 TRACE_MONITOR_VIEW: http://localhost:14268/api/traces
 IPFS_NODE_ENDPOINT: http://localhost:5001
 DRIVLY_VIN_API_URL: https://vin.dev.driv.ly
@@ -19,6 +24,3 @@ DRIVLY_OFFER_API_URL: https://offers.dev.driv.ly
 DRIVLY_API_KEY: xxx
 ELASTIC_SEARCH_APP_SEARCH_HOST: http://localhost:9200
 ELASTIC_SEARCH_APP_SEARCH_TOKEN: private-
-REDIS_URL: localhost:6379
-REDIS_PASSWORD:
-REDIS_TLS: false

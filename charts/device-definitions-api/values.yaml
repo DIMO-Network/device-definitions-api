@@ -38,6 +38,7 @@ env:
   REDIS_USER: default
   REDIS_PORT: '6379'
   REDIS_TLS: true
+  REDIS_KEY_PREFIX: definitions-api
   KAFKA_BROKERS: kafka-dev-dimo-kafka-kafka-brokers:9092
   AWS_REGION: us-east-2
   GRPC_PORT: 8086
