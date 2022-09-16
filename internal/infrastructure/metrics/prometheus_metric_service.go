@@ -3,7 +3,6 @@
 package metrics
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -31,29 +30,31 @@ func NewMetricService(metricPrefix string, settings *config.Settings) Prometheus
 	return &prometheusMetricService{svc: metricPrefix, settings: settings}
 }
 
-func (d *prometheusMetricService) Success(label string) {
-	c := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: fmt.Sprintf("%s_request_success_ops_total", d.svc),
-		Help: "Total successful",
+var (
+	Success = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "request_success_ops_total",
+		Help: "Total execution",
 	}, []string{"method"})
 
-	defer c.With(prometheus.Labels{"method": label}).Inc()
+	InternalError = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "request_error_ops_total",
+		Help: "Total execution",
+	}, []string{"method"})
+
+	BadRequestError = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "request_bad_ops_total",
+		Help: "Total execution",
+	}, []string{"method"})
+)
+
+func (d *prometheusMetricService) Success(label string) {
+	defer Success.With(prometheus.Labels{"method": label}).Inc()
 }
 
 func (d *prometheusMetricService) InternalError(label string) {
-	c := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: fmt.Sprintf("%s_api_request_error_ops_total", d.svc),
-		Help: "Total error",
-	}, []string{"method"})
-
-	defer c.With(prometheus.Labels{"method": label}).Inc()
+	defer InternalError.With(prometheus.Labels{"method": label}).Inc()
 }
 
 func (d *prometheusMetricService) BadRequestError(label string) {
-	c := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: fmt.Sprintf("%s_api_request_bad_ops_total", d.svc),
-		Help: "Total error",
-	}, []string{"method"})
-
-	defer c.With(prometheus.Labels{"method": label}).Inc()
+	defer BadRequestError.With(prometheus.Labels{"method": label}).Inc()
 }
