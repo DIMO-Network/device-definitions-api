@@ -181,7 +181,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		},
 	})
 
-	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
+	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
 
 	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
 }
