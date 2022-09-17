@@ -75,3 +75,26 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
+
+func GetDeviceDefinitionByDynamicFilter(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		deviceDefinition := c.Query("deviceMakeId")
+		integration := c.Query("integration_id")
+		make := c.Query("make_id")
+		model := c.Query("model")
+		year := c.Query("year")
+		yrInt, _ := strconv.Atoi(year)
+		verifiedVin := c.Query("verified_vin")
+		verifiedVinBool, _ := strconv.ParseBool(verifiedVin)
+		pageIndex := c.Query("page_index")
+		pgInInt, _ := strconv.Atoi(pageIndex)
+		pageSize := c.Query("page_size")
+		pgSzInt, _ := strconv.Atoi(pageSize)
+
+		query := &queries.GetDeviceDefinitionByDynamicFilterQuery{MakeID: make, IntegrationID: integration, DeviceDefinitionID: deviceDefinition, Year: yrInt, Model: model, VerifiedVin: verifiedVinBool, PageIndex: pgInInt, PageSize: pgSzInt}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}
