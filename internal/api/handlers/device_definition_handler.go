@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -84,14 +85,25 @@ func GetDeviceDefinitionByDynamicFilter(m mediator.Mediator) fiber.Handler {
 		model := c.Query("model")
 		year := c.Query("year")
 		yrInt, _ := strconv.Atoi(year)
-		verifiedVin := c.Query("verified_vin")
-		verifiedVinBool, _ := strconv.ParseBool(verifiedVin)
+		verifiedVinList := c.Query("verified_vin_list")
 		pageIndex := c.Query("page_index")
 		pgInInt, _ := strconv.Atoi(pageIndex)
 		pageSize := c.Query("page_size")
 		pgSzInt, _ := strconv.Atoi(pageSize)
 
-		query := &queries.GetDeviceDefinitionByDynamicFilterQuery{MakeID: make, IntegrationID: integration, DeviceDefinitionID: deviceDefinition, Year: yrInt, Model: model, VerifiedVin: verifiedVinBool, PageIndex: pgInInt, PageSize: pgSzInt}
+		var verifiedVinArr []string
+		_ = json.Unmarshal([]byte(verifiedVinList), &verifiedVinArr)
+
+		query := &queries.GetDeviceDefinitionByDynamicFilterQuery{
+			MakeID:             make,
+			IntegrationID:      integration,
+			DeviceDefinitionID: deviceDefinition,
+			Year:               yrInt,
+			Model:              model,
+			VerifiedVinList:    verifiedVinArr,
+			PageIndex:          pgInInt,
+			PageSize:           pgSzInt,
+		}
 
 		result, _ := m.Send(c.UserContext(), query)
 
