@@ -181,7 +181,7 @@ message FilterDeviceDefinitionRequest {
 }
 
 message GetFilteredDeviceDefinitionsResponse {
-	repeated FilterDeviceDefinitionsReponse items = 1;
+	repeated FilterDeviceDefinitionsReponse Items = 1;
 }
 
 message FilterDeviceDefinitionsReponse {
