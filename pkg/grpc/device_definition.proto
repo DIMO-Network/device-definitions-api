@@ -169,6 +169,36 @@ message GetDeviceDefinitionAllItemResponse {
 	}
 }
 
+message FilterDeviceDefinitionRequest {
+	string MakeID = 1;
+	string IntegrationID = 2;
+	string DeviceDefinitionID = 3;
+	int32 Year = 4;
+	string Model = 5;
+	repeated string VerifiedVinList = 6;
+	int32 PageIndex = 7;
+	int32 PageSize = 8;
+}
+
+message GetFilteredDeviceDefinitionsResponse {
+	repeated FilterDeviceDefinitionsReponse items = 1;
+}
+
+message FilterDeviceDefinitionsReponse {
+	string ID = 1;
+	string Model = 2;
+	int32 Year = 3;
+	string ImageUrl = 4;
+	int64 CreatedAt = 5;
+	int64 UpdatedAt = 6;
+	string Metadata = 7;
+	string Source = 8;
+	bool Verified = 9;
+	string External = 10;
+	string DeviceMakeID = 11;
+	string Make = 12;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -179,4 +209,5 @@ service DeviceDefinitionService {
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionAll(EmptyRequest) returns (GetDeviceDefinitionAllResponse);
+	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
 }

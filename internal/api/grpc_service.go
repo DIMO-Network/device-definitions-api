@@ -93,6 +93,23 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	return result, nil
 }
 
+func (s *GrpcService) GetFilteredDeviceDefinitions(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
+		MakeID:             in.MakeID,
+		IntegrationID:      in.IntegrationID,
+		DeviceDefinitionID: in.DeviceDefinitionID,
+		Year:               int(in.Year),
+		Model:              in.Model,
+		VerifiedVinList:    in.VerifiedVinList,
+		PageIndex:          int(in.PageIndex),
+		PageSize:           int(in.PageSize),
+	})
+
+	result := qryResult.(*p_grpc.GetFilteredDeviceDefinitionsResponse)
+
+	return result, nil
+}
+
 func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyRequest) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
