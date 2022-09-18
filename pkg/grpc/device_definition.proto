@@ -149,6 +149,26 @@ message UpdateDeviceDefinitionImageRequest {
 	string device_definition_id = 1;
 	string image_url = 2;
 }
+
+message GetDeviceDefinitionAllResponse {
+	repeated GetDeviceDefinitionAllItemResponse items = 1;
+}
+
+message GetDeviceDefinitionAllItemResponse {
+	string make = 1;
+	repeated GetDeviceModels models = 2;
+
+	message GetDeviceModels {
+		string model = 1;
+		repeated GetDeviceModelYears years = 2;
+	}
+
+	message GetDeviceModelYears {
+		int32 year = 1;
+		string DeviceDefinitionID = 2;
+	}
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -158,4 +178,5 @@ service DeviceDefinitionService {
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionAll(EmptyRequest) returns (GetDeviceDefinitionAllResponse);
 }

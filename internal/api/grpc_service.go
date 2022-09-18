@@ -181,7 +181,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		},
 	})
 
-	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
+	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
 
 	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
 }
@@ -196,4 +196,37 @@ func (s *GrpcService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.U
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
 	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *p_grpc.EmptyRequest) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+
+	result := &p_grpc.GetDeviceDefinitionAllResponse{}
+
+	allDevices := qryResult.([]queries.GetAllDeviceDefinitionQueryResult)
+
+	for _, device := range allDevices {
+		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
+
+		for _, model := range device.Models {
+			itemModel := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModels{
+				Model: model.Model,
+			}
+
+			for _, modelYear := range model.Years {
+				itemYear := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModelYears{
+					Year:               int32(modelYear.Year),
+					DeviceDefinitionID: modelYear.DeviceDefinitionID,
+				}
+				itemModel.Years = append(itemModel.Years, itemYear)
+			}
+
+			item.Models = append(item.Models, itemModel)
+		}
+
+		result.Items = append(result.Items, item)
+	}
+
+	return result, nil
 }

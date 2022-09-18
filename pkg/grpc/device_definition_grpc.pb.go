@@ -30,6 +30,7 @@ type DeviceDefinitionServiceClient interface {
 	CreateDeviceIntegration(ctx context.Context, in *CreateDeviceIntegrationRequest, opts ...grpc.CallOption) (*CreateDeviceIntegrationResponse, error)
 	UpdateDeviceDefinition(ctx context.Context, in *UpdateDeviceDefinitionRequest, opts ...grpc.CallOption) (*UpdateDeviceDefinitionResponse, error)
 	SetDeviceDefinitionImage(ctx context.Context, in *UpdateDeviceDefinitionImageRequest, opts ...grpc.CallOption) (*UpdateDeviceDefinitionResponse, error)
+	GetDeviceDefinitionAll(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -112,6 +113,15 @@ func (c *deviceDefinitionServiceClient) SetDeviceDefinitionImage(ctx context.Con
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionAll(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error) {
+	out := new(GetDeviceDefinitionAllResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -124,6 +134,7 @@ type DeviceDefinitionServiceServer interface {
 	CreateDeviceIntegration(context.Context, *CreateDeviceIntegrationRequest) (*CreateDeviceIntegrationResponse, error)
 	UpdateDeviceDefinition(context.Context, *UpdateDeviceDefinitionRequest) (*UpdateDeviceDefinitionResponse, error)
 	SetDeviceDefinitionImage(context.Context, *UpdateDeviceDefinitionImageRequest) (*UpdateDeviceDefinitionResponse, error)
+	GetDeviceDefinitionAll(context.Context, *EmptyRequest) (*GetDeviceDefinitionAllResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -154,6 +165,9 @@ func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceDefinition(context
 }
 func (UnimplementedDeviceDefinitionServiceServer) SetDeviceDefinitionImage(context.Context, *UpdateDeviceDefinitionImageRequest) (*UpdateDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDeviceDefinitionImage not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionAll(context.Context, *EmptyRequest) (*GetDeviceDefinitionAllResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionAll not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -313,6 +327,24 @@ func _DeviceDefinitionService_SetDeviceDefinitionImage_Handler(srv interface{}, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceDefinitionAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitionAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionAll(ctx, req.(*EmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -351,6 +383,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetDeviceDefinitionImage",
 			Handler:    _DeviceDefinitionService_SetDeviceDefinitionImage_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitionAll",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitionAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
