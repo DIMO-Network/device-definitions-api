@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -70,40 +69,6 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 		yrInt, _ := strconv.Atoi(year)
 
 		query := &queries.GetDeviceDefinitionByMakeModelYearQuery{Make: make, Model: model, Year: yrInt}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
-func GetDeviceDefinitionByDynamicFilter(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		deviceDefinition := c.Query("deviceMakeId")
-		integration := c.Query("integration_id")
-		make := c.Query("make_id")
-		model := c.Query("model")
-		year := c.Query("year")
-		yrInt, _ := strconv.Atoi(year)
-		verifiedVinList := c.Query("verified_vin_list")
-		pageIndex := c.Query("page_index")
-		pgInInt, _ := strconv.Atoi(pageIndex)
-		pageSize := c.Query("page_size")
-		pgSzInt, _ := strconv.Atoi(pageSize)
-
-		var verifiedVinArr []string
-		_ = json.Unmarshal([]byte(verifiedVinList), &verifiedVinArr)
-
-		query := &queries.GetDeviceDefinitionByDynamicFilterQuery{
-			MakeID:             make,
-			IntegrationID:      integration,
-			DeviceDefinitionID: deviceDefinition,
-			Year:               yrInt,
-			Model:              model,
-			VerifiedVinList:    verifiedVinArr,
-			PageIndex:          pgInInt,
-			PageSize:           pgSzInt,
-		}
 
 		result, _ := m.Send(c.UserContext(), query)
 
