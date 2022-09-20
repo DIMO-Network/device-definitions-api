@@ -123,6 +123,8 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyReque
 			Type:   item.Type,
 			Style:  item.Style,
 			Vendor: item.Vendor,
+			//AutoPiPowertrainToTemplateID: item.AutoPiPowertrainToTemplateID,
+			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 		})
 	}
 

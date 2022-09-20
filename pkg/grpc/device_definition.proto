@@ -94,6 +94,8 @@ message GetIntegrationItemResponse {
 	string type = 2;
 	string style = 3;
 	string vendor = 4;
+	int32 auto_pi_default_template_id = 5;
+	int32 auto_pi_powertrain_to_templateID = 6;
 }
 
 message GetDeviceDefinitionIntegrationResponse{
