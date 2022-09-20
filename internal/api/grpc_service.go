@@ -119,10 +119,17 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyReque
 
 	for _, item := range integrations {
 		result.Integrations = append(result.Integrations, &p_grpc.GetIntegrationItemResponse{
-			Id:     item.ID,
-			Type:   item.Type,
-			Style:  item.Style,
-			Vendor: item.Vendor,
+			Id:                      item.ID,
+			Type:                    item.Type,
+			Style:                   item.Style,
+			Vendor:                  item.Vendor,
+			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+			AutoPiPowertrainTemplate: &p_grpc.GetIntegrationItemResponse_GetAutoPiPowertrainTemplate{
+				BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
+				HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
+				ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
+				PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
+			},
 		})
 	}
 
