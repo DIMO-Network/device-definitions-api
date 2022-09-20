@@ -2,7 +2,6 @@ package elastic
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 )
@@ -44,7 +43,7 @@ type DeviceFeaturesResp struct {
 						Key           string `json:"key"`
 						DocumentCount int64  `json:"doc_count"`
 						Features      struct {
-							Buckets DeviceFeatures
+							Buckets map[string]map[string]int
 						}
 					}
 				}
@@ -55,7 +54,6 @@ type DeviceFeaturesResp struct {
 
 func (d *ElasticSearchService) GetDeviceFeatures(envName string) (DeviceFeaturesResp, error) {
 	url := fmt.Sprintf("%s/device-status-%s*/_search", d.BaseURL, envName)
-	log.Println(url)
 	body := `
 	{
 		"size": 0,
