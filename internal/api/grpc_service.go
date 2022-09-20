@@ -93,6 +93,23 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	return result, nil
 }
 
+func (s *GrpcService) GetFilteredDeviceDefinitions(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
+		MakeID:             in.MakeID,
+		IntegrationID:      in.IntegrationID,
+		DeviceDefinitionID: in.DeviceDefinitionID,
+		Year:               int(in.Year),
+		Model:              in.Model,
+		VerifiedVinList:    in.VerifiedVinList,
+		PageIndex:          int(in.PageIndex),
+		PageSize:           int(in.PageSize),
+	})
+
+	result := qryResult.(*p_grpc.GetFilteredDeviceDefinitionsResponse)
+
+	return result, nil
+}
+
 func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyRequest) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
@@ -102,10 +119,17 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyReque
 
 	for _, item := range integrations {
 		result.Integrations = append(result.Integrations, &p_grpc.GetIntegrationItemResponse{
-			Id:     item.ID,
-			Type:   item.Type,
-			Style:  item.Style,
-			Vendor: item.Vendor,
+			Id:                      item.ID,
+			Type:                    item.Type,
+			Style:                   item.Style,
+			Vendor:                  item.Vendor,
+			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+			AutoPiPowertrainTemplate: &p_grpc.GetIntegrationItemResponse_GetAutoPiPowertrainTemplate{
+				BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
+				HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
+				ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
+				PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
+			},
 		})
 	}
 
@@ -181,7 +205,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		},
 	})
 
-	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
+	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
 
 	return &p_grpc.UpdateDeviceDefinitionResponse{Id: result.ID}, nil
 }
