@@ -94,6 +94,15 @@ message GetIntegrationItemResponse {
 	string type = 2;
 	string style = 3;
 	string vendor = 4;
+	int32 auto_pi_default_template_id = 5;
+	GetAutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
+
+	message  GetAutoPiPowertrainTemplate {
+		int32 BEV = 1;
+		int32 HEV = 2;
+		int32 ICE = 3;
+		int32 PHEV = 4;
+	}
 }
 
 message GetDeviceDefinitionIntegrationResponse{
