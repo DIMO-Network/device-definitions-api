@@ -208,6 +208,18 @@ message FilterDeviceDefinitionsReponse {
 	string Make = 12;
 }
 
+message CreateDeviceStyleRequest {
+	string DeviceDefinitionID = 1;
+	string Name = 2;
+	string ExternalStyleID = 3;
+	string Source = 4;
+	string SubModel = 5;
+}
+
+message CreateDeviceStyleResponse {
+	string ID = 1;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -215,6 +227,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
 	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
+	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (CreateDeviceStyleResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionAll(EmptyRequest) returns (GetDeviceDefinitionAllResponse);
