@@ -19,6 +19,7 @@ type GetDeviceDefinitionQueryResult struct {
 	Metadata           interface{}                          `json:"metadata"`
 	Verified           bool                                 `json:"verified"`
 	DeviceIntegrations []GetDeviceDefinitionIntegrationList `json:"deviceIntegrations"`
+	DeviceStyles       []GetDeviceDefinitionStylesList      `json:"deviceStyles"`
 }
 
 // GetDeviceCompatibility represents what systems we know this is compatible with
@@ -64,6 +65,15 @@ type GetDeviceDefinitionIntegrationList struct {
 	Region       string          `json:"region"`
 	Country      string          `json:"country,omitempty"`
 	Capabilities json.RawMessage `json:"capabilities"`
+}
+
+type GetDeviceDefinitionStylesList struct {
+	ID                 string `json:"id"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	Name               string `json:"name"`
+	ExternalStyleID    string `json:"externalStyleId"`
+	Source             string `json:"source"`
+	SubModel           string `json:"subModel"`
 }
 
 type DeviceMake struct {

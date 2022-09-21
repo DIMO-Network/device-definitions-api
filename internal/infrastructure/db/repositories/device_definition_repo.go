@@ -82,7 +82,8 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 		models.DeviceDefinitionWhere.ID.EQ(id),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
+		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
+		qm.Load(models.DeviceDefinitionRels.DeviceStyles)).
 		One(ctx, r.DBS().Reader)
 
 	if err != nil {
