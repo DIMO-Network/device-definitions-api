@@ -6,7 +6,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic_search"
+	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"

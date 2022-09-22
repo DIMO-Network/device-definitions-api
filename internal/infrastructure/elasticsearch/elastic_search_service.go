@@ -15,11 +15,10 @@ import (
 )
 
 type ElasticSearch struct {
-	BaseURL        string
-	Token          string
-	MetaEngineName string
-	httpClient     *http.Client
-	log            zerolog.Logger
+	BaseURL    string
+	Token      string
+	httpClient *http.Client
+	log        zerolog.Logger
 }
 
 func NewElasticSearch(settings *config.Settings, logger zerolog.Logger) (*ElasticSearch, error) {
@@ -27,11 +26,10 @@ func NewElasticSearch(settings *config.Settings, logger zerolog.Logger) (*Elasti
 		Timeout: time.Second * 10,
 	}
 	return &ElasticSearch{
-		BaseURL:        settings.ElasticSearchAppSearchHost,
-		Token:          settings.ElasticSearchAppSearchToken,
-		MetaEngineName: "dd-" + settings.Environment,
-		httpClient:     netClient,
-		log:            logger,
+		BaseURL:    settings.ElasticSearchDeviceStatusHost,
+		Token:      settings.ElasticSearchDeviceStatusToken,
+		httpClient: netClient,
+		log:        logger,
 	}, nil
 }
 
