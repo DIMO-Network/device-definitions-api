@@ -13,7 +13,7 @@ import (
 )
 
 func prepareFeatureData(f map[string]map[string]int) []models.DeviceIntegrationFeatures {
-	var ft []models.DeviceIntegrationFeatures
+	ft := make([]models.DeviceIntegrationFeatures, len(f))
 
 	for k, v := range f {
 		feat := models.DeviceIntegrationFeatures{}

@@ -37,7 +37,7 @@ type elasticSearchService struct {
 	log            zerolog.Logger
 }
 
-func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (*elasticSearchService, error) {
+func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (SearchService, error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
