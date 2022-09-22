@@ -1,4 +1,4 @@
-package elastic
+package elasticsearch
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ type DeviceFeaturesResp struct {
 	}
 }
 
-func (d *ElasticSearchService) GetDeviceFeatures(envName string) (DeviceFeaturesResp, error) {
+func (d *ElasticSearch) GetDeviceFeatures(envName string) (DeviceFeaturesResp, error) {
 	url := fmt.Sprintf("%s/device-status-%s*/_search", d.BaseURL, envName)
 	body := `
 	{

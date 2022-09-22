@@ -29,7 +29,7 @@ type SearchService interface {
 	GetMetaEngineName() string
 }
 
-type ElasticSearchService struct {
+type elasticSearchService struct {
 	BaseURL        string
 	Token          string
 	MetaEngineName string
@@ -37,24 +37,11 @@ type ElasticSearchService struct {
 	log            zerolog.Logger
 }
 
-func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (SearchService, error) {
+func NewElasticSearchService(settings *config.Settings, logger zerolog.Logger) (*elasticSearchService, error) {
 	var netClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
-	return &ElasticSearchService{
-		BaseURL:        settings.ElasticSearchAppSearchHost,
-		Token:          settings.ElasticSearchAppSearchToken,
-		MetaEngineName: "dd-" + settings.Environment,
-		httpClient:     netClient,
-		log:            logger,
-	}, nil
-}
-
-func NewElasticSearhBaseService(settings *config.Settings, logger zerolog.Logger) (*ElasticSearchService, error) {
-	var netClient = &http.Client{
-		Timeout: time.Second * 10,
-	}
-	return &ElasticSearchService{
+	return &elasticSearchService{
 		BaseURL:        settings.ElasticSearchAppSearchHost,
 		Token:          settings.ElasticSearchAppSearchToken,
 		MetaEngineName: "dd-" + settings.Environment,
@@ -64,16 +51,16 @@ func NewElasticSearhBaseService(settings *config.Settings, logger zerolog.Logger
 }
 
 // Use for testing
-func (d *ElasticSearchService) GetMetaEngineName() string {
+func (d *elasticSearchService) GetMetaEngineName() string {
 	return d.MetaEngineName
 }
 
-func (d *ElasticSearchService) LoadDeviceDefinitions() error {
+func (d *elasticSearchService) LoadDeviceDefinitions() error {
 	return nil
 }
 
 // GetEngines Calls elastic instance api to list engines
-func (d *ElasticSearchService) GetEngines() (*GetEnginesResp, error) {
+func (d *elasticSearchService) GetEngines() (*GetEnginesResp, error) {
 	url := fmt.Sprintf("%s/api/as/v1/engines/", d.BaseURL)
 	engines := GetEnginesResp{}
 	_, err := d.buildAndExecRequest("GET", url, nil, &engines)
@@ -85,7 +72,7 @@ func (d *ElasticSearchService) GetEngines() (*GetEnginesResp, error) {
 }
 
 // CreateEngine https://www.elastic.co/guide/en/app-search/current/engines.html#engines-create
-func (d *ElasticSearchService) CreateEngine(name string, metaSource *string) (*EngineDetail, error) {
+func (d *elasticSearchService) CreateEngine(name string, metaSource *string) (*EngineDetail, error) {
 	if strings.ToLower(name) != name {
 		return nil, errors.New("name must be all lowercase")
 	}
@@ -112,7 +99,7 @@ func (d *ElasticSearchService) CreateEngine(name string, metaSource *string) (*E
 }
 
 // AddSourceEngineToMetaEngine https://www.elastic.co/guide/en/app-search/current/meta-engines.html#meta-engines-add-source-engines
-func (d *ElasticSearchService) AddSourceEngineToMetaEngine(sourceName, metaName string) (*EngineDetail, error) {
+func (d *elasticSearchService) AddSourceEngineToMetaEngine(sourceName, metaName string) (*EngineDetail, error) {
 	url := fmt.Sprintf("%s/api/as/v1/engines/%s/source_engines", d.BaseURL, metaName)
 	body := `["%s"]`
 	body = fmt.Sprintf(body, sourceName)
@@ -127,7 +114,7 @@ func (d *ElasticSearchService) AddSourceEngineToMetaEngine(sourceName, metaName 
 }
 
 // RemoveSourceEngine https://www.elastic.co/guide/en/app-search/current/meta-engines.html#meta-engines-remove-source-engines
-func (d *ElasticSearchService) RemoveSourceEngine(sourceName, metaName string) (*EngineDetail, error) {
+func (d *elasticSearchService) RemoveSourceEngine(sourceName, metaName string) (*EngineDetail, error) {
 	url := fmt.Sprintf("%s/api/as/v1/engines/%s/source_engines", d.BaseURL, metaName)
 	body := `["%s"]`
 	body = fmt.Sprintf(body, sourceName)
@@ -142,7 +129,7 @@ func (d *ElasticSearchService) RemoveSourceEngine(sourceName, metaName string) (
 }
 
 // DeleteEngine https://www.elastic.co/guide/en/app-search/current/engines.html#engines-delete
-func (d *ElasticSearchService) DeleteEngine(name string) error {
+func (d *elasticSearchService) DeleteEngine(name string) error {
 	url := fmt.Sprintf("%s/api/as/v1/engines/%s", d.BaseURL, name)
 	// DELETE
 	_, err := d.buildAndExecRequest("DELETE", url, nil, nil)
@@ -154,7 +141,7 @@ func (d *ElasticSearchService) DeleteEngine(name string) error {
 
 // CreateDocuments https://www.elastic.co/guide/en/app-search/current/documents.html#documents-create
 // max of 100 documents per batch, 100kb each document
-func (d *ElasticSearchService) CreateDocuments(docs []DeviceDefinitionSearchDoc, engineName string) ([]CreateDocsResp, error) {
+func (d *elasticSearchService) CreateDocuments(docs []DeviceDefinitionSearchDoc, engineName string) ([]CreateDocsResp, error) {
 	// todo: make docs generic parameter?
 	if len(docs) > 100 {
 		return nil, fmt.Errorf("docs slice is too big with len: %d, max of 100 items allowed", len(docs))
@@ -171,7 +158,7 @@ func (d *ElasticSearchService) CreateDocuments(docs []DeviceDefinitionSearchDoc,
 }
 
 // CreateDocumentsBatched splits chunks of 100 docs and calls CreateDocuments method with each chunk
-func (d *ElasticSearchService) CreateDocumentsBatched(docs []DeviceDefinitionSearchDoc, engineName string) error {
+func (d *elasticSearchService) CreateDocumentsBatched(docs []DeviceDefinitionSearchDoc, engineName string) error {
 	chunkSize := 100
 	prev := 0
 	i := 0
@@ -192,7 +179,7 @@ func (d *ElasticSearchService) CreateDocumentsBatched(docs []DeviceDefinitionSea
 
 // UpdateSearchSettingsForDeviceDefs specific method to update the search_settings for device definitions
 // https://www.elastic.co/guide/en/app-search/current/search-settings.html#search-settings-update
-func (d *ElasticSearchService) UpdateSearchSettingsForDeviceDefs(engineName string) error {
+func (d *elasticSearchService) UpdateSearchSettingsForDeviceDefs(engineName string) error {
 	url := fmt.Sprintf("%s/api/as/v1/engines/%s/search_settings", d.BaseURL, engineName)
 	body := `
 {
@@ -239,7 +226,7 @@ func (d *ElasticSearchService) UpdateSearchSettingsForDeviceDefs(engineName stri
 
 // buildAndExecRequest makes request with token and headers, marshalling passed in obj or if string just passing along in body,
 // and unmarshalling response body to objOut (must be passed in as ptr eg &varName)
-func (d *ElasticSearchService) buildAndExecRequest(method, url string, obj interface{}, objOut interface{}) (*http.Response, error) {
+func (d *elasticSearchService) buildAndExecRequest(method, url string, obj interface{}, objOut interface{}) (*http.Response, error) {
 	backoffSchedule := []time.Duration{
 		1 * time.Second,
 		3 * time.Second,

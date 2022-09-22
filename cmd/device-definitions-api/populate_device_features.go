@@ -6,29 +6,18 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
+	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic_search"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 func prepareFeatureData(f map[string]map[string]int) []models.DeviceIntegrationFeatures {
-	displayNameMapping := map[string]string{
-		"batteryVoltage":       "Battery Voltage",
-		"fuelPercentRemaining": "Fuel Tank",
-		"odometer":             "Odometer",
-		"oil":                  "Engine Oil Life",
-		"soc":                  "EV Battery",
-		"tires":                "Tires",
-		"speed":                "Speed",
-	}
-
 	var ft []models.DeviceIntegrationFeatures
 
 	for k, v := range f {
 		feat := models.DeviceIntegrationFeatures{}
 		feat.ElasticProperty = k
-		feat.DisplayName = displayNameMapping[k]
 		feat.SupportLevel = 0
 
 		if v["doc_count"] > 0 {
@@ -45,7 +34,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
-	es, _ := elastic.NewElasticSearhBaseService(s, logger)
+	es, _ := elastic.NewElasticSearch(s, logger)
 
 	resp, err := es.GetDeviceFeatures(s.Environment)
 	if err != nil {
@@ -68,9 +57,9 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				continue
 			}
 
-			if len(devices) > 1 { // we have for multiple continents
+			/* if len(devices) > 1 { // we have for multiple continents
 				// handle when we have region in elasticsearch
-			}
+			} */
 
 			if len(devices) < 1 {
 				// handle not found

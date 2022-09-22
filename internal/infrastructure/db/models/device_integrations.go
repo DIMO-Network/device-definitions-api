@@ -36,13 +36,6 @@ type DeviceIntegration struct {
 	L deviceIntegrationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-type DeviceIntegrationFeatures struct {
-	DisplayName string `json:"display_name,omitempty"`
-	IconCss string `json:"icon_css,omitempty"`
-	ElasticProperty string `json:"elastic_property,omitempty"`
-	SupportLevel	int8 `json:"supportLevel"`
-}
-
 var DeviceIntegrationColumns = struct {
 	DeviceDefinitionID string
 	IntegrationID      string
