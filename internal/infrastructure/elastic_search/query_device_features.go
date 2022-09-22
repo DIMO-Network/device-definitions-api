@@ -41,7 +41,7 @@ type DeviceFeaturesResp struct {
 					SumOtherDocCount int64 `json:"sum_other_doc_count"`
 					Buckets          []struct {
 						Key           string `json:"key"`
-						DocumentCount int64  `json:"doc_count"`
+						DocCount int64  `json:"doc_count"`
 						Features      struct {
 							Buckets map[string]map[string]int
 						}
