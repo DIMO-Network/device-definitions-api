@@ -187,6 +187,21 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.ID}, nil
 }
 
+func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.CreateDeviceStyleResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
+		DeviceDefinitionID: in.DeviceDefinitionID,
+		Name:               in.Name,
+		ExternalStyleID:    in.ExternalStyleID,
+		Source:             in.Source,
+		SubModel:           in.SubModel,
+	})
+
+	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
+
+	return &p_grpc.CreateDeviceStyleResponse{ID: result.ID}, nil
+}
+
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionCommand{

@@ -22,6 +22,7 @@ message GetDeviceDefinitionItemResponse {
 	bool  verified = 7;
 	repeated  DeviceIntegrations device_integrations = 8;
 	Make make = 9;
+	repeated DeviceStyles device_styles = 10;
 
 	message CompatibleIntegrations {
 		string id = 1;
@@ -42,13 +43,22 @@ message GetDeviceDefinitionItemResponse {
 	}
 
 	message DeviceIntegrations {
-		string id = 1;
+		string id = 1;		
 		string type = 2;
 		string style = 3;
 		string vendor = 4;
 		string region = 5;
 		string country = 6;
 		string capabilities = 7;
+		string deviceDefinitionId = 8;
+	}
+
+	message DeviceStyles {
+		string id = 1;
+		string source = 2;
+		string name = 3;
+		string subModel = 4;
+		string deviceDefinitionId = 5;
 	}
 
 	message Make {
