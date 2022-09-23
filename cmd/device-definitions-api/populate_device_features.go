@@ -89,7 +89,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			).All(ctx, pdb.DBS().Reader)
 			// check if device exists
 			if err != nil {
-				logger.Err(err).Str("integrationId", indID).Str("deviceDefinitionId", ddID).("error occurred fetching device")
+				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("error occurred fetching device")
 				continue
 			}
 
