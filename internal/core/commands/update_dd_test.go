@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	_ "embed"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"testing"
 
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -16,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type UpdateDeviceDefinitionCommandHandlerSuite struct {
@@ -139,7 +139,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	s.NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 
-	dd, err = models.DeviceDefinitions(
+	dd, _ = models.DeviceDefinitions(
 		qm.Where("id = ?", dd.ID),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
@@ -189,7 +189,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	s.NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 
-	dd, err = models.DeviceDefinitions(
+	dd, _ = models.DeviceDefinitions(
 		qm.Where("id = ?", dd.ID),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
