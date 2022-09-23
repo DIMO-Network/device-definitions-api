@@ -32,42 +32,42 @@ func (d *ElasticSearch) GetDeviceFeatures(envName, fields string) (DeviceFeature
 	url := fmt.Sprintf("%s/device-status-%s*/_search", d.BaseURL, envName)
 	body := `
 	{
-		"size": 0,
-		"query": {                                                                    
-		  "bool": {
-			"must": [
-			  {
-				"exists": {
-				  "field": "data.deviceDefinitionId"
-				}
-			  }
-			]
-		  }
+		"size":0,
+		"query":{
+		   "bool":{
+			  "must":[
+				 {
+					"exists":{
+					   "field":"data.deviceDefinitionId"
+					}
+				 }
+			  ]
+		   }
 		},
-		"aggs": {
-		  "features": {
-			"terms": {
-			  "field": "source",
-			  "size": 1000
-			},
-			"aggs": {
-			  "deviceDefinitions": {
-				"terms": {
-				  "field": "data.deviceDefinitionId",
-				  "size": 10000
-				},
-				"aggs": {
-			  "features":{
-				"filters": {
-				  "filters": ` + fields + `
-				}
+		"aggs":{
+		   "features":{
+			  "terms":{
+				 "field":"source",
+				 "size":1000
+			  },
+			  "aggs":{
+				 "deviceDefinitions":{
+					"terms":{
+					   "field":"data.deviceDefinitionId",
+					   "size":10000
+					},
+					"aggs":{
+					   "features":{
+						  "filters":{
+							"filters":` + fields + `
+						  }
+					   }
+					}
+				 }
 			  }
-			}
-			  }
-			}
-		  }
+		   }
 		}
-	  }
+	 }
 	`
 
 	deviceFeatures := DeviceFeaturesResp{}

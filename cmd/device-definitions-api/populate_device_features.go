@@ -8,6 +8,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
+	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -16,8 +17,8 @@ import (
 
 type jsonObj map[string]interface{}
 
-func prepareFeatureData(f map[string]map[string]int) []models.DeviceIntegrationFeatures {
-	ft := []models.DeviceIntegrationFeatures{}
+func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceIntegrationFeatures {
+	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range f {
 		supportLevel := 0
@@ -26,7 +27,7 @@ func prepareFeatureData(f map[string]map[string]int) []models.DeviceIntegrationF
 			supportLevel = 2
 		}
 
-		feat := models.DeviceIntegrationFeatures{
+		feat := elasticModels.DeviceIntegrationFeatures{
 			FeatureKey:   k,
 			SupportLevel: int8(supportLevel),
 		}
@@ -37,7 +38,7 @@ func prepareFeatureData(f map[string]map[string]int) []models.DeviceIntegrationF
 	return ft
 }
 
-func prepareEsQuery(i []models.IntegrationFeatures) (string, error) {
+func prepareEsQuery(i []elasticModels.IntegrationFeatures) (string, error) {
 	filters := jsonObj{}
 
 	for _, v := range i {
@@ -62,7 +63,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 
 	es, _ := elastic.NewElasticSearch(s, logger)
 
-	ifeats := []models.IntegrationFeatures{}
+	ifeats := []elasticModels.IntegrationFeatures{}
 	_ = queries.Raw("SELECT elastic_property, feature_key FROM integration_features").Bind(ctx, pdb.DBS().Reader, &ifeats)
 	esFilters, err := prepareEsQuery(ifeats)
 	if err != nil {
@@ -75,7 +76,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	}
 
 	for _, f := range resp.Aggregations.Features.Buckets {
-		intID := strings.Split(f.Key, "/")[2]
+		intID := strings.TrimPrefix(f.Key, "dimo/integration/")
 
 		for _, d := range f.DeviceDefinitions.Buckets {
 			ddID := d.Key
