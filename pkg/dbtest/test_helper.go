@@ -191,3 +191,11 @@ func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, int
 	assert.NoError(t, err)
 	return di
 }
+
+func Logger() *zerolog.Logger {
+	l := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "devices-api").
+		Logger()
+	return &l
+}
