@@ -3,14 +3,14 @@
 SELECT 'up SQL query';
 CREATE TABLE IF NOT EXISTS device_definitions_api.integration_features
 (
-    elastic_property    varchar(50) PRIMARY KEY not null,
-    feature_key         varchar(50) not null,
+    feature_key         varchar(50) PRIMARY KEY not null,
+    elastic_property    varchar(50) not null,
     display_name        varchar(50) not null,
     css_icon            varchar(100),
     created_at          timestamptz not null default current_timestamp,
     updated_at          timestamptz not null default current_timestamp
 );
-CREATE UNIQUE INDEX feature_key_idx ON device_definitions_api.integration_features (feature_key);
+CREATE UNIQUE INDEX elastic_property_idx ON device_definitions_api.integration_features (elastic_property);
 CREATE UNIQUE INDEX css_icon_idx ON device_definitions_api.integration_features (css_icon);
 
 INSERT INTO device_definitions_api.integration_features (feature_key, display_name, elastic_property) VALUES 

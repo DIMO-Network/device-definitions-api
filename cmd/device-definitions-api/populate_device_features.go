@@ -12,7 +12,6 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries"
 )
 
 type jsonObj map[string]interface{}
@@ -38,10 +37,15 @@ func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceInteg
 	return ft
 }
 
-func prepareEsQuery(i []elasticModels.IntegrationFeatures) (string, error) {
+func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
+	ifeats, err := models.IntegrationFeatures().All(ctx, d.DBS().Reader)
+	if err != nil {
+		return "", err
+	}
+
 	filters := jsonObj{}
 
-	for _, v := range i {
+	for _, v := range ifeats {
 		esKey := v.ElasticProperty
 		if v.FeatureKey == "tires" {
 			esKey = v.FeatureKey
@@ -63,11 +67,9 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 
 	es, _ := elastic.NewElasticSearch(s, logger)
 
-	ifeats := []elasticModels.IntegrationFeatures{}
-	_ = queries.Raw("SELECT elastic_property, feature_key FROM integration_features").Bind(ctx, pdb.DBS().Reader, &ifeats)
-	esFilters, err := prepareEsQuery(ifeats)
+	esFilters, err := getIntegrationFeatures(ctx, pdb)
 	if err != nil {
-		return err
+		logger.Fatal().Err(err).Msg("could not load integration features")
 	}
 
 	resp, err := es.GetDeviceFeatures(s.Environment, esFilters)
@@ -104,7 +106,6 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			feature := prepareFeatureData(d.Features.Buckets)
 
 			device := devices[0]
-
 			err = device.Features.Marshal(&feature)
 			if err != nil {
 				logger.Error().Msgf("could not marshal feature information into device with integration id %s and deviceDefinitionId %s:", intID, ddID)
