@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
 package grpc;
@@ -22,6 +23,7 @@ message GetDeviceDefinitionItemResponse {
 	bool  verified = 7;
 	repeated  DeviceIntegrations device_integrations = 8;
 	Make make = 9;
+	repeated DeviceStyles device_styles = 10;
 
 	message CompatibleIntegrations {
 		string id = 1;
@@ -42,13 +44,22 @@ message GetDeviceDefinitionItemResponse {
 	}
 
 	message DeviceIntegrations {
-		string id = 1;
+		string id = 1;		
 		string type = 2;
 		string style = 3;
 		string vendor = 4;
 		string region = 5;
 		string country = 6;
 		string capabilities = 7;
+		string deviceDefinitionId = 8;
+	}
+
+	message DeviceStyles {
+		string id = 1;
+		string source = 2;
+		string name = 3;
+		string subModel = 4;
+		string deviceDefinitionId = 5;
 	}
 
 	message Make {
@@ -148,6 +159,33 @@ message CreateDeviceIntegrationResponse {
 message UpdateDeviceDefinitionRequest {
 	string device_definition_id = 1;
 	VehicleInfo vehicle_data = 2;
+	string source = 3;
+	string image_URL = 4;
+	bool verified = 5;
+	string model = 6;
+	int32 year = 7;
+	string device_make_ID = 8;
+	repeated DeviceStyles device_styles = 9;
+	repeated DeviceIntegrations device_integrations = 10;
+
+	message DeviceStyles {
+		string id = 1;
+		string name = 2;
+		string external_style_id = 3;
+		string source = 4;
+		google.protobuf.Timestamp created_at = 5;
+		google.protobuf.Timestamp updated_at = 6;
+		string sub_model = 7;
+	}
+
+	message DeviceIntegrations {
+		string integration_id = 1;
+		string region = 2;
+		google.protobuf.Timestamp created_at = 3;
+		google.protobuf.Timestamp updated_at = 4;
+		string capabilities = 5;
+	}
+
 }
 
 message UpdateDeviceDefinitionResponse {

@@ -90,14 +90,27 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		rp.DeviceIntegrations = []*grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{}
 		for _, di := range dd.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{
-				Id:           di.ID,
-				Type:         di.Type,
-				Style:        di.Style,
-				Vendor:       di.Vendor,
-				Region:       di.Region,
-				Capabilities: string(di.Capabilities),
+				DeviceDefinitionId: dd.DeviceDefinitionID,
+				Id:                 di.ID,
+				Type:               di.Type,
+				Style:              di.Style,
+				Vendor:             di.Vendor,
+				Region:             di.Region,
+				Capabilities:       string(di.Capabilities),
 			})
 		}
+
+		rp.DeviceStyles = []*grpc.GetDeviceDefinitionItemResponse_DeviceStyles{}
+		for _, ds := range dd.DeviceStyles {
+			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.GetDeviceDefinitionItemResponse_DeviceStyles{
+				DeviceDefinitionId: dd.DeviceDefinitionID,
+				Id:                 ds.ID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
+			})
+		}
+
 		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
 	}
 
