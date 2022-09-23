@@ -6,30 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DeviceFeatures struct {
-	BatteryVoltage struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	FuelPercentRemaining struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	Odometer struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	Oil struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	Soc struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	Speed struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-	Tires struct {
-		DocumentCount int64 `json:"doc_count"`
-	}
-}
-
 type DeviceFeaturesResp struct {
 	Aggregations struct {
 		Features struct {
@@ -40,9 +16,9 @@ type DeviceFeaturesResp struct {
 				DeviceDefinitions struct {
 					SumOtherDocCount int64 `json:"sum_other_doc_count"`
 					Buckets          []struct {
-						Key           string `json:"key"`
+						Key      string `json:"key"`
 						DocCount int64  `json:"doc_count"`
-						Features      struct {
+						Features struct {
 							Buckets map[string]map[string]int
 						}
 					}
@@ -52,7 +28,7 @@ type DeviceFeaturesResp struct {
 	}
 }
 
-func (d *ElasticSearch) GetDeviceFeatures(envName string) (DeviceFeaturesResp, error) {
+func (d *ElasticSearch) GetDeviceFeatures(envName, fields string) (DeviceFeaturesResp, error) {
 	url := fmt.Sprintf("%s/device-status-%s*/_search", d.BaseURL, envName)
 	body := `
 	{
@@ -83,43 +59,7 @@ func (d *ElasticSearch) GetDeviceFeatures(envName string) (DeviceFeaturesResp, e
 				"aggs": {
 			  "features":{
 				"filters": {
-				  "filters": {
-					"odometer":{
-					  "exists": {
-						"field": "data.odometer"
-					  }
-					},
-					"fuelPercentRemaining": {
-					  "exists": {
-						  "field": "data.fuelPercentRemaining"
-					  }
-					},
-					"oil": {
-					  "exists": {
-						  "field": "data.oil"
-					  }
-					},
-					"soc": {
-					  "exists": {
-						  "field": "data.soc"
-					  }
-					},
-					"speed": {
-					  "exists": {
-						  "field": "data.speed"
-					  }
-					},
-					"tires": {
-					  "exists": {
-						  "field": "data.tires.frontLeft"
-					  }
-					},
-					"batteryVoltage":{
-					  "exists": {
-						"field": "data.batteryVoltage"
-					  }
-					}
-				  }
+				  "filters": ` + fields + `
 				}
 			  }
 			}

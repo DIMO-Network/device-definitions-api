@@ -19,7 +19,7 @@ INSERT INTO device_definitions_api.integration_features (feature_key, display_na
     ('fuel_tank', 'Fuel Tank', 'fuel_percent_remaining'),
     ('odometer', 'Odometer', 'odometer'),
     ('oil', 'Engine Oil Life', 'oil'),
-    ('tires', 'Tires', 'tires'),
+    ('tires', 'Tires', 'tires.frontLeft'),
     ('speed', 'Speed', 'speed');
 -- +goose StatementEnd
 

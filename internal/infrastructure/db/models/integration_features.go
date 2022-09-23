@@ -8,6 +8,6 @@ type IntegrationFeatures struct {
 }
 
 type DeviceIntegrationFeatures struct {
-	ElasticProperty string `json:"elastic_property,omitempty"`
-	SupportLevel    int8   `json:"supportLevel"`
+	FeatureKey   string `json:"feature_key,omitempty"`
+	SupportLevel int8   `json:"support_level"`
 }
