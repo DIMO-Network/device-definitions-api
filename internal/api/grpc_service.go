@@ -204,7 +204,7 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
 
-	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionCommand{
+	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
@@ -218,7 +218,32 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
 			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
 		},
-	})
+	}
+
+	if len(in.DeviceStyles) > 0 {
+		for _, style := range in.DeviceStyles {
+			command.DeviceStyles = append(command.DeviceStyles, commands.UpdateDeviceStyles{
+				ID:              style.Id,
+				ExternalStyleID: style.ExternalStyleId,
+				Name:            style.Name,
+				Source:          style.Source,
+				CreatedAt:       style.CreatedAt.AsTime(),
+				UpdatedAt:       style.UpdatedAt.AsTime(),
+			})
+		}
+	}
+
+	if len(in.DeviceIntegrations) > 0 {
+		for _, integration := range in.DeviceIntegrations {
+			command.DeviceIntegrations = append(command.DeviceIntegrations, commands.UpdateDeviceIntegrations{
+				IntegrationID: integration.IntegrationId,
+				CreatedAt:     integration.CreatedAt.AsTime(),
+				UpdatedAt:     integration.UpdatedAt.AsTime(),
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
 
 	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
 
