@@ -20,7 +20,7 @@ func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceInteg
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range f {
-		supportLevel := 0
+		var supportLevel int8
 
 		if v["doc_count"] > 0 {
 			supportLevel = 2
