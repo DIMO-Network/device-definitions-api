@@ -11,7 +11,6 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/device-definitions/:id", handlers.GetDeviceDefinitionByID(m))
 	app.Get("/device-definitions/:id/integrations", handlers.GetDeviceIntegrationsByID(m))
 	app.Get("/device-definitions", handlers.GetDeviceDefinitionByMMY(m))
-	app.Get("/device-definitions/filter", handlers.GetDeviceDefinitionByDynamicFilter(m))
 }
 
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {
