@@ -105,7 +105,26 @@ func (s *GrpcService) GetFilteredDeviceDefinitions(ctx context.Context, in *p_gr
 		PageSize:           int(in.PageSize),
 	})
 
-	result := qryResult.(*p_grpc.GetFilteredDeviceDefinitionsResponse)
+	ddResult := qryResult.([]queries.DeviceDefinitionQueryResponse)
+
+	result := &p_grpc.GetFilteredDeviceDefinitionsResponse{}
+
+	for _, deviceDefinition := range ddResult {
+		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
+			ID:           deviceDefinition.ID,
+			Model:        deviceDefinition.Model,
+			Year:         int32(deviceDefinition.Year),
+			ImageUrl:     deviceDefinition.ImageURL.String,
+			CreatedAt:    deviceDefinition.CreatedAt.UnixMilli(),
+			UpdatedAt:    deviceDefinition.UpdatedAt.UnixMilli(),
+			Metadata:     string(deviceDefinition.Metadata.JSON),
+			Source:       deviceDefinition.Source.String,
+			Verified:     deviceDefinition.Verified,
+			External:     deviceDefinition.ExternalID.String,
+			DeviceMakeID: deviceDefinition.DeviceMakeID,
+			Make:         deviceDefinition.Make,
+		})
+	}
 
 	return result, nil
 }
