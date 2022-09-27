@@ -7,8 +7,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/pkg/elastic"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	_ "github.com/lib/pq"
@@ -90,6 +90,24 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 		mediator.WithBehaviour(common.ValidationBehavior{}),
 		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
 		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{}, commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
+	)
+
+	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
+
+}
+
+func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+
+	//db
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
+	pdb.WaitForDB(logger)
+
+	//commands
+	m, _ := mediator.New(
+		mediator.WithBehaviour(common.LoggingBehavior{}),
+		mediator.WithBehaviour(common.ValidationBehavior{}),
+		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithHandler(&commands.SyncTeslaIntegrationCommand{}, commands.NewSyncTestlaIntegrationCommandHandler(pdb.DBS, &logger)),
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})

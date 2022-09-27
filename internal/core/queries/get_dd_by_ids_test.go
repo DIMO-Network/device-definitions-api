@@ -6,7 +6,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
-	"github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

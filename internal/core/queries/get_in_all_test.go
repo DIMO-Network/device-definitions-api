@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	dbtesthelper "github.com/DIMO-Network/device-definitions-api/pkg/dbtest"
+	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
