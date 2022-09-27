@@ -15,7 +15,7 @@ import (
 )
 
 type GetDeviceDefinitionByIdsQuery struct {
-	DeviceDefinitionID []string `json:"deviceDefinitionId" validate:"required"`
+	DeviceDefinitionID []string `json:"deviceDefinitionId"`
 }
 
 func (*GetDeviceDefinitionByIdsQuery) Key() string { return "GetDeviceDefinitionByIdsQuery" }
@@ -48,8 +48,14 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		dd, _ := ch.DDCache.GetDeviceDefinitionByID(ctx, v)
 
 		if dd == nil {
-			ch.log.Warn().Msg(fmt.Sprintf("Device Definition Id %s not found", v))
-			continue
+			if len(qry.DeviceDefinitionID) > 1 {
+				ch.log.Warn().Str("deviceDefinitionId", v).Msg("Not found - Device Definition")
+				continue
+			}
+
+			return nil, &exceptions.NotFoundError{
+				Err: fmt.Errorf("could not find device definition id: %s", v),
+			}
 		}
 
 		rp := &grpc.GetDeviceDefinitionItemResponse{
