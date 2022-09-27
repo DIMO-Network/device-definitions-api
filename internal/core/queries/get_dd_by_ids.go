@@ -78,6 +78,10 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			Verified: dd.Verified,
 		}
 
+		if dd.DeviceMake.TokenID != nil {
+			rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
+		}
+
 		// vehicle info
 		numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 		mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)

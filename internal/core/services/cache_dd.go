@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -135,6 +136,10 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 		},
 		Metadata: string(dd.Metadata.JSON),
 		Verified: dd.Verified,
+	}
+
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
 	}
 
 	// vehicle info

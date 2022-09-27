@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"math/big"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -81,4 +82,5 @@ type DeviceMake struct {
 	Name            string      `json:"name"`
 	LogoURL         null.String `json:"logo_url"`
 	OemPlatformName null.String `json:"oem_platform_name"`
+	TokenID         *big.Int    `json:"tokenId,omitempty"`
 }

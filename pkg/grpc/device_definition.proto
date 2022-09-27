@@ -67,6 +67,7 @@ message GetDeviceDefinitionItemResponse {
 		string name = 2;
 		string logo_url = 3;
 		string oem_platform_name = 4;
+		uint64 token_id = 5;
 	}
 }
 
