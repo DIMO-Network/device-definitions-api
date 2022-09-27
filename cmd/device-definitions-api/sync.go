@@ -20,7 +20,7 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 
 	//infra
-	elasticSearchService, _ := elastic.NewElasticSearchService(s, logger)
+	elasticSearchService, _ := elastic.NewElasticAppSearchService(s, logger)
 
 	//commands
 	m, _ := mediator.New(
