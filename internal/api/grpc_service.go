@@ -40,7 +40,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Year:  int(in.Year),
 	})
 
-	dd := qryResult.(models.GetDeviceDefinitionQueryResult)
+	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
