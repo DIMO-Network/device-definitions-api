@@ -60,10 +60,6 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				continue
 			}
 
-			/* if len(devices) > 1 { // we have for multiple continents
-				// handle when we have region in elasticsearch
-			} */
-
 			if len(devices) < 1 {
 				// handle not found
 				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("error could not find device")
