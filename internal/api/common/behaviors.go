@@ -69,17 +69,15 @@ func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message
 		p.log.Error().
 			Err(err).
 			Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
-		//return nil, err // if just return error does not cut mediator pipeline and will continue normal execution, must panic for mediator to stop pipeline and go to error path
 
+		// if just return error does not cut mediator pipeline and will continue normal execution, must panic for mediator to stop pipeline and go to error path
 		// increment error metric
 		if _, ok := err.(*exceptions.ConflictError); ok {
 			metrics.ConflictRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
-			panic(err)
 		}
 
 		if _, ok := err.(*exceptions.NotFoundError); ok {
 			metrics.NotFoundRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
-			panic(err)
 		}
 
 		metrics.InternalError.With(prometheus.Labels{"method": msg.Key()}).Inc()
