@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
@@ -13,7 +12,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
@@ -37,7 +35,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	redisCache := redis.NewRedisCacheService(settings.Environment == "prod", settings.Redis)
 
 	//infra
-	metricsSvc := metrics.NewMetricService(strings.ReplaceAll(settings.ServiceName, "-", "_"), settings)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -64,7 +61,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(metricsSvc, &logger, settings)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService, &logger)),

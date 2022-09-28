@@ -3,12 +3,11 @@ package common
 import (
 	"context"
 	"fmt"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/TheFellow/go-mediator/mediator"
-	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 )
 
@@ -42,40 +41,52 @@ func (p ValidationBehavior) Process(ctx context.Context, msg mediator.Message, n
 	if valErrors != nil {
 		// consider if reduce to Warn()
 		p.log.Error().Msg(fmt.Sprintf("%s validation error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
-		panic(exceptions.ValidationError{
-			Err: errors.New(valErrors[0].Field),
-		})
+		err := exceptions.ValidationError{Err: fmt.Errorf("The field %s is required", valErrors[0].Field)}
+
+		metrics.BadRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+		panic(&err)
 	}
 	return next(ctx)
 }
 
 type ErrorHandlingBehavior struct {
-	prometheusMetricService metrics.PrometheusMetricService
-	log                     *zerolog.Logger
-	settings                *config.Settings
+	log      *zerolog.Logger
+	settings *config.Settings
 }
 
-func NewErrorHandlingBehavior(prometheusMetricService metrics.PrometheusMetricService, log *zerolog.Logger, settings *config.Settings) ErrorHandlingBehavior {
-	return ErrorHandlingBehavior{prometheusMetricService: prometheusMetricService, log: log, settings: settings}
+func NewErrorHandlingBehavior(log *zerolog.Logger, settings *config.Settings) ErrorHandlingBehavior {
+	return ErrorHandlingBehavior{log: log, settings: settings}
 }
 
 // Process checks for errors in the pipeline to increment metrics and log in standard fashion
 func (p ErrorHandlingBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
 	r, err := next(ctx)
 	if err != nil {
-		// increment error metric
-		p.prometheusMetricService.InternalError(msg.Key())
+
 		// msg.Key contains the property names, and msg contains the property values that were passed into the function to execute.
 		// this automatically logs any incoming properties for easy debugging. An improvement here could be to use reflection to map out the properties to the log context.
 		p.log.Error().
 			Err(err).
 			Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
 		//return nil, err // if just return error does not cut mediator pipeline and will continue normal execution, must panic for mediator to stop pipeline and go to error path
+
+		// increment error metric
+		if _, ok := err.(*exceptions.ConflictError); ok {
+			metrics.ConflictRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+			panic(err)
+		}
+
+		if _, ok := err.(*exceptions.NotFoundError); ok {
+			metrics.NotFoundRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+			panic(err)
+		}
+
+		metrics.InternalError.With(prometheus.Labels{"method": msg.Key()}).Inc()
 		panic(err)
 	}
 	//reflect.TypeOf(next).Name() to get name of the method
 	// if no error, increment overall success metric
-	p.prometheusMetricService.Success(msg.Key())
+	metrics.Success.With(prometheus.Labels{"method": msg.Key()}).Inc()
 
 	return r, nil
 }
