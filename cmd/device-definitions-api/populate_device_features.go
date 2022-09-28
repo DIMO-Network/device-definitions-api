@@ -14,7 +14,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-type jsonObj map[string]interface{}
+type jsonObj map[string]any
 
 type SupportLevelEnum int8
 
