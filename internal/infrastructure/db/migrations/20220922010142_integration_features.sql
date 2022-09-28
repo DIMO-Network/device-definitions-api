@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.integration_features
     updated_at          timestamptz not null default current_timestamp
 );
 CREATE UNIQUE INDEX elastic_property_idx ON device_definitions_api.integration_features (elastic_property);
-CREATE UNIQUE INDEX css_icon_idx ON device_definitions_api.integration_features (css_icon);
 
 INSERT INTO device_definitions_api.integration_features (feature_key, display_name, elastic_property) VALUES 
     ('ev_battery', 'EV Battery', 'soc'),

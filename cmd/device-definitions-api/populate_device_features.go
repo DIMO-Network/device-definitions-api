@@ -16,49 +16,16 @@ import (
 
 type jsonObj map[string]interface{}
 
-func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceIntegrationFeatures {
-	ft := []elasticModels.DeviceIntegrationFeatures{}
+type SupportLevelEnum int8
 
-	for k, v := range f {
-		var supportLevel int8
+const (
+	NotSupported   SupportLevelEnum = 0
+	MaybeSupported SupportLevelEnum = 1
+	Supported      SupportLevelEnum = 2
+)
 
-		if v["doc_count"] > 0 {
-			supportLevel = 2
-		}
-
-		feat := elasticModels.DeviceIntegrationFeatures{
-			FeatureKey:   k,
-			SupportLevel: int8(supportLevel),
-		}
-
-		ft = append(ft, feat)
-	}
-
-	return ft
-}
-
-func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
-	ifeats, err := models.IntegrationFeatures().All(ctx, d.DBS().Reader)
-	if err != nil {
-		return "", err
-	}
-
-	filters := jsonObj{}
-
-	for _, v := range ifeats {
-		esKey := v.ElasticProperty
-		if v.FeatureKey == "tires" {
-			esKey = v.FeatureKey
-		}
-		filters[esKey] = jsonObj{"exists": jsonObj{"field": "data." + v.ElasticProperty}}
-	}
-
-	esFilters, err := json.Marshal(filters)
-	if err != nil {
-		return "", err
-	}
-
-	return string(esFilters), nil
+func (r SupportLevelEnum) Int() int8 {
+	return int8(r)
 }
 
 func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s *config.Settings) error {
@@ -99,7 +66,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 
 			if len(devices) < 1 {
 				// handle not found
-				logger.Error().Msgf("error could not find device with integration id %s and deviceDefinitionId %s", intID, ddID)
+				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("error could not find device")
 				continue
 			}
 
@@ -108,16 +75,61 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			device := devices[0]
 			err = device.Features.Marshal(&feature)
 			if err != nil {
-				logger.Error().Msgf("could not marshal feature information into device with integration id %s and deviceDefinitionId %s:", intID, ddID)
+				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("could not marshal feature information into device")
 				continue
 			}
 
 			if _, err := device.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-				logger.Error().Msgf("could not update device with integration id %s and deviceDefinitionId %s:", intID, ddID)
+				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("could not update device")
 				continue
 			}
 		}
 	}
 
 	return nil
+}
+
+func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceIntegrationFeatures {
+	ft := []elasticModels.DeviceIntegrationFeatures{}
+
+	for k, v := range f {
+		var supportLevel int8
+
+		if v["doc_count"] > 0 {
+			supportLevel = int8(Supported)
+		}
+
+		feat := elasticModels.DeviceIntegrationFeatures{
+			FeatureKey:   k,
+			SupportLevel: int8(supportLevel),
+		}
+
+		ft = append(ft, feat)
+	}
+
+	return ft
+}
+
+func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
+	ifeats, err := models.IntegrationFeatures().All(ctx, d.DBS().Reader)
+	if err != nil {
+		return "", err
+	}
+
+	filters := jsonObj{}
+
+	for _, v := range ifeats {
+		esKey := v.ElasticProperty
+		if v.FeatureKey == "tires" {
+			esKey = v.FeatureKey
+		}
+		filters[esKey] = jsonObj{"exists": jsonObj{"field": "data." + v.ElasticProperty}}
+	}
+
+	esFilters, err := json.Marshal(filters)
+	if err != nil {
+		return "", err
+	}
+
+	return string(esFilters), nil
 }
