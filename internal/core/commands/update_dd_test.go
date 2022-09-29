@@ -102,7 +102,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	var deviceStyles []UpdateDeviceStyles
+	deviceStyles := []UpdateDeviceStyles{}
 	deviceStyles = append(deviceStyles, UpdateDeviceStyles{
 		ID:              ksuid.New().String(),
 		Name:            "NewStyle1",
@@ -117,6 +117,19 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		SubModel:        "SubModel2",
 		ExternalStyleID: ksuid.New().String(),
 	})
+
+	styles, _ := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).
+		All(ctx, s.pdb.DBS().Reader)
+
+	for _, style := range styles {
+		deviceStyles = append(deviceStyles, UpdateDeviceStyles{
+			ID:              style.ID,
+			Name:            style.Name,
+			Source:          style.Source,
+			SubModel:        style.SubModel,
+			ExternalStyleID: ksuid.New().String(),
+		})
+	}
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
@@ -146,7 +159,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceStyles))).
 		One(ctx, s.pdb.DBS().Writer)
 
-	assert.Equal(s.T(), len(dd.R.DeviceStyles), 2)
+	assert.Equal(s.T(), len(dd.R.DeviceStyles), 4)
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_WithNewIntegration_Success() {
@@ -213,5 +226,8 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 func setupDeviceDefinitionForUpdate(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+	_ = dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr SUV 4WD", "edmunds", "Wagon", pdb)
+	_ = dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
+
 	return dd
 }

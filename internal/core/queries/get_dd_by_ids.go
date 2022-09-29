@@ -125,6 +125,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		for _, ds := range dd.DeviceStyles {
 			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.GetDeviceDefinitionItemResponse_DeviceStyles{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
+				ExternalStyleId:    ds.ExternalStyleID,
 				Id:                 ds.ID,
 				Name:               ds.Name,
 				Source:             ds.Source,
