@@ -57,6 +57,8 @@ type DeviceType struct {
 	Model     string   `json:"model"`
 	Year      int      `json:"year"`
 	SubModels []string `json:"subModels"`
+	MakeSlug  string   `json:"makeSlug"`
+	ModelSlug string   `json:"modelSlug"`
 }
 
 type GetDeviceDefinitionIntegrationList struct {
@@ -84,4 +86,5 @@ type DeviceMake struct {
 	LogoURL         null.String `json:"logo_url"`
 	OemPlatformName null.String `json:"oem_platform_name"`
 	TokenID         *big.Int    `json:"tokenId,omitempty"`
+	NameSlug        string      `json:"nameSlug"`
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"unicode"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -15,6 +16,11 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 type DeviceDefinitionRepository interface {
@@ -168,6 +174,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Year:         int16(year),
 		Source:       null.StringFrom(source),
 		Verified:     false,
+		ModelSlug:    null.StringFrom(slugString(model)),
 	}
 	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 	if err != nil {
@@ -176,4 +183,16 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		}
 	}
 	return dd, nil
+}
+
+func slugString(term string) string {
+
+	lowerCase := cases.Lower(language.English, cases.NoLower)
+	lowerTerm := lowerCase.String(term)
+
+	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+	cleaned, _, _ := transform.String(t, lowerTerm)
+
+	return cleaned
+
 }
