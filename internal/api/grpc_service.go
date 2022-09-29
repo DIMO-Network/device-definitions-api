@@ -83,7 +83,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	}
 
 	for _, integration := range dd.CompatibleIntegrations {
-		result.DeviceIntegrations = append(result.DeviceIntegrations, &p_grpc.DeviceIntegrations{
+		result.DeviceIntegrations = append(result.DeviceIntegrations, &p_grpc.DeviceIntegration{
 			Id:      integration.ID,
 			Type:    integration.Type,
 			Style:   integration.Style,
@@ -140,13 +140,13 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyReque
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
-		result.Integrations = append(result.Integrations, &p_grpc.GetIntegrationItemResponse{
+		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
 			Id:                      item.ID,
 			Type:                    item.Type,
 			Style:                   item.Style,
 			Vendor:                  item.Vendor,
 			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
-			AutoPiPowertrainTemplate: &p_grpc.GetIntegrationItemResponse_GetAutoPiPowertrainTemplate{
+			AutoPiPowertrainTemplate: &p_grpc.GetAutoPiPowertrainTemplate{
 				BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
 				HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
 				ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
@@ -169,7 +169,7 @@ func (s *GrpcService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_
 	result := &p_grpc.GetDeviceDefinitionIntegrationResponse{}
 
 	for _, queryResult := range queryResult {
-		result.Integrations = append(result.Integrations, &p_grpc.GetDeviceDefinitionIntegrationItemResponse{
+		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
 			Id:      queryResult.ID,
 			Type:    queryResult.Type,
 			Style:   queryResult.Style,
@@ -182,7 +182,7 @@ func (s *GrpcService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_
 	return result, nil
 }
 
-func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
+func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceDefinitionCommand{
 		Source: in.Source,
@@ -193,10 +193,10 @@ func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.Cre
 
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
-	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID}, nil
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.CreateDeviceIntegrationResponse, error) {
+func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceIntegrationCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
@@ -206,7 +206,7 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 
 	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
 
-	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.ID}, nil
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
 func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.CreateDeviceStyleResponse, error) {

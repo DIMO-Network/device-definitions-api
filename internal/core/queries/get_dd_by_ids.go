@@ -63,7 +63,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			Name:                   dd.Name,
 			ImageUrl:               dd.ImageURL,
 			Source:                 dd.Source,
-			CompatibleIntegrations: []*grpc.CompatibleIntegrations{},
+			CompatibleIntegrations: []*grpc.DeviceIntegration{},
 			Make: &grpc.DeviceMake{
 				Id:              dd.DeviceMake.ID,
 				Name:            dd.DeviceMake.Name,
@@ -112,9 +112,9 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		rp.Type.SubModels = dd.Type.SubModels
 
 		// build object for integrations that have all the info
-		rp.DeviceIntegrations = []*grpc.DeviceIntegrations{}
+		rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
 		for _, di := range dd.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegrations{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegration{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
 				Id:                 di.ID,
 				Type:               di.Type,
@@ -144,13 +144,13 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 }
 
 // DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func buildDeviceCompatibility(dbDIS []models.GetDeviceCompatibility) []*grpc.CompatibleIntegrations {
+func buildDeviceCompatibility(dbDIS []models.GetDeviceCompatibility) []*grpc.DeviceIntegration {
 	if len(dbDIS) == 0 {
-		return []*grpc.CompatibleIntegrations{}
+		return []*grpc.DeviceIntegration{}
 	}
-	compatibilities := make([]*grpc.CompatibleIntegrations, len(dbDIS))
+	compatibilities := make([]*grpc.DeviceIntegration, len(dbDIS))
 	for i, di := range dbDIS {
-		compatibilities[i] = &grpc.CompatibleIntegrations{
+		compatibilities[i] = &grpc.DeviceIntegration{
 			Id:           di.ID,
 			Type:         di.Type,
 			Style:        di.Style,
