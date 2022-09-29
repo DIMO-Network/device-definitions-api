@@ -314,6 +314,8 @@ type DeviceDefinitionSearchDoc struct {
 	// SubModels: M+M+Y+Submodel name
 	SubModels []string `json:"sub_models"`
 	ImageURL  string   `json:"image_url"`
+	MakeSlug  string   `json:"make_slug"`
+	ModelSlug string   `json:"model_slug"`
 	// future: we might add styles
 }
 

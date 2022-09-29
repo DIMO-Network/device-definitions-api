@@ -69,6 +69,8 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Year:          int(definition.Year),
 			SubModels:     sm,
 			ImageURL:      definition.ImageURL.String,
+			MakeSlug:      common.SlugString(definition.R.DeviceMake.Name),
+			ModelSlug:     common.SlugString(definition.Model),
 		}
 	}
 

@@ -42,6 +42,8 @@ message GetDeviceDefinitionItemResponse {
 		string  model = 3;
 		int32 year = 4;
 		repeated string sub_models = 5;
+		string make_slug = 6;
+		string model_slug = 7;
 	}
 
 	message DeviceIntegrations {
@@ -70,6 +72,7 @@ message GetDeviceDefinitionItemResponse {
 		string logo_url = 3;
 		string oem_platform_name = 4;
 		uint64 token_id = 5;
+		string name_slug = 6;
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -168,6 +169,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Year:         int16(year),
 		Source:       null.StringFrom(source),
 		Verified:     false,
+		ModelSlug:    null.StringFrom(common.SlugString(model)),
 	}
 	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 	if err != nil {
