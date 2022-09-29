@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"math/big"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -19,6 +20,7 @@ type GetDeviceDefinitionQueryResult struct {
 	Metadata           interface{}                          `json:"metadata"`
 	Verified           bool                                 `json:"verified"`
 	DeviceIntegrations []GetDeviceDefinitionIntegrationList `json:"deviceIntegrations"`
+	DeviceStyles       []GetDeviceDefinitionStylesList      `json:"deviceStyles"`
 }
 
 // GetDeviceCompatibility represents what systems we know this is compatible with
@@ -66,9 +68,19 @@ type GetDeviceDefinitionIntegrationList struct {
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 
+type GetDeviceDefinitionStylesList struct {
+	ID                 string `json:"id"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	Name               string `json:"name"`
+	ExternalStyleID    string `json:"externalStyleId"`
+	Source             string `json:"source"`
+	SubModel           string `json:"subModel"`
+}
+
 type DeviceMake struct {
 	ID              string      `json:"id"`
 	Name            string      `json:"name"`
 	LogoURL         null.String `json:"logo_url"`
 	OemPlatformName null.String `json:"oem_platform_name"`
+	TokenID         *big.Int    `json:"tokenId,omitempty"`
 }

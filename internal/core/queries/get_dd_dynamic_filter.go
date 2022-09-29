@@ -17,8 +17,8 @@ import (
 
 const (
 	innerJoinQueryFormat = "%s on %s.%s = %s.%s"
-	andEqQueryFormat     = "%s = %s"
-	andLikeQueryFormat   = "%s ilike %s"
+	andEqQueryFormat     = "%s = '%s'"
+	andLikeQueryFormat   = "%s ilike '%s'"
 )
 
 type GetDeviceDefinitionByDynamicFilterQuery struct {
@@ -77,7 +77,8 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 
 	if len(qry.IntegrationID) > 1 {
 		queryMods = append(queryMods,
-			qm.InnerJoin(fmt.Sprintf(innerJoinQueryFormat, models.TableNames.DeviceIntegrations,
+			qm.InnerJoin(fmt.Sprintf(innerJoinQueryFormat,
+				models.TableNames.DeviceIntegrations,
 				models.TableNames.DeviceIntegrations,
 				models.DeviceIntegrationColumns.DeviceDefinitionID,
 				models.TableNames.DeviceDefinitions,

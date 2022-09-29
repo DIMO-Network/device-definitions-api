@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -137,6 +138,10 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 		Verified: dd.Verified,
 	}
 
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
+	}
+
 	// vehicle info
 	var vi map[string]models.GetDeviceVehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
@@ -152,6 +157,7 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []models.GetDeviceDefinitionIntegrationList{}
+	rp.DeviceStyles = []models.GetDeviceDefinitionStylesList{}
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.GetDeviceDefinitionIntegrationList{
@@ -161,6 +167,17 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
 				Capabilities: common.JSONOrDefault(di.Capabilities),
+			})
+		}
+
+		for _, ds := range dd.R.DeviceStyles {
+			rp.DeviceStyles = append(rp.DeviceStyles, models.GetDeviceDefinitionStylesList{
+				ID:                 ds.ID,
+				DeviceDefinitionID: ds.DeviceDefinitionID,
+				ExternalStyleID:    ds.ExternalStyleID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
 			})
 		}
 	}

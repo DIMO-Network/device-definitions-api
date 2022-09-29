@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	gateways "github.com/DIMO-Network/device-definitions-api/pkg/elastic"
+	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

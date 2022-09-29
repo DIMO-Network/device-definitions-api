@@ -155,13 +155,14 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	return dm
 }
 
-func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, pdb db.Store) models.DeviceStyle {
+func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
 	ds := models.DeviceStyle{
 		ID:                 ksuid.New().String(),
 		Name:               name,
 		DeviceDefinitionID: deviceDefinitionID,
-		Source:             "Source",
-		SubModel:           "sub-model",
+		Source:             source,
+		SubModel:           subModel,
+		ExternalStyleID:    ksuid.New().String(),
 	}
 	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "no db error expected")
@@ -181,6 +182,19 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 	return integration
 }
 
+func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	integration := &models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeHardware,
+		Style:            models.IntegrationStyleAddon,
+		Vendor:           "Hardware",
+		RefreshLimitSecs: 1800,
+	}
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
+}
+
 func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) *models.DeviceIntegration {
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
@@ -190,4 +204,12 @@ func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, int
 	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err)
 	return di
+}
+
+func Logger() *zerolog.Logger {
+	l := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("app", "device-definitions-api").
+		Logger()
+	return &l
 }

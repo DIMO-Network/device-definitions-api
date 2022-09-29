@@ -7,8 +7,11 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 type GetDeviceDefinitionByIdsQuery struct {
@@ -19,11 +22,13 @@ func (*GetDeviceDefinitionByIdsQuery) Key() string { return "GetDeviceDefinition
 
 type GetDeviceDefinitionByIdsQueryHandler struct {
 	DDCache services.DeviceDefinitionCacheService
+	log     *zerolog.Logger
 }
 
-func NewGetDeviceDefinitionByIdsQueryHandler(cache services.DeviceDefinitionCacheService) GetDeviceDefinitionByIdsQueryHandler {
+func NewGetDeviceDefinitionByIdsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger) GetDeviceDefinitionByIdsQueryHandler {
 	return GetDeviceDefinitionByIdsQueryHandler{
 		DDCache: cache,
+		log:     log,
 	}
 }
 
@@ -31,14 +36,26 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 
 	qry := query.(*GetDeviceDefinitionByIdsQuery)
 
+	if len(qry.DeviceDefinitionID) == 0 {
+		return nil, &exceptions.ValidationError{
+			Err: errors.New("Device Definition Ids is required"),
+		}
+	}
+
 	response := &grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range qry.DeviceDefinitionID {
 		dd, _ := ch.DDCache.GetDeviceDefinitionByID(ctx, v)
 
 		if dd == nil {
-			fmt.Printf("Not found")
-			continue
+			if len(qry.DeviceDefinitionID) > 1 {
+				ch.log.Warn().Str("deviceDefinitionId", v).Msg("Not found - Device Definition")
+				continue
+			}
+
+			return nil, &exceptions.NotFoundError{
+				Err: fmt.Errorf("could not find device definition id: %s", v),
+			}
 		}
 
 		rp := &grpc.GetDeviceDefinitionItemResponse{
@@ -59,6 +76,10 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 				Year:  int32(dd.Type.Year),
 			},
 			Verified: dd.Verified,
+		}
+
+		if dd.DeviceMake.TokenID != nil {
+			rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
 		}
 
 		// vehicle info
@@ -90,14 +111,28 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		rp.DeviceIntegrations = []*grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{}
 		for _, di := range dd.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{
-				Id:           di.ID,
-				Type:         di.Type,
-				Style:        di.Style,
-				Vendor:       di.Vendor,
-				Region:       di.Region,
-				Capabilities: string(di.Capabilities),
+				DeviceDefinitionId: dd.DeviceDefinitionID,
+				Id:                 di.ID,
+				Type:               di.Type,
+				Style:              di.Style,
+				Vendor:             di.Vendor,
+				Region:             di.Region,
+				Capabilities:       string(di.Capabilities),
 			})
 		}
+
+		rp.DeviceStyles = []*grpc.GetDeviceDefinitionItemResponse_DeviceStyles{}
+		for _, ds := range dd.DeviceStyles {
+			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.GetDeviceDefinitionItemResponse_DeviceStyles{
+				DeviceDefinitionId: dd.DeviceDefinitionID,
+				ExternalStyleId:    ds.ExternalStyleID,
+				Id:                 ds.ID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
+			})
+		}
+
 		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
 	}
 

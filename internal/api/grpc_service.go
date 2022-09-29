@@ -40,7 +40,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Year:  int(in.Year),
 	})
 
-	dd := qryResult.(models.GetDeviceDefinitionQueryResult)
+	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
@@ -63,6 +63,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			Name:            dd.DeviceMake.Name,
 			LogoUrl:         dd.DeviceMake.LogoURL.String,
 			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
+			TokenId:         dd.DeviceMake.TokenID.Uint64(),
 		},
 		VehicleData: &p_grpc.VehicleInfo{
 			FuelType:            dd.VehicleInfo.FuelType,
@@ -93,7 +94,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	return result, nil
 }
 
-func (s *GrpcService) GetFilteredDeviceDefinitions(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
+func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
 		MakeID:             in.MakeID,
 		IntegrationID:      in.IntegrationID,
@@ -105,7 +106,26 @@ func (s *GrpcService) GetFilteredDeviceDefinitions(ctx context.Context, in *p_gr
 		PageSize:           int(in.PageSize),
 	})
 
-	result := qryResult.(*p_grpc.GetFilteredDeviceDefinitionsResponse)
+	ddResult := qryResult.([]queries.DeviceDefinitionQueryResponse)
+
+	result := &p_grpc.GetFilteredDeviceDefinitionsResponse{}
+
+	for _, deviceDefinition := range ddResult {
+		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
+			ID:           deviceDefinition.ID,
+			Model:        deviceDefinition.Model,
+			Year:         int32(deviceDefinition.Year),
+			ImageUrl:     deviceDefinition.ImageURL.String,
+			CreatedAt:    deviceDefinition.CreatedAt.UnixMilli(),
+			UpdatedAt:    deviceDefinition.UpdatedAt.UnixMilli(),
+			Metadata:     string(deviceDefinition.Metadata.JSON),
+			Source:       deviceDefinition.Source.String,
+			Verified:     deviceDefinition.Verified,
+			External:     deviceDefinition.ExternalID.String,
+			DeviceMakeID: deviceDefinition.DeviceMakeID,
+			Make:         deviceDefinition.Make,
+		})
+	}
 
 	return result, nil
 }
@@ -187,10 +207,31 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 	return &p_grpc.CreateDeviceIntegrationResponse{Id: result.ID}, nil
 }
 
+func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.CreateDeviceStyleResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
+		DeviceDefinitionID: in.DeviceDefinitionID,
+		Name:               in.Name,
+		ExternalStyleID:    in.ExternalStyleID,
+		Source:             in.Source,
+		SubModel:           in.SubModel,
+	})
+
+	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
+
+	return &p_grpc.CreateDeviceStyleResponse{ID: result.ID}, nil
+}
+
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.UpdateDeviceDefinitionResponse, error) {
 
-	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionCommand{
+	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
+		//Source:             in.Source,
+		//ImageURL:           in.Image_URL,
+		Year:         int16(in.Year),
+		Model:        in.Model,
+		Verified:     in.Verified,
+		DeviceMakeID: in.DeviceMake_ID,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
@@ -203,7 +244,34 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
 			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
 		},
-	})
+	}
+
+	if len(in.DeviceStyles) > 0 {
+		for _, style := range in.DeviceStyles {
+			command.DeviceStyles = append(command.DeviceStyles, commands.UpdateDeviceStyles{
+				ID:              style.Id,
+				ExternalStyleID: style.ExternalStyleId,
+				Name:            style.Name,
+				Source:          style.Source,
+				SubModel:        style.SubModel,
+				CreatedAt:       style.CreatedAt.AsTime(),
+				UpdatedAt:       style.UpdatedAt.AsTime(),
+			})
+		}
+	}
+
+	if len(in.DeviceIntegrations) > 0 {
+		for _, integration := range in.DeviceIntegrations {
+			command.DeviceIntegrations = append(command.DeviceIntegrations, commands.UpdateDeviceIntegrations{
+				IntegrationID: integration.IntegrationId,
+				Region:        integration.Region,
+				CreatedAt:     integration.CreatedAt.AsTime(),
+				UpdatedAt:     integration.UpdatedAt.AsTime(),
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
 
 	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
 

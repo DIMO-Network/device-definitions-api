@@ -10,7 +10,7 @@ import (
 )
 
 type GetDeviceDefinitionByIDQuery struct {
-	DeviceDefinitionID string `json:"deviceDefinitionId" validate:"required"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
 }
 
 func (*GetDeviceDefinitionByIDQuery) Key() string { return "GetDeviceDefinitionByIdQuery" }
