@@ -11,6 +11,7 @@ type GetDeviceDefinitionQueryResult struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	Name               string `json:"name"`
 	ImageURL           string `json:"imageUrl"`
+	Source             string `json:"imageUrl"`
 	// CompatibleIntegrations has systems this vehicle can integrate with
 	CompatibleIntegrations []GetDeviceCompatibility `json:"compatibleIntegrations"`
 	DeviceMake             DeviceMake               `json:"make"`

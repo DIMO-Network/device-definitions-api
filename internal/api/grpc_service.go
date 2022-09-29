@@ -53,6 +53,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		DeviceDefinitionId: dd.DeviceDefinitionID,
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
+		Source:             dd.Source,
 		Type: &p_grpc.GetDeviceDefinitionItemResponse_Type{
 			Type:  dd.Type.Type,
 			Make:  dd.Type.Make,
