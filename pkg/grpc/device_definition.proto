@@ -60,6 +60,7 @@ message GetDeviceDefinitionItemResponse {
 		string name = 3;
 		string subModel = 4;
 		string deviceDefinitionId = 5;
+		string external_style_id = 6;
 	}
 
 	message Make {

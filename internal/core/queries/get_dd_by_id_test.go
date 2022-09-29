@@ -7,6 +7,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -57,6 +58,40 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 			Year:  year,
 			Make:  mk,
 		},
+		DeviceStyles: []models.GetDeviceDefinitionStylesList{
+			models.GetDeviceDefinitionStylesList{
+				ID:                 ksuid.New().String(),
+				ExternalStyleID:    ksuid.New().String(),
+				DeviceDefinitionID: deviceDefinitionID,
+				Name:               "Hard Top 4dr SUV AWD",
+				Source:             "edmunds",
+				SubModel:           "Hard Top",
+			},
+			models.GetDeviceDefinitionStylesList{
+				ID:                 ksuid.New().String(),
+				ExternalStyleID:    ksuid.New().String(),
+				DeviceDefinitionID: deviceDefinitionID,
+				Name:               "4dr SUV 4WD",
+				Source:             "edmunds",
+				SubModel:           "Wagon",
+			},
+		},
+		DeviceIntegrations: []models.GetDeviceDefinitionIntegrationList{
+			models.GetDeviceDefinitionIntegrationList{
+				ID:     ksuid.New().String(),
+				Type:   "API",
+				Style:  "Webhook",
+				Vendor: "SmartCar",
+				Region: "Asia",
+			},
+			models.GetDeviceDefinitionIntegrationList{
+				ID:     ksuid.New().String(),
+				Type:   "API",
+				Style:  "Webhook",
+				Vendor: "SmartCar",
+				Region: "USA",
+			},
+		},
 		Verified: true,
 	}
 
@@ -71,6 +106,19 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
 	s.Equal(result.Type.Model, model)
 	s.Equal(result.Type.Make, mk)
+
+	s.Equal(result.DeviceStyles[0].DeviceDefinitionID, dd.DeviceDefinitionID)
+	s.Equal(result.DeviceStyles[0].Name, dd.DeviceStyles[0].Name)
+	s.Equal(result.DeviceStyles[0].ExternalStyleID, dd.DeviceStyles[0].ExternalStyleID)
+	s.Equal(result.DeviceStyles[0].Source, dd.DeviceStyles[0].Source)
+	s.Equal(result.DeviceStyles[0].SubModel, dd.DeviceStyles[0].SubModel)
+
+	s.Equal(result.DeviceIntegrations[0].ID, dd.DeviceIntegrations[0].ID)
+	s.Equal(result.DeviceIntegrations[0].Vendor, dd.DeviceIntegrations[0].Vendor)
+	s.Equal(result.DeviceIntegrations[0].Style, dd.DeviceIntegrations[0].Style)
+	s.Equal(result.DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
+	s.Equal(result.DeviceIntegrations[0].Country, dd.DeviceIntegrations[0].Country)
+
 }
 
 func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {
