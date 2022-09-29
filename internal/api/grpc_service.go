@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/volatiletech/null/v8"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -11,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/volatiletech/null/v8"
 )
 
 type GrpcService struct {
