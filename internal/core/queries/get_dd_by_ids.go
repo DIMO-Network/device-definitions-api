@@ -63,14 +63,14 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			Name:                   dd.Name,
 			ImageUrl:               dd.ImageURL,
 			Source:                 dd.Source,
-			CompatibleIntegrations: []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{},
-			Make: &grpc.GetDeviceDefinitionItemResponse_Make{
+			CompatibleIntegrations: []*grpc.CompatibleIntegrations{},
+			Make: &grpc.DeviceMake{
 				Id:              dd.DeviceMake.ID,
 				Name:            dd.DeviceMake.Name,
 				LogoUrl:         dd.DeviceMake.LogoURL.String,
 				OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 			},
-			Type: &grpc.GetDeviceDefinitionItemResponse_Type{
+			Type: &grpc.DeviceType{
 				Type:  dd.Type.Type,
 				Make:  dd.DeviceMake.Name,
 				Model: dd.Type.Model,
@@ -109,9 +109,9 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		rp.Type.SubModels = dd.Type.SubModels
 
 		// build object for integrations that have all the info
-		rp.DeviceIntegrations = []*grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{}
+		rp.DeviceIntegrations = []*grpc.DeviceIntegrations{}
 		for _, di := range dd.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegrations{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
 				Id:                 di.ID,
 				Type:               di.Type,
@@ -122,9 +122,9 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			})
 		}
 
-		rp.DeviceStyles = []*grpc.GetDeviceDefinitionItemResponse_DeviceStyles{}
+		rp.DeviceStyles = []*grpc.DeviceStyles{}
 		for _, ds := range dd.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.GetDeviceDefinitionItemResponse_DeviceStyles{
+			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyles{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
 				ExternalStyleId:    ds.ExternalStyleID,
 				Id:                 ds.ID,
@@ -141,13 +141,13 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 }
 
 // DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func buildDeviceCompatibility(dbDIS []models.GetDeviceCompatibility) []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations {
+func buildDeviceCompatibility(dbDIS []models.GetDeviceCompatibility) []*grpc.CompatibleIntegrations {
 	if len(dbDIS) == 0 {
-		return []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{}
+		return []*grpc.CompatibleIntegrations{}
 	}
-	compatibilities := make([]*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations, len(dbDIS))
+	compatibilities := make([]*grpc.CompatibleIntegrations, len(dbDIS))
 	for i, di := range dbDIS {
-		compatibilities[i] = &grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{
+		compatibilities[i] = &grpc.CompatibleIntegrations{
 			Id:           di.ID,
 			Type:         di.Type,
 			Style:        di.Style,
