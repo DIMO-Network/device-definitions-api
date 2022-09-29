@@ -136,14 +136,9 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.DeviceMakeID = command.DeviceMakeID
 	}
 
-	if command.Source.Valid {
-		dd.Source = command.Source
-	}
+	dd.Source = command.Source
+	dd.ImageURL = command.ImageURL
 
-	if command.ImageURL.Valid {
-		dd.ImageURL = command.ImageURL
-	}
-	
 	dd.Verified = command.Verified
 
 	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
