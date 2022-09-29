@@ -226,6 +226,12 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
+		//Source:             in.Source,
+		//ImageURL:           in.Image_URL,
+		Year:         int16(in.Year),
+		Model:        in.Model,
+		Verified:     in.Verified,
+		DeviceMakeID: in.DeviceMake_ID,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
@@ -247,6 +253,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 				ExternalStyleID: style.ExternalStyleId,
 				Name:            style.Name,
 				Source:          style.Source,
+				SubModel:        style.SubModel,
 				CreatedAt:       style.CreatedAt.AsTime(),
 				UpdatedAt:       style.UpdatedAt.AsTime(),
 			})
@@ -257,6 +264,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		for _, integration := range in.DeviceIntegrations {
 			command.DeviceIntegrations = append(command.DeviceIntegrations, commands.UpdateDeviceIntegrations{
 				IntegrationID: integration.IntegrationId,
+				Region:        integration.Region,
 				CreatedAt:     integration.CreatedAt.AsTime(),
 				UpdatedAt:     integration.UpdatedAt.AsTime(),
 			})
