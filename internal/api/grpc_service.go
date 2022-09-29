@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/volatiletech/null/v8"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -226,12 +227,12 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		//Source:             in.Source,
-		//ImageURL:           in.Image_URL,
-		Year:         int16(in.Year),
-		Model:        in.Model,
-		Verified:     in.Verified,
-		DeviceMakeID: in.DeviceMake_ID,
+		Source:             null.StringFrom(in.Source),
+		ImageURL:           null.StringFrom(in.Image_URL),
+		Year:               int16(in.Year),
+		Model:              in.Model,
+		Verified:           in.Verified,
+		DeviceMakeID:       in.DeviceMake_ID,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
