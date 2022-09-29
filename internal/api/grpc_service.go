@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/volatiletech/null/v8"
 )
 
 type GrpcService struct {
@@ -226,12 +227,12 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		//Source:             in.Source,
-		//ImageURL:           in.Image_URL,
-		Year:         int16(in.Year),
-		Model:        in.Model,
-		Verified:     in.Verified,
-		DeviceMakeID: in.DeviceMake_ID,
+		Source:             null.StringFrom(in.Source),
+		ImageURL:           null.StringFrom(in.Image_URL),
+		Year:               int16(in.Year),
+		Model:              in.Model,
+		Verified:           in.Verified,
+		DeviceMakeID:       in.DeviceMake_ID,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
