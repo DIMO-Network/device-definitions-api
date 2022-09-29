@@ -62,6 +62,7 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			DeviceDefinitionId:     dd.DeviceDefinitionID,
 			Name:                   dd.Name,
 			ImageUrl:               dd.ImageURL,
+			Source:                 dd.Source,
 			CompatibleIntegrations: []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{},
 			Make: &grpc.GetDeviceDefinitionItemResponse_Make{
 				Id:              dd.DeviceMake.ID,

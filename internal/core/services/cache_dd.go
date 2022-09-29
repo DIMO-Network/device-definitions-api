@@ -121,6 +121,7 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 		DeviceDefinitionID:     dd.ID,
 		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:               dd.ImageURL.String,
+		Source:                 dd.Source.String,
 		CompatibleIntegrations: []models.GetDeviceCompatibility{},
 		DeviceMake: models.DeviceMake{
 			ID:              dd.R.DeviceMake.ID,
