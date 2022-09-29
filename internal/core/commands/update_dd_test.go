@@ -98,6 +98,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	year := 2020
 
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
+	i := setupNewIntegrationForUpdate(s.T(), s.pdb)
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
@@ -131,8 +132,28 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		})
 	}
 
-	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
+	deviceIntegrations := []UpdateDeviceIntegrations{}
+	deviceIntegrations = append(deviceIntegrations, UpdateDeviceIntegrations{
+		IntegrationID: i.ID,
+		Region:        "China",
+	})
+
+	integrations, _ := models.DeviceIntegrations(models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(dd.ID)).
+		All(ctx, s.pdb.DBS().Reader)
+
+	for _, integration := range integrations {
+		deviceIntegrations = append(deviceIntegrations, UpdateDeviceIntegrations{
+			IntegrationID: integration.IntegrationID,
+			Region:        integration.Region,
+			CreatedAt:     integration.CreatedAt,
+		})
+	}
+
+	command := &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
+		Year:               2023,
+		Model:              "M5",
+		DeviceMakeID:       dd.DeviceMakeID,
 		VehicleInfo: UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
@@ -145,8 +166,12 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 			FuelTankCapacityGal: "1",
 			MPG:                 "1",
 		},
-		DeviceStyles: deviceStyles,
-	})
+		DeviceStyles:       deviceStyles,
+		DeviceIntegrations: deviceIntegrations,
+	}
+
+	commandResult, err := s.commandHandler.Handle(ctx, command)
+
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
 	s.NoError(err)
@@ -160,6 +185,10 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		One(ctx, s.pdb.DBS().Writer)
 
 	assert.Equal(s.T(), len(dd.R.DeviceStyles), 4)
+	assert.Equal(s.T(), dd.Year, command.Year)
+	assert.Equal(s.T(), dd.Model, command.Model)
+	assert.Equal(s.T(), dd.DeviceMakeID, command.DeviceMakeID)
+
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_WithNewIntegration_Success() {
@@ -171,6 +200,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	i := setupIntegrationForSmartCarCompatibility(s.T(), s.pdb)
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "BMW2", s.pdb)
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
@@ -183,6 +213,10 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
+		Year:               2111,
+		Model:              "M5",
+		DeviceMakeID:       dm.ID,
+		Verified:           true,
 		VehicleInfo: UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
@@ -230,4 +264,10 @@ func setupDeviceDefinitionForUpdate(t *testing.T, pdb db.Store, makeName string,
 	_ = dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
 
 	return dd
+}
+
+func setupNewIntegrationForUpdate(t *testing.T, pdb db.Store) *models.Integration {
+	i := dbtesthelper.SetupCreateHardwareIntegration(t, pdb)
+
+	return i
 }

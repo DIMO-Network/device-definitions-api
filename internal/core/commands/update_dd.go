@@ -136,8 +136,14 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.DeviceMakeID = command.DeviceMakeID
 	}
 
-	dd.Source = command.Source
-	dd.ImageURL = command.ImageURL
+	if command.Source.Valid {
+		dd.Source = command.Source
+	}
+
+	if command.ImageURL.Valid {
+		dd.ImageURL = command.ImageURL
+	}
+	
 	dd.Verified = command.Verified
 
 	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
@@ -192,10 +198,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			deviceIntegration := &models.DeviceIntegration{
 				DeviceDefinitionID: command.DeviceDefinitionID,
 				IntegrationID:      di.IntegrationID,
-				Capabilities:       di.Capabilities,
-				CreatedAt:          di.CreatedAt,
-				UpdatedAt:          di.UpdatedAt,
-				Region:             di.Region,
+				//Capabilities:       di.Capabilities,
+				CreatedAt: di.CreatedAt,
+				UpdatedAt: di.UpdatedAt,
+				Region:    di.Region,
 			}
 			err = deviceIntegration.Insert(ctx, ch.DBS().Writer.DB, boil.Infer())
 			if err != nil {

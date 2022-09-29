@@ -182,6 +182,19 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 	return integration
 }
 
+func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	integration := &models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeHardware,
+		Style:            models.IntegrationStyleAddon,
+		Vendor:           "Hardware",
+		RefreshLimitSecs: 1800,
+	}
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
+}
+
 func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) *models.DeviceIntegration {
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
