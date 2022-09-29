@@ -54,13 +54,13 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
 		Source:             dd.Source,
-		Type: &p_grpc.GetDeviceDefinitionItemResponse_Type{
+		Type: &p_grpc.DeviceType{
 			Type:  dd.Type.Type,
 			Make:  dd.Type.Make,
 			Model: dd.Type.Model,
 			Year:  int32(dd.Type.Year),
 		},
-		Make: &p_grpc.GetDeviceDefinitionItemResponse_Make{
+		Make: &p_grpc.DeviceMake{
 			Id:              dd.DeviceMake.ID,
 			Name:            dd.DeviceMake.Name,
 			LogoUrl:         dd.DeviceMake.LogoURL.String,
@@ -83,7 +83,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	}
 
 	for _, integration := range dd.CompatibleIntegrations {
-		result.DeviceIntegrations = append(result.DeviceIntegrations, &p_grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{
+		result.DeviceIntegrations = append(result.DeviceIntegrations, &p_grpc.DeviceIntegrations{
 			Id:      integration.ID,
 			Type:    integration.Type,
 			Style:   integration.Style,
