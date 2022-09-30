@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -10,6 +11,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type GrpcService struct {
@@ -319,6 +321,34 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *p_grpc.Emp
 
 		result.Items = append(result.Items, item)
 	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceCompaitibility(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
+		MakeID: in.MakeId,
+	})
+	// log.Println(qryResult, "qryResultqryResult")
+	deviceCompatibilities := qryResult.([]queries.GetDeviceCompatibilityQueryResult)
+
+	result := &p_grpc.GetDeviceCompatibilityListResponse{}
+
+	for _, v := range deviceCompatibilities {
+		r := &p_grpc.DeviceCompaitibilityList{Model: v.Model, Year: v.Year}
+		details, err := structpb.NewStruct(v.Features)
+		if err != nil {
+			log.Println(err)
+			return &p_grpc.GetDeviceCompatibilityListResponse{}, nil
+		}
+
+		r.Features = details
+		result.DeviceCompatilities = append(result.DeviceCompatilities, r)
+	}
+
+	// Hint on how to deserialize in caller
+	/* aa := r.Features.AsMap()
+	log.Printf("%+v", aa) */
 
 	return result, nil
 }

@@ -17,12 +17,18 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+type DeviceCompatibilityModel struct {
+	DeviceDefinition  models.DeviceDefinition  `boil:"device_definitions, bind"`
+	DeviceIntegration models.DeviceIntegration `boil:"device_integrations, bind"`
+}
+
 type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
+	FetchCompatibilityByMakeID(ctx context.Context, makeID string) ([]*DeviceCompatibilityModel, error)
 }
 
 type deviceDefinitionRepository struct {
@@ -175,5 +181,26 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 			Err: err,
 		}
 	}
+	return dd, nil
+}
+
+func (r *deviceDefinitionRepository) FetchCompatibilityByMakeID(ctx context.Context, makeID string) ([]*DeviceCompatibilityModel, error) {
+	var dd []*DeviceCompatibilityModel
+
+	err := models.DeviceDefinitions(
+		qm.Distinct("ON (device_definitions.year) * "),
+		qm.InnerJoin("device_integrations ON  device_definitions.id = device_integrations.device_definition_id"),
+		qm.Where("device_definitions.device_make_id = ?", makeID),
+		qm.Where("device_definitions.year >= ?", 2008),
+		qm.Where("device_integrations.features IS NOT NULL"),
+	).Bind(ctx, r.DBS().Reader, &dd)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{Err: err}
+		}
+		return nil, nil
+	}
+
 	return dd, nil
 }
