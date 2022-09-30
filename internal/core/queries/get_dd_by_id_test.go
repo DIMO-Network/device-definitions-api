@@ -58,8 +58,8 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 			Year:  year,
 			Make:  mk,
 		},
-		DeviceStyles: []models.GetDeviceDefinitionStylesList{
-			models.GetDeviceDefinitionStylesList{
+		DeviceStyles: []models.GetDeviceDefinitionStyles{
+			models.GetDeviceDefinitionStyles{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -67,7 +67,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 				Source:             "edmunds",
 				SubModel:           "Hard Top",
 			},
-			models.GetDeviceDefinitionStylesList{
+			models.GetDeviceDefinitionStyles{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -76,15 +76,15 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 				SubModel:           "Wagon",
 			},
 		},
-		DeviceIntegrations: []models.GetDeviceDefinitionIntegrationList{
-			models.GetDeviceDefinitionIntegrationList{
+		DeviceIntegrations: []models.GetDeviceDefinitionIntegration{
+			models.GetDeviceDefinitionIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
 				Vendor: "SmartCar",
 				Region: "Asia",
 			},
-			models.GetDeviceDefinitionIntegrationList{
+			models.GetDeviceDefinitionIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
