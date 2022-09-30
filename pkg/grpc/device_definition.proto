@@ -17,14 +17,13 @@ message GetDeviceDefinitionItemResponse {
 	string device_definition_id = 1;
 	string name = 2;
 	string image_url = 3;
-	repeated  DeviceIntegration compatible_integrations = 4;
-	DeviceType type = 5;
-	VehicleInfo vehicle_data = 6;
-	bool  verified = 7;
-	repeated  DeviceIntegration device_integrations = 8;
-	DeviceMake make = 9;
-	repeated DeviceStyles device_styles = 10;
-	string source = 11;
+	DeviceType type = 4;
+	VehicleInfo vehicle_data = 5;
+	bool  verified = 6;
+	repeated  DeviceIntegration device_integrations = 7;
+	DeviceMake make = 8;
+	repeated DeviceStyles device_styles = 9;
+	string source = 10;
 }
 
 	message CompatibleIntegrations {
@@ -105,7 +104,7 @@ message GetDeviceDefinitionByMMYRequest {
 }
 
 message GetIntegrationResponse {
-	repeated DeviceIntegration integrations = 1;
+	repeated Integration integrations = 1;
 }
 
 message EmptyRequest
@@ -113,25 +112,28 @@ message EmptyRequest
 
 }
 
-message DeviceIntegration {
+message Integration {
 	string id = 1;
 	string type = 2;
 	string style = 3;
 	string vendor = 4;
-	string region = 5;
-	string country = 6;
-	string capabilities = 7;
-	string deviceDefinitionId = 8;
-	int32 auto_pi_default_template_id = 9;
-	GetAutoPiPowertrainTemplate auto_pi_powertrain_template = 10;
+	int32 auto_pi_default_template_id = 5;
+	AutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
 
+	message AutoPiPowertrainTemplate {
+		int32 BEV = 1;
+		int32 HEV = 2;
+		int32 ICE = 3;
+		int32 PHEV = 4;
+	}
 }
 
-message GetAutoPiPowertrainTemplate {
-	int32 BEV = 1;
-	int32 HEV = 2;
-	int32 ICE = 3;
-	int32 PHEV = 4;
+message DeviceIntegration {
+	Integration integration = 1;
+	string region = 2;
+	string country = 3;
+	string capabilities = 4;
+	string deviceDefinitionId = 5;
 }
 
 message GetDeviceDefinitionIntegrationResponse{
@@ -189,10 +191,6 @@ message UpdateDeviceDefinitionRequest {
 		string capabilities = 5;
 	}
 
-}
-
-message UpdateDeviceDefinitionResponse {
-	string id = 1;
 }
 
 message UpdateDeviceDefinitionImageRequest {
@@ -257,10 +255,6 @@ message CreateDeviceStyleRequest {
 	string SubModel = 5;
 }
 
-message CreateDeviceStyleResponse {
-	string ID = 1;
-}
-
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -268,9 +262,9 @@ service DeviceDefinitionService {
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
 	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (BaseResponse);
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (BaseResponse);
-	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (CreateDeviceStyleResponse);
-	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
-	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
+	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
+	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
+	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
 	rpc GetDeviceDefinitionAll(EmptyRequest) returns (GetDeviceDefinitionAllResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
 }
