@@ -118,11 +118,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 
 func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
 	rp := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID:     dd.ID,
-		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:               dd.ImageURL.String,
-		Source:                 dd.Source.String,
-		CompatibleIntegrations: []models.GetDeviceCompatibility{},
+		DeviceDefinitionID: dd.ID,
+		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		ImageURL:           dd.ImageURL.String,
+		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
 			ID:              dd.R.DeviceMake.ID,
 			Name:            dd.R.DeviceMake.Name,
@@ -153,18 +152,16 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	if dd.R != nil {
-		// compatible integrations
-		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
 		// sub_models
 		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
 	}
 
 	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []models.GetDeviceDefinitionIntegrationList{}
-	rp.DeviceStyles = []models.GetDeviceDefinitionStylesList{}
+	rp.DeviceIntegrations = []models.GetDeviceDefinitionIntegration{}
+	rp.DeviceStyles = []models.GetDeviceDefinitionStyles{}
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.GetDeviceDefinitionIntegrationList{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.GetDeviceDefinitionIntegration{
 				ID:           di.R.Integration.ID,
 				Type:         di.R.Integration.Type,
 				Style:        di.R.Integration.Style,
@@ -175,7 +172,7 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 		}
 
 		for _, ds := range dd.R.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, models.GetDeviceDefinitionStylesList{
+			rp.DeviceStyles = append(rp.DeviceStyles, models.GetDeviceDefinitionStyles{
 				ID:                 ds.ID,
 				DeviceDefinitionID: ds.DeviceDefinitionID,
 				ExternalStyleID:    ds.ExternalStyleID,
@@ -187,23 +184,4 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	return rp
-}
-
-// DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func deviceCompatibilityFromDB(dbDIS repoModel.DeviceIntegrationSlice) []models.GetDeviceCompatibility {
-	if len(dbDIS) == 0 {
-		return []models.GetDeviceCompatibility{}
-	}
-	compatibilities := make([]models.GetDeviceCompatibility, len(dbDIS))
-	for i, di := range dbDIS {
-		compatibilities[i] = models.GetDeviceCompatibility{
-			ID:           di.IntegrationID,
-			Type:         di.R.Integration.Type,
-			Style:        di.R.Integration.Style,
-			Vendor:       di.R.Integration.Vendor,
-			Region:       di.Region,
-			Capabilities: common.JSONOrDefault(di.Capabilities),
-		}
-	}
-	return compatibilities
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -59,19 +58,18 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 		}
 
 		rp := &grpc.GetDeviceDefinitionItemResponse{
-			DeviceDefinitionId:     dd.DeviceDefinitionID,
-			Name:                   dd.Name,
-			ImageUrl:               dd.ImageURL,
-			Source:                 dd.Source,
-			CompatibleIntegrations: []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{},
-			Make: &grpc.GetDeviceDefinitionItemResponse_Make{
+			DeviceDefinitionId: dd.DeviceDefinitionID,
+			Name:               dd.Name,
+			ImageUrl:           dd.ImageURL,
+			Source:             dd.Source,
+			Make: &grpc.DeviceMake{
 				Id:              dd.DeviceMake.ID,
 				Name:            dd.DeviceMake.Name,
 				LogoUrl:         dd.DeviceMake.LogoURL.String,
 				OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 				NameSlug:        dd.DeviceMake.NameSlug,
 			},
-			Type: &grpc.GetDeviceDefinitionItemResponse_Type{
+			Type: &grpc.DeviceType{
 				Type:      dd.Type.Type,
 				Make:      dd.DeviceMake.Name,
 				Model:     dd.Type.Model,
@@ -106,28 +104,28 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 			MPG:                 float32(mpg),
 		}
 
-		// compatible integrations
-		rp.CompatibleIntegrations = buildDeviceCompatibility(dd.CompatibleIntegrations)
 		// sub_models
 		rp.Type.SubModels = dd.Type.SubModels
 
 		// build object for integrations that have all the info
-		rp.DeviceIntegrations = []*grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{}
+		rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
 		for _, di := range dd.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.GetDeviceDefinitionItemResponse_DeviceIntegrations{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegration{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
-				Id:                 di.ID,
-				Type:               di.Type,
-				Style:              di.Style,
-				Vendor:             di.Vendor,
-				Region:             di.Region,
-				Capabilities:       string(di.Capabilities),
+				Integration: &grpc.Integration{
+					Id:     di.ID,
+					Type:   di.Type,
+					Style:  di.Style,
+					Vendor: di.Vendor,
+				},
+				Region:       di.Region,
+				Capabilities: string(di.Capabilities),
 			})
 		}
 
-		rp.DeviceStyles = []*grpc.GetDeviceDefinitionItemResponse_DeviceStyles{}
+		rp.DeviceStyles = []*grpc.DeviceStyles{}
 		for _, ds := range dd.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.GetDeviceDefinitionItemResponse_DeviceStyles{
+			rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyles{
 				DeviceDefinitionId: dd.DeviceDefinitionID,
 				ExternalStyleId:    ds.ExternalStyleID,
 				Id:                 ds.ID,
@@ -141,23 +139,4 @@ func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query
 	}
 
 	return response, nil
-}
-
-// DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func buildDeviceCompatibility(dbDIS []models.GetDeviceCompatibility) []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations {
-	if len(dbDIS) == 0 {
-		return []*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{}
-	}
-	compatibilities := make([]*grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations, len(dbDIS))
-	for i, di := range dbDIS {
-		compatibilities[i] = &grpc.GetDeviceDefinitionItemResponse_CompatibleIntegrations{
-			Id:           di.ID,
-			Type:         di.Type,
-			Style:        di.Style,
-			Vendor:       di.Vendor,
-			Region:       di.Region,
-			Capabilities: string(di.Capabilities),
-		}
-	}
-	return compatibilities
 }
