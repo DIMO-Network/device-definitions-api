@@ -26,32 +26,23 @@ message GetDeviceDefinitionItemResponse {
 	string source = 10;
 }
 
-	message CompatibleIntegrations {
-		string id = 1;
-		string  type = 2;
-		string  style = 3;
-		string  vendor = 4;
-		string  region = 5;
-		string  country = 6;
-		string  capabilities = 7;
-	}
-
-	message Type {
-		string type = 1;
-		string  make = 2;
-		string  model = 3;
-		int32 year = 4;
-		repeated string sub_models = 5;
-		string make_slug = 6;
-		string model_slug = 7;
-	}
-
 message DeviceType {
 	string type = 1;
 	string  make = 2;
 	string  model = 3;
 	int32 year = 4;
 	repeated string sub_models = 5;
+	string make_slug = 6;
+	string model_slug = 7;
+}
+
+message DeviceStyles {
+	string id = 1;
+	string source = 2;
+	string name = 3;
+	string subModel = 4;
+	string deviceDefinitionId = 5;
+	string external_style_id = 6;
 }
 
 message DeviceIntegrations {
@@ -65,22 +56,13 @@ message DeviceIntegrations {
 	string deviceDefinitionId = 8;
 }
 
-	message Make {
-		string id = 1;
-		string name = 2;
-		string logo_url = 3;
-		string oem_platform_name = 4;
-		uint64 token_id = 5;
-		string name_slug = 6;
-	}
-}
-
 message DeviceMake {
 	string id = 1;
 	string name = 2;
 	string logo_url = 3;
 	string oem_platform_name = 4;
 	uint64 token_id = 5;
+	string name_slug = 6;
 }
 
 message VehicleInfo {
@@ -107,8 +89,7 @@ message GetIntegrationResponse {
 	repeated Integration integrations = 1;
 }
 
-message EmptyRequest
-{
+message EmptyRequest {
 
 }
 

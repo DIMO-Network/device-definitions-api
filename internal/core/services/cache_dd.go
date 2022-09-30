@@ -118,11 +118,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 
 func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
 	rp := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID:     dd.ID,
-		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:               dd.ImageURL.String,
-		Source:                 dd.Source.String,
-		CompatibleIntegrations: []models.GetDeviceCompatibility{},
+		DeviceDefinitionID: dd.ID,
+		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		ImageURL:           dd.ImageURL.String,
+		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
 			ID:              dd.R.DeviceMake.ID,
 			Name:            dd.R.DeviceMake.Name,
@@ -153,8 +152,6 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	if dd.R != nil {
-		// compatible integrations
-		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
 		// sub_models
 		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
 	}
@@ -187,23 +184,4 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	return rp
-}
-
-// DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func deviceCompatibilityFromDB(dbDIS repoModel.DeviceIntegrationSlice) []models.GetDeviceCompatibility {
-	if len(dbDIS) == 0 {
-		return []models.GetDeviceCompatibility{}
-	}
-	compatibilities := make([]models.GetDeviceCompatibility, len(dbDIS))
-	for i, di := range dbDIS {
-		compatibilities[i] = models.GetDeviceCompatibility{
-			ID:           di.IntegrationID,
-			Type:         di.R.Integration.Type,
-			Style:        di.R.Integration.Style,
-			Vendor:       di.R.Integration.Vendor,
-			Region:       di.Region,
-			Capabilities: common.JSONOrDefault(di.Capabilities),
-		}
-	}
-	return compatibilities
 }

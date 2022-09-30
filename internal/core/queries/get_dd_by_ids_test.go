@@ -115,9 +115,9 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Source, dd.DeviceStyles[0].Source)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].SubModel, dd.DeviceStyles[0].SubModel)
 
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Id, dd.DeviceIntegrations[0].ID)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Vendor, dd.DeviceIntegrations[0].Vendor)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Style, dd.DeviceIntegrations[0].Style)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Id, dd.DeviceIntegrations[0].ID)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Vendor, dd.DeviceIntegrations[0].Vendor)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Style, dd.DeviceIntegrations[0].Style)
 	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
 	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Country, dd.DeviceIntegrations[0].Country)
 }
