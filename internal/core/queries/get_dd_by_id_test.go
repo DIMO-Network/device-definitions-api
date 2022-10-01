@@ -58,8 +58,8 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 			Year:  year,
 			Make:  mk,
 		},
-		DeviceStyles: []models.GetDeviceDefinitionStyles{
-			models.GetDeviceDefinitionStyles{
+		DeviceStyles: []models.DeviceStyle{
+			models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -67,7 +67,7 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 				Source:             "edmunds",
 				SubModel:           "Hard Top",
 			},
-			models.GetDeviceDefinitionStyles{
+			models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -76,15 +76,15 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 				SubModel:           "Wagon",
 			},
 		},
-		DeviceIntegrations: []models.GetDeviceDefinitionIntegration{
-			models.GetDeviceDefinitionIntegration{
+		DeviceIntegrations: []models.DeviceIntegration{
+			models.DeviceIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
 				Vendor: "SmartCar",
 				Region: "Asia",
 			},
-			models.GetDeviceDefinitionIntegration{
+			models.DeviceIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
@@ -117,7 +117,6 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	s.Equal(result.DeviceIntegrations[0].Vendor, dd.DeviceIntegrations[0].Vendor)
 	s.Equal(result.DeviceIntegrations[0].Style, dd.DeviceIntegrations[0].Style)
 	s.Equal(result.DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
-	s.Equal(result.DeviceIntegrations[0].Country, dd.DeviceIntegrations[0].Country)
 
 }
 
