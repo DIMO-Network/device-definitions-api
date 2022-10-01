@@ -21,7 +21,6 @@ type GetDeviceDefinitionWithRelsQueryResult struct {
 	Style        string          `json:"style"`
 	Vendor       string          `json:"vendor"`
 	Region       string          `json:"region"`
-	Country      string          `json:"country,omitempty"`
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 

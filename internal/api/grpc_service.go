@@ -11,6 +11,7 @@ import (
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/null/v8"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GrpcService struct {
@@ -95,7 +96,6 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 				Vendor: integration.Vendor,
 			},
 			Region:             integration.Region,
-			Country:            integration.Country,
 			DeviceDefinitionId: dd.DeviceDefinitionID,
 		})
 	}
@@ -105,9 +105,9 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 
 func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
-		MakeID:             in.MakeID,
-		IntegrationID:      in.IntegrationID,
-		DeviceDefinitionID: in.DeviceDefinitionID,
+		MakeID:             in.MakeId,
+		IntegrationID:      in.IntegrationId,
+		DeviceDefinitionID: in.DeviceDefinitionId,
 		Year:               int(in.Year),
 		Model:              in.Model,
 		VerifiedVinList:    in.VerifiedVinList,
@@ -121,7 +121,7 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 
 	for _, deviceDefinition := range ddResult {
 		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
-			ID:           deviceDefinition.ID,
+			Id:           deviceDefinition.ID,
 			Model:        deviceDefinition.Model,
 			Year:         int32(deviceDefinition.Year),
 			ImageUrl:     deviceDefinition.ImageURL.String,
@@ -131,7 +131,7 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 			Source:       deviceDefinition.Source.String,
 			Verified:     deviceDefinition.Verified,
 			External:     deviceDefinition.ExternalID.String,
-			DeviceMakeID: deviceDefinition.DeviceMakeID,
+			DeviceMakeId: deviceDefinition.DeviceMakeID,
 			Make:         deviceDefinition.Make,
 		})
 	}
@@ -139,7 +139,7 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 	return result, nil
 }
 
-func (s *GrpcService) GetIntegrations(ctx context.Context, in *p_grpc.EmptyRequest) (*p_grpc.GetIntegrationResponse, error) {
+func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
 
@@ -183,8 +183,7 @@ func (s *GrpcService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_
 				Style:  queryResult.Style,
 				Vendor: queryResult.Vendor,
 			},
-			Region:  queryResult.Region,
-			Country: queryResult.Country,
+			Region: queryResult.Region,
 		})
 	}
 
@@ -221,9 +220,9 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
-		DeviceDefinitionID: in.DeviceDefinitionID,
+		DeviceDefinitionID: in.DeviceDefinitionId,
 		Name:               in.Name,
-		ExternalStyleID:    in.ExternalStyleID,
+		ExternalStyleID:    in.ExternalStyleId,
 		Source:             in.Source,
 		SubModel:           in.SubModel,
 	})
@@ -238,11 +237,11 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		Source:             null.StringFrom(in.Source),
-		ImageURL:           null.StringFrom(in.Image_URL),
+		ImageURL:           null.StringFrom(in.ImageUrl),
 		Year:               int16(in.Year),
 		Model:              in.Model,
 		Verified:           in.Verified,
-		DeviceMakeID:       in.DeviceMake_ID,
+		DeviceMakeID:       in.DeviceMakeId,
 		VehicleInfo: commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
@@ -301,7 +300,7 @@ func (s *GrpcService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.U
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *p_grpc.EmptyRequest) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
+func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
 

@@ -15,16 +15,16 @@ type GetDeviceDefinitionQueryResult struct {
 	DeviceMake         DeviceMake `json:"make"`
 	Type               DeviceType `json:"type"`
 	// VehicleInfo will be empty if not a vehicle type
-	VehicleInfo GetDeviceVehicleInfo `json:"vehicleData,omitempty"`
-	Metadata    interface{}          `json:"metadata"`
-	Verified    bool                 `json:"verified"`
+	VehicleInfo VehicleInfo `json:"vehicleData,omitempty"`
+	Metadata    interface{} `json:"metadata"`
+	Verified    bool        `json:"verified"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
-	DeviceIntegrations []GetDeviceDefinitionIntegration `json:"deviceIntegrations"`
-	DeviceStyles       []GetDeviceDefinitionStyles      `json:"deviceStyles"`
+	DeviceIntegrations []DeviceIntegration `json:"deviceIntegrations"`
+	DeviceStyles       []DeviceStyle       `json:"deviceStyles"`
 }
 
-// GetDeviceVehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
-type GetDeviceVehicleInfo struct {
+// VehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
+type VehicleInfo struct {
 	FuelType            string `json:"fuel_type,omitempty"`
 	DrivenWheels        string `json:"driven_wheels,omitempty"`
 	NumberOfDoors       string `json:"number_of_doors,omitempty"`
@@ -49,17 +49,16 @@ type DeviceType struct {
 	ModelSlug string   `json:"modelSlug"`
 }
 
-type GetDeviceDefinitionIntegration struct {
+type DeviceIntegration struct {
 	ID           string          `json:"id"`
 	Type         string          `json:"type"`
 	Style        string          `json:"style"`
 	Vendor       string          `json:"vendor"`
 	Region       string          `json:"region"`
-	Country      string          `json:"country,omitempty"`
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 
-type GetDeviceDefinitionStyles struct {
+type DeviceStyle struct {
 	ID                 string `json:"id"`
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	Name               string `json:"name"`

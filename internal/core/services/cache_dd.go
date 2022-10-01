@@ -146,7 +146,7 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	// vehicle info
-	var vi map[string]models.GetDeviceVehicleInfo
+	var vi map[string]models.VehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
 		rp.VehicleInfo = vi["vehicle_info"]
 	}
@@ -157,11 +157,11 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []models.GetDeviceDefinitionIntegration{}
-	rp.DeviceStyles = []models.GetDeviceDefinitionStyles{}
+	rp.DeviceIntegrations = []models.DeviceIntegration{}
+	rp.DeviceStyles = []models.DeviceStyle{}
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.GetDeviceDefinitionIntegration{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
 				ID:           di.R.Integration.ID,
 				Type:         di.R.Integration.Type,
 				Style:        di.R.Integration.Style,
@@ -172,7 +172,7 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 		}
 
 		for _, ds := range dd.R.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, models.GetDeviceDefinitionStyles{
+			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
 				ID:                 ds.ID,
 				DeviceDefinitionID: ds.DeviceDefinitionID,
 				ExternalStyleID:    ds.ExternalStyleID,
