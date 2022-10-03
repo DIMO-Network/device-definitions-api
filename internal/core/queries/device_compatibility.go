@@ -38,8 +38,9 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 
 	inf, err := models.IntegrationFeatures().All(ctx, dc.DBS().Reader)
 	if err != nil {
-		return GetDeviceCompatibilityQueryResult{}, nil
+		return GetDeviceCompatibilityQueryResult{}, err
 	}
+
 	integFeats := make(map[string]string, len(inf))
 	for _, k := range inf {
 		integFeats[k.FeatureKey] = k.DisplayName
@@ -47,7 +48,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 
 	res, err := dc.Repository.FetchCompatibilityByMakeID(ctx, qry.MakeID)
 	if err != nil {
-		return GetDeviceCompatibilityQueryResult{}, nil
+		return GetDeviceCompatibilityQueryResult{}, err
 	}
 
 	var resp []GetDeviceCompatibilityQueryResult
@@ -61,6 +62,9 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		}
 		var dd []interface{}
 		feats := make(map[string]interface{})
+		if v.DeviceIntegration.Features.IsZero() {
+			continue
+		}
 		err = v.DeviceIntegration.Features.Unmarshal(&dd)
 		if err != nil {
 			return GetDeviceCompatibilityQueryResult{}, nil
