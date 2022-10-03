@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -329,7 +328,7 @@ func (s *GrpcService) GetDeviceCompaitibility(ctx context.Context, in *p_grpc.Ge
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
 		MakeID: in.MakeId,
 	})
-	// log.Println(qryResult, "qryResultqryResult")
+
 	deviceCompatibilities := qryResult.([]queries.GetDeviceCompatibilityQueryResult)
 
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
@@ -338,17 +337,12 @@ func (s *GrpcService) GetDeviceCompaitibility(ctx context.Context, in *p_grpc.Ge
 		r := &p_grpc.DeviceCompaitibilityList{Model: v.Model, Year: v.Year}
 		details, err := structpb.NewStruct(v.Features)
 		if err != nil {
-			log.Println(err)
 			return &p_grpc.GetDeviceCompatibilityListResponse{}, nil
 		}
 
 		r.Features = details
 		result.DeviceCompatilities = append(result.DeviceCompatilities, r)
 	}
-
-	// Hint on how to deserialize in caller
-	/* aa := r.Features.AsMap()
-	log.Printf("%+v", aa) */
 
 	return result, nil
 }
