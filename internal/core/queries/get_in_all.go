@@ -20,8 +20,9 @@ type GetAllIntegrationQueryResult struct {
 	Type                         string                            `json:"type"`
 	Style                        string                            `json:"style"`
 	Vendor                       string                            `json:"vendor"`
-	AutoPiDefaultTemplateID      int                               `json:"autoPiDefaultTemplateId"`
-	AutoPiPowertrainToTemplateID map[coremodels.PowertrainType]int `json:"autoPiPowertrainToTemplateId,omitempty"`
+	AutoPiDefaultTemplateID      int                               `json:"auto_pi_default_template_id"`
+	RefreshLimitSecs             int                               `json:"refresh_limit_secs"`
+	AutoPiPowertrainToTemplateID map[coremodels.PowertrainType]int `json:"auto_pi_power_train_to_template_id,omitempty"`
 }
 
 func (*GetAllIntegrationQuery) Key() string { return "GetAllIntegrationQuery" }
@@ -61,6 +62,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 			Style:                   v.Style,
 			Vendor:                  v.Vendor,
 			AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
+			RefreshLimitSecs:        v.RefreshLimitSecs,
 		}
 		if im.AutoPiPowertrainToTemplateID != nil {
 			result[i].AutoPiPowertrainToTemplateID = im.AutoPiPowertrainToTemplateID

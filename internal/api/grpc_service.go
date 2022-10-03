@@ -153,6 +153,7 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 			Style:                   item.Style,
 			Vendor:                  item.Vendor,
 			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
 			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
 				BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
 				HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
