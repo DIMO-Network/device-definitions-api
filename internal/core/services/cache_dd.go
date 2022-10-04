@@ -159,6 +159,8 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []models.DeviceIntegration{}
 	rp.DeviceStyles = []models.DeviceStyle{}
+	rp.CompatibleIntegrations = []models.DeviceIntegration{}
+
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
@@ -169,6 +171,8 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 				Region:       di.Region,
 				Capabilities: common.JSONOrDefault(di.Capabilities),
 			})
+
+			rp.CompatibleIntegrations = rp.DeviceIntegrations
 		}
 
 		for _, ds := range dd.R.DeviceStyles {
