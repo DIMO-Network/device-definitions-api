@@ -114,3 +114,21 @@ func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolo
 	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
 
 }
+
+func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+
+	//db
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
+	pdb.WaitForDB(logger)
+
+	//commands
+	m, _ := mediator.New(
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(metricsSvc, &logger, s)),
+		mediator.WithHandler(&commands.SyncNHTSARecallsCommand{}, commands.NewSyncNHTSARecallsCommandHandler(pdb.DBS, &s.NHTSARecallsFileURL)),
+	)
+
+	_, _ = m.Send(ctx, &commands.SyncNHTSARecallsCommand{})
+
+}
