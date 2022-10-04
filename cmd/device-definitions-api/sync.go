@@ -24,9 +24,9 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService)),
 	)
 
@@ -40,9 +40,9 @@ func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncIPFSDataCommand{}, commands.NewSyncIPFSDataCommandHandler(pdb.DBS, s.IPFSNodeEndpoint)),
 	)
 
@@ -62,9 +62,9 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSmartCartForwardCompatibilityCommand{},
 			commands.NewSyncSmartCartForwardCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
@@ -86,9 +86,9 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{}, commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
 
@@ -104,9 +104,9 @@ func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolo
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.LoggingBehavior{}),
-		mediator.WithBehaviour(common.ValidationBehavior{}),
-		mediator.WithBehaviour(common.ErrorHandlingBehavior{}),
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncTeslaIntegrationCommand{}, commands.NewSyncTestlaIntegrationCommandHandler(pdb.DBS, &logger)),
 	)
 
