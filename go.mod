@@ -1,6 +1,6 @@
 module github.com/DIMO-Network/device-definitions-api
 
-go 1.18
+go 1.19
 
 require (
 	github.com/DIMO-Network/shared v0.4.3
