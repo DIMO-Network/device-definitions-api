@@ -19,8 +19,9 @@ type GetDeviceDefinitionQueryResult struct {
 	Metadata    interface{} `json:"metadata"`
 	Verified    bool        `json:"verified"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
-	DeviceIntegrations []DeviceIntegration `json:"deviceIntegrations"`
-	DeviceStyles       []DeviceStyle       `json:"deviceStyles"`
+	DeviceIntegrations     []DeviceIntegration `json:"deviceIntegrations"`
+	CompatibleIntegrations []DeviceIntegration `json:"compatibleIntegrations"`
+	DeviceStyles           []DeviceStyle       `json:"deviceStyles"`
 }
 
 // VehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
