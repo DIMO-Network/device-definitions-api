@@ -23,3 +23,6 @@ data/
 
 # Dependency directories (remove the comment below to include it)
 vendor/
+
+# Desktop Service Store (macOS)
+.DS_Store

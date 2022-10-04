@@ -5,8 +5,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/Microsoft/go-winio/pkg/guid"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +18,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SyncNHTSARecallsCommand struct {
@@ -93,6 +98,42 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 		// TODO(zavaboy): Match to DD
 
 		// TODO(zavaboy): Add to DB
+		models.DeviceNhtsaRecall{
+			ID:                   ,
+			DeviceDefinitionID:   null.String{},
+			DataRecordID:         0,
+			DataCampno:           "",
+			DataMaketxt:          "",
+			DataModeltxt:         "",
+			DataYeartxt:          0,
+			DataMfgcampno:        "",
+			DataCompname:         "",
+			DataMfgname:          "",
+			DataBgman:            null.Time{},
+			DataEndman:           null.Time{},
+			DataRcltypecd:        "",
+			DataPotaff:           null.Int{},
+			DataOdate:            null.Time{},
+			DataInfluencedBy:     "",
+			DataMFGTXT:           "",
+			DataRcdate:           time.Time{},
+			DataDatea:            time.Time{},
+			DataRpno:             "",
+			DataFMVSS:            "",
+			DataDescDefect:       "",
+			DataConequenceDefect: "",
+			DataCorrectiveAction: "",
+			DataNotes:            "",
+			DataRCLCMPTID:        "",
+			DataMFRCompName:      "",
+			DataMFRCompDesc:      "",
+			DataMFRCompPtno:      "",
+			CreatedAt:            time.Time{},
+			UpdatedAt:            time.Time{},
+			Metadata:             nil,
+			R:                    nil,
+			L:                    ,
+		}
 
 		expectID = id + 1
 	}

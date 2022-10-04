@@ -1,4 +1,4 @@
-//go:generate mockgen -source device_integration_repo.go -destination mocks/device_integration_repo_mock.go -package mocks
+//go:generate mockgen -source device_style_repo.go -destination mocks/device_style_repo_mock.go -package mocks
 
 package repositories
 
