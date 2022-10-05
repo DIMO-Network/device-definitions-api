@@ -4,6 +4,7 @@ package repositories
 
 import (
 	"context"
+	"github.com/segmentio/ksuid"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -26,6 +27,7 @@ func NewDeviceStyleRepository(dbs func() *db.ReaderWriter) DeviceStyleRepository
 func (r *deviceStyleRepository) Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string) (*models.DeviceStyle, error) {
 
 	ds := &models.DeviceStyle{
+		ID:                 ksuid.New().String(),
 		DeviceDefinitionID: deviceDefinitionID,
 		Name:               name,
 		ExternalStyleID:    externalStyleID,

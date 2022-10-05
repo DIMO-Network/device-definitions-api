@@ -231,6 +231,10 @@ message CreateDeviceMakeRequest {
 	string name = 1;
 }
 
+message GetDeviceStyleByIDRequest {
+	string id = 1;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
@@ -245,4 +249,6 @@ service DeviceDefinitionService {
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
 	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
+	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
+	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 }

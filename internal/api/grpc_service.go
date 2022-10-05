@@ -368,3 +368,41 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Em
 
 	return result, nil
 }
+
+func (s *GrpcService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDeviceStyleByIDRequest) (*p_grpc.DeviceStyle, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByIDQuery{
+		DeviceStyleID: in.Id,
+	})
+
+	ds := qryResult.(models.GetDeviceStyleQueryResult)
+	result := &p_grpc.DeviceStyle{
+		Id:                 ds.ID,
+		Source:             ds.Source,
+		SubModel:           ds.SubModel,
+		Name:               ds.Name,
+		ExternalStyleId:    ds.ExternalStyleID,
+		DeviceDefinitionId: ds.DeviceDefinitionID,
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc.GetDeviceStyleByIDRequest) (*p_grpc.DeviceStyle, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByExternalIDQuery{
+		ExternalDeviceID: in.Id,
+	})
+
+	ds := qryResult.(models.GetDeviceStyleQueryResult)
+	result := &p_grpc.DeviceStyle{
+		Id:                 ds.ID,
+		Source:             ds.Source,
+		SubModel:           ds.SubModel,
+		Name:               ds.Name,
+		ExternalStyleId:    ds.ExternalStyleID,
+		DeviceDefinitionId: ds.DeviceDefinitionID,
+	}
+
+	return result, nil
+}
