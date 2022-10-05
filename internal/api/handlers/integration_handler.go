@@ -49,3 +49,26 @@ func GetIntegrations(m mediator.Mediator) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
+
+// GetIntegrationByID godoc
+// @Summary gets integration by id.
+// @ID GetIntegrationByID
+// @Description gets integration by id.
+// @Tags device-definitions
+// @Accept json
+// @Produce json
+// @Success 200 {object} queries.GetIntegrationQueryResult
+// @Failure 404 {object} common.ProblemDetails{}
+// @Failure 500 {object} common.ProblemDetails{}
+// @Router /integrations/{id} [get]
+func GetIntegrationByID(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		id := c.Params("id")
+		query := &queries.GetIntegrationByIDQuery{IntegrationID: id}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}
