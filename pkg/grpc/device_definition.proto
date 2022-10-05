@@ -274,7 +274,7 @@ message DeviceCompatibilityList {
 
 message GetDeviceCompatibilityListResponse {
 	string make = 1;
-	repeated DeviceCompaitibilityList device_compatilities = 2;
+	repeated DeviceCompaitibilityList device_compatibilities = 2;
 }
 
 service DeviceDefinitionService {
