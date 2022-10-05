@@ -40,3 +40,13 @@ type IntegrationsMetadata struct {
 	AutoPiDefaultTemplateID      int                    `json:"autoPiDefaultTemplateId"`
 	AutoPiPowertrainToTemplateID map[PowertrainType]int `json:"autoPiPowertrainToTemplateId,omitempty"`
 }
+
+type GetIntegrationQueryResult struct {
+	ID                           string                 `json:"id"`
+	Type                         string                 `json:"type"`
+	Style                        string                 `json:"style"`
+	Vendor                       string                 `json:"vendor"`
+	AutoPiDefaultTemplateID      int                    `json:"auto_pi_default_template_id"`
+	RefreshLimitSecs             int                    `json:"refresh_limit_secs"`
+	AutoPiPowertrainToTemplateID map[PowertrainType]int `json:"auto_pi_power_train_to_template_id,omitempty"`
+}
