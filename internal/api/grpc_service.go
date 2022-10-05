@@ -324,7 +324,7 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *p_grpc.Emp
 	return result, nil
 }
 
-func (s *GrpcService) GetDeviceCompaitibility(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
 		MakeID: in.MakeId,
 	})
