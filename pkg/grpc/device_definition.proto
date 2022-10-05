@@ -266,7 +266,7 @@ message GetDeviceCompatibilityListRequest {
 	string makeId = 1;
 }
 
-message DeviceCompaitibilityList {
+message DeviceCompatibilityList {
 	string model = 1;
 	int32 year = 2;
 	google.protobuf.Struct features = 3;
