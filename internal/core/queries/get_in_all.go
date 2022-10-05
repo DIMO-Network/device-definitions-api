@@ -15,16 +15,6 @@ import (
 type GetAllIntegrationQuery struct {
 }
 
-type GetAllIntegrationQueryResult struct {
-	ID                           string                            `json:"id"`
-	Type                         string                            `json:"type"`
-	Style                        string                            `json:"style"`
-	Vendor                       string                            `json:"vendor"`
-	AutoPiDefaultTemplateID      int                               `json:"auto_pi_default_template_id"`
-	RefreshLimitSecs             int                               `json:"refresh_limit_secs"`
-	AutoPiPowertrainToTemplateID map[coremodels.PowertrainType]int `json:"auto_pi_power_train_to_template_id,omitempty"`
-}
-
 func (*GetAllIntegrationQuery) Key() string { return "GetAllIntegrationQuery" }
 
 type GetAllIntegrationQueryHandler struct {
@@ -44,7 +34,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 		}
 	}
 
-	result := make([]GetAllIntegrationQueryResult, len(all))
+	result := make([]coremodels.GetIntegrationQueryResult, len(all))
 	for i, v := range all {
 		im := new(coremodels.IntegrationsMetadata)
 		if v.Metadata.Valid {
@@ -56,7 +46,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediat
 				}
 			}
 		}
-		result[i] = GetAllIntegrationQueryResult{
+		result[i] = coremodels.GetIntegrationQueryResult{
 			ID:                      v.ID,
 			Type:                    v.Type,
 			Style:                   v.Style,

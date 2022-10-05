@@ -7,6 +7,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -143,7 +144,7 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
 
-	integrations := qryResult.([]queries.GetAllIntegrationQueryResult)
+	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
@@ -161,6 +162,29 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 				PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
 			},
 		})
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
+
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	result := &p_grpc.Integration{
+		Id:                      item.ID,
+		Type:                    item.Type,
+		Style:                   item.Style,
+		Vendor:                  item.Vendor,
+		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
+			BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
+			HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
+			ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
+			PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
+		},
 	}
 
 	return result, nil
