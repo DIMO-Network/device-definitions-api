@@ -252,7 +252,18 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 		SubModel:           in.SubModel,
 	})
 
-	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
+	result := commandResult.(commands.CreateDeviceStyleCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
+		Name: in.Name,
+	})
+
+	result := commandResult.(commands.CreateDeviceMakeCommandResult)
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }

@@ -31,6 +31,7 @@ type DeviceDefinitionServiceClient interface {
 	CreateDeviceDefinition(ctx context.Context, in *CreateDeviceDefinitionRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	CreateDeviceIntegration(ctx context.Context, in *CreateDeviceIntegrationRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	CreateDeviceStyle(ctx context.Context, in *CreateDeviceStyleRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	CreateDeviceMake(ctx context.Context, in *CreateDeviceMakeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	UpdateDeviceDefinition(ctx context.Context, in *UpdateDeviceDefinitionRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	SetDeviceDefinitionImage(ctx context.Context, in *UpdateDeviceDefinitionImageRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error)
@@ -117,6 +118,15 @@ func (c *deviceDefinitionServiceClient) CreateDeviceStyle(ctx context.Context, i
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) CreateDeviceMake(ctx context.Context, in *CreateDeviceMakeRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
+	out := new(BaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/CreateDeviceMake", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *deviceDefinitionServiceClient) UpdateDeviceDefinition(ctx context.Context, in *UpdateDeviceDefinitionRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
 	out := new(BaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/UpdateDeviceDefinition", in, out, opts...)
@@ -165,6 +175,7 @@ type DeviceDefinitionServiceServer interface {
 	CreateDeviceDefinition(context.Context, *CreateDeviceDefinitionRequest) (*BaseResponse, error)
 	CreateDeviceIntegration(context.Context, *CreateDeviceIntegrationRequest) (*BaseResponse, error)
 	CreateDeviceStyle(context.Context, *CreateDeviceStyleRequest) (*BaseResponse, error)
+	CreateDeviceMake(context.Context, *CreateDeviceMakeRequest) (*BaseResponse, error)
 	UpdateDeviceDefinition(context.Context, *UpdateDeviceDefinitionRequest) (*BaseResponse, error)
 	SetDeviceDefinitionImage(context.Context, *UpdateDeviceDefinitionImageRequest) (*BaseResponse, error)
 	GetDeviceDefinitionAll(context.Context, *emptypb.Empty) (*GetDeviceDefinitionAllResponse, error)
@@ -199,6 +210,9 @@ func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceIntegration(contex
 }
 func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceStyle(context.Context, *CreateDeviceStyleRequest) (*BaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateDeviceStyle not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) CreateDeviceMake(context.Context, *CreateDeviceMakeRequest) (*BaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDeviceMake not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceDefinition(context.Context, *UpdateDeviceDefinitionRequest) (*BaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeviceDefinition not implemented")
@@ -370,6 +384,24 @@ func _DeviceDefinitionService_CreateDeviceStyle_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_CreateDeviceMake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDeviceMakeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).CreateDeviceMake(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/CreateDeviceMake",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).CreateDeviceMake(ctx, req.(*CreateDeviceMakeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DeviceDefinitionService_UpdateDeviceDefinition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateDeviceDefinitionRequest)
 	if err := dec(in); err != nil {
@@ -480,6 +512,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateDeviceStyle",
 			Handler:    _DeviceDefinitionService_CreateDeviceStyle_Handler,
+		},
+		{
+			MethodName: "CreateDeviceMake",
+			Handler:    _DeviceDefinitionService_CreateDeviceMake_Handler,
 		},
 		{
 			MethodName: "UpdateDeviceDefinition",

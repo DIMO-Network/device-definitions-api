@@ -12,13 +12,14 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type DeviceMakeRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceMake, error)
-	GetOrCreate(ctx context.Context, makeName string) (*models.DeviceMake, error)
+	GetOrCreate(ctx context.Context, makeName string, makeSlug string, logURL string) (*models.DeviceMake, error)
 }
 
 type deviceMakeRepository struct {
@@ -45,14 +46,16 @@ func (r *deviceMakeRepository) GetAll(ctx context.Context) ([]*models.DeviceMake
 	return makes, err
 }
 
-func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string) (*models.DeviceMake, error) {
+func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string, makeSlug string, logURL string) (*models.DeviceMake, error) {
 	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(makeName))).One(ctx, r.DBS().Writer)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// create
 			m = &models.DeviceMake{
-				ID:   ksuid.New().String(),
-				Name: makeName,
+				ID:       ksuid.New().String(),
+				Name:     makeName,
+				NameSlug: null.StringFrom(makeSlug),
+				LogoURL:  null.StringFrom(logURL),
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
