@@ -12,6 +12,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -25,12 +26,13 @@ type SyncSearchDataCommandResult struct {
 func (*SyncSearchDataCommand) Key() string { return "SyncSearchDataCommand" }
 
 type SyncSearchDataCommandHandler struct {
-	DBS   func() *db.ReaderWriter
-	esSvc elastic.SearchService
+	DBS    func() *db.ReaderWriter
+	esSvc  elastic.SearchService
+	logger zerolog.Logger
 }
 
-func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc elastic.SearchService) SyncSearchDataCommandHandler {
-	return SyncSearchDataCommandHandler{DBS: dbs, esSvc: esSvc}
+func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc elastic.SearchService, logger zerolog.Logger) SyncSearchDataCommandHandler {
+	return SyncSearchDataCommandHandler{DBS: dbs, esSvc: esSvc, logger: logger}
 }
 
 func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -39,7 +41,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("found existing engines: %d", len(existingEngines.Results))
+	ch.logger.Info().Msgf("found existing engines: %d", len(existingEngines.Results))
 
 	// get all devices from DB.
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
@@ -49,7 +51,8 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		return nil, err
 	}
 
-	fmt.Printf("found %d device definitions verified", len(all))
+	ch.logger.Info().Msgf("found %d device definitions verified, starting process...", len(all))
+
 	if len(all) == 0 {
 		return nil, errors.New("0 items found to index, stopping")
 	}
@@ -69,22 +72,23 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Year:          int(definition.Year),
 			SubModels:     sm,
 			ImageURL:      definition.ImageURL.String,
-			MakeSlug:      common.SlugString(definition.R.DeviceMake.Name),
-			ModelSlug:     common.SlugString(definition.Model),
+			MakeSlug:      definition.R.DeviceMake.NameSlug,
+			ModelSlug:     definition.ModelSlug,
 		}
 	}
+	ch.logger.Info().Msgf("completed building list of docs to index, count: %d", len(docs))
 
 	tempEngineName := fmt.Sprintf("%s-%s", metaEngineName, time.Now().Format("2006-01-02t15-04"))
 	tempEngine, err := ch.esSvc.CreateEngine(tempEngineName, nil)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("created engine %s", tempEngine.Name)
+	ch.logger.Info().Msgf("created engine %s", tempEngine.Name)
 	err = ch.esSvc.CreateDocumentsBatched(docs, tempEngine.Name)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("created documents in engine %s", tempEngine.Name)
+	ch.logger.Info().Msgf("created documents in engine %s", tempEngine.Name)
 
 	var metaEngine *elastic.EngineDetail
 	var previousTempEngines []string
@@ -92,11 +96,11 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	for _, result := range existingEngines.Results {
 		if result.Name == metaEngineName && *result.Type == "meta" {
 			metaEngine = &result
-			fmt.Printf("found existing meta engine: %+v", *metaEngine)
+			ch.logger.Info().Msgf("found existing meta engine: %+v", *metaEngine)
 		}
 		if strings.Contains(result.Name, metaEngineName+"-") && *result.Type == "default" {
 			previousTempEngines = append(previousTempEngines, result.Name)
-			fmt.Printf("found previous device defs engine: %s. It will be removed", result.Name)
+			ch.logger.Info().Msgf("found previous device defs engine: %s. It will be removed", result.Name)
 		}
 	}
 	if metaEngine == nil {
@@ -104,13 +108,13 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("created meta engine with temp engine assigned.")
+		ch.logger.Info().Msg("created meta engine with temp engine assigned.")
 	} else {
 		_, err = ch.esSvc.AddSourceEngineToMetaEngine(tempEngineName, metaEngineName)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("added source %s to meta engine %s", tempEngine.Name, metaEngineName)
+		ch.logger.Info().Msgf("added source %s to meta engine %s", tempEngine.Name, metaEngineName)
 		for _, prev := range previousTempEngines {
 			// loop over all previous ones
 			if common.Contains(metaEngine.SourceEngines, prev) {
@@ -118,14 +122,14 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 				if err != nil {
 					return nil, err
 				}
-				fmt.Printf("removed previous source engine %s from %s", prev, metaEngineName)
+				ch.logger.Info().Msgf("removed previous source engine %s from %s", prev, metaEngineName)
 			}
 
 			err = ch.esSvc.DeleteEngine(prev)
 			if err != nil {
 				return nil, err
 			}
-			fmt.Printf("delete engine: %s", prev)
+			ch.logger.Info().Msgf("delete engine: %s", prev)
 		}
 	}
 	err = ch.esSvc.UpdateSearchSettingsForDeviceDefs(tempEngineName)
@@ -136,7 +140,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("completed load ok")
+	ch.logger.Info().Msg("completed loading device definitions into search index ok")
 
 	return SyncSearchDataCommandResult{true}, nil
 }

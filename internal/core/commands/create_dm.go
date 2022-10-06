@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/TheFellow/go-mediator/mediator"
 )
@@ -31,7 +30,7 @@ func (ch CreateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	command := query.(*CreateDeviceMakeCommand)
 
-	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, common.SlugString(command.Name), command.LogoURL)
+	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, command.LogoURL)
 
 	if err != nil {
 		return nil, err

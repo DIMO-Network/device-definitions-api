@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -10,6 +11,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -46,7 +48,7 @@ func (s *SyncSearchDataCommandHandlerSuite) SetupTest() {
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.queryHandler = NewSyncSearchDataCommandHandler(s.pdb.DBS, s.mockElasticSearch)
+	s.queryHandler = NewSyncSearchDataCommandHandler(s.pdb.DBS, s.mockElasticSearch, zerolog.New(os.Stdout))
 }
 
 func (s *SyncSearchDataCommandHandlerSuite) TearDownTest() {
