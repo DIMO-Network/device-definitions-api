@@ -21,7 +21,7 @@ type SupportLevelEnum int8
 
 const (
 	NotSupported   SupportLevelEnum = 0
-	MaybeSupported SupportLevelEnum = 1
+	MaybeSupported SupportLevelEnum = 1 //nolint
 	Supported      SupportLevelEnum = 2
 )
 
