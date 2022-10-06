@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS device_nhtsa_recalls
     data_mfr_comp_ptno character varying(100) COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    metadata jsonb NOT NULL,
+    metadata jsonb NULL,
     CONSTRAINT device_nhtsa_recalls_pkey PRIMARY KEY (id),
     CONSTRAINT fk_device_definition FOREIGN KEY (device_definition_id)
         REFERENCES device_definitions (id) MATCH SIMPLE
