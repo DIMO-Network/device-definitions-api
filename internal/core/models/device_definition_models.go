@@ -8,34 +8,24 @@ import (
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	Name               string `json:"name"`
-	ImageURL           string `json:"imageUrl"`
-	// CompatibleIntegrations has systems this vehicle can integrate with
-	CompatibleIntegrations []GetDeviceCompatibility `json:"compatibleIntegrations"`
-	DeviceMake             DeviceMake               `json:"make"`
-	Type                   DeviceType               `json:"type"`
+	DeviceDefinitionID string     `json:"deviceDefinitionId"`
+	Name               string     `json:"name"`
+	ImageURL           string     `json:"imageUrl"`
+	Source             string     `json:"source"`
+	DeviceMake         DeviceMake `json:"make"`
+	Type               DeviceType `json:"type"`
 	// VehicleInfo will be empty if not a vehicle type
-	VehicleInfo        GetDeviceVehicleInfo                 `json:"vehicleData,omitempty"`
-	Metadata           interface{}                          `json:"metadata"`
-	Verified           bool                                 `json:"verified"`
-	DeviceIntegrations []GetDeviceDefinitionIntegrationList `json:"deviceIntegrations"`
-	DeviceStyles       []GetDeviceDefinitionStylesList      `json:"deviceStyles"`
+	VehicleInfo VehicleInfo `json:"vehicleData,omitempty"`
+	Metadata    interface{} `json:"metadata"`
+	Verified    bool        `json:"verified"`
+	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
+	DeviceIntegrations     []DeviceIntegration `json:"deviceIntegrations"`
+	CompatibleIntegrations []DeviceIntegration `json:"compatibleIntegrations"`
+	DeviceStyles           []DeviceStyle       `json:"deviceStyles"`
 }
 
-// GetDeviceCompatibility represents what systems we know this is compatible with
-type GetDeviceCompatibility struct {
-	ID           string          `json:"id"`
-	Type         string          `json:"type"`
-	Style        string          `json:"style"`
-	Vendor       string          `json:"vendor"`
-	Region       string          `json:"region"`
-	Country      string          `json:"country,omitempty"`
-	Capabilities json.RawMessage `json:"capabilities"`
-}
-
-// GetDeviceVehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
-type GetDeviceVehicleInfo struct {
+// VehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
+type VehicleInfo struct {
 	FuelType            string `json:"fuel_type,omitempty"`
 	DrivenWheels        string `json:"driven_wheels,omitempty"`
 	NumberOfDoors       string `json:"number_of_doors,omitempty"`
@@ -56,19 +46,20 @@ type DeviceType struct {
 	Model     string   `json:"model"`
 	Year      int      `json:"year"`
 	SubModels []string `json:"subModels"`
+	MakeSlug  string   `json:"makeSlug"`
+	ModelSlug string   `json:"modelSlug"`
 }
 
-type GetDeviceDefinitionIntegrationList struct {
+type DeviceIntegration struct {
 	ID           string          `json:"id"`
 	Type         string          `json:"type"`
 	Style        string          `json:"style"`
 	Vendor       string          `json:"vendor"`
 	Region       string          `json:"region"`
-	Country      string          `json:"country,omitempty"`
 	Capabilities json.RawMessage `json:"capabilities"`
 }
 
-type GetDeviceDefinitionStylesList struct {
+type DeviceStyle struct {
 	ID                 string `json:"id"`
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	Name               string `json:"name"`
@@ -83,4 +74,5 @@ type DeviceMake struct {
 	LogoURL         null.String `json:"logo_url"`
 	OemPlatformName null.String `json:"oem_platform_name"`
 	TokenID         *big.Int    `json:"tokenId,omitempty"`
+	NameSlug        string      `json:"nameSlug"`
 }

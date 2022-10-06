@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
@@ -108,4 +109,26 @@ func setupDeviceDefinition(t *testing.T, pdb db.Store, makeName string, modelNam
 func setupDeviceMake(t *testing.T, pdb db.Store, makeName string) models.DeviceMake {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	return dm
+}
+
+func Test_slugString(t *testing.T) {
+
+	tests := []struct {
+		name string
+		term string
+		want string
+	}{
+		{name: "Remove special characters", term: "LÄND ROVER", want: "land-rover"},
+		{name: "Remove special characters", term: "Citroën", want: "citroen"},
+		{name: "Replace space with dash", term: "Mercedes Benz", want: "mercedes-benz"},
+		{name: "All characters lower case", term: "TESLA", want: "tesla"},
+		{name: "Replace underscores with a dash", term: "Alfa_Romeo", want: "alfa-romeo"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.SlugString(tt.term); got != tt.want {
+				t.Errorf("slugString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

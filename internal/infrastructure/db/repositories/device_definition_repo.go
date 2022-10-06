@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -149,8 +150,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		if errors.Is(err, sql.ErrNoRows) {
 			// create
 			m = &models.DeviceMake{
-				ID:   ksuid.New().String(),
-				Name: make,
+				ID:       ksuid.New().String(),
+				Name:     make,
+				NameSlug: common.SlugString(make),
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
@@ -168,6 +170,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Year:         int16(year),
 		Source:       null.StringFrom(source),
 		Verified:     false,
+		ModelSlug:    common.SlugString(model),
 	}
 	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 	if err != nil {

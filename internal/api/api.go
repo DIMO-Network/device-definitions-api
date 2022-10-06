@@ -41,6 +41,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
+	deviceMakeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
@@ -69,9 +70,13 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetIntegrationByIDQuery{}, queries.NewGetIntegrationByIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceStyleByExternalIDQuery{}, queries.NewGetDeviceStyleByExternalIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository)),
+		mediator.WithHandler(&commands.CreateDeviceMakeCommand{}, commands.NewCreateDeviceMakeCommandHandler(deviceMakeRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&commands.UpdateDeviceDefinitionImageCommand{}, commands.NewUpdateDeviceDefinitionImageCommandHandler(pdb.DBS, ddCacheService)),
 	)

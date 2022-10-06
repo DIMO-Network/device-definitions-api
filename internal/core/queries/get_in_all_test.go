@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
@@ -52,13 +53,13 @@ func (s *GetAllIntegrationQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items() {
+func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items_Success() {
 	ctx := context.Background()
 
 	integration := setupCreateSmartCarIntegration(s.T(), s.pdb)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllIntegrationQuery{})
-	result := qryResult.([]GetAllIntegrationQueryResult)
+	result := qryResult.([]coremodels.GetIntegrationQueryResult)
 
 	s.NoError(err)
 	s.Len(result, 1)

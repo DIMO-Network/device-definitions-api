@@ -1,6 +1,8 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
 package grpc;
@@ -17,61 +19,42 @@ message GetDeviceDefinitionItemResponse {
 	string device_definition_id = 1;
 	string name = 2;
 	string image_url = 3;
-	repeated  CompatibleIntegrations compatible_integrations = 4;
-	Type type = 5;
-	VehicleInfo vehicle_data = 6;
-	bool  verified = 7;
-	repeated  DeviceIntegrations device_integrations = 8;
-	Make make = 9;
-	repeated DeviceStyles device_styles = 10;
-
-	message CompatibleIntegrations {
-		string id = 1;
-		string  type = 2;
-		string  style = 3;
-		string  vendor = 4;
-		string  region = 5;
-		string  country = 6;
-		string  capabilities = 7;
-	}
-
-	message Type {
-		string type = 1;
-		string  make = 2;
-		string  model = 3;
-		int32 year = 4;
-		repeated string sub_models = 5;
-	}
-
-	message DeviceIntegrations {
-		string id = 1;		
-		string type = 2;
-		string style = 3;
-		string vendor = 4;
-		string region = 5;
-		string country = 6;
-		string capabilities = 7;
-		string deviceDefinitionId = 8;
-	}
-
-	message DeviceStyles {
-		string id = 1;
-		string source = 2;
-		string name = 3;
-		string subModel = 4;
-		string deviceDefinitionId = 5;
-		string external_style_id = 6;
-	}
-
-	message Make {
-		string id = 1;
-		string name = 2;
-		string logo_url = 3;
-		string oem_platform_name = 4;
-		uint64 token_id = 5;
-	}
+	DeviceType type = 4;
+	VehicleInfo vehicle_data = 5;
+	bool  verified = 6;
+	repeated  DeviceIntegration device_integrations = 7;
+	DeviceMake make = 8;
+	repeated DeviceStyle device_styles = 9;
+	string source = 10;
 }
 
+message DeviceType {
+	string type = 1;
+	string  make = 2;
+	string  model = 3;
+	int32 year = 4;
+	repeated string sub_models = 5;
+	string make_slug = 6;
+	string model_slug = 7;
+}
+
+message DeviceStyle {
+	string id = 1;
+	string source = 2;
+	string name = 3;
+	string sub_model = 4;
+	string device_definition_id = 5;
+	string external_style_id = 6;
+}
+
+message DeviceMake {
+	string id = 1;
+	string name = 2;
+	string logo_url = 3;
+	string oem_platform_name = 4;
+	uint64 token_id = 5;
+	string name_slug = 6;
+}
 
 message VehicleInfo {
 	string fuel_type = 1;
@@ -94,23 +77,18 @@ message GetDeviceDefinitionByMMYRequest {
 }
 
 message GetIntegrationResponse {
-	repeated GetIntegrationItemResponse integrations = 1;
+	repeated Integration integrations = 1;
 }
 
-message EmptyRequest
-{
-
-}
-
-message GetIntegrationItemResponse {
+message Integration {
 	string id = 1;
 	string type = 2;
 	string style = 3;
 	string vendor = 4;
 	int32 auto_pi_default_template_id = 5;
-	GetAutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
-
-	message  GetAutoPiPowertrainTemplate {
+	AutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
+	int32 refresh_limit_secs = 7;
+	message AutoPiPowertrainTemplate {
 		int32 BEV = 1;
 		int32 HEV = 2;
 		int32 ICE = 3;
@@ -118,18 +96,15 @@ message GetIntegrationItemResponse {
 	}
 }
 
-message GetDeviceDefinitionIntegrationResponse{
-	repeated GetDeviceDefinitionIntegrationItemResponse integrations = 1;
+message DeviceIntegration {
+	Integration integration = 1;
+	string region = 2;
+	string capabilities = 3;
+	string deviceDefinitionId = 4;
 }
 
-message GetDeviceDefinitionIntegrationItemResponse {
-	string id = 1;
-	string type = 2;
-	string style = 3;
-	string vendor = 4;
-	string region = 5;
-	string country = 6;
-	string capabilities = 7;
+message GetDeviceDefinitionIntegrationResponse{
+	repeated DeviceIntegration integrations = 1;
 }
 
 message GetDeviceDefinitionIntegrationRequest {
@@ -143,18 +118,13 @@ message CreateDeviceDefinitionRequest {
  string source = 4;
 }
 
-message CreateDeviceDefinitionResponse {
-	string id = 1;
-}
-
-
 message CreateDeviceIntegrationRequest {
 	string device_definition_id = 1;
 	string integration_id = 2;
 	string region = 3;
 }
 
-message CreateDeviceIntegrationResponse {
+message BaseResponse {
 	string id = 1;
 }
 
@@ -162,11 +132,11 @@ message UpdateDeviceDefinitionRequest {
 	string device_definition_id = 1;
 	VehicleInfo vehicle_data = 2;
 	string source = 3;
-	string image_URL = 4;
+	string image_url = 4;
 	bool verified = 5;
 	string model = 6;
 	int32 year = 7;
-	string device_make_ID = 8;
+	string device_make_id = 8;
 	repeated DeviceStyles device_styles = 9;
 	repeated DeviceIntegrations device_integrations = 10;
 
@@ -188,10 +158,6 @@ message UpdateDeviceDefinitionRequest {
 		string capabilities = 5;
 	}
 
-}
-
-message UpdateDeviceDefinitionResponse {
-	string id = 1;
 }
 
 message UpdateDeviceDefinitionImageRequest {
@@ -219,57 +185,70 @@ message GetDeviceDefinitionAllItemResponse {
 }
 
 message FilterDeviceDefinitionRequest {
-	string MakeID = 1;
-	string IntegrationID = 2;
-	string DeviceDefinitionID = 3;
-	int32 Year = 4;
-	string Model = 5;
-	repeated string VerifiedVinList = 6;
-	int32 PageIndex = 7;
-	int32 PageSize = 8;
+	string make_id = 1;
+	string integration_id = 2;
+	string deviceDefinition_id = 3;
+	int32 year = 4;
+	string model = 5;
+	repeated string verified_vin_list = 6;
+	int32 page_index = 7;
+	int32 page_size = 8;
 }
 
 message GetFilteredDeviceDefinitionsResponse {
-	repeated FilterDeviceDefinitionsReponse Items = 1;
+	repeated FilterDeviceDefinitionsReponse items = 1;
 }
 
 message FilterDeviceDefinitionsReponse {
-	string ID = 1;
-	string Model = 2;
-	int32 Year = 3;
-	string ImageUrl = 4;
-	int64 CreatedAt = 5;
-	int64 UpdatedAt = 6;
-	string Metadata = 7;
-	string Source = 8;
-	bool Verified = 9;
-	string External = 10;
-	string DeviceMakeID = 11;
-	string Make = 12;
+	string id = 1;
+	string model = 2;
+	int32 year = 3;
+	string image_url = 4;
+	int64 created_at = 5;
+	int64 updated_at = 6;
+	string metadata = 7;
+	string source = 8;
+	bool verified = 9;
+	string external = 10;
+	string device_make_id = 11;
+	string make = 12;
 }
 
 message CreateDeviceStyleRequest {
-	string DeviceDefinitionID = 1;
-	string Name = 2;
-	string ExternalStyleID = 3;
-	string Source = 4;
-	string SubModel = 5;
+	string device_definition_id = 1;
+	string name = 2;
+	string external_style_id = 3;
+	string source = 4;
+	string sub_model = 5;
 }
 
-message CreateDeviceStyleResponse {
-	string ID = 1;
+message GetIntegrationRequest {
+	repeated string id = 1;
+}
+
+
+message CreateDeviceMakeRequest {
+	string name = 1;
+}
+
+message GetDeviceStyleByIDRequest {
+	string id = 1;
 }
 
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
-	rpc GetIntegrations(EmptyRequest) returns (GetIntegrationResponse);
+	rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
+	rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
-	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
-	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (CreateDeviceIntegrationResponse);
-	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (CreateDeviceStyleResponse);
-	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (UpdateDeviceDefinitionResponse);
-	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (UpdateDeviceDefinitionResponse);
-	rpc GetDeviceDefinitionAll(EmptyRequest) returns (GetDeviceDefinitionAllResponse);
+	rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (BaseResponse);
+	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (BaseResponse);
+	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
+	rpc CreateDeviceMake(CreateDeviceMakeRequest) returns (BaseResponse);
+	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
+	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
+	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
+	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
+	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 }
