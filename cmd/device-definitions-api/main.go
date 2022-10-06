@@ -45,6 +45,10 @@ func main() {
 		smartCarSync(ctx, &settings, logger)
 	case "create-tesla-integrations":
 		teslaIntegrationSync(ctx, &settings, logger)
+	case "populate-device-features":
+		if err := populateDeviceFeaturesFromEs(ctx, logger, &settings); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to populate device features from elastic search")
+		}
 	default:
 		api.Run(ctx, logger, &settings)
 	}
