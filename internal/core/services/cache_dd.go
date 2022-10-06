@@ -118,21 +118,24 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 
 func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
 	rp := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID:     dd.ID,
-		Name:                   fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:               dd.ImageURL.String,
-		CompatibleIntegrations: []models.GetDeviceCompatibility{},
+		DeviceDefinitionID: dd.ID,
+		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		ImageURL:           dd.ImageURL.String,
+		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
 			ID:              dd.R.DeviceMake.ID,
 			Name:            dd.R.DeviceMake.Name,
 			LogoURL:         dd.R.DeviceMake.LogoURL,
 			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
+			NameSlug:        dd.R.DeviceMake.NameSlug,
 		},
 		Type: models.DeviceType{
-			Type:  "Vehicle",
-			Make:  dd.R.DeviceMake.Name,
-			Model: dd.Model,
-			Year:  int(dd.Year),
+			Type:      "Vehicle",
+			Make:      dd.R.DeviceMake.Name,
+			Model:     dd.Model,
+			Year:      int(dd.Year),
+			MakeSlug:  dd.R.DeviceMake.NameSlug,
+			ModelSlug: dd.ModelSlug,
 		},
 		Metadata: string(dd.Metadata.JSON),
 		Verified: dd.Verified,
@@ -143,24 +146,24 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	// vehicle info
-	var vi map[string]models.GetDeviceVehicleInfo
+	var vi map[string]models.VehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
 		rp.VehicleInfo = vi["vehicle_info"]
 	}
 
 	if dd.R != nil {
-		// compatible integrations
-		rp.CompatibleIntegrations = deviceCompatibilityFromDB(dd.R.DeviceIntegrations)
 		// sub_models
 		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
 	}
 
 	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []models.GetDeviceDefinitionIntegrationList{}
-	rp.DeviceStyles = []models.GetDeviceDefinitionStylesList{}
+	rp.DeviceIntegrations = []models.DeviceIntegration{}
+	rp.DeviceStyles = []models.DeviceStyle{}
+	rp.CompatibleIntegrations = []models.DeviceIntegration{}
+
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.GetDeviceDefinitionIntegrationList{
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
 				ID:           di.R.Integration.ID,
 				Type:         di.R.Integration.Type,
 				Style:        di.R.Integration.Style,
@@ -168,10 +171,12 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 				Region:       di.Region,
 				Capabilities: common.JSONOrDefault(di.Capabilities),
 			})
+
+			rp.CompatibleIntegrations = rp.DeviceIntegrations
 		}
 
 		for _, ds := range dd.R.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, models.GetDeviceDefinitionStylesList{
+			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
 				ID:                 ds.ID,
 				DeviceDefinitionID: ds.DeviceDefinitionID,
 				ExternalStyleID:    ds.ExternalStyleID,
@@ -183,23 +188,4 @@ func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDevi
 	}
 
 	return rp
-}
-
-// DeviceCompatibilityFromDB returns list of compatibility representation from device integrations db slice, assumes integration relation loaded
-func deviceCompatibilityFromDB(dbDIS repoModel.DeviceIntegrationSlice) []models.GetDeviceCompatibility {
-	if len(dbDIS) == 0 {
-		return []models.GetDeviceCompatibility{}
-	}
-	compatibilities := make([]models.GetDeviceCompatibility, len(dbDIS))
-	for i, di := range dbDIS {
-		compatibilities[i] = models.GetDeviceCompatibility{
-			ID:           di.IntegrationID,
-			Type:         di.R.Integration.Type,
-			Style:        di.R.Integration.Style,
-			Vendor:       di.R.Integration.Vendor,
-			Region:       di.Region,
-			Capabilities: common.JSONOrDefault(di.Capabilities),
-		}
-	}
-	return compatibilities
 }

@@ -60,8 +60,8 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 			Year:  year,
 			Make:  mk,
 		},
-		DeviceStyles: []models.GetDeviceDefinitionStylesList{
-			models.GetDeviceDefinitionStylesList{
+		DeviceStyles: []models.DeviceStyle{
+			models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -69,7 +69,7 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 				Source:             "edmunds",
 				SubModel:           "Hard Top",
 			},
-			models.GetDeviceDefinitionStylesList{
+			models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				ExternalStyleID:    ksuid.New().String(),
 				DeviceDefinitionID: deviceDefinitionID,
@@ -78,15 +78,15 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 				SubModel:           "Wagon",
 			},
 		},
-		DeviceIntegrations: []models.GetDeviceDefinitionIntegrationList{
-			models.GetDeviceDefinitionIntegrationList{
+		DeviceIntegrations: []models.DeviceIntegration{
+			models.DeviceIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
 				Vendor: "SmartCar",
 				Region: "Asia",
 			},
-			models.GetDeviceDefinitionIntegrationList{
+			models.DeviceIntegration{
 				ID:     ksuid.New().String(),
 				Type:   "API",
 				Style:  "Webhook",
@@ -115,11 +115,10 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Source, dd.DeviceStyles[0].Source)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].SubModel, dd.DeviceStyles[0].SubModel)
 
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Id, dd.DeviceIntegrations[0].ID)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Vendor, dd.DeviceIntegrations[0].Vendor)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Style, dd.DeviceIntegrations[0].Style)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Id, dd.DeviceIntegrations[0].ID)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Vendor, dd.DeviceIntegrations[0].Vendor)
+	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Style, dd.DeviceIntegrations[0].Style)
 	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Country, dd.DeviceIntegrations[0].Country)
 }
 
 func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds_BadRequest_Exception() {

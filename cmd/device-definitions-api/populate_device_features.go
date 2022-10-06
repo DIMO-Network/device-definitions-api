@@ -7,7 +7,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
@@ -20,7 +20,7 @@ type SupportLevelEnum int8
 
 const (
 	NotSupported   SupportLevelEnum = 0
-	MaybeSupported SupportLevelEnum = 1
+	MaybeSupported SupportLevelEnum = 1 //nolint
 	Supported      SupportLevelEnum = 2
 )
 
@@ -44,40 +44,34 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 		return err
 	}
 
-	for _, f := range resp.Aggregations.Features.Buckets {
-		intID := strings.TrimPrefix(f.Key, "dimo/integration/")
+	for _, i := range resp.Aggregations.Integrations.Buckets {
+		intID := strings.TrimPrefix(i.Key, "dimo/integration/")
 
-		for _, d := range f.DeviceDefinitions.Buckets {
+		for _, d := range i.DeviceDefinitions.Buckets {
 			ddID := d.Key
 
-			devices, err := models.DeviceIntegrations(
-				models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(ddID),
-				models.DeviceIntegrationWhere.IntegrationID.EQ(intID),
-			).All(ctx, pdb.DBS().Reader)
-			// check if device exists
-			if err != nil {
-				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("error occurred fetching device")
-				continue
-			}
+			for _, r := range d.Regions.Buckets {
+				region := r.Key
+				logger := logger.With().Str("integrationId", intID).Str("deviceDefinitionId", ddID).Str("region", region).Logger()
 
-			if len(devices) < 1 {
-				// handle not found
-				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("error could not find device")
-				continue
-			}
+				deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, region)
+				if err != nil {
+					logger.Err(err).Msg("Eror occurred fetching device integration.")
+					continue
+				}
 
-			feature := prepareFeatureData(d.Features.Buckets)
+				feature := prepareFeatureData(r.Features.Buckets)
 
-			device := devices[0]
-			err = device.Features.Marshal(&feature)
-			if err != nil {
-				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("could not marshal feature information into device")
-				continue
-			}
+				err = deviceInt.Features.Marshal(&feature)
+				if err != nil {
+					logger.Err(err).Msg("could not marshal feature information into device integration.")
+					continue
+				}
 
-			if _, err := device.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-				logger.Err(err).Str("integrationId", intID).Str("deviceDefinitionId", ddID).Msg("could not update device")
-				continue
+				if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+					logger.Err(err).Msg("could not update device integration with feature information.")
+					continue
+				}
 			}
 		}
 	}
@@ -85,19 +79,19 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	return nil
 }
 
-func prepareFeatureData(f map[string]map[string]int) []elasticModels.DeviceIntegrationFeatures {
+func prepareFeatureData(i map[string]elasticsearch.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
-	for k, v := range f {
-		var supportLevel int8
+	for k, v := range i {
+		supportLevel := NotSupported.Int()
 
-		if v["doc_count"] > 0 {
-			supportLevel = int8(Supported)
+		if v.DocCount > 0 {
+			supportLevel = Supported.Int()
 		}
 
 		feat := elasticModels.DeviceIntegrationFeatures{
 			FeatureKey:   k,
-			SupportLevel: int8(supportLevel),
+			SupportLevel: supportLevel,
 		}
 
 		ft = append(ft, feat)
@@ -115,11 +109,11 @@ func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
 	filters := jsonObj{}
 
 	for _, v := range ifeats {
-		esKey := v.ElasticProperty
-		if v.FeatureKey == "tires" {
-			esKey = v.FeatureKey
+		filters[v.FeatureKey] = jsonObj{
+			"exists": jsonObj{
+				"field": "data." + v.ElasticProperty,
+			},
 		}
-		filters[esKey] = jsonObj{"exists": jsonObj{"field": "data." + v.ElasticProperty}}
 	}
 
 	esFilters, err := json.Marshal(filters)
