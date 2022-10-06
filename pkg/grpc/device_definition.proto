@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
 
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
@@ -266,15 +265,20 @@ message GetDeviceCompatibilityListRequest {
 	string makeId = 1;
 }
 
+message Features {
+	string key = 1;
+	int32 support_level = 2;
+}
+
 message DeviceCompatibilityList {
 	string model = 1;
 	int32 year = 2;
-	google.protobuf.Struct features = 3;
+	repeated Features features = 3;
 }
 
 message GetDeviceCompatibilityListResponse {
 	string make = 1;
-	repeated DeviceCompaitibilityList device_compatibilities = 2;
+	repeated DeviceCompatibilityList device_compatibilities = 2;
 }
 
 service DeviceDefinitionService {

@@ -14,10 +14,15 @@ type GetDeviceCompatibilityQueryHandler struct {
 	DBS        func() *db.ReaderWriter
 }
 
+type Features struct {
+	Key          string // eg. odometer
+	SupportLevel int    // eg. 0,1,2
+}
+
 type GetDeviceCompatibilityQueryResult struct {
 	Model    string
 	Year     int32
-	Features map[string]interface{}
+	Features []Features
 }
 
 type GetDeviceCompatibilityQuery struct {
@@ -61,7 +66,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 			Year:  int32(v.DeviceDefinition.Year),
 		}
 		var dd []interface{}
-		feats := make(map[string]interface{})
+		feats := []Features{}
 		if v.DeviceIntegration.Features.IsZero() {
 			continue
 		}
@@ -71,9 +76,9 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		}
 		for _, i := range dd {
 			f := i.(map[string]interface{})
-			fk := f["feature_key"]
-			sl := f["support_level"]
-			feats[integFeats[fk.(string)]] = sl.(float64) > 0
+			ft := &Features{}
+			ft.Key = f["feature_key"].(string)
+			ft.SupportLevel = int(f["support_level"].(float64))
 		}
 
 		cr.Features = feats
