@@ -58,6 +58,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, region)
 				if err != nil {
 					logger.Err(err).Msg("Eror occurred fetching device integration.")
+					continue
 				}
 
 				feature := prepareFeatureData(r.Features.Buckets)
