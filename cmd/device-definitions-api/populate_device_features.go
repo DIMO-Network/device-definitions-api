@@ -7,7 +7,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
+	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
@@ -79,7 +79,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	return nil
 }
 
-func prepareFeatureData(i map[string]elasticsearch.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
+func prepareFeatureData(i map[string]elastic.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range i {

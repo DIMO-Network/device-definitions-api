@@ -36,7 +36,7 @@ type DeviceDefinitionServiceClient interface {
 	SetDeviceDefinitionImage(ctx context.Context, in *UpdateDeviceDefinitionImageRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error)
 	GetFilteredDeviceDefinition(ctx context.Context, in *FilterDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetFilteredDeviceDefinitionsResponse, error)
-	GetDeviceCompaitibility(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error)
+	GetDeviceCompatibility(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error)
 	GetDeviceStyleByID(ctx context.Context, in *GetDeviceStyleByIDRequest, opts ...grpc.CallOption) (*DeviceStyle, error)
 	GetDeviceStyleByExternalID(ctx context.Context, in *GetDeviceStyleByIDRequest, opts ...grpc.CallOption) (*DeviceStyle, error)
 }
@@ -166,9 +166,9 @@ func (c *deviceDefinitionServiceClient) GetFilteredDeviceDefinition(ctx context.
 	return out, nil
 }
 
-func (c *deviceDefinitionServiceClient) GetDeviceCompaitibility(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error) {
+func (c *deviceDefinitionServiceClient) GetDeviceCompatibility(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error) {
 	out := new(GetDeviceCompatibilityListResponse)
-	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceCompaitibility", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceCompatibility", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ type DeviceDefinitionServiceServer interface {
 	SetDeviceDefinitionImage(context.Context, *UpdateDeviceDefinitionImageRequest) (*BaseResponse, error)
 	GetDeviceDefinitionAll(context.Context, *emptypb.Empty) (*GetDeviceDefinitionAllResponse, error)
 	GetFilteredDeviceDefinition(context.Context, *FilterDeviceDefinitionRequest) (*GetFilteredDeviceDefinitionsResponse, error)
-	GetDeviceCompaitibility(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error)
+	GetDeviceCompatibility(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error)
 	GetDeviceStyleByID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error)
 	GetDeviceStyleByExternalID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
@@ -259,8 +259,8 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionAll(context
 func (UnimplementedDeviceDefinitionServiceServer) GetFilteredDeviceDefinition(context.Context, *FilterDeviceDefinitionRequest) (*GetFilteredDeviceDefinitionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFilteredDeviceDefinition not implemented")
 }
-func (UnimplementedDeviceDefinitionServiceServer) GetDeviceCompaitibility(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceCompaitibility not implemented")
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceCompatibility(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceCompatibility not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceStyleByID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceStyleByID not implemented")
@@ -516,20 +516,20 @@ func _DeviceDefinitionService_GetFilteredDeviceDefinition_Handler(srv interface{
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeviceDefinitionService_GetDeviceCompaitibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _DeviceDefinitionService_GetDeviceCompatibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDeviceCompatibilityListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceCompaitibility(ctx, in)
+		return srv.(DeviceDefinitionServiceServer).GetDeviceCompatibility(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceCompaitibility",
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceCompatibility",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceCompaitibility(ctx, req.(*GetDeviceCompatibilityListRequest))
+		return srv.(DeviceDefinitionServiceServer).GetDeviceCompatibility(ctx, req.(*GetDeviceCompatibilityListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -630,8 +630,8 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeviceDefinitionService_GetFilteredDeviceDefinition_Handler,
 		},
 		{
-			MethodName: "GetDeviceCompaitibility",
-			Handler:    _DeviceDefinitionService_GetDeviceCompaitibility_Handler,
+			MethodName: "GetDeviceCompatibility",
+			Handler:    _DeviceDefinitionService_GetDeviceCompatibility_Handler,
 		},
 		{
 			MethodName: "GetDeviceStyleByID",

@@ -13,7 +13,6 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/null/v8"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type GrpcService struct {
@@ -380,14 +379,17 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
 	for _, v := range deviceCompatibilities {
-		r := &p_grpc.DeviceCompaitibilityList{Model: v.Model, Year: v.Year}
-		details, err := structpb.NewStruct(v.Features)
-		if err != nil {
-			return &p_grpc.GetDeviceCompatibilityListResponse{}, nil
+		r := &p_grpc.DeviceCompatibilityList{Model: v.Model, Year: v.Year}
+
+		for _, f := range v.Features {
+			outFeat := &p_grpc.Feature{
+				Key:          f.Key,
+				SupportLevel: int32(f.SupportLevel),
+			}
+			r.Features = append(r.Features, outFeat)
 		}
 
-		r.Features = details
-		result.DeviceCompatilities = append(result.DeviceCompatilities, r)
+		result.DeviceCompatibilities = append(result.DeviceCompatibilities, r)
 	}
 
 	return result, nil
