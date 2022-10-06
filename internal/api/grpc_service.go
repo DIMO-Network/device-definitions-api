@@ -268,6 +268,19 @@ func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDev
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
+func (s *GrpcService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
+		Vendor: in.Vendor,
+		Style:  in.Style,
+		Type:   in.Type,
+	})
+
+	result := commandResult.(commands.CreateIntegrationCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
 
 	command := &commands.UpdateDeviceDefinitionCommand{

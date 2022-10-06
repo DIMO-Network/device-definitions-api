@@ -226,13 +226,18 @@ message GetIntegrationRequest {
 	repeated string id = 1;
 }
 
-
 message CreateDeviceMakeRequest {
 	string name = 1;
 }
 
 message GetDeviceStyleByIDRequest {
 	string id = 1;
+}
+
+message CreateIntegrationRequest {
+	string vendor = 1;
+	string type = 2;
+	string style = 3;
 }
 
 service DeviceDefinitionService {
@@ -245,6 +250,7 @@ service DeviceDefinitionService {
 	rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (BaseResponse);
 	rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
 	rpc CreateDeviceMake(CreateDeviceMakeRequest) returns (BaseResponse);
+	rpc CreateIntegration(CreateIntegrationRequest) returns (BaseResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
 	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
