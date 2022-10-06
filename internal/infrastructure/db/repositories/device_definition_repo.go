@@ -150,8 +150,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		if errors.Is(err, sql.ErrNoRows) {
 			// create
 			m = &models.DeviceMake{
-				ID:   ksuid.New().String(),
-				Name: make,
+				ID:       ksuid.New().String(),
+				Name:     make,
+				NameSlug: common.SlugString(make),
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
@@ -169,7 +170,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Year:         int16(year),
 		Source:       null.StringFrom(source),
 		Verified:     false,
-		ModelSlug:    null.StringFrom(common.SlugString(model)),
+		ModelSlug:    common.SlugString(model),
 	}
 	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 	if err != nil {

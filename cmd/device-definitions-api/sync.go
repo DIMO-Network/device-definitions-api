@@ -16,6 +16,7 @@ import (
 )
 
 func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 
@@ -27,7 +28,7 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService)),
+		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService, logger)),
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncSearchDataCommand{})

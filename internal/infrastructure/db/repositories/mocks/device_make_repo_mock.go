@@ -51,16 +51,16 @@ func (mr *MockDeviceMakeRepositoryMockRecorder) GetAll(ctx interface{}) *gomock.
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceMakeRepository) GetOrCreate(ctx context.Context, makeName, makeSlug, logURL string) (*models.DeviceMake, error) {
+func (m *MockDeviceMakeRepository) GetOrCreate(ctx context.Context, makeName, logURL string) (*models.DeviceMake, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreate", ctx, makeName, makeSlug, logURL)
+	ret := m.ctrl.Call(m, "GetOrCreate", ctx, makeName, logURL)
 	ret0, _ := ret[0].(*models.DeviceMake)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreate indicates an expected call of GetOrCreate.
-func (mr *MockDeviceMakeRepositoryMockRecorder) GetOrCreate(ctx, makeName, makeSlug, logURL interface{}) *gomock.Call {
+func (mr *MockDeviceMakeRepositoryMockRecorder) GetOrCreate(ctx, makeName, logURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceMakeRepository)(nil).GetOrCreate), ctx, makeName, makeSlug, logURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceMakeRepository)(nil).GetOrCreate), ctx, makeName, logURL)
 }

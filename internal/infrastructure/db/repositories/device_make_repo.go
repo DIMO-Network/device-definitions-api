@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -19,7 +20,7 @@ import (
 
 type DeviceMakeRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceMake, error)
-	GetOrCreate(ctx context.Context, makeName string, makeSlug string, logURL string) (*models.DeviceMake, error)
+	GetOrCreate(ctx context.Context, makeName string, logURL string) (*models.DeviceMake, error)
 }
 
 type deviceMakeRepository struct {
@@ -46,7 +47,7 @@ func (r *deviceMakeRepository) GetAll(ctx context.Context) ([]*models.DeviceMake
 	return makes, err
 }
 
-func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string, makeSlug string, logURL string) (*models.DeviceMake, error) {
+func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string, logURL string) (*models.DeviceMake, error) {
 	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(makeName))).One(ctx, r.DBS().Writer)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -54,7 +55,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
 				Name:     makeName,
-				NameSlug: null.StringFrom(makeSlug),
+				NameSlug: common.SlugString(makeName),
 				LogoURL:  null.StringFrom(logURL),
 			}
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())

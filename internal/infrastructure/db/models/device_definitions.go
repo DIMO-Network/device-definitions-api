@@ -35,7 +35,7 @@ type DeviceDefinition struct {
 	Verified     bool        `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
 	ExternalID   null.String `boil:"external_id" json:"external_id,omitempty" toml:"external_id" yaml:"external_id,omitempty"`
 	DeviceMakeID string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
-	ModelSlug    null.String `boil:"model_slug" json:"model_slug,omitempty" toml:"model_slug" yaml:"model_slug,omitempty"`
+	ModelSlug    string      `boil:"model_slug" json:"model_slug" toml:"model_slug" yaml:"model_slug"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -249,7 +249,7 @@ var DeviceDefinitionWhere = struct {
 	Verified     whereHelperbool
 	ExternalID   whereHelpernull_String
 	DeviceMakeID whereHelperstring
-	ModelSlug    whereHelpernull_String
+	ModelSlug    whereHelperstring
 }{
 	ID:           whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:        whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
@@ -262,7 +262,7 @@ var DeviceDefinitionWhere = struct {
 	Verified:     whereHelperbool{field: "\"device_definitions_api\".\"device_definitions\".\"verified\""},
 	ExternalID:   whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"external_id\""},
 	DeviceMakeID: whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"device_make_id\""},
-	ModelSlug:    whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
+	ModelSlug:    whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
@@ -314,8 +314,8 @@ type deviceDefinitionL struct{}
 
 var (
 	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id"}
-	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "model_slug"}
+	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
+	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )
