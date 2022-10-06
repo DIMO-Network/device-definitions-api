@@ -66,7 +66,7 @@ func (d *ElasticSearch) buildAndExecRequest(method, url string, obj interface{},
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+d.Token)
+	req.Header.Set("Authorization", "ApiKey "+d.Token)
 	var resp *http.Response
 	var err error
 
