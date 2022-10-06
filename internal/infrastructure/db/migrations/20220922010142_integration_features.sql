@@ -1,7 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
-CREATE TABLE IF NOT EXISTS device_definitions_api.integration_features
+SET search_path to device_definitions_api, public;
+
+CREATE TABLE IF NOT EXISTS integration_features
 (
     feature_key         varchar(50) PRIMARY KEY not null,
     elastic_property    varchar(50) not null,
@@ -10,9 +11,10 @@ CREATE TABLE IF NOT EXISTS device_definitions_api.integration_features
     created_at          timestamptz not null default current_timestamp,
     updated_at          timestamptz not null default current_timestamp
 );
-CREATE UNIQUE INDEX elastic_property_idx ON device_definitions_api.integration_features (elastic_property);
 
-INSERT INTO device_definitions_api.integration_features (feature_key, display_name, elastic_property) VALUES 
+CREATE UNIQUE INDEX elastic_property_idx ON integration_features (elastic_property);
+
+INSERT INTO integration_features (feature_key, display_name, elastic_property) VALUES 
     ('ev_battery', 'EV Battery', 'soc'),
     ('battery_voltage', 'Battery Voltage', 'battery_voltage'),
     ('fuel_tank', 'Fuel Tank', 'fuel_percent_remaining'),
@@ -24,10 +26,7 @@ INSERT INTO device_definitions_api.integration_features (feature_key, display_na
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+SET search_path to device_definitions_api, public;
 
-DROP INDEX feature_key_idx;
-DROP INDEX css_icon_idx;
-
-DROP TABLE device_definitions_api.integration_features
+DROP TABLE integration_features
 -- +goose StatementEnd
