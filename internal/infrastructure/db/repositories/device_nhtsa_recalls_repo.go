@@ -20,7 +20,10 @@ import (
 
 type DeviceNHTSARecallsRepository interface {
 	Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON) (*models.DeviceNhtsaRecall, error)
-	GetLastDataRecordID(ctx context.Context) (null.Int, error)
+	GetLastDataRecordID(ctx context.Context) (*null.Int, error)
+	GetAllWithoutDD(ctx context.Context, matchingVersion string) (*models.DeviceNhtsaRecallSlice, error)
+	GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error)
+	SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error
 }
 
 type deviceNHTSARecallsRepository struct {
@@ -89,18 +92,69 @@ func (r *deviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinit
 	return dnr, nil
 }
 
-func (r *deviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) (null.Int, error) {
+func (r *deviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) (*null.Int, error) {
 	recall, err := models.DeviceNhtsaRecalls(
 		qm.OrderBy("data_record_id DESC"),
 		qm.Limit(1),
 	).One(ctx, r.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return null.Int{}, nil
+			return &null.Int{}, nil
 		}
-		return null.Int{}, err
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
 	}
-	return null.IntFrom(recall.DataRecordID), nil
+	ret := null.IntFrom(recall.DataRecordID)
+	return &ret, nil
+}
+
+func (r *deviceNHTSARecallsRepository) GetAllWithoutDD(ctx context.Context, matchingVersion string) (*models.DeviceNhtsaRecallSlice, error) {
+	recalls, err := models.DeviceNhtsaRecalls(
+		qm.Where("device_definition_id IS NULL"),
+		qm.Or("coalesce(jsonb_extract_path_text(metadata, 'matchingVersion'),'NO_VER') <> ?", matchingVersion),
+		qm.OrderBy("data_record_id ASC"),
+	).All(ctx, r.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &models.DeviceNhtsaRecallSlice{}, nil
+		}
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
+	}
+	return &recalls, nil
+}
+
+func (r *deviceNHTSARecallsRepository) GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error) {
+	recall, err := models.DeviceNhtsaRecalls(
+		qm.Where("id = ?", id),
+	).One(ctx, r.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &models.DeviceNhtsaRecall{}, nil
+		}
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
+	}
+	return recall, nil
+}
+
+func (r *deviceNHTSARecallsRepository) SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error {
+	if deviceDefinitionID == nil {
+		recall.DeviceDefinitionID = null.StringFromPtr(deviceDefinitionID)
+	}
+	if metadata == nil {
+		recall.Metadata = *metadata
+	}
+	_, err := recall.Update(ctx, r.DBS().Writer, boil.Infer())
+	if err != nil {
+		return &exceptions.InternalError{
+			Err: err,
+		}
+	}
+	return nil
 }
 
 func (r *deviceNHTSARecallsRepository) nullableInt(value string) null.Int {

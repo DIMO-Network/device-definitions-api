@@ -124,13 +124,14 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 	//repos
 	deviceNHTSARecallsRepository := repositories.NewDeviceNHTSARecallsRepository(pdb.DBS)
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceMakeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 
 	//commands
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
 		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(metricsSvc, &logger, s)),
-		mediator.WithHandler(&commands.SyncNHTSARecallsCommand{}, commands.NewSyncNHTSARecallsCommandHandler(pdb.DBS, deviceNHTSARecallsRepository, deviceDefinitionRepository, &s.NHTSARecallsFileURL)),
+		mediator.WithHandler(&commands.SyncNHTSARecallsCommand{}, commands.NewSyncNHTSARecallsCommandHandler(pdb.DBS, deviceNHTSARecallsRepository, deviceDefinitionRepository, deviceMakeRepository, &s.NHTSARecallsFileURL)),
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncNHTSARecallsCommand{})

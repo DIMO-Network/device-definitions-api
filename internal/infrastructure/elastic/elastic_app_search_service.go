@@ -1,4 +1,4 @@
-//go:generate mockgen -source elastic_search_api_service.go -destination mocks/elastic_search_api_service_mock.go -package mocks
+//go:generate mockgen -source elastic_app_search_service.go -destination mocks/elastic_app_search_service_mock.go -package mocks
 
 package elastic
 
