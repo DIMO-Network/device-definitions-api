@@ -33,7 +33,7 @@ type DeviceMake struct {
 	TokenID         types.NullDecimal `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
 	LogoURL         null.String       `boil:"logo_url" json:"logo_url,omitempty" toml:"logo_url" yaml:"logo_url,omitempty"`
 	OemPlatformName null.String       `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
-	NameSlug        string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
+	NameSlug        null.String       `boil:"name_slug" json:"name_slug,omitempty" toml:"name_slug" yaml:"name_slug,omitempty"`
 
 	R *deviceMakeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceMakeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -120,7 +120,7 @@ var DeviceMakeWhere = struct {
 	TokenID         whereHelpertypes_NullDecimal
 	LogoURL         whereHelpernull_String
 	OemPlatformName whereHelpernull_String
-	NameSlug        whereHelperstring
+	NameSlug        whereHelpernull_String
 }{
 	ID:              whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"id\""},
 	Name:            whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name\""},
@@ -130,7 +130,7 @@ var DeviceMakeWhere = struct {
 	TokenID:         whereHelpertypes_NullDecimal{field: "\"device_definitions_api\".\"device_makes\".\"token_id\""},
 	LogoURL:         whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"logo_url\""},
 	OemPlatformName: whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"oem_platform_name\""},
-	NameSlug:        whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
+	NameSlug:        whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
 }
 
 // DeviceMakeRels is where relationship names are stored.
@@ -162,8 +162,8 @@ type deviceMakeL struct{}
 
 var (
 	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug"}
-	deviceMakeColumnsWithoutDefault = []string{"id", "name", "name_slug"}
-	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name"}
+	deviceMakeColumnsWithoutDefault = []string{"id", "name"}
+	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug"}
 	deviceMakePrimaryKeyColumns     = []string{"id"}
 	deviceMakeGeneratedColumns      = []string{}
 )

@@ -158,7 +158,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
 				Name:     make,
-				NameSlug: common.SlugString(make),
+				NameSlug: null.StringFrom(common.SlugString(make)),
 			}
 			err = m.Insert(ctx, tx, boil.Infer())
 			if err != nil {
