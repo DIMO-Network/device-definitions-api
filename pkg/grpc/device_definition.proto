@@ -239,6 +239,14 @@ message GetDeviceStyleByIDRequest {
 	string id = 1;
 }
 
+message GetDeviceStyleByDeviceDefinitionIDRequest {
+	string id = 1;
+}
+
+message GetDeviceStyleResponse {
+	repeated DeviceStyle device_styles = 1;
+}
+
 message CreateIntegrationRequest {
 	string vendor = 1;
 	string type = 2;
@@ -263,4 +271,5 @@ service DeviceDefinitionService {
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
+	rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
 }
