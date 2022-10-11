@@ -3,11 +3,16 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+
 	"github.com/volatiletech/null/v8"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -35,7 +40,7 @@ func Contains(s []string, str string) bool {
 }
 
 // SubModelsFromStylesDB gets the unique style.SubModel from the styles slice, deduping sub_model
-func SubModelsFromStylesDB(styles models.DeviceStyleSlice) []string {
+func SubModelsFromStylesDB(styles repoModel.DeviceStyleSlice) []string {
 	items := map[string]string{}
 	for _, style := range styles {
 		if _, ok := items[style.SubModel]; !ok {
@@ -60,7 +65,7 @@ var Reset = "\033[0m"
 var Green = "\033[32m"
 var Purple = "\033[35m"
 
-func PrintMMY(definition *models.DeviceDefinition, color string, includeSource bool) string {
+func PrintMMY(definition *repoModel.DeviceDefinition, color string, includeSource bool) string {
 	mk := ""
 	if definition.R != nil && definition.R.DeviceMake != nil {
 		mk = definition.R.DeviceMake.Name
@@ -84,4 +89,162 @@ func SlugString(term string) string {
 
 	return cleaned
 
+}
+
+func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
+	rp := &models.GetDeviceDefinitionQueryResult{
+		DeviceDefinitionID: dd.ID,
+		ExternalID:         dd.ExternalID.String,
+		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		ImageURL:           dd.ImageURL.String,
+		Source:             dd.Source.String,
+		DeviceMake: models.DeviceMake{
+			ID:              dd.R.DeviceMake.ID,
+			Name:            dd.R.DeviceMake.Name,
+			LogoURL:         dd.R.DeviceMake.LogoURL,
+			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
+			NameSlug:        dd.R.DeviceMake.NameSlug,
+		},
+		Type: models.DeviceType{
+			Type:      "Vehicle",
+			Make:      dd.R.DeviceMake.Name,
+			Model:     dd.Model,
+			Year:      int(dd.Year),
+			MakeSlug:  dd.R.DeviceMake.NameSlug,
+			ModelSlug: dd.ModelSlug,
+		},
+		Metadata: string(dd.Metadata.JSON),
+		Verified: dd.Verified,
+	}
+
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
+	}
+
+	// vehicle info
+	var vi map[string]models.VehicleInfo
+	if err := dd.Metadata.Unmarshal(&vi); err == nil {
+		rp.VehicleInfo = vi["vehicle_info"]
+	}
+
+	if dd.R != nil {
+		// sub_models
+		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+	}
+
+	// build object for integrations that have all the info
+	rp.DeviceIntegrations = []models.DeviceIntegration{}
+	rp.DeviceStyles = []models.DeviceStyle{}
+	rp.CompatibleIntegrations = []models.DeviceIntegration{}
+
+	if dd.R != nil {
+		for _, di := range dd.R.DeviceIntegrations {
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
+				ID:           di.R.Integration.ID,
+				Type:         di.R.Integration.Type,
+				Style:        di.R.Integration.Style,
+				Vendor:       di.R.Integration.Vendor,
+				Region:       di.Region,
+				Capabilities: JSONOrDefault(di.Capabilities),
+			})
+
+			rp.CompatibleIntegrations = rp.DeviceIntegrations
+		}
+
+		for _, ds := range dd.R.DeviceStyles {
+			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
+				ID:                 ds.ID,
+				DeviceDefinitionID: ds.DeviceDefinitionID,
+				ExternalStyleID:    ds.ExternalStyleID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
+			})
+		}
+	}
+
+	return rp
+}
+
+func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {
+	rp := &grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: dd.DeviceDefinitionID,
+		ExternalId:         dd.ExternalID,
+		Name:               dd.Name,
+		ImageUrl:           dd.ImageURL,
+		Source:             dd.Source,
+		Make: &grpc.DeviceMake{
+			Id:              dd.DeviceMake.ID,
+			Name:            dd.DeviceMake.Name,
+			LogoUrl:         dd.DeviceMake.LogoURL.String,
+			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
+			NameSlug:        dd.DeviceMake.NameSlug,
+		},
+		Type: &grpc.DeviceType{
+			Type:      dd.Type.Type,
+			Make:      dd.DeviceMake.Name,
+			Model:     dd.Type.Model,
+			Year:      int32(dd.Type.Year),
+			MakeSlug:  dd.Type.MakeSlug,
+			ModelSlug: dd.Type.ModelSlug,
+		},
+		Verified: dd.Verified,
+	}
+
+	if dd.DeviceMake.TokenID != nil {
+		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
+	}
+
+	// vehicle info
+	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
+	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
+	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
+	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
+
+	rp.VehicleData = &grpc.VehicleInfo{
+		FuelType:            dd.VehicleInfo.FuelType,
+		DrivenWheels:        dd.VehicleInfo.DrivenWheels,
+		NumberOfDoors:       int32(numberOfDoors),
+		Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
+		EPAClass:            dd.VehicleInfo.EPAClass,
+		VehicleType:         dd.VehicleInfo.VehicleType,
+		MPGHighway:          float32(mpgHighway),
+		MPGCity:             float32(mpgCity),
+		FuelTankCapacityGal: float32(fuelTankCapacityGal),
+		MPG:                 float32(mpg),
+	}
+
+	// sub_models
+	rp.Type.SubModels = dd.Type.SubModels
+
+	// build object for integrations that have all the info
+	rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
+	for _, di := range dd.DeviceIntegrations {
+		rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegration{
+			DeviceDefinitionId: dd.DeviceDefinitionID,
+			Integration: &grpc.Integration{
+				Id:     di.ID,
+				Type:   di.Type,
+				Style:  di.Style,
+				Vendor: di.Vendor,
+			},
+			Region:       di.Region,
+			Capabilities: string(di.Capabilities),
+		})
+	}
+
+	rp.DeviceStyles = []*grpc.DeviceStyle{}
+	for _, ds := range dd.DeviceStyles {
+		rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyle{
+			DeviceDefinitionId: dd.DeviceDefinitionID,
+			ExternalStyleId:    ds.ExternalStyleID,
+			Id:                 ds.ID,
+			Name:               ds.Name,
+			Source:             ds.Source,
+			SubModel:           ds.SubModel,
+		})
+	}
+
+	return rp
 }
