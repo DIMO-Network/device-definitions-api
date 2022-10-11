@@ -26,6 +26,7 @@ type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
 	GetDeviceDefinitionBySource(ctx context.Context, in *GetDeviceDefinitionBySourceRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetIntegrations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationResponse, error)
 	GetIntegrationByID(ctx context.Context, in *GetIntegrationRequest, opts ...grpc.CallOption) (*Integration, error)
 	GetDeviceDefinitionIntegration(ctx context.Context, in *GetDeviceDefinitionIntegrationRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionIntegrationResponse, error)
@@ -72,6 +73,15 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByMMY(ctx context.Con
 func (c *deviceDefinitionServiceClient) GetDeviceDefinitionBySource(ctx context.Context, in *GetDeviceDefinitionBySourceRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
 	out := new(GetDeviceDefinitionResponse)
 	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionBySource", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
+	out := new(GetDeviceDefinitionResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionWithoutImages", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +230,7 @@ type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error)
 	GetDeviceDefinitionBySource(context.Context, *GetDeviceDefinitionBySourceRequest) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionWithoutImages(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error)
 	GetIntegrations(context.Context, *emptypb.Empty) (*GetIntegrationResponse, error)
 	GetIntegrationByID(context.Context, *GetIntegrationRequest) (*Integration, error)
 	GetDeviceDefinitionIntegration(context.Context, *GetDeviceDefinitionIntegrationRequest) (*GetDeviceDefinitionIntegrationResponse, error)
@@ -250,6 +261,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMMY(conte
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionBySource(context.Context, *GetDeviceDefinitionBySourceRequest) (*GetDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionBySource not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionWithoutImages(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionWithoutImages not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetIntegrations(context.Context, *emptypb.Empty) (*GetIntegrationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrations not implemented")
@@ -360,6 +374,24 @@ func _DeviceDefinitionService_GetDeviceDefinitionBySource_Handler(srv interface{
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionBySource(ctx, req.(*GetDeviceDefinitionBySourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_GetDeviceDefinitionWithoutImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionWithoutImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitionWithoutImages",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionWithoutImages(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -652,6 +684,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceDefinitionBySource",
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionBySource_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitionWithoutImages",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitionWithoutImages_Handler,
 		},
 		{
 			MethodName: "GetIntegrations",

@@ -150,6 +150,14 @@ func (s *GrpcService) GetDeviceDefinitionBySource(ctx context.Context, in *p_grp
 	return result, nil
 }
 
+func (s *GrpcService) GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithoutImageQuery{})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
+
 func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})

@@ -258,6 +258,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
 	rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);

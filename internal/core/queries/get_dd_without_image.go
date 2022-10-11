@@ -11,36 +11,32 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type GetDeviceDefinitionBySourceQuery struct {
-	Source string `json:"source" validate:"required"`
+type GetDeviceDefinitionWithoutImageQuery struct {
 }
 
-func (*GetDeviceDefinitionBySourceQuery) Key() string {
-	return "GetDeviceDefinitionBySourceQuery"
+func (*GetDeviceDefinitionWithoutImageQuery) Key() string {
+	return "GetDeviceDefinitionWithoutImageQuery"
 }
 
-type GetDeviceDefinitionBySourceQueryHandler struct {
+type GetDeviceDefinitionWithoutImageQueryHandler struct {
 	DBS func() *db.ReaderWriter
 	log *zerolog.Logger
 }
 
-func NewGetDeviceDefinitionBySourceQueryHandler(dbs func() *db.ReaderWriter, log *zerolog.Logger) GetDeviceDefinitionBySourceQueryHandler {
-	return GetDeviceDefinitionBySourceQueryHandler{
+func NewGetDeviceDefinitionWithoutImageQueryHandler(dbs func() *db.ReaderWriter, log *zerolog.Logger) GetDeviceDefinitionWithoutImageQueryHandler {
+	return GetDeviceDefinitionWithoutImageQueryHandler{
 		DBS: dbs,
 		log: log,
 	}
 }
 
-func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetDeviceDefinitionBySourceQuery)
-
-	all, err := repoModel.DeviceDefinitions(repoModel.DeviceDefinitionWhere.Source.EQ(null.StringFrom(qry.Source)),
-		qm.OrderBy("id")).All(ctx, ch.DBS().Reader)
+	all, err := repoModel.DeviceDefinitions(qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
+		repoModel.DeviceDefinitionWhere.ImageURL.IsNull()).All(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		return nil, &exceptions.InternalError{
