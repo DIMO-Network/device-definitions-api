@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
 	GetDeviceDefinitionBySource(ctx context.Context, in *GetDeviceDefinitionBySourceRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
@@ -55,6 +56,15 @@ func NewDeviceDefinitionServiceClient(cc grpc.ClientConnInterface) DeviceDefinit
 func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
 	out := new(GetDeviceDefinitionResponse)
 	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionByID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
+	out := new(GetDeviceDefinitionResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -228,6 +238,7 @@ func (c *deviceDefinitionServiceClient) GetDeviceStylesByDeviceDefinitionID(ctx 
 // for forward compatibility
 type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitions(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error)
 	GetDeviceDefinitionBySource(context.Context, *GetDeviceDefinitionBySourceRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionWithoutImages(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error)
@@ -255,6 +266,9 @@ type UnimplementedDeviceDefinitionServiceServer struct {
 
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByID not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitions(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitions not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByMMY not implemented")
@@ -338,6 +352,24 @@ func _DeviceDefinitionService_GetDeviceDefinitionByID_Handler(srv interface{}, c
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByID(ctx, req.(*GetDeviceDefinitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_GetDeviceDefinitions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitions(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -676,6 +708,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceDefinitionByID",
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionByID_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitions",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitions_Handler,
 		},
 		{
 			MethodName: "GetDeviceDefinitionByMMY",

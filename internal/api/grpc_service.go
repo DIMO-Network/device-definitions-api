@@ -370,11 +370,11 @@ func (s *GrpcService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.U
 
 func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionGroupQuery{})
 
 	result := &p_grpc.GetDeviceDefinitionAllResponse{}
 
-	allDevices := qryResult.([]queries.GetAllDeviceDefinitionQueryResult)
+	allDevices := qryResult.([]queries.GetAllDeviceDefinitionGroupQueryResult)
 
 	for _, device := range allDevices {
 		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
@@ -397,6 +397,14 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Em
 
 		result.Items = append(result.Items, item)
 	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceDefinitions(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
 	return result, nil
 }
