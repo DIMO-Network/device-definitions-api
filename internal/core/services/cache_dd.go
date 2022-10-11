@@ -6,12 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/shared/redis"
 )
@@ -65,7 +63,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 		return nil, nil
 	}
 
-	rp = buildDeviceDefinitionResult(dd)
+	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
 
 	rpJSON, _ := json.Marshal(rp)
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
@@ -108,84 +106,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 		return nil, nil
 	}
 
-	rp = buildDeviceDefinitionResult(dd)
+	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
 
 	rpJSON, _ := json.Marshal(rp)
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
 
 	return rp, nil
-}
-
-func buildDeviceDefinitionResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
-	rp := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID: dd.ID,
-		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:           dd.ImageURL.String,
-		Source:             dd.Source.String,
-		DeviceMake: models.DeviceMake{
-			ID:              dd.R.DeviceMake.ID,
-			Name:            dd.R.DeviceMake.Name,
-			LogoURL:         dd.R.DeviceMake.LogoURL,
-			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
-			NameSlug:        dd.R.DeviceMake.NameSlug,
-		},
-		Type: models.DeviceType{
-			Type:      "Vehicle",
-			Make:      dd.R.DeviceMake.Name,
-			Model:     dd.Model,
-			Year:      int(dd.Year),
-			MakeSlug:  dd.R.DeviceMake.NameSlug,
-			ModelSlug: dd.ModelSlug,
-		},
-		Metadata: string(dd.Metadata.JSON),
-		Verified: dd.Verified,
-	}
-
-	if !dd.R.DeviceMake.TokenID.IsZero() {
-		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
-	}
-
-	// vehicle info
-	var vi map[string]models.VehicleInfo
-	if err := dd.Metadata.Unmarshal(&vi); err == nil {
-		rp.VehicleInfo = vi["vehicle_info"]
-	}
-
-	if dd.R != nil {
-		// sub_models
-		rp.Type.SubModels = common.SubModelsFromStylesDB(dd.R.DeviceStyles)
-	}
-
-	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []models.DeviceIntegration{}
-	rp.DeviceStyles = []models.DeviceStyle{}
-	rp.CompatibleIntegrations = []models.DeviceIntegration{}
-
-	if dd.R != nil {
-		for _, di := range dd.R.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
-				ID:           di.R.Integration.ID,
-				Type:         di.R.Integration.Type,
-				Style:        di.R.Integration.Style,
-				Vendor:       di.R.Integration.Vendor,
-				Region:       di.Region,
-				Capabilities: common.JSONOrDefault(di.Capabilities),
-			})
-
-			rp.CompatibleIntegrations = rp.DeviceIntegrations
-		}
-
-		for _, ds := range dd.R.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
-				ID:                 ds.ID,
-				DeviceDefinitionID: ds.DeviceDefinitionID,
-				ExternalStyleID:    ds.ExternalStyleID,
-				Name:               ds.Name,
-				Source:             ds.Source,
-				SubModel:           ds.SubModel,
-			})
-		}
-	}
-
-	return rp
 }

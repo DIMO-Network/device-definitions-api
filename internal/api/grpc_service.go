@@ -140,6 +140,16 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 	return result, nil
 }
 
+func (s *GrpcService) GetDeviceDefinitionBySource(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySourceRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySourceQuery{
+		Source: in.Source,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
+
 func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
@@ -264,6 +274,19 @@ func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDev
 	})
 
 	result := commandResult.(commands.CreateDeviceMakeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
+		Vendor: in.Vendor,
+		Style:  in.Style,
+		Type:   in.Type,
+	})
+
+	result := commandResult.(commands.CreateIntegrationCommandResult)
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
@@ -409,6 +432,30 @@ func (s *GrpcService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDevi
 		Name:               ds.Name,
 		ExternalStyleId:    ds.ExternalStyleID,
 		DeviceDefinitionId: ds.DeviceDefinitionID,
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, in *p_grpc.GetDeviceStyleByDeviceDefinitionIDRequest) (*p_grpc.GetDeviceStyleResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByDeviceDefinitionIDQuery{
+		DeviceDefinitionID: in.Id,
+	})
+
+	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
+
+	result := &p_grpc.GetDeviceStyleResponse{}
+
+	for _, ds := range styles {
+		result.DeviceStyles = append(result.DeviceStyles, &p_grpc.DeviceStyle{
+			Id:                 ds.ID,
+			Source:             ds.Source,
+			SubModel:           ds.SubModel,
+			Name:               ds.Name,
+			ExternalStyleId:    ds.ExternalStyleID,
+			DeviceDefinitionId: ds.DeviceDefinitionID,
+		})
 	}
 
 	return result, nil
