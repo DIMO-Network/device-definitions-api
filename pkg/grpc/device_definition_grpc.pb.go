@@ -40,6 +40,7 @@ type DeviceDefinitionServiceClient interface {
 	GetFilteredDeviceDefinition(ctx context.Context, in *FilterDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetFilteredDeviceDefinitionsResponse, error)
 	GetDeviceStyleByID(ctx context.Context, in *GetDeviceStyleByIDRequest, opts ...grpc.CallOption) (*DeviceStyle, error)
 	GetDeviceStyleByExternalID(ctx context.Context, in *GetDeviceStyleByIDRequest, opts ...grpc.CallOption) (*DeviceStyle, error)
+	GetDeviceStylesByDeviceDefinitionID(ctx context.Context, in *GetDeviceStyleByDeviceDefinitionIDRequest, opts ...grpc.CallOption) (*GetDeviceStyleResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -203,6 +204,15 @@ func (c *deviceDefinitionServiceClient) GetDeviceStyleByExternalID(ctx context.C
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, in *GetDeviceStyleByDeviceDefinitionIDRequest, opts ...grpc.CallOption) (*GetDeviceStyleResponse, error) {
+	out := new(GetDeviceStyleResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceStylesByDeviceDefinitionID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -224,6 +234,7 @@ type DeviceDefinitionServiceServer interface {
 	GetFilteredDeviceDefinition(context.Context, *FilterDeviceDefinitionRequest) (*GetFilteredDeviceDefinitionsResponse, error)
 	GetDeviceStyleByID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error)
 	GetDeviceStyleByExternalID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error)
+	GetDeviceStylesByDeviceDefinitionID(context.Context, *GetDeviceStyleByDeviceDefinitionIDRequest) (*GetDeviceStyleResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -281,6 +292,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceStyleByID(context.Con
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceStyleByExternalID(context.Context, *GetDeviceStyleByIDRequest) (*DeviceStyle, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceStyleByExternalID not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceStylesByDeviceDefinitionID(context.Context, *GetDeviceStyleByDeviceDefinitionIDRequest) (*GetDeviceStyleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceStylesByDeviceDefinitionID not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -602,6 +616,24 @@ func _DeviceDefinitionService_GetDeviceStyleByExternalID_Handler(srv interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceStylesByDeviceDefinitionID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceStyleByDeviceDefinitionIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceStylesByDeviceDefinitionID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceStylesByDeviceDefinitionID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceStylesByDeviceDefinitionID(ctx, req.(*GetDeviceStyleByDeviceDefinitionIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -676,6 +708,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceStyleByExternalID",
 			Handler:    _DeviceDefinitionService_GetDeviceStyleByExternalID_Handler,
+		},
+		{
+			MethodName: "GetDeviceStylesByDeviceDefinitionID",
+			Handler:    _DeviceDefinitionService_GetDeviceStylesByDeviceDefinitionID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
