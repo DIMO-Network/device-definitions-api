@@ -296,6 +296,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		Source:             null.StringFrom(in.Source),
+		ExternalID:         in.ExternalId,
 		ImageURL:           null.StringFrom(in.ImageUrl),
 		Year:               int16(in.Year),
 		Model:              in.Model,

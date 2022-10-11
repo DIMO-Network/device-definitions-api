@@ -144,6 +144,7 @@ message UpdateDeviceDefinitionRequest {
 	string device_make_id = 8;
 	repeated DeviceStyles device_styles = 9;
 	repeated DeviceIntegrations device_integrations = 10;
+	string external_id = 11;
 
 	message DeviceStyles {
 		string id = 1;
