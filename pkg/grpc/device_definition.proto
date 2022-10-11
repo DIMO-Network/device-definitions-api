@@ -242,7 +242,7 @@ message GetDeviceStyleByIDRequest {
 message GetDeviceCompatibilityListRequest {
 	string make_id = 1;
 	string integration_id = 2;
-	int32 year = 3;
+	string region = 3;
 }
 
 message Feature {
