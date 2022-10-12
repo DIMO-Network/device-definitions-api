@@ -287,7 +287,7 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 		LogoUrl:         deviceMake.LogoURL.String,
 		OemPlatformName: deviceMake.OemPlatformName.String,
 		TokenId:         deviceMake.TokenID.Uint64(),
-		ExternalIds:     string(deviceMake.ExternalIds)
+		ExternalIds:     string(deviceMake.ExternalIds),
 	}
 
 	return result, nil
