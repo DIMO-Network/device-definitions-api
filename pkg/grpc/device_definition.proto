@@ -55,6 +55,7 @@ message DeviceMake {
 	string oem_platform_name = 4;
 	uint64 token_id = 5;
 	string name_slug = 6;
+	string external_ids = 7;
 }
 
 message VehicleInfo {
