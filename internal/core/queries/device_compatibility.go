@@ -44,7 +44,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 
 	integFeats := make(map[string]string, len(inf))
 	for _, k := range inf {
-		integFeats[k.ElasticProperty] = k.DisplayName
+		integFeats[k.FeatureKey] = k.DisplayName
 	}
 
 	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region)

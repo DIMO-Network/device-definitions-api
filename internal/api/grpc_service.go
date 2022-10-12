@@ -492,9 +492,6 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 		for _, f := range features {
 			fkey := f.FeatureKey
-			if fkey == "tires" {
-				fkey = "tires.frontLeft"
-			}
 			ft := &p_grpc.Feature{
 				Key:          integFeats[fkey],
 				SupportLevel: int32(f.SupportLevel),
