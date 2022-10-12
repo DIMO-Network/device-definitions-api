@@ -308,7 +308,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
 	rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
-	rpc GetDeviceCompatibility(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
+	rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
