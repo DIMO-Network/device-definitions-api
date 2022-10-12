@@ -70,10 +70,11 @@ type DeviceStyle struct {
 }
 
 type DeviceMake struct {
-	ID              string      `json:"id"`
-	Name            string      `json:"name"`
-	LogoURL         null.String `json:"logo_url"`
-	OemPlatformName null.String `json:"oem_platform_name"`
-	TokenID         *big.Int    `json:"tokenId,omitempty"`
-	NameSlug        string      `json:"nameSlug"`
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	LogoURL         null.String     `json:"logo_url"`
+	OemPlatformName null.String     `json:"oem_platform_name"`
+	TokenID         *big.Int        `json:"tokenId,omitempty"`
+	NameSlug        string          `json:"nameSlug"`
+	ExternalIds     json.RawMessage `json:"external_ids"`
 }
