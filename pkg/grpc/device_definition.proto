@@ -241,6 +241,31 @@ message GetDeviceStyleByIDRequest {
 	string id = 1;
 }
 
+message GetDeviceCompatibilityListRequest {
+	string make_id = 1;
+	string integration_id = 2;
+	string region = 3;
+}
+
+message Feature {
+	string key = 1;
+	int32 support_level = 2;
+}
+
+message DeviceCompatibilities {
+	int32 year = 1;
+	repeated Feature features = 2;
+}
+
+message DeviceCompatibilityList {
+	string name = 1;
+	repeated DeviceCompatibilities years = 2;
+}
+
+message GetDeviceCompatibilityListResponse {
+	repeated DeviceCompatibilityList models = 1;
+}
+
 message GetDeviceStyleByDeviceDefinitionIDRequest {
 	string id = 1;
 }
@@ -283,6 +308,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
 	rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
+	rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);

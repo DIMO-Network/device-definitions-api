@@ -7,7 +7,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
@@ -80,7 +79,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	return nil
 }
 
-func prepareFeatureData(i map[string]elasticsearch.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
+func prepareFeatureData(i map[string]elastic.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range i {
@@ -110,7 +109,11 @@ func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
 	filters := jsonObj{}
 
 	for _, v := range ifeats {
-		filters[v.FeatureKey] = jsonObj{"exists": jsonObj{"field": "data." + v.ElasticProperty}}
+		filters[v.FeatureKey] = jsonObj{
+			"exists": jsonObj{
+				"field": "data." + v.ElasticProperty,
+			},
+		}
 	}
 
 	esFilters, err := json.Marshal(filters)

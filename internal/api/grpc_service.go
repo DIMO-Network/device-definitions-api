@@ -7,10 +7,11 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -18,10 +19,11 @@ import (
 type GrpcService struct {
 	p_grpc.UnimplementedDeviceDefinitionServiceServer
 	Mediator mediator.Mediator
+	logger   *zerolog.Logger
 }
 
-func NewGrpcService(mediator mediator.Mediator) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcService{Mediator: mediator}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcService{Mediator: mediator, logger: logger}
 }
 
 func (s *GrpcService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
@@ -162,7 +164,7 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
 
-	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
+	integrations := qryResult.([]models.GetIntegrationQueryResult)
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
@@ -189,7 +191,7 @@ func (s *GrpcService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetInte
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
 
-	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	item := qryResult.(models.GetIntegrationQueryResult)
 	result := &p_grpc.Integration{
 		Id:                      item.ID,
 		Type:                    item.Type,
@@ -278,7 +280,7 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{})
 
-	deviceMake := qryResult.(coremodels.DeviceMake)
+	deviceMake := qryResult.(models.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
 		Id:              deviceMake.ID,
@@ -296,7 +298,7 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceMakeQuery{})
 
-	deviceMakes := qryResult.([]coremodels.DeviceMake)
+	deviceMakes := qryResult.([]models.DeviceMake)
 
 	result := &p_grpc.GetDeviceMakeResponse{}
 
@@ -443,6 +445,75 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Em
 	return result, nil
 }
 
+func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
+		MakeID:        in.MakeId,
+		IntegrationID: in.IntegrationId,
+		Region:        in.Region,
+	})
+
+	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
+
+	result := &p_grpc.GetDeviceCompatibilityListResponse{}
+
+	integFeats := deviceCompatibilities.IntegrationFeatures
+	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
+	for _, v := range deviceCompatibilities.DeviceDefinitions {
+		if len(v.R.DeviceIntegrations) == 0 {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("Could not find device integrations")
+			continue
+		}
+
+		di := v.R.DeviceIntegrations[0]
+
+		if di.Features.IsZero() {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("No compatibility information found")
+			continue
+		}
+		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
+
+		feats := []*p_grpc.Feature{}
+		var features []elasticModels.DeviceIntegrationFeatures
+
+		err := di.Features.Unmarshal(&features)
+		if err != nil {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("Error de-serializing features information")
+			continue
+		}
+
+		for _, f := range features {
+			fkey := f.FeatureKey
+			if fkey == "tires" {
+				fkey = "tires.frontLeft"
+			}
+			ft := &p_grpc.Feature{
+				Key:          integFeats[fkey],
+				SupportLevel: int32(f.SupportLevel),
+			}
+			feats = append(feats, ft)
+		}
+
+		res.Features = feats
+		dcMap[v.Model] = append(dcMap[v.Model], res)
+	}
+
+	for k, v := range dcMap {
+		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
+		result.Models = append(result.Models, dcr)
+	}
+
+	return result, nil
+}
+
 func (s *GrpcService) GetDeviceDefinitions(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
 
@@ -476,7 +547,7 @@ func (s *GrpcService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, i
 		DeviceDefinitionID: in.Id,
 	})
 
-	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
+	styles := qryResult.([]models.GetDeviceStyleQueryResult)
 
 	result := &p_grpc.GetDeviceStyleResponse{}
 

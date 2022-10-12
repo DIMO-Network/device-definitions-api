@@ -24,6 +24,7 @@ type DeviceDefinitionRepository interface {
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
+	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error)
 }
 
 type deviceDefinitionRepository struct {
@@ -179,4 +180,24 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		}
 	}
 	return dd, nil
+}
+
+func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
+	res, err := models.DeviceDefinitions(
+		qm.InnerJoin(
+			models.TableNames.DeviceIntegrations+" ON "+models.TableNames.DeviceDefinitions+".id = "+models.TableNames.DeviceIntegrations+".device_definition_id",
+		),
+		qm.Where("device_definitions.device_make_id = ?", makeID),
+		qm.Where("device_definitions.year >= ?", 2008),
+		qm.Where("device_integrations.features IS NOT NULL"),
+		qm.Where("device_integrations.integration_id = ?", integrationID),
+		qm.Where("device_integrations.region = ?", region),
+		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
+	).All(ctx, r.DBS().Reader)
+
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	return res, nil
 }
