@@ -8,6 +8,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
@@ -478,10 +479,8 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
 
 		feats := []*p_grpc.Feature{}
-		var features []struct {
-			FeatureKey   string `json:"feature_key"`
-			SupportLevel int32  `json:"support_level"`
-		}
+		var features []elasticModels.DeviceIntegrationFeatures
+
 		err := di.Features.Unmarshal(&features)
 		if err != nil {
 			s.logger.Debug().
@@ -492,9 +491,13 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 		}
 
 		for _, f := range features {
+			fkey := f.FeatureKey
+			if fkey == "tires" {
+				fkey = "tires.frontLeft"
+			}
 			ft := &p_grpc.Feature{
-				Key:          integFeats[f.FeatureKey],
-				SupportLevel: f.SupportLevel,
+				Key:          integFeats[fkey],
+				SupportLevel: int32(f.SupportLevel),
 			}
 			feats = append(feats, ft)
 		}

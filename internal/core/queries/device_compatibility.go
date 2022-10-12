@@ -14,16 +14,6 @@ type GetDeviceCompatibilityQueryHandler struct {
 	DBS        func() *db.ReaderWriter
 }
 
-type Feature struct {
-	Key          string // eg. odometer
-	SupportLevel int    // eg. 0,1,2
-}
-
-type DeviceModelYear struct {
-	Year     int32
-	Features []Feature
-}
-
 type GetDeviceCompatibilityQueryResult struct {
 	DeviceDefinitions   models.DeviceDefinitionSlice
 	IntegrationFeatures map[string]string
@@ -54,7 +44,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 
 	integFeats := make(map[string]string, len(inf))
 	for _, k := range inf {
-		integFeats[k.FeatureKey] = k.DisplayName
+		integFeats[k.ElasticProperty] = k.DisplayName
 	}
 
 	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region)
