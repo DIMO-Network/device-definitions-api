@@ -275,6 +275,46 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
+func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{})
+
+	deviceMake := qryResult.(coremodels.DeviceMake)
+
+	result := &p_grpc.DeviceMake{
+		Id:              deviceMake.ID,
+		Name:            deviceMake.Name,
+		NameSlug:        deviceMake.NameSlug,
+		LogoUrl:         deviceMake.LogoURL.String,
+		OemPlatformName: deviceMake.OemPlatformName.String,
+		TokenId:         deviceMake.TokenID.Uint64(),
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceMakeQuery{})
+
+	deviceMakes := qryResult.([]coremodels.DeviceMake)
+
+	result := &p_grpc.GetDeviceMakeResponse{}
+
+	for _, deviceMake := range deviceMakes {
+		make := &p_grpc.DeviceMake{
+			Id:              deviceMake.ID,
+			Name:            deviceMake.Name,
+			NameSlug:        deviceMake.NameSlug,
+			LogoUrl:         deviceMake.LogoURL.String,
+			OemPlatformName: deviceMake.OemPlatformName.String,
+			TokenId:         deviceMake.TokenID.Uint64(),
+		}
+
+		result.DeviceMakes = append(result.DeviceMakes, make)
+	}
+
+	return result, nil
+}
+
 func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{

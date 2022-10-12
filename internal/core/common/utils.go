@@ -104,6 +104,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 			LogoURL:         dd.R.DeviceMake.LogoURL,
 			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
 			NameSlug:        dd.R.DeviceMake.NameSlug,
+			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
 			Type:      "Vehicle",
