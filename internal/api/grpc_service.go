@@ -482,7 +482,10 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
 
 		feats := []*p_grpc.Feature{}
-		var dd []interface{}
+		var features []struct{
+			FeatureKey   string
+			SupportLevel int32
+		}
 		err := di.Features.Unmarshal(&dd)
 		if err != nil {
 			s.logger.Debug().
