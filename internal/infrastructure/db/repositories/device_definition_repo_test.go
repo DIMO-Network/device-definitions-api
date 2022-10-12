@@ -3,17 +3,18 @@ package repositories
 import (
 	"context"
 	_ "embed"
-	"testing"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"testing"
 )
 
 type DeviceDefinitionRepositorySuite struct {
@@ -93,10 +94,17 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	year := 2022
 
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
+	i := &models.Integration{
+		ID:     ksuid.New().String(),
+		Type:   models.IntegrationTypeHardware,
+		Style:  models.IntegrationStyleAddon,
+		Vendor: common.AutoPiVendor,
+	}
+	s.NoError(i.Insert(ctx, s.pdb.DBS().Writer, boil.Infer()))
 
 	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
 	s.NoError(err)
-	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ("AutoPi")).One(ctx, s.pdb.DBS().Reader)
+	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(common.AutoPiVendor)).One(ctx, s.pdb.DBS().Reader)
 	s.NoError(err)
 	dis, err := dd.DeviceIntegrations(models.DeviceIntegrationWhere.IntegrationID.EQ(integration.ID)).All(ctx, s.pdb.DBS().Reader)
 	s.NoError(err)
@@ -106,8 +114,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 		regions = append(regions, di.Region)
 	}
 
-	assert.Contains(s.T(), common.AmericasRegion, regions)
-	assert.Contains(s.T(), common.EuropeRegion, regions)
+	assert.Equal(s.T(), common.AmericasRegion.String(), dis[0].Region)
+	assert.Contains(s.T(), common.EuropeRegion.String(), dis[1].Region)
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
 }
 
