@@ -16,8 +16,8 @@ CREATE UNIQUE INDEX elastic_property_idx ON integration_features (elastic_proper
 
 INSERT INTO integration_features (feature_key, display_name, elastic_property) VALUES 
     ('ev_battery', 'EV Battery', 'soc'),
-    ('battery_voltage', 'Battery Voltage', 'battery_voltage'),
-    ('fuel_tank', 'Fuel Tank', 'fuel_percent_remaining'),
+    ('battery_voltage', 'Battery Voltage', 'batteryVoltage'),
+    ('fuel_tank', 'Fuel Tank', 'fuelPercentRemaining'),
     ('odometer', 'Odometer', 'odometer'),
     ('oil', 'Engine Oil Life', 'oil'),
     ('tires', 'Tires', 'tires.frontLeft'),
