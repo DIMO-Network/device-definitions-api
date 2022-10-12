@@ -458,10 +458,6 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 	integFeats := deviceCompatibilities.IntegrationFeatures
 	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
 	for _, v := range deviceCompatibilities.DeviceDefinitions {
-		// struct has noa values yet
-		if _, ok := dcMap[v.Model]; !ok {
-			dcMap[v.Model] = []*p_grpc.DeviceCompatibilities{}
-		}
 		if len(v.R.DeviceIntegrations) == 0 {
 			s.logger.Debug().
 				Str("Model", v.Model).
@@ -482,11 +478,11 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
 
 		feats := []*p_grpc.Feature{}
-		var features []struct{
-			FeatureKey   string
-			SupportLevel int32
+		var features []struct {
+			FeatureKey   string `json:"feature_key"`
+			SupportLevel int32  `json:"support_level"`
 		}
-		err := di.Features.Unmarshal(&dd)
+		err := di.Features.Unmarshal(&features)
 		if err != nil {
 			s.logger.Debug().
 				Str("Model", v.Model).
@@ -495,11 +491,11 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 			continue
 		}
 
-		for _, i := range dd {
-			f := i.(map[string]interface{})
-			ft := &p_grpc.Feature{}
-			ft.Key = integFeats[f["feature_key"].(string)]
-			ft.SupportLevel = int32(f["support_level"].(float64))
+		for _, f := range features {
+			ft := &p_grpc.Feature{
+				Key:          integFeats[f.FeatureKey],
+				SupportLevel: f.SupportLevel,
+			}
 			feats = append(feats, ft)
 		}
 
