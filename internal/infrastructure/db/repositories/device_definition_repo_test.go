@@ -79,8 +79,35 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
 
 	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
-
 	s.NoError(err)
+
+	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
+}
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_AutoPi_DeviceIntegration() {
+	ctx := context.Background()
+
+	model := "Corolla"
+	mk := "Toyota"
+	source := "source-01"
+	year := 2022
+
+	dm := setupDeviceMake(s.T(), s.pdb, mk)
+
+	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
+	s.NoError(err)
+	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ("AutoPi")).One(ctx, s.pdb.DBS().Reader)
+	s.NoError(err)
+	dis, err := dd.DeviceIntegrations(models.DeviceIntegrationWhere.IntegrationID.EQ(integration.ID)).All(ctx, s.pdb.DBS().Reader)
+	s.NoError(err)
+	assert.Len(s.T(), dis, 2)
+	var regions []string
+	for _, di := range dis {
+		regions = append(regions, di.Region)
+	}
+
+	assert.Contains(s.T(), common.AmericasRegion, regions)
+	assert.Contains(s.T(), common.EuropeRegion, regions)
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
 }
 
