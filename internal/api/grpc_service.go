@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -17,10 +18,11 @@ import (
 type GrpcService struct {
 	p_grpc.UnimplementedDeviceDefinitionServiceServer
 	Mediator mediator.Mediator
+	logger   *zerolog.Logger
 }
 
-func NewGrpcService(mediator mediator.Mediator) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcService{Mediator: mediator}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcService{Mediator: mediator, logger: logger}
 }
 
 func (s *GrpcService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
@@ -454,27 +456,39 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
 	integFeats := deviceCompatibilities.IntegrationFeatures
-	dcMap := make(map[string][]*p_grpc.DeviceModelYears)
+	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
 	for _, v := range deviceCompatibilities.DeviceDefinitions {
 		// struct has noa values yet
 		if _, ok := dcMap[v.Model]; !ok {
-			dcMap[v.Model] = []*p_grpc.DeviceModelYears{}
+			dcMap[v.Model] = []*p_grpc.DeviceCompatibilities{}
 		}
 		if len(v.R.DeviceIntegrations) == 0 {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("Could not find device integrations")
 			continue
 		}
 
 		di := v.R.DeviceIntegrations[0]
 
 		if di.Features.IsZero() {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("No compatibility information found")
 			continue
 		}
-		res := &p_grpc.DeviceModelYears{Year: int32(v.Year)}
+		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
 
 		feats := []*p_grpc.Feature{}
 		var dd []interface{}
 		err := di.Features.Unmarshal(&dd)
 		if err != nil {
+			s.logger.Debug().
+				Str("Model", v.Model).
+				Str("DeviceDefinition", v.ID).
+				Msg("Error de-serializing features information")
 			continue
 		}
 

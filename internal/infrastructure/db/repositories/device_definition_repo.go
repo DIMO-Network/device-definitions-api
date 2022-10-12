@@ -194,10 +194,7 @@ func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Contex
 	).All(ctx, r.DBS().Reader)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{Err: err}
-		}
-		return nil, nil
+		return nil, &exceptions.InternalError{Err: err}
 	}
 
 	return res, nil

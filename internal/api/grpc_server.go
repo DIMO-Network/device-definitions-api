@@ -23,7 +23,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 		grpc_recovery.WithRecoveryHandler(common.GrpcConfig),
 	}
 
-	service := NewGrpcService(m)
+	service := NewGrpcService(m, &logger)
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(opts...),

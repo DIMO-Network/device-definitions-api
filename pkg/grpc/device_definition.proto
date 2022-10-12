@@ -252,14 +252,14 @@ message Feature {
 	int32 support_level = 2;
 }
 
-message DeviceModelYears {
+message DeviceCompatibilities {
 	int32 year = 1;
 	repeated Feature features = 2;
 }
 
 message DeviceCompatibilityList {
 	string name = 1;
-	repeated DeviceModelYears years = 2;
+	repeated DeviceCompatibilities years = 2;
 }
 
 message GetDeviceCompatibilityListResponse {
