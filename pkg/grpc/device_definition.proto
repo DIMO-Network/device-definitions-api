@@ -55,6 +55,7 @@ message DeviceMake {
 	string oem_platform_name = 4;
 	uint64 token_id = 5;
 	string name_slug = 6;
+	string external_ids = 7;
 }
 
 message VehicleInfo {
@@ -144,6 +145,7 @@ message UpdateDeviceDefinitionRequest {
 	string device_make_id = 8;
 	repeated DeviceStyles device_styles = 9;
 	repeated DeviceIntegrations device_integrations = 10;
+	string external_id = 11;
 
 	message DeviceStyles {
 		string id = 1;
@@ -278,10 +280,20 @@ message CreateIntegrationRequest {
 	string style = 3;
 }
 
+message GetDeviceMakeByNameRequest {
+	string name = 1;
+}
+
+message GetDeviceMakeResponse {
+	repeated DeviceMake device_makes = 1;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
 	rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
@@ -293,6 +305,8 @@ service DeviceDefinitionService {
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
 	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
+	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
+	rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
 	rpc GetDeviceCompatibility(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);

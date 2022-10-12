@@ -183,7 +183,6 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 }
 
 func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
-	boil.DebugMode = true
 	res, err := models.DeviceDefinitions(
 		qm.InnerJoin("device_integrations ON device_definitions.id = device_integrations.device_definition_id"),
 		qm.Where("device_definitions.device_make_id = ?", makeID),

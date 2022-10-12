@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetAllDeviceDefinitionQueryHandlerSuite struct {
+type GetAllDeviceDefinitionGroupGroupQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
@@ -21,28 +21,28 @@ type GetAllDeviceDefinitionQueryHandlerSuite struct {
 	mockRepository     *mocks.MockDeviceDefinitionRepository
 	mockMakeRepository *mocks.MockDeviceMakeRepository
 
-	queryHandler GetAllDeviceDefinitionQueryHandler
+	queryHandler GetAllDeviceDefinitionGroupQueryHandler
 }
 
-func TestGetAllDeviceDefinitionQueryHandler(t *testing.T) {
-	suite.Run(t, new(GetAllDeviceDefinitionQueryHandlerSuite))
+func TestGetAllDeviceDefinitionGroupQueryHandler(t *testing.T) {
+	suite.Run(t, new(GetAllDeviceDefinitionGroupGroupQueryHandlerSuite))
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) SetupTest() {
+func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 
 	s.mockRepository = mocks.NewMockDeviceDefinitionRepository(s.ctrl)
 	s.mockMakeRepository = mocks.NewMockDeviceMakeRepository(s.ctrl)
 
-	s.queryHandler = NewGetAllDeviceDefinitionQueryHandler(s.mockRepository, s.mockMakeRepository)
+	s.queryHandler = NewGetAllDeviceDefinitionGroupQueryHandler(s.mockRepository, s.mockMakeRepository)
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) TearDownTest() {
+func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items() {
+func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) TestGetAllDeviceDefinitionGroupQuery_With_Items() {
 	ctx := context.Background()
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	model := "Hummer"
@@ -66,15 +66,15 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuer
 	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
 	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
-	result := qryResult.([]GetAllDeviceDefinitionQueryResult)
+	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionGroupQuery{})
+	result := qryResult.([]GetAllDeviceDefinitionGroupQueryResult)
 
 	s.NoError(err)
 	s.Len(result, 1)
 	assert.Equal(s.T(), mk, result[0].Make)
 }
 
-func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_Empty() {
+func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) TestGetAllDeviceDefinitionGroupQuery_Empty() {
 	ctx := context.Background()
 
 	var dd []*models.DeviceDefinition
@@ -83,8 +83,8 @@ func (s *GetAllDeviceDefinitionQueryHandlerSuite) TestGetAllDeviceDefinitionQuer
 	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
 	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionQuery{})
-	result := qryResult.([]GetAllDeviceDefinitionQueryResult)
+	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionGroupQuery{})
+	result := qryResult.([]GetAllDeviceDefinitionGroupQueryResult)
 
 	s.NoError(err)
 	s.Len(result, 0)

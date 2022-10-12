@@ -149,6 +149,14 @@ func (s *GrpcService) GetDeviceDefinitionBySource(ctx context.Context, in *p_grp
 	return result, nil
 }
 
+func (s *GrpcService) GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithoutImageQuery{})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
+
 func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
@@ -266,6 +274,48 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
+func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{})
+
+	deviceMake := qryResult.(models.DeviceMake)
+
+	result := &p_grpc.DeviceMake{
+		Id:              deviceMake.ID,
+		Name:            deviceMake.Name,
+		NameSlug:        deviceMake.NameSlug,
+		LogoUrl:         deviceMake.LogoURL.String,
+		OemPlatformName: deviceMake.OemPlatformName.String,
+		TokenId:         deviceMake.TokenID.Uint64(),
+		ExternalIds:     string(deviceMake.ExternalIds),
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceMakeQuery{})
+
+	deviceMakes := qryResult.([]models.DeviceMake)
+
+	result := &p_grpc.GetDeviceMakeResponse{}
+
+	for _, deviceMake := range deviceMakes {
+		make := &p_grpc.DeviceMake{
+			Id:              deviceMake.ID,
+			Name:            deviceMake.Name,
+			NameSlug:        deviceMake.NameSlug,
+			LogoUrl:         deviceMake.LogoURL.String,
+			OemPlatformName: deviceMake.OemPlatformName.String,
+			TokenId:         deviceMake.TokenID.Uint64(),
+			ExternalIds:     string(deviceMake.ExternalIds),
+		}
+
+		result.DeviceMakes = append(result.DeviceMakes, make)
+	}
+
+	return result, nil
+}
+
 func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
@@ -295,6 +345,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		Source:             null.StringFrom(in.Source),
+		ExternalID:         in.ExternalId,
 		ImageURL:           null.StringFrom(in.ImageUrl),
 		Year:               int16(in.Year),
 		Model:              in.Model,
@@ -360,11 +411,11 @@ func (s *GrpcService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.U
 
 func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionGroupQuery{})
 
 	result := &p_grpc.GetDeviceDefinitionAllResponse{}
 
-	allDevices := qryResult.([]queries.GetAllDeviceDefinitionQueryResult)
+	allDevices := qryResult.([]queries.GetAllDeviceDefinitionGroupQueryResult)
 
 	for _, device := range allDevices {
 		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
@@ -443,6 +494,14 @@ func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.Get
 		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
 		result.Models = append(result.Models, dcr)
 	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceDefinitions(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
 	return result, nil
 }

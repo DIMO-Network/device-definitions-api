@@ -21,6 +21,7 @@ import (
 type UpdateDeviceDefinitionCommand struct {
 	DeviceDefinitionID string      `json:"deviceDefinitionId"`
 	Source             null.String `json:"source"`
+	ExternalID         string      `json:"external_id"`
 	ImageURL           null.String `json:"image_url"`
 	VehicleInfo        UpdateDeviceVehicleInfo
 	Verified           bool                       `json:"verified"`
@@ -134,6 +135,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	if len(command.DeviceMakeID) > 0 {
 		dd.DeviceMakeID = command.DeviceMakeID
+	}
+
+	if len(command.ExternalID) > 0 {
+		dd.ExternalID = null.StringFrom(command.ExternalID)
 	}
 
 	dd.Source = command.Source
