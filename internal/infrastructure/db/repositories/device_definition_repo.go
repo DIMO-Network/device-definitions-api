@@ -184,7 +184,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 
 func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
 	res, err := models.DeviceDefinitions(
-		qm.InnerJoin("device_integrations ON device_definitions.id = device_integrations.device_definition_id"),
+		qm.InnerJoin(
+			models.TableNames.DeviceIntegrations+" ON "+models.TableNames.DeviceDefinitions+".id = "+models.TableNames.DeviceIntegrations+".device_definition_id",
+		),
 		qm.Where("device_definitions.device_make_id = ?", makeID),
 		qm.Where("device_definitions.year >= ?", 2008),
 		qm.Where("device_integrations.features IS NOT NULL"),
