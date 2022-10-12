@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	repositories "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,19 +35,19 @@ func (m *MockDeviceDefinitionRepository) EXPECT() *MockDeviceDefinitionRepositor
 	return m.recorder
 }
 
-// FetchCompatibilityByMakeID mocks base method.
-func (m *MockDeviceDefinitionRepository) FetchCompatibilityByMakeID(ctx context.Context, makeID string) ([]*repositories.DeviceCompatibilityModel, error) {
+// FetchDeviceCompatibility mocks base method.
+func (m *MockDeviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchCompatibilityByMakeID", ctx, makeID)
-	ret0, _ := ret[0].([]*repositories.DeviceCompatibilityModel)
+	ret := m.ctrl.Call(m, "FetchDeviceCompatibility", ctx, makeID, integrationID, region)
+	ret0, _ := ret[0].(models.DeviceDefinitionSlice)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FetchCompatibilityByMakeID indicates an expected call of FetchCompatibilityByMakeID.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) FetchCompatibilityByMakeID(ctx, makeID interface{}) *gomock.Call {
+// FetchDeviceCompatibility indicates an expected call of FetchDeviceCompatibility.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) FetchDeviceCompatibility(ctx, makeID, integrationID, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchCompatibilityByMakeID", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).FetchCompatibilityByMakeID), ctx, makeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchDeviceCompatibility", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).FetchDeviceCompatibility), ctx, makeID, integrationID, region)
 }
 
 // GetAll mocks base method.

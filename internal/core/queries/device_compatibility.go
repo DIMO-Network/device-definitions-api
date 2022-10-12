@@ -19,14 +19,20 @@ type Feature struct {
 	SupportLevel int    // eg. 0,1,2
 }
 
-type GetDeviceCompatibilityQueryResult struct {
-	Model    string
+type DeviceModelYear struct {
 	Year     int32
 	Features []Feature
 }
 
+type GetDeviceCompatibilityQueryResult struct {
+	DeviceDefinitions   models.DeviceDefinitionSlice
+	IntegrationFeatures map[string]string
+}
+
 type GetDeviceCompatibilityQuery struct {
-	MakeID string `json:"makeId" validate:"required"`
+	MakeID        string `json:"makeId" validate:"required"`
+	IntegrationID string `json:"integrationId" validate:"required"`
+	Region        string `json:"region" validate:"required"`
 }
 
 func (*GetDeviceCompatibilityQuery) Key() string { return "GetDeviceCompatibilityQuery" }
@@ -51,40 +57,13 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		integFeats[k.FeatureKey] = k.DisplayName
 	}
 
-	res, err := dc.Repository.FetchCompatibilityByMakeID(ctx, qry.MakeID)
+	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region)
 	if err != nil {
 		return GetDeviceCompatibilityQueryResult{}, err
 	}
 
-	var resp []GetDeviceCompatibilityQueryResult
-	for _, v := range res {
-		if v.DeviceIntegration.Features.IsZero() {
-			continue
-		}
-		cr := GetDeviceCompatibilityQueryResult{
-			Model: v.DeviceDefinition.Model,
-			Year:  int32(v.DeviceDefinition.Year),
-		}
-		var dd []interface{}
-		feats := []Feature{}
-		if v.DeviceIntegration.Features.IsZero() {
-			continue
-		}
-		err = v.DeviceIntegration.Features.Unmarshal(&dd)
-		if err != nil {
-			return GetDeviceCompatibilityQueryResult{}, nil
-		}
-		for _, i := range dd {
-			f := i.(map[string]interface{})
-			ft := &Feature{}
-			ft.Key = f["feature_key"].(string)
-			ft.SupportLevel = int(f["support_level"].(float64))
-		}
-
-		cr.Features = feats
-
-		resp = append(resp, cr)
-	}
-
-	return resp, nil
+	return GetDeviceCompatibilityQueryResult{
+		DeviceDefinitions:   res,
+		IntegrationFeatures: integFeats,
+	}, nil
 }

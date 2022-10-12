@@ -7,7 +7,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -154,7 +153,7 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
 
-	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
+	integrations := qryResult.([]models.GetIntegrationQueryResult)
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
@@ -181,7 +180,7 @@ func (s *GrpcService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetInte
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
 
-	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	item := qryResult.(models.GetIntegrationQueryResult)
 	result := &p_grpc.Integration{
 		Id:                      item.ID,
 		Type:                    item.Type,
@@ -394,25 +393,55 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Em
 
 func (s *GrpcService) GetDeviceCompatibility(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
-		MakeID: in.MakeId,
+		MakeID:        in.MakeId,
+		IntegrationID: in.IntegrationId,
+		Region:        in.Region,
 	})
 
-	deviceCompatibilities := qryResult.([]queries.GetDeviceCompatibilityQueryResult)
+	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
 
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
-	for _, v := range deviceCompatibilities {
-		r := &p_grpc.DeviceCompatibilityList{Model: v.Model, Year: v.Year}
-
-		for _, f := range v.Features {
-			outFeat := &p_grpc.Feature{
-				Key:          f.Key,
-				SupportLevel: int32(f.SupportLevel),
-			}
-			r.Features = append(r.Features, outFeat)
+	integFeats := deviceCompatibilities.IntegrationFeatures
+	dcMap := make(map[string][]*p_grpc.DeviceModelYears)
+	for _, v := range deviceCompatibilities.DeviceDefinitions {
+		// struct has noa values yet
+		if _, ok := dcMap[v.Model]; !ok {
+			dcMap[v.Model] = []*p_grpc.DeviceModelYears{}
+		}
+		if len(v.R.DeviceIntegrations) == 0 {
+			continue
 		}
 
-		result.DeviceCompatibilities = append(result.DeviceCompatibilities, r)
+		di := v.R.DeviceIntegrations[0]
+
+		if di.Features.IsZero() {
+			continue
+		}
+		res := &p_grpc.DeviceModelYears{Year: int32(v.Year)}
+
+		feats := []*p_grpc.Feature{}
+		var dd []interface{}
+		err := di.Features.Unmarshal(&dd)
+		if err != nil {
+			continue
+		}
+
+		for _, i := range dd {
+			f := i.(map[string]interface{})
+			ft := &p_grpc.Feature{}
+			ft.Key = integFeats[f["feature_key"].(string)]
+			ft.SupportLevel = int32(f["support_level"].(float64))
+			feats = append(feats, ft)
+		}
+
+		res.Features = feats
+		dcMap[v.Model] = append(dcMap[v.Model], res)
+	}
+
+	for k, v := range dcMap {
+		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
+		result.Models = append(result.Models, dcr)
 	}
 
 	return result, nil
@@ -443,7 +472,7 @@ func (s *GrpcService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, i
 		DeviceDefinitionID: in.Id,
 	})
 
-	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
+	styles := qryResult.([]models.GetDeviceStyleQueryResult)
 
 	result := &p_grpc.GetDeviceStyleResponse{}
 
