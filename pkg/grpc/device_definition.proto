@@ -307,6 +307,13 @@ message UpdateDeviceStyleRequest {
 	string sub_model = 6;
 }
 
+message GetDeviceStyleFilterRequest {
+	string name = 1;
+	string device_definition_id = 2;
+	string source = 3;
+	string sub_model = 4;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
@@ -331,6 +338,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
+	rpc GetDeviceStylesByFilter(GetDeviceStyleFilterRequest) returns (GetDeviceStyleResponse);
 	rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
 	rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
 }
