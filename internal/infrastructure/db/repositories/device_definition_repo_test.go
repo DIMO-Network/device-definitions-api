@@ -63,6 +63,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 	source := "source-01"
 	year := 2022
 
+	_ = setupAutoPiIntegration(s.T(), s.pdb)
 	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
 
 	s.NoError(err)
@@ -80,6 +81,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	year := 2022
 
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
+	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
 	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year)
 	s.NoError(err)
@@ -142,6 +144,11 @@ func setupDeviceDefinition(t *testing.T, pdb db.Store, makeName string, modelNam
 func setupDeviceMake(t *testing.T, pdb db.Store, makeName string) models.DeviceMake {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	return dm
+}
+
+func setupAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	i := dbtesthelper.SetupCreateAutoPiIntegration(t, pdb)
+	return i
 }
 
 func Test_slugString(t *testing.T) {
