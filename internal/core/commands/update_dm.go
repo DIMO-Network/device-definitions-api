@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -42,7 +43,7 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	command := query.(*UpdateDeviceMakeCommand)
 
-	dm, err := models.DeviceMakes(models.DeviceDefinitionWhere.DeviceMakeID.EQ(command.ID)).One(ctx, ch.DBS().Reader)
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.ID)).One(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -54,7 +55,8 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	if dm == nil {
 		dm = &models.DeviceMake{
-			ID: command.ID,
+			ID:       command.ID,
+			NameSlug: common.SlugString(command.Name),
 		}
 	}
 
@@ -72,7 +74,7 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIds))
 
-	if err := dm.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceStyleColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
+	if err := dm.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceMakeColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
