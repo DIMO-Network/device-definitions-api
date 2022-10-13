@@ -14,7 +14,6 @@ import (
 )
 
 type GetAllDeviceMakeQuery struct {
-	Name string `json:"name"`
 }
 
 func (*GetAllDeviceMakeQuery) Key() string { return "GetAllDeviceMakeQuery" }
@@ -43,9 +42,12 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 			Name:            v.Name,
 			LogoURL:         v.LogoURL,
 			OemPlatformName: v.OemPlatformName,
-			TokenID:         v.TokenID.Big.Int(new(big.Int)),
 			NameSlug:        v.NameSlug,
 			ExternalIds:     common.JSONOrDefault(v.ExternalIds),
+		}
+
+		if !v.TokenID.IsZero() {
+			result[i].TokenID = v.TokenID.Big.Int(new(big.Int))
 		}
 	}
 

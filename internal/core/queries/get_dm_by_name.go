@@ -51,9 +51,12 @@ func (ch GetDeviceMakeByNameQueryHandler) Handle(ctx context.Context, query medi
 		Name:            v.Name,
 		LogoURL:         v.LogoURL,
 		OemPlatformName: v.OemPlatformName,
-		TokenID:         v.TokenID.Big.Int(new(big.Int)),
 		NameSlug:        v.NameSlug,
 		ExternalIds:     common.JSONOrDefault(v.ExternalIds),
+	}
+
+	if !v.TokenID.IsZero() {
+		result.TokenID = v.TokenID.Big.Int(new(big.Int))
 	}
 
 	return result, nil
