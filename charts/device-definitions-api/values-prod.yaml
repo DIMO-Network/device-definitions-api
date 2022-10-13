@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: f11a1bf
+  tag: 0f8bcd8
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
