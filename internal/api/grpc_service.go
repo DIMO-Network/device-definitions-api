@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -579,4 +580,39 @@ func (s *GrpcService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc
 	}
 
 	return result, nil
+}
+
+func (s *GrpcService) UpdateDeviceMake(ctx context.Context, in *p_grpc.UpdateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
+
+	command := &commands.UpdateDeviceMakeCommand{
+		ID:              in.Id,
+		Name:            in.Name,
+		LogoURL:         null.StringFrom(in.LogoUrl),
+		OemPlatformName: null.StringFrom(in.OemPlatformName),
+		ExternalIds:     json.RawMessage(in.ExternalIds),
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.UpdateDeviceMakeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
+
+	command := &commands.UpdateDeviceStyleCommand{
+		ID:                 in.Id,
+		Name:               in.Name,
+		ExternalStyleID:    in.ExternalStyleId,
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		Source:             in.Source,
+		SubModel:           in.SubModel,
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.UpdateDeviceStyleCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
