@@ -279,7 +279,9 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 }
 
 func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{})
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{
+		Name: in.Name,
+	})
 
 	deviceMake := qryResult.(models.DeviceMake)
 
@@ -289,8 +291,11 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 		NameSlug:        deviceMake.NameSlug,
 		LogoUrl:         deviceMake.LogoURL.String,
 		OemPlatformName: deviceMake.OemPlatformName.String,
-		TokenId:         deviceMake.TokenID.Uint64(),
 		ExternalIds:     string(deviceMake.ExternalIds),
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
 	}
 
 	return result, nil
@@ -304,14 +309,18 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 	result := &p_grpc.GetDeviceMakeResponse{}
 
 	for _, deviceMake := range deviceMakes {
+
 		make := &p_grpc.DeviceMake{
 			Id:              deviceMake.ID,
 			Name:            deviceMake.Name,
 			NameSlug:        deviceMake.NameSlug,
 			LogoUrl:         deviceMake.LogoURL.String,
 			OemPlatformName: deviceMake.OemPlatformName.String,
-			TokenId:         deviceMake.TokenID.Uint64(),
 			ExternalIds:     string(deviceMake.ExternalIds),
+		}
+
+		if deviceMake.TokenID != nil {
+			make.TokenId = deviceMake.TokenID.Uint64()
 		}
 
 		result.DeviceMakes = append(result.DeviceMakes, make)
@@ -355,7 +364,10 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		Model:              in.Model,
 		Verified:           in.Verified,
 		DeviceMakeID:       in.DeviceMakeId,
-		VehicleInfo: commands.UpdateDeviceVehicleInfo{
+	}
+
+	if in.VehicleData != nil {
+		command.VehicleInfo = commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
 			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
@@ -366,7 +378,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 			FuelTankCapacityGal: fmt.Sprintf("%f", in.VehicleData.FuelTankCapacityGal),
 			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
 			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
-		},
+		}
 	}
 
 	if len(in.DeviceStyles) > 0 {

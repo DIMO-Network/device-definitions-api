@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"fmt"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -97,9 +96,12 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	if err != nil {
-		return nil, &exceptions.NotFoundError{
-			Err: fmt.Errorf("could not find device definition id: %s", command.DeviceDefinitionID),
+	if dd == nil {
+		dd = &models.DeviceDefinition{
+			ID:           command.DeviceDefinitionID,
+			DeviceMakeID: command.DeviceMakeID,
+			Model:        command.Model,
+			Year:         command.Year,
 		}
 	}
 
@@ -146,8 +148,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	dd.Verified = command.Verified
 
-	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
-	if err != nil {
+	if err := dd.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
