@@ -288,6 +288,25 @@ message GetDeviceMakeResponse {
 	repeated DeviceMake device_makes = 1;
 }
 
+message UpdateDeviceMakeRequest {
+	string id = 1;
+	string name = 2;
+	string logo_url = 3;
+	string oem_platform_name = 4;
+	uint64 token_id = 5;
+	string name_slug = 6;
+	string external_ids = 7;
+}
+
+message UpdateDeviceStyleRequest {
+	string id = 1;
+	string name = 2;
+	string device_definition_id = 3;
+	string external_style_id = 4;
+	string source = 5;
+	string sub_model = 6;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
@@ -312,4 +331,6 @@ service DeviceDefinitionService {
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
 	rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
+	rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
+	rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
 }
