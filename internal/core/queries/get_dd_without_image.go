@@ -35,8 +35,14 @@ func NewGetDeviceDefinitionWithoutImageQueryHandler(dbs func() *db.ReaderWriter,
 
 func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	all, err := repoModel.DeviceDefinitions(qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
-		repoModel.DeviceDefinitionWhere.ImageURL.IsNull()).All(ctx, ch.DBS().Reader)
+	all, err := repoModel.DeviceDefinitions(
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
+		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles),
+		repoModel.DeviceDefinitionWhere.ImageURL.IsNull()).
+		All(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		return nil, &exceptions.InternalError{
@@ -47,13 +53,8 @@ func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context
 	response := &grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range all {
-		ch.log.Info().Msg(fmt.Sprintf("Start %s", v.ID))
-
 		dd := common.BuildFromDeviceDefinitionToQueryResult(v)
-		ch.log.Info().Msg(fmt.Sprintf("DD %s", dd.DeviceDefinitionID))
 		rp := common.BuildFromQueryResultToGRPC(dd)
-		ch.log.Info().Msg(fmt.Sprintf("GRPC %s", rp.DeviceDefinitionId))
-
 		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
 	}
 
