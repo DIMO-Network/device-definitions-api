@@ -14,7 +14,7 @@ import (
 )
 
 type GetDeviceStyleByDeviceDefinitionIDQuery struct {
-	DeviceDefinitionID string `json:"device_style_id"`
+	DeviceDefinitionID string `json:"device_definition_id"`
 }
 
 func (*GetDeviceStyleByDeviceDefinitionIDQuery) Key() string {
@@ -35,14 +35,10 @@ func (ch GetDeviceStyleByDeviceDefinitionIDQueryHandler) Handle(ctx context.Cont
 
 	styles, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID)).All(ctx, ch.DBS().Reader)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("could not find device style id: %s", qry.DeviceDefinitionID),
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: fmt.Errorf("failed to get device styles"),
 			}
-		}
-
-		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
 

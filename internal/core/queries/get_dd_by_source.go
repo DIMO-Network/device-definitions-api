@@ -39,8 +39,12 @@ func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, qu
 
 	qry := query.(*GetDeviceDefinitionBySourceQuery)
 
-	all, err := repoModel.DeviceDefinitions(repoModel.DeviceDefinitionWhere.Source.EQ(null.StringFrom(qry.Source)),
-		qm.OrderBy("id")).All(ctx, ch.DBS().Reader)
+	all, err := repoModel.DeviceDefinitions(
+		repoModel.DeviceDefinitionWhere.Source.EQ(null.StringFrom(qry.Source)),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
+		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles)).All(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		return nil, &exceptions.InternalError{
@@ -51,13 +55,8 @@ func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, qu
 	response := &grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range all {
-		ch.log.Info().Msg(fmt.Sprintf("Start %s", v.ID))
-
 		dd := common.BuildFromDeviceDefinitionToQueryResult(v)
-		ch.log.Info().Msg(fmt.Sprintf("DD %s", dd.DeviceDefinitionID))
 		rp := common.BuildFromQueryResultToGRPC(dd)
-		ch.log.Info().Msg(fmt.Sprintf("GRPC %s", rp.DeviceDefinitionId))
-
 		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
 	}
 
