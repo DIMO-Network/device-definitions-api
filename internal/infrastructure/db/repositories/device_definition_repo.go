@@ -5,6 +5,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -123,6 +124,8 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 }
 
 func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
+	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
+	defer tx.Rollback() //nolint
 
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
@@ -146,7 +149,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	}
 
 	// Create device Make
-	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(make))).One(ctx, r.DBS().Writer)
+	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(make))).One(ctx, tx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// create
@@ -155,13 +158,17 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 				Name:     make,
 				NameSlug: common.SlugString(make),
 			}
-			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
+			err = m.Insert(ctx, tx, boil.Infer())
 			if err != nil {
 				return nil, &exceptions.InternalError{
 					Err: errors.Wrapf(err, "error inserting make: %s", make),
 				}
 			}
 		}
+	}
+	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(common.AutoPiVendor)).One(ctx, r.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: errors.Wrap(err, "failed to get autopi integration")}
 	}
 
 	dd = &models.DeviceDefinition{
@@ -173,11 +180,33 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Verified:     false,
 		ModelSlug:    common.SlugString(model),
 	}
-	err = dd.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
+
+	err = dd.Insert(ctx, tx, boil.Infer())
 	if err != nil {
-		return nil, &exceptions.InternalError{
-			Err: err,
-		}
+		return nil, &exceptions.InternalError{Err: err}
+	}
+	di := &models.DeviceIntegration{
+		DeviceDefinitionID: dd.ID,
+		IntegrationID:      integration.ID,
+		Region:             common.AmericasRegion.String(),
+	}
+	di2 := &models.DeviceIntegration{
+		DeviceDefinitionID: dd.ID,
+		IntegrationID:      integration.ID,
+		Region:             common.EuropeRegion.String(),
+	}
+	err = di.Insert(ctx, tx, boil.Infer())
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
+	err = di2.Insert(ctx, tx, boil.Infer())
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
 	}
 	return dd, nil
 }

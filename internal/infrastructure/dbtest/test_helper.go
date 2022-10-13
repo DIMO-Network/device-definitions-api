@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
@@ -169,12 +170,25 @@ func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, sour
 	return ds
 }
 
+func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	integration := &models.Integration{
+		ID:               ksuid.New().String(),
+		Type:             models.IntegrationTypeAPI,
+		Style:            models.IntegrationStyleWebhook,
+		Vendor:           common.AutoPiVendor,
+		RefreshLimitSecs: 1800,
+	}
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return integration
+}
+
 func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
 	integration := &models.Integration{
 		ID:               ksuid.New().String(),
 		Type:             models.IntegrationTypeAPI,
 		Style:            models.IntegrationStyleWebhook,
-		Vendor:           "SmartCar",
+		Vendor:           common.SmartCarVendor,
 		RefreshLimitSecs: 1800,
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
