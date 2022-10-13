@@ -3,6 +3,9 @@ package repositories
 import (
 	"context"
 	_ "embed"
+
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
@@ -14,7 +17,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"testing"
 )
 
 type DeviceDefinitionRepositorySuite struct {
@@ -109,10 +111,6 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	dis, err := dd.DeviceIntegrations(models.DeviceIntegrationWhere.IntegrationID.EQ(integration.ID)).All(ctx, s.pdb.DBS().Reader)
 	s.NoError(err)
 	assert.Len(s.T(), dis, 2)
-	var regions []string
-	for _, di := range dis {
-		regions = append(regions, di.Region)
-	}
 
 	assert.Equal(s.T(), common.AmericasRegion.String(), dis[0].Region)
 	assert.Contains(s.T(), common.EuropeRegion.String(), dis[1].Region)

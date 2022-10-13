@@ -5,6 +5,9 @@ package repositories
 import (
 	"context"
 	"database/sql"
+
+	"strings"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -14,7 +17,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"strings"
 )
 
 type DeviceDefinitionRepository interface {
@@ -123,7 +125,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 
 func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
