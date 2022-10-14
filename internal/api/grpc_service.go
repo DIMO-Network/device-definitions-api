@@ -468,6 +468,8 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
 
+	logger.Debug().Interface("queryResult", deviceCompatibilities).Msg("Completed compatibility query.")
+
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
 	integFeats := deviceCompatibilities.IntegrationFeatures
