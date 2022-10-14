@@ -221,7 +221,7 @@ func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Contex
 		models.DeviceIntegrationWhere.Features.IsNotNull(),
 		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
 		models.DeviceIntegrationWhere.Region.EQ(region),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
+		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID), models.DeviceIntegrationWhere.Region.EQ(region)),
 	).All(ctx, r.DBS().Reader)
 
 	if err != nil {
