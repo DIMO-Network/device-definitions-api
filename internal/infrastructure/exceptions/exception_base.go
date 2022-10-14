@@ -16,6 +16,7 @@ func (r *ConflictError) Error() string {
 	return r.Err.Error()
 }
 
+// NotFoundError will be translated by the behaviours to the correct Http or gRPC error status code
 type NotFoundError struct {
 	Err error
 }
