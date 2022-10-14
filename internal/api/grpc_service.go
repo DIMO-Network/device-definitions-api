@@ -459,6 +459,7 @@ func (s *GrpcService) GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Em
 }
 
 func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+	logger := s.logger.With().Str("rpc", "GetDeviceCompatibilities").Logger()
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
 		MakeID:        in.MakeId,
 		IntegrationID: in.IntegrationId,
@@ -471,22 +472,21 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 	integFeats := deviceCompatibilities.IntegrationFeatures
 	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
+
+	// Group by model name.
 	for _, v := range deviceCompatibilities.DeviceDefinitions {
+		logger := logger.With().Str("modelName", v.Model).Str("deviceDefinitionId", v.ID).Logger()
 		if len(v.R.DeviceIntegrations) == 0 {
-			s.logger.Debug().
-				Str("Model", v.Model).
-				Str("DeviceDefinition", v.ID).
-				Msg("Could not find device integrations")
+			// This should never happen, because of the inner join.
+			logger.Error().Msg("No integrations for this definition.")
 			continue
 		}
 
 		di := v.R.DeviceIntegrations[0]
 
 		if di.Features.IsZero() {
-			s.logger.Debug().
-				Str("Model", v.Model).
-				Str("DeviceDefinition", v.ID).
-				Msg("No compatibility information found")
+			// This should never happen, because we filtered for "features IS NOT NULL".
+			logger.Error().Msg("Feature column was null.")
 			continue
 		}
 		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
@@ -496,17 +496,13 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 		err := di.Features.Unmarshal(&features)
 		if err != nil {
-			s.logger.Debug().
-				Str("Model", v.Model).
-				Str("DeviceDefinition", v.ID).
-				Msg("Error de-serializing features information")
+			logger.Err(err).Msg("Error unmarshaling features JSON blob.")
 			continue
 		}
 
 		for _, f := range features {
-			fkey := f.FeatureKey
 			ft := &p_grpc.Feature{
-				Key:          integFeats[fkey],
+				Key:          integFeats[f.FeatureKey],
 				SupportLevel: int32(f.SupportLevel),
 			}
 			feats = append(feats, ft)
