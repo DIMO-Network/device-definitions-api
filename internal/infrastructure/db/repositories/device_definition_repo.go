@@ -214,13 +214,13 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
 	res, err := models.DeviceDefinitions(
 		qm.InnerJoin(
-			models.TableNames.DeviceIntegrations+" ON "+models.TableNames.DeviceDefinitions+".id = "+models.TableNames.DeviceIntegrations+".device_definition_id",
+			models.TableNames.DeviceIntegrations+" ON "+models.DeviceDefinitionTableColumns.ID+" = "+models.DeviceIntegrationTableColumns.DeviceDefinitionID,
 		),
-		qm.Where("device_definitions.device_make_id = ?", makeID),
-		qm.Where("device_definitions.year >= ?", 2008),
-		qm.Where("device_integrations.features IS NOT NULL"),
-		qm.Where("device_integrations.integration_id = ?", integrationID),
-		qm.Where("device_integrations.region = ?", region),
+		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
+		models.DeviceDefinitionWhere.Year.GTE(2008),
+		models.DeviceIntegrationWhere.Features.IsNotNull(),
+		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
+		models.DeviceIntegrationWhere.Region.EQ(region),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 	).All(ctx, r.DBS().Reader)
 
