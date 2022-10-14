@@ -486,6 +486,8 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 		di := v.R.DeviceIntegrations[0]
 
+		logger.Debug().Interface("deviceIntegration", di).Msg("Loaded device integration.")
+
 		if di.Features.IsZero() {
 			// This should never happen, because we filtered for "features IS NOT NULL".
 			logger.Error().Msg("Feature column was null.")
