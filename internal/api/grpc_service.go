@@ -369,7 +369,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	}
 
 	if in.VehicleData != nil {
-		command.VehicleInfo = commands.UpdateDeviceVehicleInfo{
+		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
 			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),

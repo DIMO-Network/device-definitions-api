@@ -71,7 +71,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
-		VehicleInfo: UpdateDeviceVehicleInfo{
+		VehicleInfo: &UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
 			NumberOfDoors:       "4",
@@ -154,7 +154,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		Year:               2023,
 		Model:              "M5",
 		DeviceMakeID:       dd.DeviceMakeID,
-		VehicleInfo: UpdateDeviceVehicleInfo{
+		VehicleInfo: &UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
 			NumberOfDoors:       "4",
@@ -217,7 +217,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		Model:              "M5",
 		DeviceMakeID:       dm.ID,
 		Verified:           true,
-		VehicleInfo: UpdateDeviceVehicleInfo{
+		VehicleInfo: &UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
 			NumberOfDoors:       "4",
