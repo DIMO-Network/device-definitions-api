@@ -220,10 +220,14 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	ddByID, _ := ch.DDCache.GetDeviceDefinitionByID(ctx, command.DeviceDefinitionID)
+	dd, _ = models.DeviceDefinitions(
+		qm.Where("id = ?", command.DeviceDefinitionID),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake)).
+		One(ctx, ch.DBS().Reader)
+
 	// Remove Cache
-	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, ddByID.DeviceDefinitionID)
-	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, ddByID.DeviceMake.Name, ddByID.Type.Model, int(ddByID.Type.Year))
+	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
+	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
