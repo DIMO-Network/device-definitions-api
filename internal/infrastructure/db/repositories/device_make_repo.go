@@ -58,6 +58,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 				NameSlug: common.SlugString(makeName),
 				LogoURL:  null.StringFrom(logURL),
 			}
+			// todo set TokenID. increase from latest tokenId
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())
 			if err != nil {
 				return nil, &exceptions.InternalError{Err: errors.Wrapf(err, "error inserting make: %s", makeName)}
