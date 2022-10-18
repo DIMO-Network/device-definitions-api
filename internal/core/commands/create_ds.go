@@ -23,26 +23,26 @@ type CreateDeviceStyleCommandResult struct {
 func (*CreateDeviceStyleCommand) Key() string { return "CreateDeviceStyleCommand" }
 
 type CreateDeviceStyleCommandHandler struct {
-	Repository repositories.DeviceStyleRepository
-	DDCache    services.DeviceDefinitionCacheService
+	repository repositories.DeviceStyleRepository
+	ddCache    services.DeviceDefinitionCacheService
 }
 
 func NewCreateDeviceStyleCommandHandler(repository repositories.DeviceStyleRepository, cache services.DeviceDefinitionCacheService) CreateDeviceStyleCommandHandler {
-	return CreateDeviceStyleCommandHandler{Repository: repository, DDCache: cache}
+	return CreateDeviceStyleCommandHandler{repository: repository, ddCache: cache}
 }
 
 func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*CreateDeviceStyleCommand)
 
-	ds, err := ch.Repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel)
+	ds, err := ch.repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// Remove Cache
-	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
+	ch.ddCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
 
 	return CreateDeviceStyleCommandResult{ID: ds.ID}, nil
 }
