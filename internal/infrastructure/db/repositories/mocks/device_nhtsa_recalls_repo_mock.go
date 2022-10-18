@@ -51,11 +51,26 @@ func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) Create(ctx, deviceDefini
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).Create), ctx, deviceDefinitionID, data, metadata)
 }
 
+// GetByID mocks base method.
+func (m *MockDeviceNHTSARecallsRepository) GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByID", ctx, id)
+	ret0, _ := ret[0].(*models.DeviceNhtsaRecall)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByID indicates an expected call of GetByID.
+func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).GetByID), ctx, id)
+}
+
 // GetLastDataRecordID mocks base method.
-func (m *MockDeviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) (null.Int, error) {
+func (m *MockDeviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) (*null.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLastDataRecordID", ctx)
-	ret0, _ := ret[0].(null.Int)
+	ret0, _ := ret[0].(*null.Int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -64,4 +79,33 @@ func (m *MockDeviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Conte
 func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) GetLastDataRecordID(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastDataRecordID", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).GetLastDataRecordID), ctx)
+}
+
+// MatchDeviceDefinition mocks base method.
+func (m *MockDeviceNHTSARecallsRepository) MatchDeviceDefinition(ctx context.Context, matchingVersion string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MatchDeviceDefinition", ctx, matchingVersion)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MatchDeviceDefinition indicates an expected call of MatchDeviceDefinition.
+func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) MatchDeviceDefinition(ctx, matchingVersion interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MatchDeviceDefinition", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).MatchDeviceDefinition), ctx, matchingVersion)
+}
+
+// SetDDAndMetadata mocks base method.
+func (m *MockDeviceNHTSARecallsRepository) SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDDAndMetadata", ctx, recall, deviceDefinitionID, metadata)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetDDAndMetadata indicates an expected call of SetDDAndMetadata.
+func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) SetDDAndMetadata(ctx, recall, deviceDefinitionID, metadata interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDDAndMetadata", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).SetDDAndMetadata), ctx, recall, deviceDefinitionID, metadata)
 }

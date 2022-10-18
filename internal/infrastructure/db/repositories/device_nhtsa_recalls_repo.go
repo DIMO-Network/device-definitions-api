@@ -21,7 +21,7 @@ import (
 type DeviceNHTSARecallsRepository interface {
 	Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON) (*models.DeviceNhtsaRecall, error)
 	GetLastDataRecordID(ctx context.Context) (*null.Int, error)
-	GetAllWithoutDD(ctx context.Context, matchingVersion string) (*models.DeviceNhtsaRecallSlice, error)
+	MatchDeviceDefinition(ctx context.Context, matchingVersion string) (int64, error)
 	GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error)
 	SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error
 }
@@ -109,21 +109,54 @@ func (r *deviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) 
 	return &ret, nil
 }
 
-func (r *deviceNHTSARecallsRepository) GetAllWithoutDD(ctx context.Context, matchingVersion string) (*models.DeviceNhtsaRecallSlice, error) {
-	recalls, err := models.DeviceNhtsaRecalls(
-		qm.Where("device_definition_id IS NULL"),
-		qm.Or("coalesce(jsonb_extract_path_text(metadata, 'matchingVersion'),'NO_VER') <> ?", matchingVersion),
-		qm.OrderBy("data_record_id ASC"),
-	).All(ctx, r.DBS().Reader)
+func (r *deviceNHTSARecallsRepository) MatchDeviceDefinition(ctx context.Context, matchingVersion string) (int64, error) {
+	updateMatching := `UPDATE device_nhtsa_recalls
+		SET
+			device_definition_id = matches.dd_id,
+			metadata = COALESCE(metadata,'{}'::jsonb) || json_build_object(
+				'matchingVersion',$1::text,
+				'matchType',matches.match_type
+				)::jsonb,
+		    updated_at = NOW()
+		FROM (
+			SELECT
+				dnr.id,
+				dd.id AS "dd_id",
+				CASE
+					WHEN dd.model = dnr.data_modeltxt
+						THEN 'EXACT'
+					WHEN dd.model ILIKE dnr.data_modeltxt
+						THEN 'EXACT CI'
+					WHEN dd.model IS NOT NULL
+						THEN 'ALPHANUM CI'
+					ELSE 'NONE'
+					END AS "match_type"
+			FROM device_nhtsa_recalls dnr
+			LEFT JOIN device_makes dm
+				ON regexp_replace(dm.name, '\W+', '', 'g') ILIKE regexp_replace(dnr.data_maketxt, '\W+', '', 'g')
+			LEFT JOIN device_definitions dd
+				ON dm.id = dd.device_make_id
+					   AND dd.year = dnr.data_yeartxt
+					   AND regexp_replace(dd.model, '\W+', '', 'g') ILIKE regexp_replace(dnr.data_modeltxt, '\W+', '', 'g')
+			WHERE (dnr.metadata ->> 'matchingVersion') <> $1::text OR dnr.metadata IS NULL
+			ORDER BY
+				dnr.data_record_id ASC,
+				dd.model ilike dnr.data_modeltxt
+			 ) matches
+		WHERE matches.id = device_nhtsa_recalls.id`
+	result, err := r.DBS().Writer.Exec(updateMatching, matchingVersion)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return &models.DeviceNhtsaRecallSlice{}, nil
-		}
-		return nil, &exceptions.InternalError{
-			Err: err,
+		return 0, &exceptions.InternalError{
+			Err: errors.Wrap(err, "failed to exec sql"),
 		}
 	}
-	return &recalls, nil
+	matchedCount, err := result.RowsAffected()
+	if err != nil {
+		return 0, &exceptions.InternalError{
+			Err: errors.Wrap(err, "filed to get affected row count"),
+		}
+	}
+	return matchedCount, nil
 }
 
 func (r *deviceNHTSARecallsRepository) GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error) {
