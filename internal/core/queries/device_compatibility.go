@@ -16,7 +16,7 @@ type GetDeviceCompatibilityQueryHandler struct {
 
 type FeatureDetails struct {
 	DisplayName string
-	CssIcon     string
+	CSSIcon     string
 }
 
 type GetDeviceCompatibilityQueryResult struct {
@@ -51,7 +51,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	for _, k := range inf {
 		integFeats[k.FeatureKey] = FeatureDetails{
 			DisplayName: k.DisplayName,
-			CssIcon:     k.CSSIcon.String,
+			CSSIcon:     k.CSSIcon.String,
 		}
 	}
 
