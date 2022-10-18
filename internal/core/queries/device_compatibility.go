@@ -14,9 +14,14 @@ type GetDeviceCompatibilityQueryHandler struct {
 	DBS        func() *db.ReaderWriter
 }
 
+type FeatureDetails struct {
+	DisplayName string
+	CssIcon     string
+}
+
 type GetDeviceCompatibilityQueryResult struct {
 	DeviceDefinitions   models.DeviceDefinitionSlice
-	IntegrationFeatures map[string]map[string]string
+	IntegrationFeatures map[string]FeatureDetails
 }
 
 type GetDeviceCompatibilityQuery struct {
@@ -42,11 +47,11 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		return GetDeviceCompatibilityQueryResult{}, err
 	}
 
-	integFeats := make(map[string]map[string]string, len(inf))
+	integFeats := make(map[string]FeatureDetails, len(inf))
 	for _, k := range inf {
-		integFeats[k.FeatureKey] = map[string]string{
-			"displayName": k.DisplayName,
-			"cssIcon":     k.CSSIcon.String,
+		integFeats[k.FeatureKey] = FeatureDetails{
+			DisplayName: k.DisplayName,
+			CssIcon:     k.CSSIcon.String,
 		}
 	}
 
