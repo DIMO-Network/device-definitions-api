@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: d8efb42
+  tag: 7ccff65
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -26,7 +26,7 @@ cronJob:
 env:
   ENVIRONMENT: dev
   PORT: '8080'
-  LOG_LEVEL: debug
+  LOG_LEVEL: info
   DB_PORT: '5432'
   DB_NAME: device_definitions_api
   DB_MAX_OPEN_CONNECTIONS: '10'
