@@ -508,8 +508,8 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 		for _, f := range features {
 			ft := &p_grpc.Feature{
-				Key:          integFeats[f.FeatureKey]["displayName"],
-				CssIcon:      integFeats[f.FeatureKey]["cssIcon"],
+				Key:          integFeats[f.FeatureKey].DisplayName,
+				CssIcon:      integFeats[f.FeatureKey].CSSIcon,
 				SupportLevel: int32(f.SupportLevel),
 			}
 
