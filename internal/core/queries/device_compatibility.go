@@ -16,7 +16,7 @@ type GetDeviceCompatibilityQueryHandler struct {
 
 type GetDeviceCompatibilityQueryResult struct {
 	DeviceDefinitions   models.DeviceDefinitionSlice
-	IntegrationFeatures map[string]string
+	IntegrationFeatures map[string]map[string]string
 }
 
 type GetDeviceCompatibilityQuery struct {
@@ -42,9 +42,12 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		return GetDeviceCompatibilityQueryResult{}, err
 	}
 
-	integFeats := make(map[string]string, len(inf))
+	integFeats := make(map[string]map[string]string, len(inf))
 	for _, k := range inf {
-		integFeats[k.FeatureKey] = k.DisplayName
+		integFeats[k.FeatureKey] = map[string]string{
+			"displayName": k.DisplayName,
+			"cssIcon":     k.CSSIcon.String,
+		}
 	}
 
 	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region)

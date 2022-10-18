@@ -3,9 +3,9 @@ package commands
 import (
 	"context"
 	"database/sql"
-
 	"time"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -22,7 +22,7 @@ type UpdateDeviceDefinitionCommand struct {
 	Source             null.String `json:"source"`
 	ExternalID         string      `json:"external_id"`
 	ImageURL           null.String `json:"image_url"`
-	VehicleInfo        UpdateDeviceVehicleInfo
+	VehicleInfo        *UpdateDeviceVehicleInfo
 	Verified           bool                       `json:"verified"`
 	Model              string                     `json:"model"`
 	Year               int16                      `json:"year"`
@@ -102,29 +102,37 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			DeviceMakeID: command.DeviceMakeID,
 			Model:        command.Model,
 			Year:         command.Year,
+			Verified:     false,
+			ModelSlug:    common.SlugString(command.Model),
 		}
 	}
 
 	// Update Vehicle Info
-	deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
-	if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
-		deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
-		deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
-		deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
-		deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
-		deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
-		deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
-		deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
-		deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
-		deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
-		deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
-	}
-
-	err = dd.Metadata.Marshal(deviceVehicleInfoMetaData)
-	if err != nil {
-		return nil, &exceptions.InternalError{
-			Err: err,
+	if command.VehicleInfo != nil {
+		deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
+		if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
+			deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
+			deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
+			deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
+			deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
+			deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
+			deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
+			deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
+			deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
+			deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
+			deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
 		}
+
+		vehicleInfo := make(map[string]*UpdateDeviceVehicleInfo)
+		vehicleInfo["vehicle_info"] = deviceVehicleInfoMetaData
+
+		err = dd.Metadata.Marshal(vehicleInfo)
+		if err != nil {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
+
 	}
 
 	if len(command.Model) > 0 {
@@ -145,7 +153,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	dd.Source = command.Source
 	dd.ImageURL = command.ImageURL
-
 	dd.Verified = command.Verified
 
 	if err := dd.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
@@ -213,8 +220,13 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
+	dd, _ = models.DeviceDefinitions(
+		qm.Where("id = ?", command.DeviceDefinitionID),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake)).
+		One(ctx, ch.DBS().Reader)
+
 	// Remove Cache
-	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
+	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
 	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil

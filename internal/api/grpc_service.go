@@ -73,7 +73,6 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			Name:            dd.DeviceMake.Name,
 			LogoUrl:         dd.DeviceMake.LogoURL.String,
 			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
-			TokenId:         dd.DeviceMake.TokenID.Uint64(),
 			NameSlug:        dd.DeviceMake.NameSlug,
 		},
 		VehicleData: &p_grpc.VehicleInfo{
@@ -89,6 +88,9 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			MPG:                 float32(mpg),
 		},
 		Verified: dd.Verified,
+	}
+	if dd.DeviceMake.TokenID != nil {
+		result.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
 	}
 
 	for _, integration := range dd.DeviceIntegrations {
@@ -367,7 +369,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	}
 
 	if in.VehicleData != nil {
-		command.VehicleInfo = commands.UpdateDeviceVehicleInfo{
+		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
 			DrivenWheels:        in.VehicleData.DrivenWheels,
 			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
@@ -506,9 +508,11 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 
 		for _, f := range features {
 			ft := &p_grpc.Feature{
-				Key:          integFeats[f.FeatureKey],
+				Key:          integFeats[f.FeatureKey]["displayName"],
+				CssIcon:      integFeats[f.FeatureKey]["cssIcon"],
 				SupportLevel: int32(f.SupportLevel),
 			}
+
 			feats = append(feats, ft)
 		}
 

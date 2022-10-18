@@ -250,6 +250,7 @@ message GetDeviceCompatibilityListRequest {
 message Feature {
 	string key = 1;
 	int32 support_level = 2;
+	string css_icon = 3;
 }
 
 message DeviceCompatibilities {
