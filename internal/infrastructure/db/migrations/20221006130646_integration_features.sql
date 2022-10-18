@@ -21,7 +21,22 @@ INSERT INTO integration_features (feature_key, display_name, elastic_property) V
     ('odometer', 'Odometer', 'odometer'),
     ('oil', 'Engine Oil Life', 'oil'),
     ('tires', 'Tires', 'tires.frontLeft'),
-    ('speed', 'Speed', 'speed');
+    ('speed', 'Speed', 'speed'),
+    ('location', 'Location', 'latitude'),
+    ('battery_capacity', 'Battery Capacity', 'batteryCapacity'),
+    ('charging', 'Charging Status', 'charging'),
+    ('range', 'Range', 'range'),
+    ('vin', 'VIN', 'vin'),
+    ('cell_tower', 'Cell Tower Info', 'cell.ip'),
+    ('engine_runtime', 'Engine Run Time', 'runTime'),
+    ('ambient_temperature', 'Ambient Temperature', 'ambientTemp'),
+    ('barometric_pressure', 'Barometric Pressure', 'barometricPressure'),
+    ('coolant_temperature', 'Coolant Temperature', 'coolantTemp'),
+    ('engine_load', 'Engine Load', 'engineLoad'),
+    ('engine_speed', 'Engine Speed', 'engineSpeed'),
+    ('throttle_position', 'Gas Pedal Position', 'throttlePosition'),
+    ('fuel_type', 'Fuel Type', 'fuelType');
+
 -- +goose StatementEnd
 
 -- +goose Down
