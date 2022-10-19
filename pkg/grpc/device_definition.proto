@@ -27,6 +27,18 @@ message GetDeviceDefinitionItemResponse {
 	repeated DeviceStyle device_styles = 9;
 	string source = 10;
 	string external_id = 11;
+	repeated DeviceTypeAttribute attributes = 12;
+}
+
+message DeviceTypeAttribute {
+	string name = 1;
+	string label = 2;
+	string type = 3;
+	bool required = 4;
+	string defaultValue = 5;
+	string value = 6;
+	repeated string options = 7;
+	string description = 8;
 }
 
 message DeviceType {
@@ -315,6 +327,16 @@ message GetDeviceStyleFilterRequest {
 	string sub_model = 4;
 }
 
+message GetDeviceTypeByIDRequest {
+	string id = 1;
+}
+
+message GetDeviceTypeResponse {
+	string id = 1;
+	string name = 2;
+	repeated DeviceTypeAttribute attributes = 3;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
@@ -342,4 +364,5 @@ service DeviceDefinitionService {
 	rpc GetDeviceStylesByFilter(GetDeviceStyleFilterRequest) returns (GetDeviceStyleResponse);
 	rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
 	rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
+	rpc GetDeviceTypesByID(GetDeviceTypeByIDRequest) returns (GetDeviceTypeResponse);
 }

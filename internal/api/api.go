@@ -80,6 +80,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceStyleByExternalIDQuery{}, queries.NewGetDeviceStyleByExternalIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceMakeByNameQuery{}, queries.NewGetDeviceMakeByNameQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllDeviceMakeQuery{}, queries.NewGetAllDeviceMakeQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository, ddCacheService)),
@@ -105,6 +106,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	RegisterDeviceDefinitionsRoutes(app, *m)
 	RegisterIntegrationRoutes(app, *m)
+	RegisterDeviceTypeRoutes(app, *m)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 

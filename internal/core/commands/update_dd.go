@@ -23,12 +23,13 @@ type UpdateDeviceDefinitionCommand struct {
 	ExternalID         string      `json:"external_id"`
 	ImageURL           null.String `json:"image_url"`
 	VehicleInfo        *UpdateDeviceVehicleInfo
-	Verified           bool                       `json:"verified"`
-	Model              string                     `json:"model"`
-	Year               int16                      `json:"year"`
-	DeviceMakeID       string                     `json:"device_make_id"`
-	DeviceStyles       []UpdateDeviceStyles       `json:"deviceStyles"`
-	DeviceIntegrations []UpdateDeviceIntegrations `json:"deviceIntegrations"`
+	Verified           bool                                    `json:"verified"`
+	Model              string                                  `json:"model"`
+	Year               int16                                   `json:"year"`
+	DeviceMakeID       string                                  `json:"device_make_id"`
+	DeviceStyles       []UpdateDeviceStyles                    `json:"deviceStyles"`
+	DeviceIntegrations []UpdateDeviceIntegrations              `json:"deviceIntegrations"`
+	DeviceAttributes   []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
 }
 
 type UpdateDeviceIntegrations struct {

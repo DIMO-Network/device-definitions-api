@@ -8,10 +8,16 @@ import (
 )
 
 type CreateDeviceDefinitionCommand struct {
-	Source string `json:"source"`
-	Make   string `json:"make"`
-	Model  string `json:"model"`
-	Year   int    `json:"year"`
+	Source           string                                  `json:"source"`
+	Make             string                                  `json:"make"`
+	Model            string                                  `json:"model"`
+	Year             int                                     `json:"year"`
+	DeviceAttributes []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
+}
+
+type UpdateDeviceDefinitionAttributeModel struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type CreateDeviceDefinitionCommandResult struct {
@@ -29,7 +35,6 @@ func NewCreateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 }
 
 func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-
 	command := query.(*CreateDeviceDefinitionCommand)
 
 	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, command.Make, command.Model, command.Year)
