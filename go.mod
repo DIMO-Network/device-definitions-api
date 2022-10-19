@@ -43,7 +43,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/ipfs/go-cid v0.3.2 // indirect
-	github.com/ka-weihe/fast-levenshtein v0.0.0-20201227151214-4c99ee36a1ba // indirect
 	github.com/klauspost/cpuid/v2 v2.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
