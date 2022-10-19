@@ -24,7 +24,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error)
 }
 
@@ -123,7 +123,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -179,6 +179,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Source:       null.StringFrom(source),
 		Verified:     false,
 		ModelSlug:    common.SlugString(model),
+		DeviceTypeID: null.StringFrom(deviceTypeID),
 	}
 
 	err = dd.Insert(ctx, tx, boil.Infer())
