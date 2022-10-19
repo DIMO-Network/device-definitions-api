@@ -55,7 +55,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
 				Name:     makeName,
-				NameSlug: null.StringFrom(common.SlugString(makeName)),
+				NameSlug: common.SlugString(makeName),
 				LogoURL:  null.StringFrom(logURL),
 			}
 			// todo set TokenID. increase from latest tokenId

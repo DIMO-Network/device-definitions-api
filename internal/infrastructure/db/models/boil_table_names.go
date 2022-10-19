@@ -7,6 +7,7 @@ var TableNames = struct {
 	DeviceDefinitions   string
 	DeviceIntegrations  string
 	DeviceMakes         string
+	DeviceNhtsaRecalls  string
 	DeviceStyles        string
 	IntegrationFeatures string
 	Integrations        string
@@ -14,6 +15,7 @@ var TableNames = struct {
 	DeviceDefinitions:   "device_definitions",
 	DeviceIntegrations:  "device_integrations",
 	DeviceMakes:         "device_makes",
+	DeviceNhtsaRecalls:  "device_nhtsa_recalls",
 	DeviceStyles:        "device_styles",
 	IntegrationFeatures: "integration_features",
 	Integrations:        "integrations",

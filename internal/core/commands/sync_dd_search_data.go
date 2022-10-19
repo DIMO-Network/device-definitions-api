@@ -72,8 +72,8 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Year:          int(definition.Year),
 			SubModels:     sm,
 			ImageURL:      definition.ImageURL.String,
-			MakeSlug:      definition.R.DeviceMake.NameSlug.String,
-			ModelSlug:     definition.ModelSlug.String,
+			MakeSlug:      definition.R.DeviceMake.NameSlug,
+			ModelSlug:     definition.ModelSlug,
 		}
 	}
 	ch.logger.Info().Msgf("completed building list of docs to index, count: %d", len(docs))
