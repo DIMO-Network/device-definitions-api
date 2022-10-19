@@ -82,6 +82,13 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		var metaData map[string]interface{}
 		for _, prop := range command.DeviceAttributes {
 			property := filterProperty(prop.Name, ai["properties"])
+
+			if property == nil {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("invalid property %s", prop.Name),
+				}
+			}
+
 			if property != nil {
 				metaData[property.Name] = prop.Value
 			}

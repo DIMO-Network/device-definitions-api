@@ -24,58 +24,65 @@ import (
 
 // DeviceType is an object representing the database table.
 type DeviceType struct {
-	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt  time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	Name       string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Properties null.JSON `boil:"properties" json:"properties,omitempty" toml:"properties" yaml:"properties,omitempty"`
+	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	CreatedAt   time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt   time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Name        string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Metadatakey string    `boil:"metadatakey" json:"metadatakey" toml:"metadatakey" yaml:"metadatakey"`
+	Properties  null.JSON `boil:"properties" json:"properties,omitempty" toml:"properties" yaml:"properties,omitempty"`
 
 	R *deviceTypeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceTypeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DeviceTypeColumns = struct {
-	ID         string
-	CreatedAt  string
-	UpdatedAt  string
-	Name       string
-	Properties string
+	ID          string
+	CreatedAt   string
+	UpdatedAt   string
+	Name        string
+	Metadatakey string
+	Properties  string
 }{
-	ID:         "id",
-	CreatedAt:  "created_at",
-	UpdatedAt:  "updated_at",
-	Name:       "name",
-	Properties: "properties",
+	ID:          "id",
+	CreatedAt:   "created_at",
+	UpdatedAt:   "updated_at",
+	Name:        "name",
+	Metadatakey: "metadatakey",
+	Properties:  "properties",
 }
 
 var DeviceTypeTableColumns = struct {
-	ID         string
-	CreatedAt  string
-	UpdatedAt  string
-	Name       string
-	Properties string
+	ID          string
+	CreatedAt   string
+	UpdatedAt   string
+	Name        string
+	Metadatakey string
+	Properties  string
 }{
-	ID:         "device_types.id",
-	CreatedAt:  "device_types.created_at",
-	UpdatedAt:  "device_types.updated_at",
-	Name:       "device_types.name",
-	Properties: "device_types.properties",
+	ID:          "device_types.id",
+	CreatedAt:   "device_types.created_at",
+	UpdatedAt:   "device_types.updated_at",
+	Name:        "device_types.name",
+	Metadatakey: "device_types.metadatakey",
+	Properties:  "device_types.properties",
 }
 
 // Generated where
 
 var DeviceTypeWhere = struct {
-	ID         whereHelperstring
-	CreatedAt  whereHelpertime_Time
-	UpdatedAt  whereHelpertime_Time
-	Name       whereHelperstring
-	Properties whereHelpernull_JSON
+	ID          whereHelperstring
+	CreatedAt   whereHelpertime_Time
+	UpdatedAt   whereHelpertime_Time
+	Name        whereHelperstring
+	Metadatakey whereHelperstring
+	Properties  whereHelpernull_JSON
 }{
-	ID:         whereHelperstring{field: "\"device_definitions_api\".\"device_types\".\"id\""},
-	CreatedAt:  whereHelpertime_Time{field: "\"device_definitions_api\".\"device_types\".\"created_at\""},
-	UpdatedAt:  whereHelpertime_Time{field: "\"device_definitions_api\".\"device_types\".\"updated_at\""},
-	Name:       whereHelperstring{field: "\"device_definitions_api\".\"device_types\".\"name\""},
-	Properties: whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_types\".\"properties\""},
+	ID:          whereHelperstring{field: "\"device_definitions_api\".\"device_types\".\"id\""},
+	CreatedAt:   whereHelpertime_Time{field: "\"device_definitions_api\".\"device_types\".\"created_at\""},
+	UpdatedAt:   whereHelpertime_Time{field: "\"device_definitions_api\".\"device_types\".\"updated_at\""},
+	Name:        whereHelperstring{field: "\"device_definitions_api\".\"device_types\".\"name\""},
+	Metadatakey: whereHelperstring{field: "\"device_definitions_api\".\"device_types\".\"metadatakey\""},
+	Properties:  whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_types\".\"properties\""},
 }
 
 // DeviceTypeRels is where relationship names are stored.
@@ -106,8 +113,8 @@ func (r *deviceTypeR) GetDeviceDefinitions() DeviceDefinitionSlice {
 type deviceTypeL struct{}
 
 var (
-	deviceTypeAllColumns            = []string{"id", "created_at", "updated_at", "name", "properties"}
-	deviceTypeColumnsWithoutDefault = []string{"id", "name"}
+	deviceTypeAllColumns            = []string{"id", "created_at", "updated_at", "name", "metadatakey", "properties"}
+	deviceTypeColumnsWithoutDefault = []string{"id", "name", "metadatakey"}
 	deviceTypeColumnsWithDefault    = []string{"created_at", "updated_at", "properties"}
 	deviceTypePrimaryKeyColumns     = []string{"id"}
 	deviceTypeGeneratedColumns      = []string{}

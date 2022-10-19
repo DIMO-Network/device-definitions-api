@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS device_types
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
                              name text not null,
+                             metaDataKey text not null,
                              properties jsonb
                              );
 
@@ -23,8 +24,8 @@ alter table device_definitions
             on delete cascade;
 
 delete from device_types;
-INSERT INTO device_types (id, name, properties)
-VALUES('vehicle', 'Vehicle information', '{
+INSERT INTO device_types (id, name, metaDataKey, properties)
+VALUES('vehicle', 'Vehicle information', 'vehicle_info', '{
   "properties": [
     {
       "name": "fuel_type",
@@ -119,11 +120,13 @@ VALUES('vehicle', 'Vehicle information', '{
   ]
 }');
 select * from device_types;
-SELECT * from device_definitions
+SELECT * from device_definitions;
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
 
-ALTER TABLE device_definitions
-    DROP COLUMN device_type_id;
+alter table device_definitions
+    drop column device_type_id
+
+drop table device_types;

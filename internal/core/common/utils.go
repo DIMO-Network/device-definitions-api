@@ -107,7 +107,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
-			Type:      "Vehicle",
+			Type:      dd.R.DeviceType.Name,
 			Make:      dd.R.DeviceMake.Name,
 			Model:     dd.Model,
 			Year:      int(dd.Year),
@@ -125,7 +125,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 	// vehicle info
 	var vi map[string]models.VehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
-		rp.VehicleInfo = vi["vehicle_info"]
+		rp.VehicleInfo = vi[dd.R.DeviceType.Metadatakey]
 	}
 
 	if dd.R != nil {
