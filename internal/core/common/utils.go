@@ -128,17 +128,15 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 		rp.VehicleInfo = vi[dd.R.DeviceType.Metadatakey]
 	}
 
-	if dd.R != nil {
-		// sub_models
-		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
-	}
-
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []models.DeviceIntegration{}
 	rp.DeviceStyles = []models.DeviceStyle{}
 	rp.CompatibleIntegrations = []models.DeviceIntegration{}
+	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
 	if dd.R != nil {
+		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
 				ID:           di.R.Integration.ID,

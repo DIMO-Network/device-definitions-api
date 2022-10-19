@@ -67,9 +67,10 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	// attribute info
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
 	var ai map[string][]coremodels.GetDeviceTypeAttributeQueryResult
 	if err := dt.Properties.Unmarshal(&ai); err == nil {
-
 		filterProperty := func(name string, items []coremodels.GetDeviceTypeAttributeQueryResult) *coremodels.GetDeviceTypeAttributeQueryResult {
 			for _, attribute := range items {
 				if name == attribute.Name {
@@ -79,7 +80,6 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			return nil
 		}
 
-		var metaData map[string]interface{}
 		for _, prop := range command.DeviceAttributes {
 			property := filterProperty(prop.Name, ai["properties"])
 
@@ -89,13 +89,19 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 				}
 			}
 
-			if property != nil {
-				metaData[property.Name] = prop.Value
+			if property.Required && len(prop.Value) == 0 {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("property %s is required", prop.Name),
+				}
 			}
+
+			metaData[property.Name] = prop.Value
 		}
 	}
 
-	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, command.Make, command.Model, command.Year, command.DeviceTypeID)
+	deviceTypeInfo[dt.Metadatakey] = metaData
+
+	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo)
 
 	if err != nil {
 		return nil, err

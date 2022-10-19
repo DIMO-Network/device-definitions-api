@@ -5,7 +5,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -24,7 +23,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error)
 }
 
@@ -43,6 +42,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 		qm.And("model ilike ?", model),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
 	}
 	if loadIntegrations {
 		qms = append(qms,
@@ -85,6 +85,7 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 		models.DeviceDefinitionWhere.ID.EQ(id),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles)).
 		One(ctx, r.DBS().Reader)
@@ -123,7 +124,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -180,6 +181,15 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Verified:     false,
 		ModelSlug:    common.SlugString(model),
 		DeviceTypeID: null.StringFrom(deviceTypeID),
+	}
+
+	if metaData != nil {
+		err = dd.Metadata.Marshal(metaData)
+		if err != nil {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
 	}
 
 	err = dd.Insert(ctx, tx, boil.Infer())

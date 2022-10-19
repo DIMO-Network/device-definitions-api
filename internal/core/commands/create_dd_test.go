@@ -3,12 +3,12 @@ package commands
 import (
 	"context"
 	_ "embed"
-	"github.com/segmentio/ksuid"
 
 	"testing"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/segmentio/ksuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -21,6 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+//go:embed device_type_vehicle_properties.json
+var deviceTypeVehiclePropertyDataSample []byte
 
 type CreateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
@@ -73,7 +76,9 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 		DeviceTypeID: null.StringFrom(deviceType.ID),
 	}
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, model, year, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, model, year, gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
+
+	var deviceAttributes []*UpdateDeviceDefinitionAttributeModel
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
 		Source:       source,
@@ -81,6 +86,10 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 		Make:         mk,
 		Year:         year,
 		DeviceTypeID: deviceType.ID,
+		DeviceAttributes: append(deviceAttributes, &UpdateDeviceDefinitionAttributeModel{
+			Name:  "MPG",
+			Value: "12",
+		}),
 	})
 	result := commandResult.(CreateDeviceDefinitionCommandResult)
 
@@ -91,18 +100,21 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCommand_Exception() {
 	ctx := context.Background()
 
+	deviceType := setupCreateDeviceType(s.T(), s.pdb)
+
 	model := "Hummer"
 	mk := "Toyota"
 	source := "source-01"
 	year := 2022
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, model, year, "vehicle").Return(nil, errors.New("Error")).Times(1)
+	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, model, year, gomock.Any(), gomock.Any()).Return(nil, errors.New("Error")).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
-		Source: source,
-		Model:  model,
-		Make:   mk,
-		Year:   year,
+		Source:       source,
+		Model:        model,
+		Make:         mk,
+		Year:         year,
+		DeviceTypeID: deviceType.ID,
 	})
 
 	s.Nil(commandResult)
@@ -111,8 +123,10 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 
 func setupCreateDeviceType(t *testing.T, pdb db.Store) models.DeviceType {
 	deviceType := models.DeviceType{
-		ID:   ksuid.New().String(),
-		Name: "vehicle",
+		ID:          ksuid.New().String(),
+		Name:        "vehicle",
+		Metadatakey: "vehicle_info",
+		Properties:  null.JSONFrom(deviceTypeVehiclePropertyDataSample),
 	}
 	err := deviceType.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "database error")

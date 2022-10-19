@@ -1,0 +1,94 @@
+{
+  "properties": [
+    {
+      "name": "fuel_type",
+      "label": "Fuel Type",
+      "description": "",
+      "type": "string",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "driven_wheels",
+      "label": "Driven Wheels",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "number_of_doors",
+      "label": "Number of Doors",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "base_MSRP",
+      "label": "Base MSRP",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "EPA_class",
+      "label": "EPA Class",
+      "description": "",
+      "type": "string",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "vehicle_type",
+      "label": "Vehicle Type",
+      "description": "",
+      "type": "string",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "MPG_highway",
+      "label": "MPG Highway",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "MPG_city",
+      "label": "MPG City",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "fuel_tank_capacity_gal",
+      "label": "Fuel tank capacity gal",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    },
+    {
+      "name": "MPG",
+      "label": "MPG",
+      "description": "",
+      "type": "number",
+      "required": false,
+      "defaultValue": "",
+      "options": []
+    }
+  ]
+}
