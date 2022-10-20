@@ -24,5 +24,8 @@ type Settings struct {
 	DrivlyVINAPIURL                string         `yaml:"DRIVLY_VIN_API_URL"`
 	DrivlyOfferAPIURL              string         `yaml:"DRIVLY_OFFER_API_URL"`
 	Redis                          redis.Settings `yaml:"REDIS"`
+	FuelAPIVehiclesEndpoint        string         `yaml:"FUEL_API_SEARCH_VEHICLES_ENDPOINT"`
+	FuelAPIImagesEndpoint          string         `yaml:"FUEL_API_SEARCH_IMAGES_ENDPOINT"`
+	FuelAPIKey                     string         `yaml:"FUEL_API_KEY"`
 	NHTSARecallsFileURL            string         `yaml:"NHTSA_RECALLS_FILE_URL"`
 }
