@@ -15,7 +15,7 @@ type GetDeviceDefinitionQueryResult struct {
 	Source             string     `json:"source"`
 	DeviceMake         DeviceMake `json:"make"`
 	Type               DeviceType `json:"type"`
-	// VehicleInfo will be empty if not a vehicle type
+	// Deprecated: instead of VehicleInfo use DeviceAttributes
 	VehicleInfo VehicleInfo `json:"vehicleData,omitempty"`
 	Metadata    interface{} `json:"metadata"`
 	Verified    bool        `json:"verified"`

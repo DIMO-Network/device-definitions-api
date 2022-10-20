@@ -1,19 +1,18 @@
 -- +goose Up
 -- +goose StatementBegin
 SELECT 'up SQL query';
--- +goose StatementEnd
 
 SET search_path = device_definitions_api, public;
 
 CREATE TABLE IF NOT EXISTS device_types
 (
-    id character(50) PRIMARY KEY NOT NULL, -- not use ksuid. Use slug id
-    created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                             name text not null,
-                             metaDataKey text not null,
-                             properties jsonb
-                             );
+    id          character(50) PRIMARY KEY NOT NULL, -- do not use ksuid. Use slug id
+    created_at  timestamp with time zone  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  timestamp with time zone  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name        text                      not null,
+    metaDataKey text                      not null,
+    properties  jsonb
+);
 
 alter table device_definitions
     add column device_type_id character(50) null;
@@ -25,7 +24,7 @@ alter table device_definitions
 
 delete from device_types;
 INSERT INTO device_types (id, name, metaDataKey, properties)
-VALUES('vehicle', 'Vehicle information', 'vehicle_info', '{
+VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
   "properties": [
     {
       "name": "fuel_type",
@@ -119,14 +118,19 @@ VALUES('vehicle', 'Vehicle information', 'vehicle_info', '{
     }
   ]
 }');
-select * from device_types;
-SELECT * from device_definitions;
+select *
+from device_types;
+update device_definitions set device_type_id = 'vehicle'; -- update all records to default
+
+-- +goose StatementEnd
+
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
--- +goose StatementEnd
 
-alter table device_definitions
-    drop column device_type_id
+SET search_path to device_definitions_api, public;
 
 drop table device_types;
+alter table device_definitions drop column device_type_id
+
+-- +goose StatementEnd

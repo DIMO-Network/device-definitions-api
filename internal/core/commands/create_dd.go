@@ -16,15 +16,18 @@ import (
 )
 
 type CreateDeviceDefinitionCommand struct {
-	Source           string                                  `json:"source"`
-	Make             string                                  `json:"make"`
-	Model            string                                  `json:"model"`
-	Year             int                                     `json:"year"`
-	DeviceTypeID     string                                  `json:"device_type_id"`
+	Source string `json:"source"`
+	Make   string `json:"make"`
+	Model  string `json:"model"`
+	Year   int    `json:"year"`
+	// DeviceTypeID comes from the device_types.id table, determines what kind of device this is, typically a vehicle
+	DeviceTypeID string `json:"device_type_id"`
+	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
 }
 
 type UpdateDeviceDefinitionAttributeModel struct {
+	// Name should match one of the name keys in the allowed device_types.properties
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
@@ -48,11 +51,11 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	command := query.(*CreateDeviceDefinitionCommand)
 
 	const (
-		deviceTypeVehicle = "vehicle"
+		defaultDeviceType = "vehicle"
 	)
 
 	if len(command.DeviceTypeID) == 0 {
-		command.DeviceTypeID = deviceTypeVehicle
+		command.DeviceTypeID = defaultDeviceType
 	}
 
 	// Resolve attributes by device types
