@@ -70,4 +70,12 @@ Have goose installed, then:
 
 `goose -dir internal/infrastructure/db/migrations create slugs-not-null sql`
 
+## Local development
+
+Importing data: Device definition exports are [here](url)
+You can use sqlboiler to import or this command:
+```sh
+psql "host=localhost port=5432 dbname=device_definitions_api user=dimo password=dimo" -c "\COPY device_definitions_api.integrations (id, type, style, vendor, created_at, updated_at, refresh_limit_secs, metadata) FROM '/Users/aenglish/Downloads/drive-download-20221020T172636Z-001/integrations.csv' DELIMITER ',' CSV HEADER"
+```
+
 
