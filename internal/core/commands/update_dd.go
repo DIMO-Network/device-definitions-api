@@ -107,7 +107,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			ModelSlug:    common.SlugString(command.Model),
 		}
 	}
-
+	// todo: change this to use the DeviceAttributes. For now leaving as is so doesn't break dependencies.
 	// Update Vehicle Info
 	if command.VehicleInfo != nil {
 		deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)

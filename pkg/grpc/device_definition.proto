@@ -20,7 +20,7 @@ message GetDeviceDefinitionItemResponse {
 	string name = 2;
 	string image_url = 3;
 	DeviceType type = 4;
-	VehicleInfo vehicle_data = 5;
+	VehicleInfo vehicle_data = 5 [deprecated = true];
 	bool  verified = 6;
 	repeated  DeviceIntegration device_integrations = 7;
 	DeviceMake make = 8;
@@ -148,7 +148,7 @@ message BaseResponse {
 
 message UpdateDeviceDefinitionRequest {
 	string device_definition_id = 1;
-	VehicleInfo vehicle_data = 2;
+	VehicleInfo vehicle_data = 2 [deprecated = true];
 	string source = 3;
 	string image_url = 4;
 	bool verified = 5;

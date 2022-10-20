@@ -50,9 +50,9 @@ func (ch GetDeviceTypeByIDQueryHandler) Handle(ctx context.Context, query mediat
 	}
 
 	// attribute info
-	var vi map[string][]coremodels.GetDeviceTypeAttributeQueryResult
-	if err := v.Properties.Unmarshal(&vi); err == nil {
-		result.Attributes = append(result.Attributes, vi["properties"]...)
+	var ai map[string][]coremodels.GetDeviceTypeAttributeQueryResult
+	if err := v.Properties.Unmarshal(&ai); err == nil {
+		result.Attributes = append(result.Attributes, ai["properties"]...)
 	}
 
 	return result, nil
