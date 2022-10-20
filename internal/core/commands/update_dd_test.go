@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	_ "embed"
-	"github.com/pkg/errors"
 	"testing"
 
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -12,6 +11,7 @@ import (
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

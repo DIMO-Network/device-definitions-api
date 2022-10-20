@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	_ "embed"
-	"github.com/volatiletech/null/v8"
 
 	"testing"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -195,7 +195,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 
 	dd := setupDeviceDefinitionWithStyles(s.T(), s.pdb, mk, model, year)
 
-	var newStyles []*models.DeviceStyle
+	newStyles := []*models.DeviceStyle{}
 
 	for _, style := range dd.R.DeviceStyles {
 		newStyles = append(newStyles, style)
@@ -230,7 +230,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 	i := setupIntegrationForDeviceIntegration(s.T(), s.pdb)
 	dd := setupDeviceDefinitionWithIntegrations(s.T(), s.pdb, mk, model, year)
 
-	var newDeviceIntegrations []*models.DeviceIntegration
+	newDeviceIntegrations := []*models.DeviceIntegration{}
 
 	for _, integration := range dd.R.DeviceIntegrations {
 		newDeviceIntegrations = append(newDeviceIntegrations, integration)
