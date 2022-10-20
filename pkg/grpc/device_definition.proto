@@ -256,6 +256,7 @@ message Feature {
 message DeviceCompatibilities {
 	int32 year = 1;
 	repeated Feature features = 2;
+	string level = 3;
 }
 
 message DeviceCompatibilityList {

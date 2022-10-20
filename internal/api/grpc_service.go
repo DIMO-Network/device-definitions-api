@@ -475,6 +475,10 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
 	integFeats := deviceCompatibilities.IntegrationFeatures
+	totalWeightsCount := 0.0
+	for _, v := range deviceCompatibilities.IntegrationFeatures {
+		totalWeightsCount += v.FeatureWeight
+	}
 	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
 
 	// Group by model name.
@@ -506,6 +510,8 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 			continue
 		}
 
+		ifeat := map[string]queries.FeatureDetails{}
+
 		for _, f := range features {
 			ft := &p_grpc.Feature{
 				Key:          integFeats[f.FeatureKey].DisplayName,
@@ -513,10 +519,19 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 				SupportLevel: int32(f.SupportLevel),
 			}
 
+			fts := queries.FeatureDetails{
+				FeatureWeight: integFeats[f.FeatureKey].FeatureWeight,
+				SupportLevel:  int32(f.SupportLevel),
+			}
+
+			ifeat[f.FeatureKey] = fts
+
 			feats = append(feats, ft)
 		}
 
+		level := queries.GetDeviceCompatibilityLevel(ifeat, totalWeightsCount)
 		res.Features = feats
+		res.Level = level
 		dcMap[v.Model] = append(dcMap[v.Model], res)
 	}
 
