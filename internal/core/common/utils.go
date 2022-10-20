@@ -203,6 +203,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
 	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
 
+	//nolint
 	rp.VehicleData = &grpc.VehicleInfo{
 		FuelType:            dd.VehicleInfo.FuelType,
 		DrivenWheels:        dd.VehicleInfo.DrivenWheels,

@@ -368,6 +368,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		DeviceMakeID:       in.DeviceMakeId,
 	}
 
+	//nolint
 	if in.VehicleData != nil {
 		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,
