@@ -673,3 +673,28 @@ func (s *GrpcService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDe
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
+
+func (s *GrpcService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDeviceTypeByIDRequest) (*p_grpc.GetDeviceTypeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceTypeByIDQuery{
+		DeviceTypeID: in.Id,
+	})
+
+	dt := qryResult.(models.GetDeviceTypeQueryResult)
+	result := &p_grpc.GetDeviceTypeResponse{
+		Id:   dt.ID,
+		Name: dt.Name,
+	}
+
+	for _, prop := range dt.Attributes {
+		result.Attributes = append(result.Attributes, &p_grpc.DeviceTypeAttribute{
+			Name:         prop.Name,
+			Label:        prop.Label,
+			Description:  prop.Description,
+			Required:     prop.Required,
+			DefaultValue: prop.DefaultValue,
+			Options:      prop.Option,
+		})
+	}
+
+	return result, nil
+}

@@ -49,6 +49,7 @@ type DeviceDefinitionServiceClient interface {
 	GetDeviceStylesByFilter(ctx context.Context, in *GetDeviceStyleFilterRequest, opts ...grpc.CallOption) (*GetDeviceStyleResponse, error)
 	UpdateDeviceMake(ctx context.Context, in *UpdateDeviceMakeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	UpdateDeviceStyle(ctx context.Context, in *UpdateDeviceStyleRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	GetDeviceTypesByID(ctx context.Context, in *GetDeviceTypeByIDRequest, opts ...grpc.CallOption) (*GetDeviceTypeResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -293,6 +294,15 @@ func (c *deviceDefinitionServiceClient) UpdateDeviceStyle(ctx context.Context, i
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceTypesByID(ctx context.Context, in *GetDeviceTypeByIDRequest, opts ...grpc.CallOption) (*GetDeviceTypeResponse, error) {
+	out := new(GetDeviceTypeResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceTypesByID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -323,6 +333,7 @@ type DeviceDefinitionServiceServer interface {
 	GetDeviceStylesByFilter(context.Context, *GetDeviceStyleFilterRequest) (*GetDeviceStyleResponse, error)
 	UpdateDeviceMake(context.Context, *UpdateDeviceMakeRequest) (*BaseResponse, error)
 	UpdateDeviceStyle(context.Context, *UpdateDeviceStyleRequest) (*BaseResponse, error)
+	GetDeviceTypesByID(context.Context, *GetDeviceTypeByIDRequest) (*GetDeviceTypeResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -407,6 +418,9 @@ func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceMake(context.Conte
 }
 func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceStyle(context.Context, *UpdateDeviceStyleRequest) (*BaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDeviceStyle not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceTypesByID(context.Context, *GetDeviceTypeByIDRequest) (*GetDeviceTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceTypesByID not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -890,6 +904,24 @@ func _DeviceDefinitionService_UpdateDeviceStyle_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceTypesByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceTypeByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceTypesByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceTypesByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceTypesByID(ctx, req.(*GetDeviceTypeByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1000,6 +1032,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateDeviceStyle",
 			Handler:    _DeviceDefinitionService_UpdateDeviceStyle_Handler,
+		},
+		{
+			MethodName: "GetDeviceTypesByID",
+			Handler:    _DeviceDefinitionService_GetDeviceTypesByID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

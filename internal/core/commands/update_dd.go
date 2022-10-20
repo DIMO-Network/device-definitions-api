@@ -23,12 +23,13 @@ type UpdateDeviceDefinitionCommand struct {
 	ExternalID         string      `json:"external_id"`
 	ImageURL           null.String `json:"image_url"`
 	VehicleInfo        *UpdateDeviceVehicleInfo
-	Verified           bool                       `json:"verified"`
-	Model              string                     `json:"model"`
-	Year               int16                      `json:"year"`
-	DeviceMakeID       string                     `json:"device_make_id"`
-	DeviceStyles       []UpdateDeviceStyles       `json:"deviceStyles"`
-	DeviceIntegrations []UpdateDeviceIntegrations `json:"deviceIntegrations"`
+	Verified           bool                                    `json:"verified"`
+	Model              string                                  `json:"model"`
+	Year               int16                                   `json:"year"`
+	DeviceMakeID       string                                  `json:"device_make_id"`
+	DeviceStyles       []UpdateDeviceStyles                    `json:"deviceStyles"`
+	DeviceIntegrations []UpdateDeviceIntegrations              `json:"deviceIntegrations"`
+	DeviceAttributes   []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
 }
 
 type UpdateDeviceIntegrations struct {
@@ -106,7 +107,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			ModelSlug:    common.SlugString(command.Model),
 		}
 	}
-
+	// todo: change this to use the DeviceAttributes. For now leaving as is so doesn't break dependencies.
 	// Update Vehicle Info
 	if command.VehicleInfo != nil {
 		deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
