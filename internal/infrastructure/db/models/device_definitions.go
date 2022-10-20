@@ -279,12 +279,14 @@ var DeviceDefinitionRels = struct {
 	DeviceIntegrations string
 	DeviceNhtsaRecalls string
 	DeviceStyles       string
+	Images             string
 }{
 	DeviceMake:         "DeviceMake",
 	DeviceType:         "DeviceType",
 	DeviceIntegrations: "DeviceIntegrations",
 	DeviceNhtsaRecalls: "DeviceNhtsaRecalls",
 	DeviceStyles:       "DeviceStyles",
+	Images:             "Images",
 }
 
 // deviceDefinitionR is where relationships are stored.
@@ -294,6 +296,7 @@ type deviceDefinitionR struct {
 	DeviceIntegrations DeviceIntegrationSlice `boil:"DeviceIntegrations" json:"DeviceIntegrations" toml:"DeviceIntegrations" yaml:"DeviceIntegrations"`
 	DeviceNhtsaRecalls DeviceNhtsaRecallSlice `boil:"DeviceNhtsaRecalls" json:"DeviceNhtsaRecalls" toml:"DeviceNhtsaRecalls" yaml:"DeviceNhtsaRecalls"`
 	DeviceStyles       DeviceStyleSlice       `boil:"DeviceStyles" json:"DeviceStyles" toml:"DeviceStyles" yaml:"DeviceStyles"`
+	Images             ImageSlice             `boil:"Images" json:"Images" toml:"Images" yaml:"Images"`
 }
 
 // NewStruct creates a new relationship struct
@@ -334,6 +337,13 @@ func (r *deviceDefinitionR) GetDeviceStyles() DeviceStyleSlice {
 		return nil
 	}
 	return r.DeviceStyles
+}
+
+func (r *deviceDefinitionR) GetImages() ImageSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Images
 }
 
 // deviceDefinitionL is where Load methods for each relationship are stored.
@@ -687,6 +697,20 @@ func (o *DeviceDefinition) DeviceStyles(mods ...qm.QueryMod) deviceStyleQuery {
 	)
 
 	return DeviceStyles(queryMods...)
+}
+
+// Images retrieves all the image's Images with an executor.
+func (o *DeviceDefinition) Images(mods ...qm.QueryMod) imageQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"device_definitions_api\".\"images\".\"device_definition_id\"=?", o.ID),
+	)
+
+	return Images(queryMods...)
 }
 
 // LoadDeviceMake allows an eager lookup of values, cached into the
@@ -1275,6 +1299,120 @@ func (deviceDefinitionL) LoadDeviceStyles(ctx context.Context, e boil.ContextExe
 	return nil
 }
 
+// LoadImages allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (deviceDefinitionL) LoadImages(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceDefinition interface{}, mods queries.Applicator) error {
+	var slice []*DeviceDefinition
+	var object *DeviceDefinition
+
+	if singular {
+		var ok bool
+		object, ok = maybeDeviceDefinition.(*DeviceDefinition)
+		if !ok {
+			object = new(DeviceDefinition)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceDefinition)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceDefinition))
+			}
+		}
+	} else {
+		s, ok := maybeDeviceDefinition.(*[]*DeviceDefinition)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceDefinition)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceDefinition))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &deviceDefinitionR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &deviceDefinitionR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.images`),
+		qm.WhereIn(`device_definitions_api.images.device_definition_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load images")
+	}
+
+	var resultSlice []*Image
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice images")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on images")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for images")
+	}
+
+	if len(imageAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Images = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &imageR{}
+			}
+			foreign.R.DeviceDefinition = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.DeviceDefinitionID {
+				local.R.Images = append(local.R.Images, foreign)
+				if foreign.R == nil {
+					foreign.R = &imageR{}
+				}
+				foreign.R.DeviceDefinition = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetDeviceMake of the deviceDefinition to the related item.
 // Sets o.R.DeviceMake to related.
 // Adds o to related.R.DeviceDefinitions.
@@ -1626,6 +1764,59 @@ func (o *DeviceDefinition) AddDeviceStyles(ctx context.Context, exec boil.Contex
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &deviceStyleR{
+				DeviceDefinition: o,
+			}
+		} else {
+			rel.R.DeviceDefinition = o
+		}
+	}
+	return nil
+}
+
+// AddImages adds the given related objects to the existing relationships
+// of the device_definition, optionally inserting them as new records.
+// Appends related to o.R.Images.
+// Sets related.R.DeviceDefinition appropriately.
+func (o *DeviceDefinition) AddImages(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Image) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.DeviceDefinitionID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"device_definitions_api\".\"images\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"device_definition_id"}),
+				strmangle.WhereClause("\"", "\"", 2, imagePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.DeviceDefinitionID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &deviceDefinitionR{
+			Images: related,
+		}
+	} else {
+		o.R.Images = append(o.R.Images, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &imageR{
 				DeviceDefinition: o,
 			}
 		} else {

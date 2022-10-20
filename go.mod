@@ -3,7 +3,7 @@ module github.com/DIMO-Network/device-definitions-api
 go 1.18
 
 require (
-	github.com/DIMO-Network/shared v0.4.3
+	github.com/DIMO-Network/shared v0.4.5
 	github.com/DIMO-Network/zflogger v1.0.0-beta
 	github.com/TheFellow/go-mediator v0.0.0-20211104172412-746952fa0611
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
