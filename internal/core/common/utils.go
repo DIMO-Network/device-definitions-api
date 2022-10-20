@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+
 	"math/big"
 	"sort"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	"github.com/volatiletech/null/v8"
@@ -246,4 +248,43 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	}
 
 	return rp
+}
+
+func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (map[string]interface{}, error) {
+	// attribute info
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
+	var ai map[string][]models.GetDeviceTypeAttributeQueryResult
+	if err := dt.Properties.Unmarshal(&ai); err == nil {
+		filterProperty := func(name string, items []models.GetDeviceTypeAttributeQueryResult) *models.GetDeviceTypeAttributeQueryResult {
+			for _, attribute := range items {
+				if name == attribute.Name {
+					return &attribute
+				}
+			}
+			return nil
+		}
+
+		for _, prop := range attributes {
+			property := filterProperty(prop.Name, ai["properties"])
+
+			if property == nil {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("invalid property %s", prop.Name),
+				}
+			}
+
+			if property.Required && len(prop.Value) == 0 {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("property %s is required", prop.Name),
+				}
+			}
+
+			metaData[property.Name] = prop.Value
+		}
+	}
+
+	deviceTypeInfo[dt.Metadatakey] = metaData
+
+	return deviceTypeInfo, nil
 }

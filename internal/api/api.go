@@ -86,7 +86,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository, ddCacheService)),
 		mediator.WithHandler(&commands.CreateIntegrationCommand{}, commands.NewCreateIntegrationCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceMakeCommand{}, commands.NewCreateDeviceMakeCommandHandler(deviceMakeRepository)),
-		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(pdb.DBS, ddCacheService)),
+		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&commands.UpdateDeviceDefinitionImageCommand{}, commands.NewUpdateDeviceDefinitionImageCommandHandler(pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceCompatibilityQuery{}, queries.NewGetDeviceCompatibilityQueryHandler(pdb.DBS, deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceMakeCommand{}, commands.NewUpdateDeviceMakeCommandHandler(pdb.DBS)),

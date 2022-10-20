@@ -20,7 +20,7 @@ message GetDeviceDefinitionItemResponse {
 	string name = 2;
 	string image_url = 3;
 	DeviceType type = 4;
-	VehicleInfo vehicle_data = 5 [deprecated = true];
+	VehicleInfo vehicle_data = 5;
 	bool  verified = 6;
 	repeated  DeviceIntegration device_integrations = 7;
 	DeviceMake make = 8;

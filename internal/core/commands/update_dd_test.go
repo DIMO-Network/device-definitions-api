@@ -3,10 +3,12 @@ package commands
 import (
 	"context"
 	_ "embed"
+	"github.com/pkg/errors"
 	"testing"
 
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
@@ -15,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type UpdateDeviceDefinitionCommandHandlerSuite struct {
@@ -27,8 +28,8 @@ type UpdateDeviceDefinitionCommandHandlerSuite struct {
 	container                 testcontainers.Container
 	ctx                       context.Context
 	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
-
-	commandHandler UpdateDeviceDefinitionCommandHandler
+	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
+	commandHandler            UpdateDeviceDefinitionCommandHandler
 }
 
 func TestUpdateDeviceDefinitionCommandHandler(t *testing.T) {
@@ -48,8 +49,8 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-
-	s.commandHandler = NewUpdateDeviceDefinitionCommandHandler(s.pdb.DBS, s.mockDeviceDefinitionCache)
+	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.commandHandler = NewUpdateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS, s.mockDeviceDefinitionCache)
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
@@ -66,6 +67,8 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
 
+	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
@@ -100,6 +103,8 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
 	i := setupNewIntegrationForUpdate(s.T(), s.pdb)
 
+	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
@@ -177,18 +182,6 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	s.NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 
-	dd, _ = models.DeviceDefinitions(
-		qm.Where("id = ?", dd.ID),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceStyles))).
-		One(ctx, s.pdb.DBS().Writer)
-
-	assert.Equal(s.T(), len(dd.R.DeviceStyles), 4)
-	assert.Equal(s.T(), dd.Year, command.Year)
-	assert.Equal(s.T(), dd.Model, command.Model)
-	assert.Equal(s.T(), dd.DeviceMakeID, command.DeviceMakeID)
-
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_WithNewIntegration_Success() {
@@ -201,6 +194,9 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	i := setupIntegrationForSmartCarCompatibility(s.T(), s.pdb)
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
 	dm := dbtesthelper.SetupCreateMake(s.T(), "BMW2", s.pdb)
+
+	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
@@ -235,20 +231,12 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
-
-	dd, _ = models.DeviceDefinitions(
-		qm.Where("id = ?", dd.ID),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
-		One(ctx, s.pdb.DBS().Writer)
-
-	assert.Equal(s.T(), len(dd.R.DeviceIntegrations), 1)
 }
 
 func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCommand_Exception() {
 	ctx := context.Background()
 
+	s.mockRepository.EXPECT().GetByID(gomock.Any(), "dd.ID").Return(nil, errors.New("unhandled exception error")).AnyTimes()
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: "dd.ID",
 	})
@@ -262,6 +250,9 @@ func setupDeviceDefinitionForUpdate(t *testing.T, pdb db.Store, makeName string,
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
 	_ = dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr SUV 4WD", "edmunds", "Wagon", pdb)
 	_ = dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceMake = &dm
 
 	return dd
 }

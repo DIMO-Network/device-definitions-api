@@ -8,17 +8,16 @@ import (
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string     `json:"deviceDefinitionId"`
-	ExternalID         string     `json:"external_id"`
-	Name               string     `json:"name"`
-	ImageURL           string     `json:"imageUrl"`
-	Source             string     `json:"source"`
-	DeviceMake         DeviceMake `json:"make"`
-	Type               DeviceType `json:"type"`
-	// Deprecated: instead of VehicleInfo use DeviceAttributes
-	VehicleInfo VehicleInfo `json:"vehicleData,omitempty"`
-	Metadata    interface{} `json:"metadata"`
-	Verified    bool        `json:"verified"`
+	DeviceDefinitionID string      `json:"deviceDefinitionId"`
+	ExternalID         string      `json:"external_id"`
+	Name               string      `json:"name"`
+	ImageURL           string      `json:"imageUrl"`
+	Source             string      `json:"source"`
+	DeviceMake         DeviceMake  `json:"make"`
+	Type               DeviceType  `json:"type"`
+	VehicleInfo        VehicleInfo `json:"vehicleData,omitempty"`
+	Metadata           interface{} `json:"metadata"`
+	Verified           bool        `json:"verified"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
 	DeviceIntegrations     []DeviceIntegration   `json:"deviceIntegrations"`
 	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
