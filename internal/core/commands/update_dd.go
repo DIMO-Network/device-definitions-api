@@ -237,6 +237,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	dd, err = ch.Repository.GetByID(ctx, dd.ID)
 
+	if err != nil {
+		return nil, err
+	}
+
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
 	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
