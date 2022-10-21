@@ -105,6 +105,14 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	// Resolve make
 	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
 
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: fmt.Errorf("failed to get device makes"),
+			}
+		}
+	}
+
 	// Resolve attributes by device types
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
 
