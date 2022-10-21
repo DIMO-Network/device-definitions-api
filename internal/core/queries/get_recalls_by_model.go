@@ -65,7 +65,7 @@ func (qh GetRecallsByModelQueryHandler) Handle(ctx context.Context, query mediat
 		result.Recalls = append(result.Recalls, &p_grpc.RecallItem{
 			DeviceDefinitionId: v.DeviceDefinitionID.String,
 			Name:               fmt.Sprintf("%d %s %s", v.R.DeviceDefinition.Year, v.R.DeviceDefinition.R.DeviceMake.Name, v.R.DeviceDefinition.Model),
-			Description:        "", // todo: ask james.
+			Description:        v.DataDescDefect,
 			//Date:               v.DataRcdate.UnixMilli(),
 			Year: int32(v.DataYeartxt),
 		})
