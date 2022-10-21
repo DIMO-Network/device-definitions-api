@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -12,6 +11,8 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type GetRecallsByModelQuery struct {
@@ -31,14 +32,17 @@ func NewGetRecallsByModelQueryHandler(dbs func() *db.ReaderWriter) GetRecallsByM
 func (qh GetRecallsByModelQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetRecallsByModelQuery)
 
-	all, err := models.DeviceNhtsaRecalls(models.DeviceNhtsaRecallWhere.DeviceDefinitionID.EQ(null.StringFrom(qry.DeviceDefinitionID))).
+	all, err := models.DeviceNhtsaRecalls(models.DeviceNhtsaRecallWhere.DeviceDefinitionID.EQ(null.StringFrom(qry.DeviceDefinitionID)),
+		qm.Load(models.DeviceNhtsaRecallRels.DeviceDefinition),
+		qm.Load(qm.Rels(models.DeviceNhtsaRecallRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake))).
 		All(ctx, qh.DBS().Reader)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &p_grpc.GetRecallsResponse{}, nil
 		}
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get integrations"),
+			Err: fmt.Errorf("failed to get nthsa"),
 		}
 	}
 

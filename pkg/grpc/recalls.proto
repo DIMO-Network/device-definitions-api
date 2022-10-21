@@ -18,7 +18,7 @@ message GetRecallsByMakeRequest {
 }
 
 message GetRecallsByModelRequest {
-  string model = 1;
+  string device_definition_id = 1;
 }
 
 message GetRecallsResponse {

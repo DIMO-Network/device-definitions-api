@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
@@ -33,7 +33,7 @@ func (s *GrpcService) GetRecallsByMake(ctx context.Context, in *p_grpc.GetRecall
 func (s *GrpcService) GetRecallsByModel(ctx context.Context, in *p_grpc.GetRecallsByModelRequest) (*p_grpc.GetRecallsResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetRecallsByModelQuery{
-		Model: in.Model,
+		DeviceDefinitionID: in.DeviceDefinitionId,
 	})
 
 	result := qryResult.(*p_grpc.GetRecallsResponse)

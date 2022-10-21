@@ -49,14 +49,17 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 		ddIDs[i] = dd.ID
 	}
 
-	// todo not sure if in ddIDs will work
-	all, err := models.DeviceNhtsaRecalls(qm.AndIn("device_definition_id in ?", ddIDs)).All(ctx, qh.DBS().Reader)
+	all, err := models.DeviceNhtsaRecalls(models.DeviceNhtsaRecallWhere.DeviceDefinitionID.IN(ddIDs),
+		qm.Load(models.DeviceNhtsaRecallRels.DeviceDefinition),
+		qm.Load(qm.Rels(models.DeviceNhtsaRecallRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake))).
+		All(ctx, qh.DBS().Reader)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &p_grpc.GetRecallsResponse{}, nil
 		}
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get integrations"),
+			Err: fmt.Errorf("failed to get Nhtsa"),
 		}
 	}
 
