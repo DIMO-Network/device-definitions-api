@@ -133,7 +133,7 @@ type GetDeviceDefinitionItemResponse struct {
 	DeviceStyles       []*DeviceStyle         `protobuf:"bytes,9,rep,name=device_styles,json=deviceStyles,proto3" json:"device_styles,omitempty"`
 	Source             string                 `protobuf:"bytes,10,opt,name=source,proto3" json:"source,omitempty"`
 	ExternalId         string                 `protobuf:"bytes,11,opt,name=external_id,json=externalId,proto3" json:"external_id,omitempty"`
-	Attributes         []*DeviceTypeAttribute `protobuf:"bytes,12,rep,name=attributes,proto3" json:"attributes,omitempty"`
+	DeviceAttributes   []*DeviceTypeAttribute `protobuf:"bytes,12,rep,name=device_attributes,json=deviceAttributes,proto3" json:"device_attributes,omitempty"`
 }
 
 func (x *GetDeviceDefinitionItemResponse) Reset() {
@@ -246,9 +246,9 @@ func (x *GetDeviceDefinitionItemResponse) GetExternalId() string {
 	return ""
 }
 
-func (x *GetDeviceDefinitionItemResponse) GetAttributes() []*DeviceTypeAttribute {
+func (x *GetDeviceDefinitionItemResponse) GetDeviceAttributes() []*DeviceTypeAttribute {
 	if x != nil {
-		return x.Attributes
+		return x.DeviceAttributes
 	}
 	return nil
 }
@@ -356,6 +356,61 @@ func (x *DeviceTypeAttribute) GetDescription() string {
 	return ""
 }
 
+type DeviceTypeAttributeRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *DeviceTypeAttributeRequest) Reset() {
+	*x = DeviceTypeAttributeRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeviceTypeAttributeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceTypeAttributeRequest) ProtoMessage() {}
+
+func (x *DeviceTypeAttributeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceTypeAttributeRequest.ProtoReflect.Descriptor instead.
+func (*DeviceTypeAttributeRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeviceTypeAttributeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeviceTypeAttributeRequest) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 type DeviceType struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -373,7 +428,7 @@ type DeviceType struct {
 func (x *DeviceType) Reset() {
 	*x = DeviceType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[4]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -386,7 +441,7 @@ func (x *DeviceType) String() string {
 func (*DeviceType) ProtoMessage() {}
 
 func (x *DeviceType) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[4]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -399,7 +454,7 @@ func (x *DeviceType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceType.ProtoReflect.Descriptor instead.
 func (*DeviceType) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{4}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DeviceType) GetType() string {
@@ -467,7 +522,7 @@ type DeviceStyle struct {
 func (x *DeviceStyle) Reset() {
 	*x = DeviceStyle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[5]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -480,7 +535,7 @@ func (x *DeviceStyle) String() string {
 func (*DeviceStyle) ProtoMessage() {}
 
 func (x *DeviceStyle) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[5]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +548,7 @@ func (x *DeviceStyle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceStyle.ProtoReflect.Descriptor instead.
 func (*DeviceStyle) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{5}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DeviceStyle) GetId() string {
@@ -555,7 +610,7 @@ type DeviceMake struct {
 func (x *DeviceMake) Reset() {
 	*x = DeviceMake{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[6]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -568,7 +623,7 @@ func (x *DeviceMake) String() string {
 func (*DeviceMake) ProtoMessage() {}
 
 func (x *DeviceMake) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[6]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -581,7 +636,7 @@ func (x *DeviceMake) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceMake.ProtoReflect.Descriptor instead.
 func (*DeviceMake) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{6}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeviceMake) GetId() string {
@@ -653,7 +708,7 @@ type VehicleInfo struct {
 func (x *VehicleInfo) Reset() {
 	*x = VehicleInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[7]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -666,7 +721,7 @@ func (x *VehicleInfo) String() string {
 func (*VehicleInfo) ProtoMessage() {}
 
 func (x *VehicleInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[7]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +734,7 @@ func (x *VehicleInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VehicleInfo.ProtoReflect.Descriptor instead.
 func (*VehicleInfo) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{7}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *VehicleInfo) GetFuelType() string {
@@ -766,7 +821,7 @@ type GetDeviceDefinitionByMMYRequest struct {
 func (x *GetDeviceDefinitionByMMYRequest) Reset() {
 	*x = GetDeviceDefinitionByMMYRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[8]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -779,7 +834,7 @@ func (x *GetDeviceDefinitionByMMYRequest) String() string {
 func (*GetDeviceDefinitionByMMYRequest) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionByMMYRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[8]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -792,7 +847,7 @@ func (x *GetDeviceDefinitionByMMYRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceDefinitionByMMYRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionByMMYRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{8}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetDeviceDefinitionByMMYRequest) GetMake() string {
@@ -834,7 +889,7 @@ type GetDeviceDefinitionBySourceRequest struct {
 func (x *GetDeviceDefinitionBySourceRequest) Reset() {
 	*x = GetDeviceDefinitionBySourceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[9]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -847,7 +902,7 @@ func (x *GetDeviceDefinitionBySourceRequest) String() string {
 func (*GetDeviceDefinitionBySourceRequest) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionBySourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[9]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +915,7 @@ func (x *GetDeviceDefinitionBySourceRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetDeviceDefinitionBySourceRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionBySourceRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{9}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetDeviceDefinitionBySourceRequest) GetSource() string {
@@ -881,7 +936,7 @@ type GetIntegrationResponse struct {
 func (x *GetIntegrationResponse) Reset() {
 	*x = GetIntegrationResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[10]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -894,7 +949,7 @@ func (x *GetIntegrationResponse) String() string {
 func (*GetIntegrationResponse) ProtoMessage() {}
 
 func (x *GetIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[10]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -907,7 +962,7 @@ func (x *GetIntegrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*GetIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{10}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetIntegrationResponse) GetIntegrations() []*Integration {
@@ -934,7 +989,7 @@ type Integration struct {
 func (x *Integration) Reset() {
 	*x = Integration{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[11]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -947,7 +1002,7 @@ func (x *Integration) String() string {
 func (*Integration) ProtoMessage() {}
 
 func (x *Integration) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[11]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -960,7 +1015,7 @@ func (x *Integration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Integration.ProtoReflect.Descriptor instead.
 func (*Integration) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{11}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Integration) GetId() string {
@@ -1026,7 +1081,7 @@ type DeviceIntegration struct {
 func (x *DeviceIntegration) Reset() {
 	*x = DeviceIntegration{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[12]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1039,7 +1094,7 @@ func (x *DeviceIntegration) String() string {
 func (*DeviceIntegration) ProtoMessage() {}
 
 func (x *DeviceIntegration) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[12]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1052,7 +1107,7 @@ func (x *DeviceIntegration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceIntegration.ProtoReflect.Descriptor instead.
 func (*DeviceIntegration) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{12}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DeviceIntegration) GetIntegration() *Integration {
@@ -1094,7 +1149,7 @@ type GetDeviceDefinitionIntegrationResponse struct {
 func (x *GetDeviceDefinitionIntegrationResponse) Reset() {
 	*x = GetDeviceDefinitionIntegrationResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[13]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1107,7 +1162,7 @@ func (x *GetDeviceDefinitionIntegrationResponse) String() string {
 func (*GetDeviceDefinitionIntegrationResponse) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionIntegrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[13]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1120,7 +1175,7 @@ func (x *GetDeviceDefinitionIntegrationResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GetDeviceDefinitionIntegrationResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionIntegrationResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{13}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetDeviceDefinitionIntegrationResponse) GetIntegrations() []*DeviceIntegration {
@@ -1141,7 +1196,7 @@ type GetDeviceDefinitionIntegrationRequest struct {
 func (x *GetDeviceDefinitionIntegrationRequest) Reset() {
 	*x = GetDeviceDefinitionIntegrationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[14]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1154,7 +1209,7 @@ func (x *GetDeviceDefinitionIntegrationRequest) String() string {
 func (*GetDeviceDefinitionIntegrationRequest) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[14]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1167,7 +1222,7 @@ func (x *GetDeviceDefinitionIntegrationRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use GetDeviceDefinitionIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{14}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetDeviceDefinitionIntegrationRequest) GetId() string {
@@ -1182,16 +1237,18 @@ type CreateDeviceDefinitionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Make   string `protobuf:"bytes,1,opt,name=make,proto3" json:"make,omitempty"`
-	Model  string `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
-	Year   int32  `protobuf:"varint,3,opt,name=year,proto3" json:"year,omitempty"`
-	Source string `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	Make             string                        `protobuf:"bytes,1,opt,name=make,proto3" json:"make,omitempty"`
+	Model            string                        `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	Year             int32                         `protobuf:"varint,3,opt,name=year,proto3" json:"year,omitempty"`
+	Source           string                        `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	DeviceTypeId     string                        `protobuf:"bytes,5,opt,name=device_type_id,json=deviceTypeId,proto3" json:"device_type_id,omitempty"`
+	DeviceAttributes []*DeviceTypeAttributeRequest `protobuf:"bytes,6,rep,name=device_attributes,json=deviceAttributes,proto3" json:"device_attributes,omitempty"`
 }
 
 func (x *CreateDeviceDefinitionRequest) Reset() {
 	*x = CreateDeviceDefinitionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[15]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1204,7 +1261,7 @@ func (x *CreateDeviceDefinitionRequest) String() string {
 func (*CreateDeviceDefinitionRequest) ProtoMessage() {}
 
 func (x *CreateDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[15]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1217,7 +1274,7 @@ func (x *CreateDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*CreateDeviceDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{15}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateDeviceDefinitionRequest) GetMake() string {
@@ -1248,6 +1305,20 @@ func (x *CreateDeviceDefinitionRequest) GetSource() string {
 	return ""
 }
 
+func (x *CreateDeviceDefinitionRequest) GetDeviceTypeId() string {
+	if x != nil {
+		return x.DeviceTypeId
+	}
+	return ""
+}
+
+func (x *CreateDeviceDefinitionRequest) GetDeviceAttributes() []*DeviceTypeAttributeRequest {
+	if x != nil {
+		return x.DeviceAttributes
+	}
+	return nil
+}
+
 type CreateDeviceIntegrationRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1261,7 +1332,7 @@ type CreateDeviceIntegrationRequest struct {
 func (x *CreateDeviceIntegrationRequest) Reset() {
 	*x = CreateDeviceIntegrationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[16]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1274,7 +1345,7 @@ func (x *CreateDeviceIntegrationRequest) String() string {
 func (*CreateDeviceIntegrationRequest) ProtoMessage() {}
 
 func (x *CreateDeviceIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[16]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1358,7 @@ func (x *CreateDeviceIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*CreateDeviceIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{16}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateDeviceIntegrationRequest) GetDeviceDefinitionId() string {
@@ -1322,7 +1393,7 @@ type BaseResponse struct {
 func (x *BaseResponse) Reset() {
 	*x = BaseResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[17]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1335,7 +1406,7 @@ func (x *BaseResponse) String() string {
 func (*BaseResponse) ProtoMessage() {}
 
 func (x *BaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[17]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1419,7 @@ func (x *BaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BaseResponse.ProtoReflect.Descriptor instead.
 func (*BaseResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{17}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *BaseResponse) GetId() string {
@@ -1375,12 +1446,14 @@ type UpdateDeviceDefinitionRequest struct {
 	DeviceStyles       []*UpdateDeviceDefinitionRequest_DeviceStyles       `protobuf:"bytes,9,rep,name=device_styles,json=deviceStyles,proto3" json:"device_styles,omitempty"`
 	DeviceIntegrations []*UpdateDeviceDefinitionRequest_DeviceIntegrations `protobuf:"bytes,10,rep,name=device_integrations,json=deviceIntegrations,proto3" json:"device_integrations,omitempty"`
 	ExternalId         string                                              `protobuf:"bytes,11,opt,name=external_id,json=externalId,proto3" json:"external_id,omitempty"`
+	DeviceTypeId       string                                              `protobuf:"bytes,12,opt,name=device_type_id,json=deviceTypeId,proto3" json:"device_type_id,omitempty"`
+	DeviceAttributes   []*DeviceTypeAttributeRequest                       `protobuf:"bytes,13,rep,name=device_attributes,json=deviceAttributes,proto3" json:"device_attributes,omitempty"`
 }
 
 func (x *UpdateDeviceDefinitionRequest) Reset() {
 	*x = UpdateDeviceDefinitionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[18]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1393,7 +1466,7 @@ func (x *UpdateDeviceDefinitionRequest) String() string {
 func (*UpdateDeviceDefinitionRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[18]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1406,7 +1479,7 @@ func (x *UpdateDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{18}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UpdateDeviceDefinitionRequest) GetDeviceDefinitionId() string {
@@ -1487,6 +1560,20 @@ func (x *UpdateDeviceDefinitionRequest) GetExternalId() string {
 	return ""
 }
 
+func (x *UpdateDeviceDefinitionRequest) GetDeviceTypeId() string {
+	if x != nil {
+		return x.DeviceTypeId
+	}
+	return ""
+}
+
+func (x *UpdateDeviceDefinitionRequest) GetDeviceAttributes() []*DeviceTypeAttributeRequest {
+	if x != nil {
+		return x.DeviceAttributes
+	}
+	return nil
+}
+
 type UpdateDeviceDefinitionImageRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1499,7 +1586,7 @@ type UpdateDeviceDefinitionImageRequest struct {
 func (x *UpdateDeviceDefinitionImageRequest) Reset() {
 	*x = UpdateDeviceDefinitionImageRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[19]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1512,7 +1599,7 @@ func (x *UpdateDeviceDefinitionImageRequest) String() string {
 func (*UpdateDeviceDefinitionImageRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceDefinitionImageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[19]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +1612,7 @@ func (x *UpdateDeviceDefinitionImageRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use UpdateDeviceDefinitionImageRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceDefinitionImageRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{19}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UpdateDeviceDefinitionImageRequest) GetDeviceDefinitionId() string {
@@ -1553,7 +1640,7 @@ type GetDeviceDefinitionAllResponse struct {
 func (x *GetDeviceDefinitionAllResponse) Reset() {
 	*x = GetDeviceDefinitionAllResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[20]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1566,7 +1653,7 @@ func (x *GetDeviceDefinitionAllResponse) String() string {
 func (*GetDeviceDefinitionAllResponse) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionAllResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[20]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1579,7 +1666,7 @@ func (x *GetDeviceDefinitionAllResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceDefinitionAllResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionAllResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{20}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetDeviceDefinitionAllResponse) GetItems() []*GetDeviceDefinitionAllItemResponse {
@@ -1601,7 +1688,7 @@ type GetDeviceDefinitionAllItemResponse struct {
 func (x *GetDeviceDefinitionAllItemResponse) Reset() {
 	*x = GetDeviceDefinitionAllItemResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[21]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1614,7 +1701,7 @@ func (x *GetDeviceDefinitionAllItemResponse) String() string {
 func (*GetDeviceDefinitionAllItemResponse) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionAllItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[21]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1627,7 +1714,7 @@ func (x *GetDeviceDefinitionAllItemResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetDeviceDefinitionAllItemResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionAllItemResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{21}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetDeviceDefinitionAllItemResponse) GetMake() string {
@@ -1662,7 +1749,7 @@ type FilterDeviceDefinitionRequest struct {
 func (x *FilterDeviceDefinitionRequest) Reset() {
 	*x = FilterDeviceDefinitionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[22]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1675,7 +1762,7 @@ func (x *FilterDeviceDefinitionRequest) String() string {
 func (*FilterDeviceDefinitionRequest) ProtoMessage() {}
 
 func (x *FilterDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[22]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1688,7 +1775,7 @@ func (x *FilterDeviceDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterDeviceDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*FilterDeviceDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{22}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *FilterDeviceDefinitionRequest) GetMakeId() string {
@@ -1758,7 +1845,7 @@ type GetFilteredDeviceDefinitionsResponse struct {
 func (x *GetFilteredDeviceDefinitionsResponse) Reset() {
 	*x = GetFilteredDeviceDefinitionsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[23]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1771,7 +1858,7 @@ func (x *GetFilteredDeviceDefinitionsResponse) String() string {
 func (*GetFilteredDeviceDefinitionsResponse) ProtoMessage() {}
 
 func (x *GetFilteredDeviceDefinitionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[23]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1784,7 +1871,7 @@ func (x *GetFilteredDeviceDefinitionsResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use GetFilteredDeviceDefinitionsResponse.ProtoReflect.Descriptor instead.
 func (*GetFilteredDeviceDefinitionsResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{23}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetFilteredDeviceDefinitionsResponse) GetItems() []*FilterDeviceDefinitionsReponse {
@@ -1816,7 +1903,7 @@ type FilterDeviceDefinitionsReponse struct {
 func (x *FilterDeviceDefinitionsReponse) Reset() {
 	*x = FilterDeviceDefinitionsReponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[24]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1829,7 +1916,7 @@ func (x *FilterDeviceDefinitionsReponse) String() string {
 func (*FilterDeviceDefinitionsReponse) ProtoMessage() {}
 
 func (x *FilterDeviceDefinitionsReponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[24]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1842,7 +1929,7 @@ func (x *FilterDeviceDefinitionsReponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterDeviceDefinitionsReponse.ProtoReflect.Descriptor instead.
 func (*FilterDeviceDefinitionsReponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{24}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *FilterDeviceDefinitionsReponse) GetId() string {
@@ -1944,7 +2031,7 @@ type CreateDeviceStyleRequest struct {
 func (x *CreateDeviceStyleRequest) Reset() {
 	*x = CreateDeviceStyleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[25]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1957,7 +2044,7 @@ func (x *CreateDeviceStyleRequest) String() string {
 func (*CreateDeviceStyleRequest) ProtoMessage() {}
 
 func (x *CreateDeviceStyleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[25]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1970,7 +2057,7 @@ func (x *CreateDeviceStyleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceStyleRequest.ProtoReflect.Descriptor instead.
 func (*CreateDeviceStyleRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{25}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CreateDeviceStyleRequest) GetDeviceDefinitionId() string {
@@ -2019,7 +2106,7 @@ type GetIntegrationRequest struct {
 func (x *GetIntegrationRequest) Reset() {
 	*x = GetIntegrationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[26]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2032,7 +2119,7 @@ func (x *GetIntegrationRequest) String() string {
 func (*GetIntegrationRequest) ProtoMessage() {}
 
 func (x *GetIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[26]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2045,7 +2132,7 @@ func (x *GetIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*GetIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{26}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GetIntegrationRequest) GetId() []string {
@@ -2066,7 +2153,7 @@ type CreateDeviceMakeRequest struct {
 func (x *CreateDeviceMakeRequest) Reset() {
 	*x = CreateDeviceMakeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[27]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2079,7 +2166,7 @@ func (x *CreateDeviceMakeRequest) String() string {
 func (*CreateDeviceMakeRequest) ProtoMessage() {}
 
 func (x *CreateDeviceMakeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[27]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2092,7 +2179,7 @@ func (x *CreateDeviceMakeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceMakeRequest.ProtoReflect.Descriptor instead.
 func (*CreateDeviceMakeRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{27}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *CreateDeviceMakeRequest) GetName() string {
@@ -2113,7 +2200,7 @@ type GetDeviceStyleByIDRequest struct {
 func (x *GetDeviceStyleByIDRequest) Reset() {
 	*x = GetDeviceStyleByIDRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[28]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2126,7 +2213,7 @@ func (x *GetDeviceStyleByIDRequest) String() string {
 func (*GetDeviceStyleByIDRequest) ProtoMessage() {}
 
 func (x *GetDeviceStyleByIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[28]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2139,7 +2226,7 @@ func (x *GetDeviceStyleByIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceStyleByIDRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceStyleByIDRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{28}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetDeviceStyleByIDRequest) GetId() string {
@@ -2162,7 +2249,7 @@ type GetDeviceCompatibilityListRequest struct {
 func (x *GetDeviceCompatibilityListRequest) Reset() {
 	*x = GetDeviceCompatibilityListRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[29]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2175,7 +2262,7 @@ func (x *GetDeviceCompatibilityListRequest) String() string {
 func (*GetDeviceCompatibilityListRequest) ProtoMessage() {}
 
 func (x *GetDeviceCompatibilityListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[29]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2188,7 +2275,7 @@ func (x *GetDeviceCompatibilityListRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetDeviceCompatibilityListRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceCompatibilityListRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{29}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetDeviceCompatibilityListRequest) GetMakeId() string {
@@ -2225,7 +2312,7 @@ type Feature struct {
 func (x *Feature) Reset() {
 	*x = Feature{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[30]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2238,7 +2325,7 @@ func (x *Feature) String() string {
 func (*Feature) ProtoMessage() {}
 
 func (x *Feature) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[30]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2251,7 +2338,7 @@ func (x *Feature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Feature.ProtoReflect.Descriptor instead.
 func (*Feature) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{30}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *Feature) GetKey() string {
@@ -2287,7 +2374,7 @@ type DeviceCompatibilities struct {
 func (x *DeviceCompatibilities) Reset() {
 	*x = DeviceCompatibilities{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[31]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2300,7 +2387,7 @@ func (x *DeviceCompatibilities) String() string {
 func (*DeviceCompatibilities) ProtoMessage() {}
 
 func (x *DeviceCompatibilities) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[31]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2313,7 +2400,7 @@ func (x *DeviceCompatibilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceCompatibilities.ProtoReflect.Descriptor instead.
 func (*DeviceCompatibilities) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{31}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DeviceCompatibilities) GetYear() int32 {
@@ -2342,7 +2429,7 @@ type DeviceCompatibilityList struct {
 func (x *DeviceCompatibilityList) Reset() {
 	*x = DeviceCompatibilityList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[32]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2355,7 +2442,7 @@ func (x *DeviceCompatibilityList) String() string {
 func (*DeviceCompatibilityList) ProtoMessage() {}
 
 func (x *DeviceCompatibilityList) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[32]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2368,7 +2455,7 @@ func (x *DeviceCompatibilityList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceCompatibilityList.ProtoReflect.Descriptor instead.
 func (*DeviceCompatibilityList) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{32}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeviceCompatibilityList) GetName() string {
@@ -2396,7 +2483,7 @@ type GetDeviceCompatibilityListResponse struct {
 func (x *GetDeviceCompatibilityListResponse) Reset() {
 	*x = GetDeviceCompatibilityListResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[33]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2409,7 +2496,7 @@ func (x *GetDeviceCompatibilityListResponse) String() string {
 func (*GetDeviceCompatibilityListResponse) ProtoMessage() {}
 
 func (x *GetDeviceCompatibilityListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[33]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2422,7 +2509,7 @@ func (x *GetDeviceCompatibilityListResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetDeviceCompatibilityListResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceCompatibilityListResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{33}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetDeviceCompatibilityListResponse) GetModels() []*DeviceCompatibilityList {
@@ -2443,7 +2530,7 @@ type GetDeviceStyleByDeviceDefinitionIDRequest struct {
 func (x *GetDeviceStyleByDeviceDefinitionIDRequest) Reset() {
 	*x = GetDeviceStyleByDeviceDefinitionIDRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[34]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2456,7 +2543,7 @@ func (x *GetDeviceStyleByDeviceDefinitionIDRequest) String() string {
 func (*GetDeviceStyleByDeviceDefinitionIDRequest) ProtoMessage() {}
 
 func (x *GetDeviceStyleByDeviceDefinitionIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[34]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2469,7 +2556,7 @@ func (x *GetDeviceStyleByDeviceDefinitionIDRequest) ProtoReflect() protoreflect.
 
 // Deprecated: Use GetDeviceStyleByDeviceDefinitionIDRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceStyleByDeviceDefinitionIDRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{34}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetDeviceStyleByDeviceDefinitionIDRequest) GetId() string {
@@ -2490,7 +2577,7 @@ type GetDeviceStyleResponse struct {
 func (x *GetDeviceStyleResponse) Reset() {
 	*x = GetDeviceStyleResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[35]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2503,7 +2590,7 @@ func (x *GetDeviceStyleResponse) String() string {
 func (*GetDeviceStyleResponse) ProtoMessage() {}
 
 func (x *GetDeviceStyleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[35]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2516,7 +2603,7 @@ func (x *GetDeviceStyleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceStyleResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceStyleResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{35}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetDeviceStyleResponse) GetDeviceStyles() []*DeviceStyle {
@@ -2539,7 +2626,7 @@ type CreateIntegrationRequest struct {
 func (x *CreateIntegrationRequest) Reset() {
 	*x = CreateIntegrationRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[36]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2552,7 +2639,7 @@ func (x *CreateIntegrationRequest) String() string {
 func (*CreateIntegrationRequest) ProtoMessage() {}
 
 func (x *CreateIntegrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[36]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2565,7 +2652,7 @@ func (x *CreateIntegrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIntegrationRequest.ProtoReflect.Descriptor instead.
 func (*CreateIntegrationRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{36}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *CreateIntegrationRequest) GetVendor() string {
@@ -2600,7 +2687,7 @@ type GetDeviceMakeByNameRequest struct {
 func (x *GetDeviceMakeByNameRequest) Reset() {
 	*x = GetDeviceMakeByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[37]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2613,7 +2700,7 @@ func (x *GetDeviceMakeByNameRequest) String() string {
 func (*GetDeviceMakeByNameRequest) ProtoMessage() {}
 
 func (x *GetDeviceMakeByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[37]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2626,7 +2713,7 @@ func (x *GetDeviceMakeByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceMakeByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceMakeByNameRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{37}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *GetDeviceMakeByNameRequest) GetName() string {
@@ -2647,7 +2734,7 @@ type GetDeviceMakeResponse struct {
 func (x *GetDeviceMakeResponse) Reset() {
 	*x = GetDeviceMakeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[38]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2660,7 +2747,7 @@ func (x *GetDeviceMakeResponse) String() string {
 func (*GetDeviceMakeResponse) ProtoMessage() {}
 
 func (x *GetDeviceMakeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[38]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2673,7 +2760,7 @@ func (x *GetDeviceMakeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceMakeResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceMakeResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{38}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *GetDeviceMakeResponse) GetDeviceMakes() []*DeviceMake {
@@ -2700,7 +2787,7 @@ type UpdateDeviceMakeRequest struct {
 func (x *UpdateDeviceMakeRequest) Reset() {
 	*x = UpdateDeviceMakeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[39]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2713,7 +2800,7 @@ func (x *UpdateDeviceMakeRequest) String() string {
 func (*UpdateDeviceMakeRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceMakeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[39]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2726,7 +2813,7 @@ func (x *UpdateDeviceMakeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceMakeRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceMakeRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{39}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *UpdateDeviceMakeRequest) GetId() string {
@@ -2794,7 +2881,7 @@ type UpdateDeviceStyleRequest struct {
 func (x *UpdateDeviceStyleRequest) Reset() {
 	*x = UpdateDeviceStyleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[40]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2807,7 +2894,7 @@ func (x *UpdateDeviceStyleRequest) String() string {
 func (*UpdateDeviceStyleRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceStyleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[40]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2820,7 +2907,7 @@ func (x *UpdateDeviceStyleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceStyleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceStyleRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{40}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *UpdateDeviceStyleRequest) GetId() string {
@@ -2879,7 +2966,7 @@ type GetDeviceStyleFilterRequest struct {
 func (x *GetDeviceStyleFilterRequest) Reset() {
 	*x = GetDeviceStyleFilterRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[41]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2892,7 +2979,7 @@ func (x *GetDeviceStyleFilterRequest) String() string {
 func (*GetDeviceStyleFilterRequest) ProtoMessage() {}
 
 func (x *GetDeviceStyleFilterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[41]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2905,7 +2992,7 @@ func (x *GetDeviceStyleFilterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceStyleFilterRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceStyleFilterRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{41}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *GetDeviceStyleFilterRequest) GetName() string {
@@ -2947,7 +3034,7 @@ type GetDeviceTypeByIDRequest struct {
 func (x *GetDeviceTypeByIDRequest) Reset() {
 	*x = GetDeviceTypeByIDRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[42]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2960,7 +3047,7 @@ func (x *GetDeviceTypeByIDRequest) String() string {
 func (*GetDeviceTypeByIDRequest) ProtoMessage() {}
 
 func (x *GetDeviceTypeByIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[42]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2973,7 +3060,7 @@ func (x *GetDeviceTypeByIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceTypeByIDRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceTypeByIDRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{42}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetDeviceTypeByIDRequest) GetId() string {
@@ -2996,7 +3083,7 @@ type GetDeviceTypeResponse struct {
 func (x *GetDeviceTypeResponse) Reset() {
 	*x = GetDeviceTypeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[43]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3009,7 +3096,7 @@ func (x *GetDeviceTypeResponse) String() string {
 func (*GetDeviceTypeResponse) ProtoMessage() {}
 
 func (x *GetDeviceTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[43]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3022,7 +3109,7 @@ func (x *GetDeviceTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceTypeResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceTypeResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{43}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetDeviceTypeResponse) GetId() string {
@@ -3060,7 +3147,7 @@ type Integration_AutoPiPowertrainTemplate struct {
 func (x *Integration_AutoPiPowertrainTemplate) Reset() {
 	*x = Integration_AutoPiPowertrainTemplate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[44]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3073,7 +3160,7 @@ func (x *Integration_AutoPiPowertrainTemplate) String() string {
 func (*Integration_AutoPiPowertrainTemplate) ProtoMessage() {}
 
 func (x *Integration_AutoPiPowertrainTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[44]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3086,7 +3173,7 @@ func (x *Integration_AutoPiPowertrainTemplate) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use Integration_AutoPiPowertrainTemplate.ProtoReflect.Descriptor instead.
 func (*Integration_AutoPiPowertrainTemplate) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{11, 0}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{12, 0}
 }
 
 func (x *Integration_AutoPiPowertrainTemplate) GetBEV() int32 {
@@ -3134,7 +3221,7 @@ type UpdateDeviceDefinitionRequest_DeviceStyles struct {
 func (x *UpdateDeviceDefinitionRequest_DeviceStyles) Reset() {
 	*x = UpdateDeviceDefinitionRequest_DeviceStyles{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[45]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3147,7 +3234,7 @@ func (x *UpdateDeviceDefinitionRequest_DeviceStyles) String() string {
 func (*UpdateDeviceDefinitionRequest_DeviceStyles) ProtoMessage() {}
 
 func (x *UpdateDeviceDefinitionRequest_DeviceStyles) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[45]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3160,7 +3247,7 @@ func (x *UpdateDeviceDefinitionRequest_DeviceStyles) ProtoReflect() protoreflect
 
 // Deprecated: Use UpdateDeviceDefinitionRequest_DeviceStyles.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceDefinitionRequest_DeviceStyles) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{18, 0}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{19, 0}
 }
 
 func (x *UpdateDeviceDefinitionRequest_DeviceStyles) GetId() string {
@@ -3227,7 +3314,7 @@ type UpdateDeviceDefinitionRequest_DeviceIntegrations struct {
 func (x *UpdateDeviceDefinitionRequest_DeviceIntegrations) Reset() {
 	*x = UpdateDeviceDefinitionRequest_DeviceIntegrations{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[46]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[47]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3240,7 +3327,7 @@ func (x *UpdateDeviceDefinitionRequest_DeviceIntegrations) String() string {
 func (*UpdateDeviceDefinitionRequest_DeviceIntegrations) ProtoMessage() {}
 
 func (x *UpdateDeviceDefinitionRequest_DeviceIntegrations) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[46]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[47]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3253,7 +3340,7 @@ func (x *UpdateDeviceDefinitionRequest_DeviceIntegrations) ProtoReflect() protor
 
 // Deprecated: Use UpdateDeviceDefinitionRequest_DeviceIntegrations.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceDefinitionRequest_DeviceIntegrations) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{18, 1}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{19, 1}
 }
 
 func (x *UpdateDeviceDefinitionRequest_DeviceIntegrations) GetIntegrationId() string {
@@ -3303,7 +3390,7 @@ type GetDeviceDefinitionAllItemResponse_GetDeviceModels struct {
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModels) Reset() {
 	*x = GetDeviceDefinitionAllItemResponse_GetDeviceModels{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[47]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[48]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3316,7 +3403,7 @@ func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModels) String() string {
 func (*GetDeviceDefinitionAllItemResponse_GetDeviceModels) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModels) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[47]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[48]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3329,7 +3416,7 @@ func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModels) ProtoReflect() prot
 
 // Deprecated: Use GetDeviceDefinitionAllItemResponse_GetDeviceModels.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionAllItemResponse_GetDeviceModels) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{21, 0}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{22, 0}
 }
 
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModels) GetModel() string {
@@ -3358,7 +3445,7 @@ type GetDeviceDefinitionAllItemResponse_GetDeviceModelYears struct {
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) Reset() {
 	*x = GetDeviceDefinitionAllItemResponse_GetDeviceModelYears{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_pkg_grpc_device_definition_proto_msgTypes[48]
+		mi := &file_pkg_grpc_device_definition_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3371,7 +3458,7 @@ func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) String() string
 func (*GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) ProtoMessage() {}
 
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_device_definition_proto_msgTypes[48]
+	mi := &file_pkg_grpc_device_definition_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3384,7 +3471,7 @@ func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) ProtoReflect() 
 
 // Deprecated: Use GetDeviceDefinitionAllItemResponse_GetDeviceModelYears.ProtoReflect.Descriptor instead.
 func (*GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{21, 1}
+	return file_pkg_grpc_device_definition_proto_rawDescGZIP(), []int{22, 1}
 }
 
 func (x *GetDeviceDefinitionAllItemResponse_GetDeviceModelYears) GetYear() int32 {
@@ -3420,7 +3507,7 @@ var file_pkg_grpc_device_definition_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x25, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69,
 	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x74, 0x65, 0x6d,
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x11, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65,
-	0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x9c, 0x04, 0x0a, 0x1f,
+	0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xa9, 0x04, 0x0a, 0x1f,
 	0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
 	0x69, 0x6f, 0x6e, 0x49, 0x74, 0x65, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
 	0x30, 0x0a, 0x14, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69,
@@ -3451,199 +3538,219 @@ var file_pkg_grpc_device_definition_proto_rawDesc = []byte{
 	0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1f,
 	0x0a, 0x0b, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x0b, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x49, 0x64, 0x12,
-	0x39, 0x0a, 0x0a, 0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, 0x18, 0x0c, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63,
-	0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x52, 0x0a,
-	0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, 0x22, 0xe5, 0x01, 0x0a, 0x13, 0x44,
-	0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75,
-	0x74, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04,
-	0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65,
-	0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x18, 0x04, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x08, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x12, 0x22, 0x0a, 0x0c,
-	0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0c, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65,
-	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18,
-	0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
-	0x6f, 0x6e, 0x22, 0xb9, 0x01, 0x0a, 0x0a, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64,
-	0x65, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12,
-	0x12, 0x0a, 0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x79,
-	0x65, 0x61, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x75, 0x62, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
-	0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x73, 0x75, 0x62, 0x4d, 0x6f, 0x64, 0x65,
-	0x6c, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x6d, 0x61, 0x6b, 0x65, 0x5f, 0x73, 0x6c, 0x75, 0x67, 0x18,
-	0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6d, 0x61, 0x6b, 0x65, 0x53, 0x6c, 0x75, 0x67, 0x12,
-	0x1d, 0x0a, 0x0a, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x73, 0x6c, 0x75, 0x67, 0x18, 0x07, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x53, 0x6c, 0x75, 0x67, 0x22, 0xc4,
-	0x01, 0x0a, 0x0b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x79, 0x6c, 0x65, 0x12, 0x0e,
-	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x16,
-	0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x75,
-	0x62, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73,
-	0x75, 0x62, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x30, 0x0a, 0x14, 0x64, 0x65, 0x76, 0x69, 0x63,
-	0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66,
-	0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x2a, 0x0a, 0x11, 0x65, 0x78, 0x74,
-	0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x53, 0x74,
-	0x79, 0x6c, 0x65, 0x49, 0x64, 0x22, 0xd2, 0x01, 0x0a, 0x0a, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
-	0x4d, 0x61, 0x6b, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x6c, 0x6f, 0x67, 0x6f,
-	0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6c, 0x6f, 0x67, 0x6f,
-	0x55, 0x72, 0x6c, 0x12, 0x2a, 0x0a, 0x11, 0x6f, 0x65, 0x6d, 0x5f, 0x70, 0x6c, 0x61, 0x74, 0x66,
-	0x6f, 0x72, 0x6d, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f,
-	0x6f, 0x65, 0x6d, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x12,
-	0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x04, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x1b, 0x0a, 0x09, 0x6e, 0x61,
-	0x6d, 0x65, 0x5f, 0x73, 0x6c, 0x75, 0x67, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6e,
-	0x61, 0x6d, 0x65, 0x53, 0x6c, 0x75, 0x67, 0x12, 0x21, 0x0a, 0x0c, 0x65, 0x78, 0x74, 0x65, 0x72,
-	0x6e, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x65,
-	0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x49, 0x64, 0x73, 0x22, 0xd7, 0x02, 0x0a, 0x0b, 0x56,
-	0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1b, 0x0a, 0x09, 0x66, 0x75,
-	0x65, 0x6c, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x66,
-	0x75, 0x65, 0x6c, 0x54, 0x79, 0x70, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x72, 0x69, 0x76, 0x65,
-	0x6e, 0x5f, 0x77, 0x68, 0x65, 0x65, 0x6c, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c,
-	0x64, 0x72, 0x69, 0x76, 0x65, 0x6e, 0x57, 0x68, 0x65, 0x65, 0x6c, 0x73, 0x12, 0x26, 0x0a, 0x0f,
-	0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x5f, 0x6f, 0x66, 0x5f, 0x64, 0x6f, 0x6f, 0x72, 0x73, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x44,
-	0x6f, 0x6f, 0x72, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x4d, 0x53, 0x52,
-	0x50, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x62, 0x61, 0x73, 0x65, 0x4d, 0x53, 0x52,
-	0x50, 0x12, 0x1b, 0x0a, 0x09, 0x45, 0x50, 0x41, 0x5f, 0x63, 0x6c, 0x61, 0x73, 0x73, 0x18, 0x05,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x45, 0x50, 0x41, 0x43, 0x6c, 0x61, 0x73, 0x73, 0x12, 0x21,
-	0x0a, 0x0c, 0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x4d, 0x50, 0x47, 0x5f, 0x68, 0x69, 0x67, 0x68, 0x77, 0x61, 0x79,
-	0x18, 0x07, 0x20, 0x01, 0x28, 0x02, 0x52, 0x0a, 0x4d, 0x50, 0x47, 0x48, 0x69, 0x67, 0x68, 0x77,
-	0x61, 0x79, 0x12, 0x19, 0x0a, 0x08, 0x4d, 0x50, 0x47, 0x5f, 0x63, 0x69, 0x74, 0x79, 0x18, 0x08,
-	0x20, 0x01, 0x28, 0x02, 0x52, 0x07, 0x4d, 0x50, 0x47, 0x43, 0x69, 0x74, 0x79, 0x12, 0x33, 0x0a,
-	0x16, 0x66, 0x75, 0x65, 0x6c, 0x5f, 0x74, 0x61, 0x6e, 0x6b, 0x5f, 0x63, 0x61, 0x70, 0x61, 0x63,
-	0x69, 0x74, 0x79, 0x5f, 0x67, 0x61, 0x6c, 0x18, 0x09, 0x20, 0x01, 0x28, 0x02, 0x52, 0x13, 0x66,
-	0x75, 0x65, 0x6c, 0x54, 0x61, 0x6e, 0x6b, 0x43, 0x61, 0x70, 0x61, 0x63, 0x69, 0x74, 0x79, 0x47,
-	0x61, 0x6c, 0x12, 0x10, 0x0a, 0x03, 0x4d, 0x50, 0x47, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x02, 0x52,
-	0x03, 0x4d, 0x50, 0x47, 0x22, 0x77, 0x0a, 0x1f, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63,
-	0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x79, 0x4d, 0x4d, 0x59,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6d,
-	0x61, 0x6b, 0x65, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x61, 0x6b,
-	0x65, 0x49, 0x44, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x79, 0x65, 0x61,
-	0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x79, 0x65, 0x61, 0x72, 0x22, 0x3c, 0x0a,
-	0x22, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69,
-	0x74, 0x69, 0x6f, 0x6e, 0x42, 0x79, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0x4f, 0x0a, 0x16, 0x47,
-	0x65, 0x74, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x0c, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x72,
-	0x70, 0x63, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c,
-	0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x9c, 0x03, 0x0a,
-	0x0b, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04,
-	0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65,
-	0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x05, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x76, 0x65, 0x6e, 0x64, 0x6f, 0x72,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x76, 0x65, 0x6e, 0x64, 0x6f, 0x72, 0x12, 0x3c,
-	0x0a, 0x1b, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x70, 0x69, 0x5f, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c,
-	0x74, 0x5f, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x05, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x17, 0x61, 0x75, 0x74, 0x6f, 0x50, 0x69, 0x44, 0x65, 0x66, 0x61, 0x75,
-	0x6c, 0x74, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x49, 0x64, 0x12, 0x69, 0x0a, 0x1b,
-	0x61, 0x75, 0x74, 0x6f, 0x5f, 0x70, 0x69, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x74, 0x72, 0x61,
-	0x69, 0x6e, 0x5f, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x75, 0x74, 0x6f, 0x50, 0x69, 0x50, 0x6f, 0x77, 0x65, 0x72,
-	0x74, 0x72, 0x61, 0x69, 0x6e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x52, 0x18, 0x61,
-	0x75, 0x74, 0x6f, 0x50, 0x69, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x54,
-	0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x12, 0x2c, 0x0a, 0x12, 0x72, 0x65, 0x66, 0x72, 0x65,
-	0x73, 0x68, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x5f, 0x73, 0x65, 0x63, 0x73, 0x18, 0x07, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x10, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x4c, 0x69, 0x6d, 0x69,
-	0x74, 0x53, 0x65, 0x63, 0x73, 0x1a, 0x64, 0x0a, 0x18, 0x41, 0x75, 0x74, 0x6f, 0x50, 0x69, 0x50,
-	0x6f, 0x77, 0x65, 0x72, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74,
-	0x65, 0x12, 0x10, 0x0a, 0x03, 0x42, 0x45, 0x56, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03,
-	0x42, 0x45, 0x56, 0x12, 0x10, 0x0a, 0x03, 0x48, 0x45, 0x56, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x03, 0x48, 0x45, 0x56, 0x12, 0x10, 0x0a, 0x03, 0x49, 0x43, 0x45, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x03, 0x49, 0x43, 0x45, 0x12, 0x12, 0x0a, 0x04, 0x50, 0x48, 0x45, 0x56, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x50, 0x48, 0x45, 0x56, 0x22, 0xb4, 0x01, 0x0a, 0x11,
-	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x12, 0x33, 0x0a, 0x0b, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6e,
-	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0b, 0x69, 0x6e, 0x74, 0x65, 0x67,
-	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12, 0x22,
-	0x0a, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69,
-	0x65, 0x73, 0x12, 0x2e, 0x0a, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69,
-	0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12,
-	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x49, 0x64, 0x22, 0x65, 0x0a, 0x26, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
-	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x0c,
-	0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
-	0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x69, 0x6e, 0x74,
-	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x37, 0x0a, 0x25, 0x47, 0x65, 0x74,
-	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
-	0x69, 0x64, 0x22, 0x75, 0x0a, 0x1d, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69,
-	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x12, 0x0a,
-	0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x79, 0x65, 0x61,
-	0x72, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0x91, 0x01, 0x0a, 0x1e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x30, 0x0a, 0x14,
+	0x46, 0x0a, 0x11, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x61, 0x74, 0x74, 0x72, 0x69, 0x62,
+	0x75, 0x74, 0x65, 0x73, 0x18, 0x0c, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x72, 0x70,
+	0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74, 0x72,
+	0x69, 0x62, 0x75, 0x74, 0x65, 0x52, 0x10, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x41, 0x74, 0x74,
+	0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, 0x22, 0xe5, 0x01, 0x0a, 0x13, 0x44, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x05, 0x6c, 0x61, 0x62, 0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70,
+	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a,
+	0x08, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x08, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x12, 0x22, 0x0a, 0x0c, 0x64, 0x65, 0x66,
+	0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0c, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x14, 0x0a,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x07,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x20, 0x0a,
+	0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x08, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22,
+	0x46, 0x0a, 0x1a, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74,
+	0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0xb9, 0x01, 0x0a, 0x0a, 0x44, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61,
+	0x6b, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x12, 0x14,
+	0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d,
+	0x6f, 0x64, 0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x04, 0x79, 0x65, 0x61, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x75, 0x62, 0x5f,
+	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x73, 0x75,
+	0x62, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x6d, 0x61, 0x6b, 0x65, 0x5f,
+	0x73, 0x6c, 0x75, 0x67, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6d, 0x61, 0x6b, 0x65,
+	0x53, 0x6c, 0x75, 0x67, 0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x5f, 0x73, 0x6c,
+	0x75, 0x67, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x53,
+	0x6c, 0x75, 0x67, 0x22, 0xc4, 0x01, 0x0a, 0x0b, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74,
+	0x79, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x02, 0x69, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x1b, 0x0a, 0x09, 0x73, 0x75, 0x62, 0x5f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x73, 0x75, 0x62, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x30, 0x0a, 0x14,
 	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f,
-	0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69,
-	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x25,
-	0x0a, 0x0e, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x22, 0x1e, 0x0a,
-	0x0c, 0x42, 0x61, 0x73, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x89, 0x08,
-	0x0a, 0x1d, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65,
-	0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x30, 0x0a, 0x14, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69,
-	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64,
-	0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49,
-	0x64, 0x12, 0x38, 0x0a, 0x0c, 0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x5f, 0x64, 0x61, 0x74,
-	0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x56,
-	0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x02, 0x18, 0x01, 0x52, 0x0b,
-	0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x44, 0x61, 0x74, 0x61, 0x12, 0x16, 0x0a, 0x06, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c,
-	0x12, 0x1a, 0x0a, 0x08, 0x76, 0x65, 0x72, 0x69, 0x66, 0x69, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x08, 0x76, 0x65, 0x72, 0x69, 0x66, 0x69, 0x65, 0x64, 0x12, 0x14, 0x0a, 0x05,
-	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64,
-	0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x07, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x04, 0x79, 0x65, 0x61, 0x72, 0x12, 0x24, 0x0a, 0x0e, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65,
-	0x5f, 0x6d, 0x61, 0x6b, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c,
-	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4d, 0x61, 0x6b, 0x65, 0x49, 0x64, 0x12, 0x55, 0x0a, 0x0d,
-	0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x73, 0x18, 0x09, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x30, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f,
-	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53,
-	0x74, 0x79, 0x6c, 0x65, 0x73, 0x52, 0x0c, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x79,
-	0x6c, 0x65, 0x73, 0x12, 0x67, 0x0a, 0x13, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x69, 0x6e,
-	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x0a, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x36, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x65,
-	0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65,
-	0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65,
-	0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1f, 0x0a, 0x0b,
-	0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x0b, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0a, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x49, 0x64, 0x1a, 0x89, 0x02,
+	0x6e, 0x5f, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x2a,
+	0x0a, 0x11, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x73, 0x74, 0x79, 0x6c, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x65, 0x78, 0x74, 0x65, 0x72,
+	0x6e, 0x61, 0x6c, 0x53, 0x74, 0x79, 0x6c, 0x65, 0x49, 0x64, 0x22, 0xd2, 0x01, 0x0a, 0x0a, 0x44,
+	0x65, 0x76, 0x69, 0x63, 0x65, 0x4d, 0x61, 0x6b, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a,
+	0x08, 0x6c, 0x6f, 0x67, 0x6f, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x6c, 0x6f, 0x67, 0x6f, 0x55, 0x72, 0x6c, 0x12, 0x2a, 0x0a, 0x11, 0x6f, 0x65, 0x6d, 0x5f,
+	0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0f, 0x6f, 0x65, 0x6d, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d,
+	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12,
+	0x1b, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x5f, 0x73, 0x6c, 0x75, 0x67, 0x18, 0x06, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x6e, 0x61, 0x6d, 0x65, 0x53, 0x6c, 0x75, 0x67, 0x12, 0x21, 0x0a, 0x0c,
+	0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x07, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x49, 0x64, 0x73, 0x22,
+	0xd7, 0x02, 0x0a, 0x0b, 0x56, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12,
+	0x1b, 0x0a, 0x09, 0x66, 0x75, 0x65, 0x6c, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x66, 0x75, 0x65, 0x6c, 0x54, 0x79, 0x70, 0x65, 0x12, 0x23, 0x0a, 0x0d,
+	0x64, 0x72, 0x69, 0x76, 0x65, 0x6e, 0x5f, 0x77, 0x68, 0x65, 0x65, 0x6c, 0x73, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x72, 0x69, 0x76, 0x65, 0x6e, 0x57, 0x68, 0x65, 0x65, 0x6c,
+	0x73, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x5f, 0x6f, 0x66, 0x5f, 0x64,
+	0x6f, 0x6f, 0x72, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x6e, 0x75, 0x6d, 0x62,
+	0x65, 0x72, 0x4f, 0x66, 0x44, 0x6f, 0x6f, 0x72, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x62, 0x61, 0x73,
+	0x65, 0x5f, 0x4d, 0x53, 0x52, 0x50, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x62, 0x61,
+	0x73, 0x65, 0x4d, 0x53, 0x52, 0x50, 0x12, 0x1b, 0x0a, 0x09, 0x45, 0x50, 0x41, 0x5f, 0x63, 0x6c,
+	0x61, 0x73, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x45, 0x50, 0x41, 0x43, 0x6c,
+	0x61, 0x73, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x5f, 0x74,
+	0x79, 0x70, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x76, 0x65, 0x68, 0x69, 0x63,
+	0x6c, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x4d, 0x50, 0x47, 0x5f, 0x68, 0x69,
+	0x67, 0x68, 0x77, 0x61, 0x79, 0x18, 0x07, 0x20, 0x01, 0x28, 0x02, 0x52, 0x0a, 0x4d, 0x50, 0x47,
+	0x48, 0x69, 0x67, 0x68, 0x77, 0x61, 0x79, 0x12, 0x19, 0x0a, 0x08, 0x4d, 0x50, 0x47, 0x5f, 0x63,
+	0x69, 0x74, 0x79, 0x18, 0x08, 0x20, 0x01, 0x28, 0x02, 0x52, 0x07, 0x4d, 0x50, 0x47, 0x43, 0x69,
+	0x74, 0x79, 0x12, 0x33, 0x0a, 0x16, 0x66, 0x75, 0x65, 0x6c, 0x5f, 0x74, 0x61, 0x6e, 0x6b, 0x5f,
+	0x63, 0x61, 0x70, 0x61, 0x63, 0x69, 0x74, 0x79, 0x5f, 0x67, 0x61, 0x6c, 0x18, 0x09, 0x20, 0x01,
+	0x28, 0x02, 0x52, 0x13, 0x66, 0x75, 0x65, 0x6c, 0x54, 0x61, 0x6e, 0x6b, 0x43, 0x61, 0x70, 0x61,
+	0x63, 0x69, 0x74, 0x79, 0x47, 0x61, 0x6c, 0x12, 0x10, 0x0a, 0x03, 0x4d, 0x50, 0x47, 0x18, 0x0a,
+	0x20, 0x01, 0x28, 0x02, 0x52, 0x03, 0x4d, 0x50, 0x47, 0x22, 0x77, 0x0a, 0x1f, 0x47, 0x65, 0x74,
+	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x42, 0x79, 0x4d, 0x4d, 0x59, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04,
+	0x6d, 0x61, 0x6b, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65,
+	0x12, 0x16, 0x0a, 0x06, 0x6d, 0x61, 0x6b, 0x65, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x6d, 0x61, 0x6b, 0x65, 0x49, 0x44, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x12,
+	0x0a, 0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x79, 0x65,
+	0x61, 0x72, 0x22, 0x3c, 0x0a, 0x22, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
+	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x79, 0x53, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x22, 0x4f, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x0c, 0x69, 0x6e,
+	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x11, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x22, 0x9c, 0x03, 0x0a, 0x0b, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69,
+	0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x76,
+	0x65, 0x6e, 0x64, 0x6f, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x76, 0x65, 0x6e,
+	0x64, 0x6f, 0x72, 0x12, 0x3c, 0x0a, 0x1b, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x70, 0x69, 0x5f, 0x64,
+	0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x5f,
+	0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x17, 0x61, 0x75, 0x74, 0x6f, 0x50, 0x69,
+	0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x49,
+	0x64, 0x12, 0x69, 0x0a, 0x1b, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x70, 0x69, 0x5f, 0x70, 0x6f, 0x77,
+	0x65, 0x72, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x5f, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x49, 0x6e,
+	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x41, 0x75, 0x74, 0x6f, 0x50, 0x69,
+	0x50, 0x6f, 0x77, 0x65, 0x72, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61,
+	0x74, 0x65, 0x52, 0x18, 0x61, 0x75, 0x74, 0x6f, 0x50, 0x69, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x74,
+	0x72, 0x61, 0x69, 0x6e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x12, 0x2c, 0x0a, 0x12,
+	0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x5f, 0x73, 0x65,
+	0x63, 0x73, 0x18, 0x07, 0x20, 0x01, 0x28, 0x05, 0x52, 0x10, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73,
+	0x68, 0x4c, 0x69, 0x6d, 0x69, 0x74, 0x53, 0x65, 0x63, 0x73, 0x1a, 0x64, 0x0a, 0x18, 0x41, 0x75,
+	0x74, 0x6f, 0x50, 0x69, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x54, 0x65,
+	0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x42, 0x45, 0x56, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x03, 0x42, 0x45, 0x56, 0x12, 0x10, 0x0a, 0x03, 0x48, 0x45, 0x56, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x48, 0x45, 0x56, 0x12, 0x10, 0x0a, 0x03, 0x49, 0x43,
+	0x45, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x49, 0x43, 0x45, 0x12, 0x12, 0x0a, 0x04,
+	0x50, 0x48, 0x45, 0x56, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x50, 0x48, 0x45, 0x56,
+	0x22, 0xb4, 0x01, 0x0a, 0x11, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x33, 0x0a, 0x0b, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x72,
+	0x70, 0x63, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0b,
+	0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x72,
+	0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67,
+	0x69, 0x6f, 0x6e, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74,
+	0x69, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62,
+	0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x12, 0x2e, 0x0a, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63,
+	0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x22, 0x65, 0x0a, 0x26, 0x47, 0x65, 0x74, 0x44, 0x65,
+	0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e,
+	0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x3b, 0x0a, 0x0c, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44,
+	0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x0c, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x37,
+	0x0a, 0x25, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0xea, 0x01, 0x0a, 0x1d, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61, 0x6b,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x61, 0x6b, 0x65, 0x12, 0x14, 0x0a,
+	0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f,
+	0x64, 0x65, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x04, 0x79, 0x65, 0x61, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
+	0x24, 0x0a, 0x0e, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54,
+	0x79, 0x70, 0x65, 0x49, 0x64, 0x12, 0x4d, 0x0a, 0x11, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f,
+	0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x20, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79,
+	0x70, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x52, 0x10, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
+	0x75, 0x74, 0x65, 0x73, 0x22, 0x91, 0x01, 0x0a, 0x1e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x44,
+	0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x30, 0x0a, 0x14, 0x64, 0x65, 0x76, 0x69, 0x63,
+	0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66,
+	0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x69, 0x6e, 0x74,
+	0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0d, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64,
+	0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x22, 0x1e, 0x0a, 0x0c, 0x42, 0x61, 0x73, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0xfe, 0x08, 0x0a, 0x1d, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x30, 0x0a, 0x14, 0x64, 0x65,
+	0x76, 0x69, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65,
+	0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x0c,
+	0x76, 0x65, 0x68, 0x69, 0x63, 0x6c, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x56, 0x65, 0x68, 0x69, 0x63, 0x6c,
+	0x65, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x02, 0x18, 0x01, 0x52, 0x0b, 0x76, 0x65, 0x68, 0x69, 0x63,
+	0x6c, 0x65, 0x44, 0x61, 0x74, 0x61, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1b,
+	0x0a, 0x09, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x76,
+	0x65, 0x72, 0x69, 0x66, 0x69, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x76,
+	0x65, 0x72, 0x69, 0x66, 0x69, 0x65, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x12, 0x0a,
+	0x04, 0x79, 0x65, 0x61, 0x72, 0x18, 0x07, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x79, 0x65, 0x61,
+	0x72, 0x12, 0x24, 0x0a, 0x0e, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x6d, 0x61, 0x6b, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x65, 0x76, 0x69, 0x63,
+	0x65, 0x4d, 0x61, 0x6b, 0x65, 0x49, 0x64, 0x12, 0x55, 0x0a, 0x0d, 0x64, 0x65, 0x76, 0x69, 0x63,
+	0x65, 0x5f, 0x73, 0x74, 0x79, 0x6c, 0x65, 0x73, 0x18, 0x09, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x30,
+	0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x79, 0x6c, 0x65, 0x73,
+	0x52, 0x0c, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x79, 0x6c, 0x65, 0x73, 0x12, 0x67,
+	0x0a, 0x13, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x0a, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x36, 0x2e, 0x67, 0x72,
+	0x70, 0x63, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
+	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x52, 0x12, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x6e, 0x74, 0x65, 0x67,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x74, 0x65, 0x72,
+	0x6e, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78,
+	0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x49, 0x64, 0x12, 0x24, 0x0a, 0x0e, 0x64, 0x65, 0x76, 0x69,
+	0x63, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0c, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x12, 0x4d,
+	0x0a, 0x11, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75,
+	0x74, 0x65, 0x73, 0x18, 0x0d, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x67, 0x72, 0x70, 0x63,
+	0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69,
+	0x62, 0x75, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x10, 0x64, 0x65, 0x76,
+	0x69, 0x63, 0x65, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, 0x1a, 0x89, 0x02,
 	0x0a, 0x0c, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x79, 0x6c, 0x65, 0x73, 0x12, 0x0e,
 	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12,
 	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
@@ -4048,148 +4155,151 @@ func file_pkg_grpc_device_definition_proto_rawDescGZIP() []byte {
 	return file_pkg_grpc_device_definition_proto_rawDescData
 }
 
-var file_pkg_grpc_device_definition_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
+var file_pkg_grpc_device_definition_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
 var file_pkg_grpc_device_definition_proto_goTypes = []interface{}{
 	(*GetDeviceDefinitionRequest)(nil),                             // 0: grpc.GetDeviceDefinitionRequest
 	(*GetDeviceDefinitionResponse)(nil),                            // 1: grpc.GetDeviceDefinitionResponse
 	(*GetDeviceDefinitionItemResponse)(nil),                        // 2: grpc.GetDeviceDefinitionItemResponse
 	(*DeviceTypeAttribute)(nil),                                    // 3: grpc.DeviceTypeAttribute
-	(*DeviceType)(nil),                                             // 4: grpc.DeviceType
-	(*DeviceStyle)(nil),                                            // 5: grpc.DeviceStyle
-	(*DeviceMake)(nil),                                             // 6: grpc.DeviceMake
-	(*VehicleInfo)(nil),                                            // 7: grpc.VehicleInfo
-	(*GetDeviceDefinitionByMMYRequest)(nil),                        // 8: grpc.GetDeviceDefinitionByMMYRequest
-	(*GetDeviceDefinitionBySourceRequest)(nil),                     // 9: grpc.GetDeviceDefinitionBySourceRequest
-	(*GetIntegrationResponse)(nil),                                 // 10: grpc.GetIntegrationResponse
-	(*Integration)(nil),                                            // 11: grpc.Integration
-	(*DeviceIntegration)(nil),                                      // 12: grpc.DeviceIntegration
-	(*GetDeviceDefinitionIntegrationResponse)(nil),                 // 13: grpc.GetDeviceDefinitionIntegrationResponse
-	(*GetDeviceDefinitionIntegrationRequest)(nil),                  // 14: grpc.GetDeviceDefinitionIntegrationRequest
-	(*CreateDeviceDefinitionRequest)(nil),                          // 15: grpc.CreateDeviceDefinitionRequest
-	(*CreateDeviceIntegrationRequest)(nil),                         // 16: grpc.CreateDeviceIntegrationRequest
-	(*BaseResponse)(nil),                                           // 17: grpc.BaseResponse
-	(*UpdateDeviceDefinitionRequest)(nil),                          // 18: grpc.UpdateDeviceDefinitionRequest
-	(*UpdateDeviceDefinitionImageRequest)(nil),                     // 19: grpc.UpdateDeviceDefinitionImageRequest
-	(*GetDeviceDefinitionAllResponse)(nil),                         // 20: grpc.GetDeviceDefinitionAllResponse
-	(*GetDeviceDefinitionAllItemResponse)(nil),                     // 21: grpc.GetDeviceDefinitionAllItemResponse
-	(*FilterDeviceDefinitionRequest)(nil),                          // 22: grpc.FilterDeviceDefinitionRequest
-	(*GetFilteredDeviceDefinitionsResponse)(nil),                   // 23: grpc.GetFilteredDeviceDefinitionsResponse
-	(*FilterDeviceDefinitionsReponse)(nil),                         // 24: grpc.FilterDeviceDefinitionsReponse
-	(*CreateDeviceStyleRequest)(nil),                               // 25: grpc.CreateDeviceStyleRequest
-	(*GetIntegrationRequest)(nil),                                  // 26: grpc.GetIntegrationRequest
-	(*CreateDeviceMakeRequest)(nil),                                // 27: grpc.CreateDeviceMakeRequest
-	(*GetDeviceStyleByIDRequest)(nil),                              // 28: grpc.GetDeviceStyleByIDRequest
-	(*GetDeviceCompatibilityListRequest)(nil),                      // 29: grpc.GetDeviceCompatibilityListRequest
-	(*Feature)(nil),                                                // 30: grpc.Feature
-	(*DeviceCompatibilities)(nil),                                  // 31: grpc.DeviceCompatibilities
-	(*DeviceCompatibilityList)(nil),                                // 32: grpc.DeviceCompatibilityList
-	(*GetDeviceCompatibilityListResponse)(nil),                     // 33: grpc.GetDeviceCompatibilityListResponse
-	(*GetDeviceStyleByDeviceDefinitionIDRequest)(nil),              // 34: grpc.GetDeviceStyleByDeviceDefinitionIDRequest
-	(*GetDeviceStyleResponse)(nil),                                 // 35: grpc.GetDeviceStyleResponse
-	(*CreateIntegrationRequest)(nil),                               // 36: grpc.CreateIntegrationRequest
-	(*GetDeviceMakeByNameRequest)(nil),                             // 37: grpc.GetDeviceMakeByNameRequest
-	(*GetDeviceMakeResponse)(nil),                                  // 38: grpc.GetDeviceMakeResponse
-	(*UpdateDeviceMakeRequest)(nil),                                // 39: grpc.UpdateDeviceMakeRequest
-	(*UpdateDeviceStyleRequest)(nil),                               // 40: grpc.UpdateDeviceStyleRequest
-	(*GetDeviceStyleFilterRequest)(nil),                            // 41: grpc.GetDeviceStyleFilterRequest
-	(*GetDeviceTypeByIDRequest)(nil),                               // 42: grpc.GetDeviceTypeByIDRequest
-	(*GetDeviceTypeResponse)(nil),                                  // 43: grpc.GetDeviceTypeResponse
-	(*Integration_AutoPiPowertrainTemplate)(nil),                   // 44: grpc.Integration.AutoPiPowertrainTemplate
-	(*UpdateDeviceDefinitionRequest_DeviceStyles)(nil),             // 45: grpc.UpdateDeviceDefinitionRequest.DeviceStyles
-	(*UpdateDeviceDefinitionRequest_DeviceIntegrations)(nil),       // 46: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations
-	(*GetDeviceDefinitionAllItemResponse_GetDeviceModels)(nil),     // 47: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels
-	(*GetDeviceDefinitionAllItemResponse_GetDeviceModelYears)(nil), // 48: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModelYears
-	(*timestamppb.Timestamp)(nil),                                  // 49: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                                          // 50: google.protobuf.Empty
+	(*DeviceTypeAttributeRequest)(nil),                             // 4: grpc.DeviceTypeAttributeRequest
+	(*DeviceType)(nil),                                             // 5: grpc.DeviceType
+	(*DeviceStyle)(nil),                                            // 6: grpc.DeviceStyle
+	(*DeviceMake)(nil),                                             // 7: grpc.DeviceMake
+	(*VehicleInfo)(nil),                                            // 8: grpc.VehicleInfo
+	(*GetDeviceDefinitionByMMYRequest)(nil),                        // 9: grpc.GetDeviceDefinitionByMMYRequest
+	(*GetDeviceDefinitionBySourceRequest)(nil),                     // 10: grpc.GetDeviceDefinitionBySourceRequest
+	(*GetIntegrationResponse)(nil),                                 // 11: grpc.GetIntegrationResponse
+	(*Integration)(nil),                                            // 12: grpc.Integration
+	(*DeviceIntegration)(nil),                                      // 13: grpc.DeviceIntegration
+	(*GetDeviceDefinitionIntegrationResponse)(nil),                 // 14: grpc.GetDeviceDefinitionIntegrationResponse
+	(*GetDeviceDefinitionIntegrationRequest)(nil),                  // 15: grpc.GetDeviceDefinitionIntegrationRequest
+	(*CreateDeviceDefinitionRequest)(nil),                          // 16: grpc.CreateDeviceDefinitionRequest
+	(*CreateDeviceIntegrationRequest)(nil),                         // 17: grpc.CreateDeviceIntegrationRequest
+	(*BaseResponse)(nil),                                           // 18: grpc.BaseResponse
+	(*UpdateDeviceDefinitionRequest)(nil),                          // 19: grpc.UpdateDeviceDefinitionRequest
+	(*UpdateDeviceDefinitionImageRequest)(nil),                     // 20: grpc.UpdateDeviceDefinitionImageRequest
+	(*GetDeviceDefinitionAllResponse)(nil),                         // 21: grpc.GetDeviceDefinitionAllResponse
+	(*GetDeviceDefinitionAllItemResponse)(nil),                     // 22: grpc.GetDeviceDefinitionAllItemResponse
+	(*FilterDeviceDefinitionRequest)(nil),                          // 23: grpc.FilterDeviceDefinitionRequest
+	(*GetFilteredDeviceDefinitionsResponse)(nil),                   // 24: grpc.GetFilteredDeviceDefinitionsResponse
+	(*FilterDeviceDefinitionsReponse)(nil),                         // 25: grpc.FilterDeviceDefinitionsReponse
+	(*CreateDeviceStyleRequest)(nil),                               // 26: grpc.CreateDeviceStyleRequest
+	(*GetIntegrationRequest)(nil),                                  // 27: grpc.GetIntegrationRequest
+	(*CreateDeviceMakeRequest)(nil),                                // 28: grpc.CreateDeviceMakeRequest
+	(*GetDeviceStyleByIDRequest)(nil),                              // 29: grpc.GetDeviceStyleByIDRequest
+	(*GetDeviceCompatibilityListRequest)(nil),                      // 30: grpc.GetDeviceCompatibilityListRequest
+	(*Feature)(nil),                                                // 31: grpc.Feature
+	(*DeviceCompatibilities)(nil),                                  // 32: grpc.DeviceCompatibilities
+	(*DeviceCompatibilityList)(nil),                                // 33: grpc.DeviceCompatibilityList
+	(*GetDeviceCompatibilityListResponse)(nil),                     // 34: grpc.GetDeviceCompatibilityListResponse
+	(*GetDeviceStyleByDeviceDefinitionIDRequest)(nil),              // 35: grpc.GetDeviceStyleByDeviceDefinitionIDRequest
+	(*GetDeviceStyleResponse)(nil),                                 // 36: grpc.GetDeviceStyleResponse
+	(*CreateIntegrationRequest)(nil),                               // 37: grpc.CreateIntegrationRequest
+	(*GetDeviceMakeByNameRequest)(nil),                             // 38: grpc.GetDeviceMakeByNameRequest
+	(*GetDeviceMakeResponse)(nil),                                  // 39: grpc.GetDeviceMakeResponse
+	(*UpdateDeviceMakeRequest)(nil),                                // 40: grpc.UpdateDeviceMakeRequest
+	(*UpdateDeviceStyleRequest)(nil),                               // 41: grpc.UpdateDeviceStyleRequest
+	(*GetDeviceStyleFilterRequest)(nil),                            // 42: grpc.GetDeviceStyleFilterRequest
+	(*GetDeviceTypeByIDRequest)(nil),                               // 43: grpc.GetDeviceTypeByIDRequest
+	(*GetDeviceTypeResponse)(nil),                                  // 44: grpc.GetDeviceTypeResponse
+	(*Integration_AutoPiPowertrainTemplate)(nil),                   // 45: grpc.Integration.AutoPiPowertrainTemplate
+	(*UpdateDeviceDefinitionRequest_DeviceStyles)(nil),             // 46: grpc.UpdateDeviceDefinitionRequest.DeviceStyles
+	(*UpdateDeviceDefinitionRequest_DeviceIntegrations)(nil),       // 47: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations
+	(*GetDeviceDefinitionAllItemResponse_GetDeviceModels)(nil),     // 48: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels
+	(*GetDeviceDefinitionAllItemResponse_GetDeviceModelYears)(nil), // 49: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModelYears
+	(*timestamppb.Timestamp)(nil),                                  // 50: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                                          // 51: google.protobuf.Empty
 }
 var file_pkg_grpc_device_definition_proto_depIdxs = []int32{
 	2,  // 0: grpc.GetDeviceDefinitionResponse.device_definitions:type_name -> grpc.GetDeviceDefinitionItemResponse
-	4,  // 1: grpc.GetDeviceDefinitionItemResponse.type:type_name -> grpc.DeviceType
-	7,  // 2: grpc.GetDeviceDefinitionItemResponse.vehicle_data:type_name -> grpc.VehicleInfo
-	12, // 3: grpc.GetDeviceDefinitionItemResponse.device_integrations:type_name -> grpc.DeviceIntegration
-	6,  // 4: grpc.GetDeviceDefinitionItemResponse.make:type_name -> grpc.DeviceMake
-	5,  // 5: grpc.GetDeviceDefinitionItemResponse.device_styles:type_name -> grpc.DeviceStyle
-	3,  // 6: grpc.GetDeviceDefinitionItemResponse.attributes:type_name -> grpc.DeviceTypeAttribute
-	11, // 7: grpc.GetIntegrationResponse.integrations:type_name -> grpc.Integration
-	44, // 8: grpc.Integration.auto_pi_powertrain_template:type_name -> grpc.Integration.AutoPiPowertrainTemplate
-	11, // 9: grpc.DeviceIntegration.integration:type_name -> grpc.Integration
-	12, // 10: grpc.GetDeviceDefinitionIntegrationResponse.integrations:type_name -> grpc.DeviceIntegration
-	7,  // 11: grpc.UpdateDeviceDefinitionRequest.vehicle_data:type_name -> grpc.VehicleInfo
-	45, // 12: grpc.UpdateDeviceDefinitionRequest.device_styles:type_name -> grpc.UpdateDeviceDefinitionRequest.DeviceStyles
-	46, // 13: grpc.UpdateDeviceDefinitionRequest.device_integrations:type_name -> grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations
-	21, // 14: grpc.GetDeviceDefinitionAllResponse.items:type_name -> grpc.GetDeviceDefinitionAllItemResponse
-	47, // 15: grpc.GetDeviceDefinitionAllItemResponse.models:type_name -> grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels
-	24, // 16: grpc.GetFilteredDeviceDefinitionsResponse.items:type_name -> grpc.FilterDeviceDefinitionsReponse
-	30, // 17: grpc.DeviceCompatibilities.features:type_name -> grpc.Feature
-	31, // 18: grpc.DeviceCompatibilityList.years:type_name -> grpc.DeviceCompatibilities
-	32, // 19: grpc.GetDeviceCompatibilityListResponse.models:type_name -> grpc.DeviceCompatibilityList
-	5,  // 20: grpc.GetDeviceStyleResponse.device_styles:type_name -> grpc.DeviceStyle
-	6,  // 21: grpc.GetDeviceMakeResponse.device_makes:type_name -> grpc.DeviceMake
-	3,  // 22: grpc.GetDeviceTypeResponse.attributes:type_name -> grpc.DeviceTypeAttribute
-	49, // 23: grpc.UpdateDeviceDefinitionRequest.DeviceStyles.created_at:type_name -> google.protobuf.Timestamp
-	49, // 24: grpc.UpdateDeviceDefinitionRequest.DeviceStyles.updated_at:type_name -> google.protobuf.Timestamp
-	49, // 25: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations.created_at:type_name -> google.protobuf.Timestamp
-	49, // 26: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations.updated_at:type_name -> google.protobuf.Timestamp
-	48, // 27: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels.years:type_name -> grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModelYears
-	0,  // 28: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:input_type -> grpc.GetDeviceDefinitionRequest
-	50, // 29: grpc.DeviceDefinitionService.GetDeviceDefinitions:input_type -> google.protobuf.Empty
-	8,  // 30: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:input_type -> grpc.GetDeviceDefinitionByMMYRequest
-	9,  // 31: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:input_type -> grpc.GetDeviceDefinitionBySourceRequest
-	50, // 32: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:input_type -> google.protobuf.Empty
-	50, // 33: grpc.DeviceDefinitionService.GetIntegrations:input_type -> google.protobuf.Empty
-	26, // 34: grpc.DeviceDefinitionService.GetIntegrationByID:input_type -> grpc.GetIntegrationRequest
-	14, // 35: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:input_type -> grpc.GetDeviceDefinitionIntegrationRequest
-	15, // 36: grpc.DeviceDefinitionService.CreateDeviceDefinition:input_type -> grpc.CreateDeviceDefinitionRequest
-	16, // 37: grpc.DeviceDefinitionService.CreateDeviceIntegration:input_type -> grpc.CreateDeviceIntegrationRequest
-	25, // 38: grpc.DeviceDefinitionService.CreateDeviceStyle:input_type -> grpc.CreateDeviceStyleRequest
-	27, // 39: grpc.DeviceDefinitionService.CreateDeviceMake:input_type -> grpc.CreateDeviceMakeRequest
-	36, // 40: grpc.DeviceDefinitionService.CreateIntegration:input_type -> grpc.CreateIntegrationRequest
-	18, // 41: grpc.DeviceDefinitionService.UpdateDeviceDefinition:input_type -> grpc.UpdateDeviceDefinitionRequest
-	19, // 42: grpc.DeviceDefinitionService.SetDeviceDefinitionImage:input_type -> grpc.UpdateDeviceDefinitionImageRequest
-	50, // 43: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:input_type -> google.protobuf.Empty
-	37, // 44: grpc.DeviceDefinitionService.GetDeviceMakeByName:input_type -> grpc.GetDeviceMakeByNameRequest
-	50, // 45: grpc.DeviceDefinitionService.GetDeviceMakes:input_type -> google.protobuf.Empty
-	22, // 46: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:input_type -> grpc.FilterDeviceDefinitionRequest
-	29, // 47: grpc.DeviceDefinitionService.GetDeviceCompatibilities:input_type -> grpc.GetDeviceCompatibilityListRequest
-	28, // 48: grpc.DeviceDefinitionService.GetDeviceStyleByID:input_type -> grpc.GetDeviceStyleByIDRequest
-	28, // 49: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:input_type -> grpc.GetDeviceStyleByIDRequest
-	34, // 50: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:input_type -> grpc.GetDeviceStyleByDeviceDefinitionIDRequest
-	41, // 51: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:input_type -> grpc.GetDeviceStyleFilterRequest
-	39, // 52: grpc.DeviceDefinitionService.UpdateDeviceMake:input_type -> grpc.UpdateDeviceMakeRequest
-	40, // 53: grpc.DeviceDefinitionService.UpdateDeviceStyle:input_type -> grpc.UpdateDeviceStyleRequest
-	42, // 54: grpc.DeviceDefinitionService.GetDeviceTypesByID:input_type -> grpc.GetDeviceTypeByIDRequest
-	1,  // 55: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:output_type -> grpc.GetDeviceDefinitionResponse
-	1,  // 56: grpc.DeviceDefinitionService.GetDeviceDefinitions:output_type -> grpc.GetDeviceDefinitionResponse
-	2,  // 57: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:output_type -> grpc.GetDeviceDefinitionItemResponse
-	1,  // 58: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionResponse
-	1,  // 59: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:output_type -> grpc.GetDeviceDefinitionResponse
-	10, // 60: grpc.DeviceDefinitionService.GetIntegrations:output_type -> grpc.GetIntegrationResponse
-	11, // 61: grpc.DeviceDefinitionService.GetIntegrationByID:output_type -> grpc.Integration
-	13, // 62: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:output_type -> grpc.GetDeviceDefinitionIntegrationResponse
-	17, // 63: grpc.DeviceDefinitionService.CreateDeviceDefinition:output_type -> grpc.BaseResponse
-	17, // 64: grpc.DeviceDefinitionService.CreateDeviceIntegration:output_type -> grpc.BaseResponse
-	17, // 65: grpc.DeviceDefinitionService.CreateDeviceStyle:output_type -> grpc.BaseResponse
-	17, // 66: grpc.DeviceDefinitionService.CreateDeviceMake:output_type -> grpc.BaseResponse
-	17, // 67: grpc.DeviceDefinitionService.CreateIntegration:output_type -> grpc.BaseResponse
-	17, // 68: grpc.DeviceDefinitionService.UpdateDeviceDefinition:output_type -> grpc.BaseResponse
-	17, // 69: grpc.DeviceDefinitionService.SetDeviceDefinitionImage:output_type -> grpc.BaseResponse
-	20, // 70: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
-	6,  // 71: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake
-	38, // 72: grpc.DeviceDefinitionService.GetDeviceMakes:output_type -> grpc.GetDeviceMakeResponse
-	23, // 73: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:output_type -> grpc.GetFilteredDeviceDefinitionsResponse
-	33, // 74: grpc.DeviceDefinitionService.GetDeviceCompatibilities:output_type -> grpc.GetDeviceCompatibilityListResponse
-	5,  // 75: grpc.DeviceDefinitionService.GetDeviceStyleByID:output_type -> grpc.DeviceStyle
-	5,  // 76: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:output_type -> grpc.DeviceStyle
-	35, // 77: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:output_type -> grpc.GetDeviceStyleResponse
-	35, // 78: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:output_type -> grpc.GetDeviceStyleResponse
-	17, // 79: grpc.DeviceDefinitionService.UpdateDeviceMake:output_type -> grpc.BaseResponse
-	17, // 80: grpc.DeviceDefinitionService.UpdateDeviceStyle:output_type -> grpc.BaseResponse
-	43, // 81: grpc.DeviceDefinitionService.GetDeviceTypesByID:output_type -> grpc.GetDeviceTypeResponse
-	55, // [55:82] is the sub-list for method output_type
-	28, // [28:55] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	5,  // 1: grpc.GetDeviceDefinitionItemResponse.type:type_name -> grpc.DeviceType
+	8,  // 2: grpc.GetDeviceDefinitionItemResponse.vehicle_data:type_name -> grpc.VehicleInfo
+	13, // 3: grpc.GetDeviceDefinitionItemResponse.device_integrations:type_name -> grpc.DeviceIntegration
+	7,  // 4: grpc.GetDeviceDefinitionItemResponse.make:type_name -> grpc.DeviceMake
+	6,  // 5: grpc.GetDeviceDefinitionItemResponse.device_styles:type_name -> grpc.DeviceStyle
+	3,  // 6: grpc.GetDeviceDefinitionItemResponse.device_attributes:type_name -> grpc.DeviceTypeAttribute
+	12, // 7: grpc.GetIntegrationResponse.integrations:type_name -> grpc.Integration
+	45, // 8: grpc.Integration.auto_pi_powertrain_template:type_name -> grpc.Integration.AutoPiPowertrainTemplate
+	12, // 9: grpc.DeviceIntegration.integration:type_name -> grpc.Integration
+	13, // 10: grpc.GetDeviceDefinitionIntegrationResponse.integrations:type_name -> grpc.DeviceIntegration
+	4,  // 11: grpc.CreateDeviceDefinitionRequest.device_attributes:type_name -> grpc.DeviceTypeAttributeRequest
+	8,  // 12: grpc.UpdateDeviceDefinitionRequest.vehicle_data:type_name -> grpc.VehicleInfo
+	46, // 13: grpc.UpdateDeviceDefinitionRequest.device_styles:type_name -> grpc.UpdateDeviceDefinitionRequest.DeviceStyles
+	47, // 14: grpc.UpdateDeviceDefinitionRequest.device_integrations:type_name -> grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations
+	4,  // 15: grpc.UpdateDeviceDefinitionRequest.device_attributes:type_name -> grpc.DeviceTypeAttributeRequest
+	22, // 16: grpc.GetDeviceDefinitionAllResponse.items:type_name -> grpc.GetDeviceDefinitionAllItemResponse
+	48, // 17: grpc.GetDeviceDefinitionAllItemResponse.models:type_name -> grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels
+	25, // 18: grpc.GetFilteredDeviceDefinitionsResponse.items:type_name -> grpc.FilterDeviceDefinitionsReponse
+	31, // 19: grpc.DeviceCompatibilities.features:type_name -> grpc.Feature
+	32, // 20: grpc.DeviceCompatibilityList.years:type_name -> grpc.DeviceCompatibilities
+	33, // 21: grpc.GetDeviceCompatibilityListResponse.models:type_name -> grpc.DeviceCompatibilityList
+	6,  // 22: grpc.GetDeviceStyleResponse.device_styles:type_name -> grpc.DeviceStyle
+	7,  // 23: grpc.GetDeviceMakeResponse.device_makes:type_name -> grpc.DeviceMake
+	3,  // 24: grpc.GetDeviceTypeResponse.attributes:type_name -> grpc.DeviceTypeAttribute
+	50, // 25: grpc.UpdateDeviceDefinitionRequest.DeviceStyles.created_at:type_name -> google.protobuf.Timestamp
+	50, // 26: grpc.UpdateDeviceDefinitionRequest.DeviceStyles.updated_at:type_name -> google.protobuf.Timestamp
+	50, // 27: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations.created_at:type_name -> google.protobuf.Timestamp
+	50, // 28: grpc.UpdateDeviceDefinitionRequest.DeviceIntegrations.updated_at:type_name -> google.protobuf.Timestamp
+	49, // 29: grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModels.years:type_name -> grpc.GetDeviceDefinitionAllItemResponse.GetDeviceModelYears
+	0,  // 30: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:input_type -> grpc.GetDeviceDefinitionRequest
+	51, // 31: grpc.DeviceDefinitionService.GetDeviceDefinitions:input_type -> google.protobuf.Empty
+	9,  // 32: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:input_type -> grpc.GetDeviceDefinitionByMMYRequest
+	10, // 33: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:input_type -> grpc.GetDeviceDefinitionBySourceRequest
+	51, // 34: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:input_type -> google.protobuf.Empty
+	51, // 35: grpc.DeviceDefinitionService.GetIntegrations:input_type -> google.protobuf.Empty
+	27, // 36: grpc.DeviceDefinitionService.GetIntegrationByID:input_type -> grpc.GetIntegrationRequest
+	15, // 37: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:input_type -> grpc.GetDeviceDefinitionIntegrationRequest
+	16, // 38: grpc.DeviceDefinitionService.CreateDeviceDefinition:input_type -> grpc.CreateDeviceDefinitionRequest
+	17, // 39: grpc.DeviceDefinitionService.CreateDeviceIntegration:input_type -> grpc.CreateDeviceIntegrationRequest
+	26, // 40: grpc.DeviceDefinitionService.CreateDeviceStyle:input_type -> grpc.CreateDeviceStyleRequest
+	28, // 41: grpc.DeviceDefinitionService.CreateDeviceMake:input_type -> grpc.CreateDeviceMakeRequest
+	37, // 42: grpc.DeviceDefinitionService.CreateIntegration:input_type -> grpc.CreateIntegrationRequest
+	19, // 43: grpc.DeviceDefinitionService.UpdateDeviceDefinition:input_type -> grpc.UpdateDeviceDefinitionRequest
+	20, // 44: grpc.DeviceDefinitionService.SetDeviceDefinitionImage:input_type -> grpc.UpdateDeviceDefinitionImageRequest
+	51, // 45: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:input_type -> google.protobuf.Empty
+	38, // 46: grpc.DeviceDefinitionService.GetDeviceMakeByName:input_type -> grpc.GetDeviceMakeByNameRequest
+	51, // 47: grpc.DeviceDefinitionService.GetDeviceMakes:input_type -> google.protobuf.Empty
+	23, // 48: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:input_type -> grpc.FilterDeviceDefinitionRequest
+	30, // 49: grpc.DeviceDefinitionService.GetDeviceCompatibilities:input_type -> grpc.GetDeviceCompatibilityListRequest
+	29, // 50: grpc.DeviceDefinitionService.GetDeviceStyleByID:input_type -> grpc.GetDeviceStyleByIDRequest
+	29, // 51: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:input_type -> grpc.GetDeviceStyleByIDRequest
+	35, // 52: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:input_type -> grpc.GetDeviceStyleByDeviceDefinitionIDRequest
+	42, // 53: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:input_type -> grpc.GetDeviceStyleFilterRequest
+	40, // 54: grpc.DeviceDefinitionService.UpdateDeviceMake:input_type -> grpc.UpdateDeviceMakeRequest
+	41, // 55: grpc.DeviceDefinitionService.UpdateDeviceStyle:input_type -> grpc.UpdateDeviceStyleRequest
+	43, // 56: grpc.DeviceDefinitionService.GetDeviceTypesByID:input_type -> grpc.GetDeviceTypeByIDRequest
+	1,  // 57: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:output_type -> grpc.GetDeviceDefinitionResponse
+	1,  // 58: grpc.DeviceDefinitionService.GetDeviceDefinitions:output_type -> grpc.GetDeviceDefinitionResponse
+	2,  // 59: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:output_type -> grpc.GetDeviceDefinitionItemResponse
+	1,  // 60: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionResponse
+	1,  // 61: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:output_type -> grpc.GetDeviceDefinitionResponse
+	11, // 62: grpc.DeviceDefinitionService.GetIntegrations:output_type -> grpc.GetIntegrationResponse
+	12, // 63: grpc.DeviceDefinitionService.GetIntegrationByID:output_type -> grpc.Integration
+	14, // 64: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:output_type -> grpc.GetDeviceDefinitionIntegrationResponse
+	18, // 65: grpc.DeviceDefinitionService.CreateDeviceDefinition:output_type -> grpc.BaseResponse
+	18, // 66: grpc.DeviceDefinitionService.CreateDeviceIntegration:output_type -> grpc.BaseResponse
+	18, // 67: grpc.DeviceDefinitionService.CreateDeviceStyle:output_type -> grpc.BaseResponse
+	18, // 68: grpc.DeviceDefinitionService.CreateDeviceMake:output_type -> grpc.BaseResponse
+	18, // 69: grpc.DeviceDefinitionService.CreateIntegration:output_type -> grpc.BaseResponse
+	18, // 70: grpc.DeviceDefinitionService.UpdateDeviceDefinition:output_type -> grpc.BaseResponse
+	18, // 71: grpc.DeviceDefinitionService.SetDeviceDefinitionImage:output_type -> grpc.BaseResponse
+	21, // 72: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
+	7,  // 73: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake
+	39, // 74: grpc.DeviceDefinitionService.GetDeviceMakes:output_type -> grpc.GetDeviceMakeResponse
+	24, // 75: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:output_type -> grpc.GetFilteredDeviceDefinitionsResponse
+	34, // 76: grpc.DeviceDefinitionService.GetDeviceCompatibilities:output_type -> grpc.GetDeviceCompatibilityListResponse
+	6,  // 77: grpc.DeviceDefinitionService.GetDeviceStyleByID:output_type -> grpc.DeviceStyle
+	6,  // 78: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:output_type -> grpc.DeviceStyle
+	36, // 79: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:output_type -> grpc.GetDeviceStyleResponse
+	36, // 80: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:output_type -> grpc.GetDeviceStyleResponse
+	18, // 81: grpc.DeviceDefinitionService.UpdateDeviceMake:output_type -> grpc.BaseResponse
+	18, // 82: grpc.DeviceDefinitionService.UpdateDeviceStyle:output_type -> grpc.BaseResponse
+	44, // 83: grpc.DeviceDefinitionService.GetDeviceTypesByID:output_type -> grpc.GetDeviceTypeResponse
+	57, // [57:84] is the sub-list for method output_type
+	30, // [30:57] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_pkg_grpc_device_definition_proto_init() }
@@ -4247,7 +4357,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceType); i {
+			switch v := v.(*DeviceTypeAttributeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4259,7 +4369,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceStyle); i {
+			switch v := v.(*DeviceType); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4271,7 +4381,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceMake); i {
+			switch v := v.(*DeviceStyle); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4283,7 +4393,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VehicleInfo); i {
+			switch v := v.(*DeviceMake); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4295,7 +4405,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionByMMYRequest); i {
+			switch v := v.(*VehicleInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4307,7 +4417,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionBySourceRequest); i {
+			switch v := v.(*GetDeviceDefinitionByMMYRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4319,7 +4429,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetIntegrationResponse); i {
+			switch v := v.(*GetDeviceDefinitionBySourceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4331,7 +4441,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Integration); i {
+			switch v := v.(*GetIntegrationResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4343,7 +4453,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceIntegration); i {
+			switch v := v.(*Integration); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4355,7 +4465,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionIntegrationResponse); i {
+			switch v := v.(*DeviceIntegration); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4367,7 +4477,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionIntegrationRequest); i {
+			switch v := v.(*GetDeviceDefinitionIntegrationResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4379,7 +4489,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateDeviceDefinitionRequest); i {
+			switch v := v.(*GetDeviceDefinitionIntegrationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4391,7 +4501,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateDeviceIntegrationRequest); i {
+			switch v := v.(*CreateDeviceDefinitionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4403,7 +4513,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BaseResponse); i {
+			switch v := v.(*CreateDeviceIntegrationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4415,7 +4525,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceDefinitionRequest); i {
+			switch v := v.(*BaseResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4427,7 +4537,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceDefinitionImageRequest); i {
+			switch v := v.(*UpdateDeviceDefinitionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4439,7 +4549,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionAllResponse); i {
+			switch v := v.(*UpdateDeviceDefinitionImageRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4451,7 +4561,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionAllItemResponse); i {
+			switch v := v.(*GetDeviceDefinitionAllResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4463,7 +4573,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FilterDeviceDefinitionRequest); i {
+			switch v := v.(*GetDeviceDefinitionAllItemResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4475,7 +4585,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetFilteredDeviceDefinitionsResponse); i {
+			switch v := v.(*FilterDeviceDefinitionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4487,7 +4597,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FilterDeviceDefinitionsReponse); i {
+			switch v := v.(*GetFilteredDeviceDefinitionsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4499,7 +4609,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateDeviceStyleRequest); i {
+			switch v := v.(*FilterDeviceDefinitionsReponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4511,7 +4621,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetIntegrationRequest); i {
+			switch v := v.(*CreateDeviceStyleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4523,7 +4633,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateDeviceMakeRequest); i {
+			switch v := v.(*GetIntegrationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4535,7 +4645,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceStyleByIDRequest); i {
+			switch v := v.(*CreateDeviceMakeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4547,7 +4657,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceCompatibilityListRequest); i {
+			switch v := v.(*GetDeviceStyleByIDRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4559,7 +4669,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Feature); i {
+			switch v := v.(*GetDeviceCompatibilityListRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4571,7 +4681,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceCompatibilities); i {
+			switch v := v.(*Feature); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4583,7 +4693,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceCompatibilityList); i {
+			switch v := v.(*DeviceCompatibilities); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4595,7 +4705,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceCompatibilityListResponse); i {
+			switch v := v.(*DeviceCompatibilityList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4607,7 +4717,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceStyleByDeviceDefinitionIDRequest); i {
+			switch v := v.(*GetDeviceCompatibilityListResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4619,7 +4729,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceStyleResponse); i {
+			switch v := v.(*GetDeviceStyleByDeviceDefinitionIDRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4631,7 +4741,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateIntegrationRequest); i {
+			switch v := v.(*GetDeviceStyleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4643,7 +4753,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceMakeByNameRequest); i {
+			switch v := v.(*CreateIntegrationRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4655,7 +4765,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceMakeResponse); i {
+			switch v := v.(*GetDeviceMakeByNameRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4667,7 +4777,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceMakeRequest); i {
+			switch v := v.(*GetDeviceMakeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4679,7 +4789,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceStyleRequest); i {
+			switch v := v.(*UpdateDeviceMakeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4691,7 +4801,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceStyleFilterRequest); i {
+			switch v := v.(*UpdateDeviceStyleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4703,7 +4813,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceTypeByIDRequest); i {
+			switch v := v.(*GetDeviceStyleFilterRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4715,7 +4825,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceTypeResponse); i {
+			switch v := v.(*GetDeviceTypeByIDRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4727,7 +4837,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Integration_AutoPiPowertrainTemplate); i {
+			switch v := v.(*GetDeviceTypeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4739,7 +4849,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceDefinitionRequest_DeviceStyles); i {
+			switch v := v.(*Integration_AutoPiPowertrainTemplate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4751,7 +4861,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDeviceDefinitionRequest_DeviceIntegrations); i {
+			switch v := v.(*UpdateDeviceDefinitionRequest_DeviceStyles); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4763,7 +4873,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetDeviceDefinitionAllItemResponse_GetDeviceModels); i {
+			switch v := v.(*UpdateDeviceDefinitionRequest_DeviceIntegrations); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4775,6 +4885,18 @@ func file_pkg_grpc_device_definition_proto_init() {
 			}
 		}
 		file_pkg_grpc_device_definition_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetDeviceDefinitionAllItemResponse_GetDeviceModels); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_grpc_device_definition_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetDeviceDefinitionAllItemResponse_GetDeviceModelYears); i {
 			case 0:
 				return &v.state
@@ -4793,7 +4915,7 @@ func file_pkg_grpc_device_definition_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pkg_grpc_device_definition_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   49,
+			NumMessages:   50,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

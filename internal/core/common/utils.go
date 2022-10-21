@@ -109,7 +109,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
-			Type:      dd.R.DeviceType.Name,
+			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
 			Make:      dd.R.DeviceMake.Name,
 			Model:     dd.Model,
 			Year:      int(dd.Year),
@@ -138,6 +138,19 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 
 	if dd.R != nil {
 		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+
+		var ai map[string]any
+		if err := dd.Metadata.Unmarshal(&ai); err == nil {
+			if ai != nil {
+				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
+				for key, value := range attributes {
+					rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
+						Name:  key,
+						Value: value.(string),
+					})
+				}
+			}
+		}
 
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
@@ -245,6 +258,19 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			Name:               ds.Name,
 			Source:             ds.Source,
 			SubModel:           ds.SubModel,
+		})
+	}
+
+	rp.DeviceAttributes = []*grpc.DeviceTypeAttribute{}
+	for _, da := range dd.DeviceAttributes {
+		rp.DeviceAttributes = append(rp.DeviceAttributes, &grpc.DeviceTypeAttribute{
+			Name:        da.Name,
+			Label:       da.Label,
+			Description: da.Description,
+			Value:       da.Value,
+			Required:    da.Required,
+			Type:        da.Type,
+			Options:     da.Option,
 		})
 	}
 
