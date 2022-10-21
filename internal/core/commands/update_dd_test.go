@@ -74,6 +74,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
+		DeviceMakeID:       dd.R.DeviceMake.ID,
 		VehicleInfo: &UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",

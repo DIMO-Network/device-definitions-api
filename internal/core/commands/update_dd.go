@@ -102,6 +102,9 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
+	// Resolve make
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
+
 	// Resolve attributes by device types
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
 
@@ -235,15 +238,9 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
-	dd, err = ch.Repository.GetByID(ctx, dd.ID)
-
-	if err != nil {
-		return nil, err
-	}
-
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
-	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
+	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dm.Name, dd.Model, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
