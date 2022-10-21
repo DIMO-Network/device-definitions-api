@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+
 	"math/big"
 	"sort"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	"github.com/volatiletech/null/v8"
@@ -107,7 +109,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
-			Type:      dd.R.DeviceType.Name,
+			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
 			Make:      dd.R.DeviceMake.Name,
 			Model:     dd.Model,
 			Year:      int(dd.Year),
@@ -137,6 +139,19 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 
 	if dd.R != nil {
 		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+
+		var ai map[string]any
+		if err := dd.Metadata.Unmarshal(&ai); err == nil {
+			if ai != nil {
+				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
+				for key, value := range attributes {
+					rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
+						Name:  key,
+						Value: value.(string),
+					})
+				}
+			}
+		}
 
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
@@ -252,5 +267,57 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		})
 	}
 
+	rp.DeviceAttributes = []*grpc.DeviceTypeAttribute{}
+	for _, da := range dd.DeviceAttributes {
+		rp.DeviceAttributes = append(rp.DeviceAttributes, &grpc.DeviceTypeAttribute{
+			Name:        da.Name,
+			Label:       da.Label,
+			Description: da.Description,
+			Value:       da.Value,
+			Required:    da.Required,
+			Type:        da.Type,
+			Options:     da.Option,
+		})
+	}
+
 	return rp
+}
+
+func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (map[string]interface{}, error) {
+	// attribute info
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
+	var ai map[string][]models.GetDeviceTypeAttributeQueryResult
+	if err := dt.Properties.Unmarshal(&ai); err == nil {
+		filterProperty := func(name string, items []models.GetDeviceTypeAttributeQueryResult) *models.GetDeviceTypeAttributeQueryResult {
+			for _, attribute := range items {
+				if name == attribute.Name {
+					return &attribute
+				}
+			}
+			return nil
+		}
+
+		for _, prop := range attributes {
+			property := filterProperty(prop.Name, ai["properties"])
+
+			if property == nil {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("invalid property %s", prop.Name),
+				}
+			}
+
+			if property.Required && len(prop.Value) == 0 {
+				return nil, &exceptions.ValidationError{
+					Err: fmt.Errorf("property %s is required", prop.Name),
+				}
+			}
+
+			metaData[property.Name] = prop.Value
+		}
+	}
+
+	deviceTypeInfo[dt.Metadatakey] = metaData
+
+	return deviceTypeInfo, nil
 }

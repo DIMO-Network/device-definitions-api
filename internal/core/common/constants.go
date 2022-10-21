@@ -13,6 +13,10 @@ const (
 	AutoPiVendor   = "AutoPi"
 )
 
+const (
+	DefaultDeviceType = "vehicle"
+)
+
 func (r RegionEnum) String() string {
 	return string(r)
 }
