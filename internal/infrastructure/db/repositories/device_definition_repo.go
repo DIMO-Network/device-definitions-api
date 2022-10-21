@@ -223,6 +223,8 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	return dd, nil
 }
 
+// CreateOrUpdate does an upsert to persist the device definition. Includes metadata as a parameter, device styles will be created on the fly
+// uses a transaction to rollback if any part does not get written
 func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
 
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
@@ -288,10 +290,9 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 			deviceIntegration := &models.DeviceIntegration{
 				DeviceDefinitionID: dd.ID,
 				IntegrationID:      di.IntegrationID,
-				//Capabilities:       di.Capabilities,
-				CreatedAt: di.CreatedAt,
-				UpdatedAt: di.UpdatedAt,
-				Region:    di.Region,
+				CreatedAt:          di.CreatedAt,
+				UpdatedAt:          di.UpdatedAt,
+				Region:             di.Region,
 			}
 			err = deviceIntegration.Insert(ctx, tx, boil.Infer())
 			if err != nil {
