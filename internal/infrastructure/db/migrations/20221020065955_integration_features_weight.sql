@@ -3,29 +3,32 @@
 SELECT 'up SQL query';
 
 ALTER TABLE integration_features ADD feature_weight float NULL;
-BEGIN;
-    UPDATE integration_features SET feature_weight = 1 WHERE feature_key = 'ev_battery';
-    UPDATE integration_features SET feature_weight = 0.5 WHERE feature_key = 'battery_voltage';
-    UPDATE integration_features SET feature_weight = 0.75 WHERE feature_key = 'fuel_percent_remaining';
-    UPDATE integration_features SET feature_weight = 1 WHERE feature_key = 'odometer';
-    UPDATE integration_features SET feature_weight = 0.5 WHERE feature_key = 'oil';
-    UPDATE integration_features SET feature_weight = 0.75 WHERE feature_key = 'tires';
-    UPDATE integration_features SET feature_weight = 0.75 WHERE feature_key = 'speed';
-    UPDATE integration_features SET feature_weight = 1 WHERE feature_key = 'location';
-    UPDATE integration_features SET feature_weight = 1 WHERE feature_key = 'battery_capacity';
-    UPDATE integration_features SET feature_weight = 0.5 WHERE feature_key = 'charging';
-    UPDATE integration_features SET feature_weight = 0.75 WHERE feature_key = 'range';
-    UPDATE integration_features SET feature_weight = 1 WHERE feature_key = 'vin';
-    UPDATE integration_features SET feature_weight = 0.5 WHERE feature_key = 'cell_tower';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'engine_runtime';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'ambient_temperature';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'barometric_pressure';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'coolant_temperature';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'engine_load';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'engine_speed';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'throttle_position';
-    UPDATE integration_features SET feature_weight = 0.25 WHERE feature_key = 'fuel_type';
-COMMIT;
+
+UPDATE integration_features SET feature_weight = t.weight FROM (
+   VALUES ('ev_battery', 1),
+    ('battery_voltage', 0.5),
+    ('fuel_percent_remaining', 0.75),
+    ('odometer', 1),
+    ('oil', 0.5),
+    ('tires', 0.75),
+    ('speed', 0.75),
+    ('location', 1),
+    ('battery_capacity', 1),
+    ('charging', 0.5),
+    ('range', 0.75),
+    ('vin', 1),
+    ('cell_tower', 0.5),
+    ('engine_runtime', 0.25),
+    ('ambient_temperature', 0.25),
+    ('barometric_pressure', 0.25),
+    ('coolant_temperature', 0.25),
+    ('engine_load', 0.25),
+    ('engine_speed', 0.25),
+    ('throttle_position', 0.25),
+    ('fuel_type', 0.25)
+) AS t(id, weight) 
+WHERE  integration_features.feature_key  = t.id;
+
 -- +goose StatementEnd
 
 -- +goose Down

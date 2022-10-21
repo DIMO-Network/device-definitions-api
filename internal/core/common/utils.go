@@ -125,6 +125,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 	// vehicle info
 	var vi map[string]models.VehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
+		//nolint
 		rp.VehicleInfo = vi[dd.R.DeviceType.Metadatakey]
 	}
 
@@ -195,12 +196,18 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	}
 
 	// vehicle info
+	//nolint
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
+	//nolint
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
+	//nolint
 	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	//nolint
 	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
+	//nolint
 	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
 
+	//nolint
 	rp.VehicleData = &grpc.VehicleInfo{
 		FuelType:            dd.VehicleInfo.FuelType,
 		DrivenWheels:        dd.VehicleInfo.DrivenWheels,

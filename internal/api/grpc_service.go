@@ -48,10 +48,15 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 
 	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
+	//nolint
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
+	//nolint
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
+	//nolint
 	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	//nolint
 	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
+	//nolint
 	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
 
 	result := &p_grpc.GetDeviceDefinitionItemResponse{
@@ -75,12 +80,13 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 			NameSlug:        dd.DeviceMake.NameSlug,
 		},
+		//nolint
 		VehicleData: &p_grpc.VehicleInfo{
-			FuelType:            dd.VehicleInfo.FuelType,
-			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
-			NumberOfDoors:       int32(numberOfDoors),
-			Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
-			EPAClass:            dd.VehicleInfo.EPAClass,
+			FuelType: dd.VehicleInfo.FuelType,
+			DrivenWheels:  dd.VehicleInfo.DrivenWheels,
+			NumberOfDoors: int32(numberOfDoors),
+			Base_MSRP: int32(dd.VehicleInfo.BaseMSRP),
+			EPAClass: dd.VehicleInfo.EPAClass,
 			VehicleType:         dd.VehicleInfo.VehicleType,
 			MPGHighway:          float32(mpgHighway),
 			MPGCity:             float32(mpgCity),
@@ -368,6 +374,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		DeviceMakeID:       in.DeviceMakeId,
 	}
 
+	//nolint
 	if in.VehicleData != nil {
 		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
 			FuelType:            in.VehicleData.FuelType,

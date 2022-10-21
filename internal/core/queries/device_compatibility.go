@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	GOLD_LEVEL   = "Gold"
-	SILVER_LEVEL = "Silver"
-	BRONZE_LEVEL = "Bronze"
+	GoldLevel   = "Gold"
+	SilverLevel = "Silver"
+	BronzeLevel = "Bronze"
 )
 
 type GetDeviceCompatibilityQueryHandler struct {
@@ -54,20 +54,18 @@ func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights floa
 	for _, v := range fd {
 		if v.SupportLevel > 0 {
 			total += v.FeatureWeight
-		} else {
-			total += 0
 		}
 	}
 
-	if total != 0 && total < totalWeights {
+	if total != 0 && total <= totalWeights {
 		p := (total / totalWeights) * 100
 
 		if p >= 75 {
-			level = GOLD_LEVEL
-		} else if p > 50 && p < 75 {
-			level = SILVER_LEVEL
+			level = GoldLevel
+		} else if p > 50 {
+			level = SilverLevel
 		} else {
-			level = BRONZE_LEVEL
+			level = BronzeLevel
 		}
 	}
 
