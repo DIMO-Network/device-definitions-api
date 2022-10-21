@@ -124,39 +124,57 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
+	// todo: change this to use the DeviceAttributes. For now leaving as is so doesn't break dependencies.
+	// Update Vehicle Info
+	if command.VehicleInfo != nil {
+		if len(command.DeviceAttributes) == 0 {
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "fuel_type",
+				Value: command.VehicleInfo.FuelType,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "driven_wheels",
+				Value: command.VehicleInfo.DrivenWheels,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "number_of_doors",
+				Value: command.VehicleInfo.NumberOfDoors,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "base_MSRP",
+				Value: fmt.Sprintf("%d", command.VehicleInfo.BaseMSRP),
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "EPA_class",
+				Value: command.VehicleInfo.EPAClass,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "vehicle_type",
+				Value: command.VehicleInfo.VehicleType,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "MPG_city",
+				Value: command.VehicleInfo.MPGCity,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "MPG_highway",
+				Value: command.VehicleInfo.MPGHighway,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "MPG",
+				Value: command.VehicleInfo.MPG,
+			})
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  "fuel_tank_capacity_gal",
+				Value: command.VehicleInfo.FuelTankCapacityGal,
+			})
+		}
+	}
+
 	// attribute info
 	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
 	if err != nil {
 		return nil, err
-	}
-
-	// todo: change this to use the DeviceAttributes. For now leaving as is so doesn't break dependencies.
-	// Update Vehicle Info
-	if command.VehicleInfo != nil {
-		deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
-		if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
-			deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
-			deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
-			deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
-			deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
-			deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
-			deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
-			deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
-			deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
-			deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
-			deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
-		}
-
-		vehicleInfo := make(map[string]*UpdateDeviceVehicleInfo)
-		vehicleInfo["vehicle_info"] = deviceVehicleInfoMetaData
-
-		err = dd.Metadata.Marshal(vehicleInfo)
-		if err != nil {
-			return nil, &exceptions.InternalError{
-				Err: err,
-			}
-		}
-
 	}
 
 	if len(command.Model) > 0 {

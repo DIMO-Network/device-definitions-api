@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	_ "embed"
-
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -249,25 +248,36 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 	assert.Equal(s.T(), dd.ID, dd2.ID)
 }
 
-func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_DeviceTypes_Success() {
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_Vehicle_DeviceTypes_Success() {
 	ctx := context.Background()
 
 	model := "Hilux"
 	mk := "Toyota"
-	source := "source-01"
 	year := 2022
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
+	dt, _ := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(dd.DeviceTypeID.String)).One(ctx, s.pdb.DBS().Reader)
+
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
+	var ai map[string][]interface{}
+	defaultValue := "defaultValue"
+	if err := dt.Properties.Unmarshal(&ai); err == nil {
+		metaData["MPG"] = defaultValue
+	}
+	deviceTypeInfo[dt.Metadatakey] = metaData
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", nil)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, deviceTypeInfo)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
+
 }
 
 func setupDeviceDefinition(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+
 	return dd
 }
 
