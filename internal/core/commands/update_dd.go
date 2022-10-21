@@ -121,6 +121,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Year:         command.Year,
 			Verified:     false,
 			ModelSlug:    common.SlugString(command.Model),
+			DeviceTypeID: null.StringFrom(dt.ID),
 		}
 	}
 
@@ -233,6 +234,8 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	if err != nil {
 		return nil, err
 	}
+
+	dd, err = ch.Repository.GetByID(ctx, dd.ID)
 
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)

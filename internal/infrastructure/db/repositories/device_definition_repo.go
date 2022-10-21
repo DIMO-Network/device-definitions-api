@@ -302,6 +302,11 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 		}
 	}
 
+	err := tx.Commit()
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
 	return dd, nil
 }
 
