@@ -13,6 +13,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/golang/mock/gomock"
@@ -64,6 +65,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	deviceType := setupCreateDeviceType(s.T(), s.pdb)
 
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
+	deviceMakeID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	model := "Hummer"
 	mk := "Toyota"
 	source := "source-01"
@@ -75,10 +77,12 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 		Year:         int16(year),
 		DeviceTypeID: null.StringFrom(deviceType.ID),
 	}
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceMake = &models.DeviceMake{ID: deviceMakeID, Name: mk}
 
 	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, model, year, gomock.Any(), gomock.Any()).Return(dd, nil).Times(1)
 
-	var deviceAttributes []*UpdateDeviceDefinitionAttributeModel
+	var deviceAttributes []*coremodels.UpdateDeviceTypeAttribute
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
 		Source:       source,
@@ -86,7 +90,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 		Make:         mk,
 		Year:         year,
 		DeviceTypeID: deviceType.ID,
-		DeviceAttributes: append(deviceAttributes, &UpdateDeviceDefinitionAttributeModel{
+		DeviceAttributes: append(deviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
 			Name:  "MPG",
 			Value: "12",
 		}),

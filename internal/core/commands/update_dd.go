@@ -3,18 +3,20 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type UpdateDeviceDefinitionCommand struct {
@@ -23,13 +25,16 @@ type UpdateDeviceDefinitionCommand struct {
 	ExternalID         string      `json:"external_id"`
 	ImageURL           null.String `json:"image_url"`
 	VehicleInfo        *UpdateDeviceVehicleInfo
-	Verified           bool                                    `json:"verified"`
-	Model              string                                  `json:"model"`
-	Year               int16                                   `json:"year"`
-	DeviceMakeID       string                                  `json:"device_make_id"`
-	DeviceStyles       []UpdateDeviceStyles                    `json:"deviceStyles"`
-	DeviceIntegrations []UpdateDeviceIntegrations              `json:"deviceIntegrations"`
-	DeviceAttributes   []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
+	Verified           bool                       `json:"verified"`
+	Model              string                     `json:"model"`
+	Year               int16                      `json:"year"`
+	DeviceMakeID       string                     `json:"device_make_id"`
+	DeviceStyles       []UpdateDeviceStyles       `json:"deviceStyles"`
+	DeviceIntegrations []UpdateDeviceIntegrations `json:"deviceIntegrations"`
+	// DeviceTypeID comes from the device_types.id table, determines what kind of device this is, typically a vehicle
+	DeviceTypeID string `json:"device_type_id"`
+	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
+	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
 }
 
 type UpdateDeviceIntegrations struct {
@@ -70,29 +75,51 @@ type UpdateDeviceDefinitionCommandResult struct {
 func (*UpdateDeviceDefinitionCommand) Key() string { return "UpdateDeviceDefinitionCommand" }
 
 type UpdateDeviceDefinitionCommandHandler struct {
-	DBS     func() *db.ReaderWriter
-	DDCache services.DeviceDefinitionCacheService
+	Repository repositories.DeviceDefinitionRepository
+	DBS        func() *db.ReaderWriter
+	DDCache    services.DeviceDefinitionCacheService
 }
 
-func NewUpdateDeviceDefinitionCommandHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) UpdateDeviceDefinitionCommandHandler {
-	return UpdateDeviceDefinitionCommandHandler{DBS: dbs, DDCache: cache}
+func NewUpdateDeviceDefinitionCommandHandler(repository repositories.DeviceDefinitionRepository, dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) UpdateDeviceDefinitionCommandHandler {
+	return UpdateDeviceDefinitionCommandHandler{DDCache: cache, Repository: repository, DBS: dbs}
 }
 
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*UpdateDeviceDefinitionCommand)
 
-	dd, err := models.DeviceDefinitions(
-		qm.Where("id = ?", command.DeviceDefinitionID),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration))).
-		One(ctx, ch.DBS().Reader)
+	if len(command.DeviceTypeID) == 0 {
+		command.DeviceTypeID = common.DefaultDeviceType
+	}
+
+	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.InternalError{
 				Err: err,
+			}
+		}
+	}
+
+	// Resolve make
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: fmt.Errorf("failed to get device makes"),
+			}
+		}
+	}
+
+	// Resolve attributes by device types
+	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: fmt.Errorf("failed to get device types"),
 			}
 		}
 	}
@@ -105,35 +132,59 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Year:         command.Year,
 			Verified:     false,
 			ModelSlug:    common.SlugString(command.Model),
+			DeviceTypeID: null.StringFrom(dt.ID),
 		}
 	}
-	// todo: change this to use the DeviceAttributes. For now leaving as is so doesn't break dependencies.
-	// Update Vehicle Info
-	if command.VehicleInfo != nil {
-		deviceVehicleInfoMetaData := new(UpdateDeviceVehicleInfo)
-		if err := dd.Metadata.Unmarshal(deviceVehicleInfoMetaData); err == nil {
-			deviceVehicleInfoMetaData.FuelType = command.VehicleInfo.FuelType
-			deviceVehicleInfoMetaData.DrivenWheels = command.VehicleInfo.DrivenWheels
-			deviceVehicleInfoMetaData.NumberOfDoors = command.VehicleInfo.NumberOfDoors
-			deviceVehicleInfoMetaData.BaseMSRP = int(command.VehicleInfo.BaseMSRP)
-			deviceVehicleInfoMetaData.EPAClass = command.VehicleInfo.EPAClass
-			deviceVehicleInfoMetaData.VehicleType = command.VehicleInfo.VehicleType
-			deviceVehicleInfoMetaData.MPGCity = command.VehicleInfo.MPGCity
-			deviceVehicleInfoMetaData.MPGHighway = command.VehicleInfo.MPGHighway
-			deviceVehicleInfoMetaData.MPG = command.VehicleInfo.MPG
-			deviceVehicleInfoMetaData.FuelTankCapacityGal = command.VehicleInfo.FuelTankCapacityGal
-		}
 
-		vehicleInfo := make(map[string]*UpdateDeviceVehicleInfo)
-		vehicleInfo["vehicle_info"] = deviceVehicleInfoMetaData
+	// check if vehicleInfo is set and load the attributes, so that we don't break existing code. In the future we may remove this if all
+	// clients update to send in metadata as DeviceAttributes
+	if command.VehicleInfo != nil && len(command.DeviceAttributes) == 0 {
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "fuel_type",
+			Value: command.VehicleInfo.FuelType,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "driven_wheels",
+			Value: command.VehicleInfo.DrivenWheels,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "number_of_doors",
+			Value: command.VehicleInfo.NumberOfDoors,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "base_MSRP",
+			Value: fmt.Sprintf("%d", command.VehicleInfo.BaseMSRP),
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "EPA_class",
+			Value: command.VehicleInfo.EPAClass,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "vehicle_type",
+			Value: command.VehicleInfo.VehicleType,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "MPG_city",
+			Value: command.VehicleInfo.MPGCity,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "MPG_highway",
+			Value: command.VehicleInfo.MPGHighway,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "MPG",
+			Value: command.VehicleInfo.MPG,
+		})
+		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+			Name:  "fuel_tank_capacity_gal",
+			Value: command.VehicleInfo.FuelTankCapacityGal,
+		})
+	}
 
-		err = dd.Metadata.Marshal(vehicleInfo)
-		if err != nil {
-			return nil, &exceptions.InternalError{
-				Err: err,
-			}
-		}
-
+	// attribute info
+	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(command.Model) > 0 {
@@ -156,25 +207,12 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dd.ImageURL = command.ImageURL
 	dd.Verified = command.Verified
 
-	if err := dd.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
-		return nil, &exceptions.InternalError{
-			Err: err,
-		}
-	}
+	var deviceStyles []*models.DeviceStyle
+	var deviceIntegrations []*models.DeviceIntegration
 
 	if len(command.DeviceStyles) > 0 {
-		// Remove Device Styles
-		_, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(command.DeviceDefinitionID)).
-			DeleteAll(ctx, ch.DBS().Writer.DB)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: err,
-			}
-		}
-
-		// Update Device Styles
 		for _, ds := range command.DeviceStyles {
-			subModels := &models.DeviceStyle{
+			deviceStyles = append(deviceStyles, &models.DeviceStyle{
 				ID:                 ds.ID,
 				DeviceDefinitionID: command.DeviceDefinitionID,
 				Name:               ds.Name,
@@ -183,52 +221,31 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 				CreatedAt:          ds.CreatedAt,
 				UpdatedAt:          ds.UpdatedAt,
 				SubModel:           ds.SubModel,
-			}
-			err = subModels.Insert(ctx, ch.DBS().Writer.DB, boil.Infer())
-			if err != nil {
-				return nil, &exceptions.InternalError{
-					Err: err,
-				}
-			}
+			})
 		}
 	}
 
 	if len(command.DeviceIntegrations) > 0 {
-		// Remove Device Integrations
-		_, err = models.DeviceIntegrations(models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(command.DeviceDefinitionID)).
-			DeleteAll(ctx, ch.DBS().Writer.DB)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: err,
-			}
-		}
-
 		for _, di := range command.DeviceIntegrations {
-			deviceIntegration := &models.DeviceIntegration{
+			deviceIntegrations = append(deviceIntegrations, &models.DeviceIntegration{
 				DeviceDefinitionID: command.DeviceDefinitionID,
 				IntegrationID:      di.IntegrationID,
-				//Capabilities:       di.Capabilities,
-				CreatedAt: di.CreatedAt,
-				UpdatedAt: di.UpdatedAt,
-				Region:    di.Region,
-			}
-			err = deviceIntegration.Insert(ctx, ch.DBS().Writer.DB, boil.Infer())
-			if err != nil {
-				return nil, &exceptions.InternalError{
-					Err: err,
-				}
-			}
+				CreatedAt:          di.CreatedAt,
+				UpdatedAt:          di.UpdatedAt,
+				Region:             di.Region,
+			})
 		}
 	}
 
-	dd, _ = models.DeviceDefinitions(
-		qm.Where("id = ?", command.DeviceDefinitionID),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake)).
-		One(ctx, ch.DBS().Reader)
+	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, deviceTypeInfo)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
-	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
+	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dm.Name, dd.Model, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }

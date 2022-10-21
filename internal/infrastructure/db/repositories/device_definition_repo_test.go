@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	_ "embed"
-
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -16,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -135,9 +135,176 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Existing_Su
 	assert.Equal(s.T(), dd.ID, dd2.ID)
 }
 
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_New_Success() {
+	ctx := context.Background()
+
+	model := "Hilux"
+	mk := "Toyota"
+	source := "source-01"
+	year := 2022
+
+	dm := setupDeviceMake(s.T(), s.pdb, mk)
+	dd := &models.DeviceDefinition{
+		ID:           ksuid.New().String(),
+		DeviceMakeID: dm.ID,
+		Model:        model,
+		Source:       null.StringFrom(source),
+		Year:         int16(year),
+		Verified:     false,
+		ModelSlug:    common.SlugString(model),
+	}
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, nil)
+
+	s.NoError(err)
+	assert.Equal(s.T(), dd.ID, dd2.ID)
+}
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Existing_Success() {
+	ctx := context.Background()
+
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
+
+	newModel := "Hulix Pro"
+	newYear := 2023
+	newSource := "source-02"
+
+	dd.Model = newModel
+	dd.Year = int16(newYear)
+	dd.Source = null.StringFrom(newSource)
+
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, nil)
+
+	s.NoError(err)
+	assert.Equal(s.T(), dd.ID, dd2.ID)
+	assert.Equal(s.T(), dd.Model, dd2.Model)
+	assert.Equal(s.T(), dd.Year, dd2.Year)
+	assert.Equal(s.T(), dd.Source, dd2.Source)
+}
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_NewStyles_Success() {
+	ctx := context.Background()
+
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinitionWithStyles(s.T(), s.pdb, mk, model, year)
+
+	newStyles := []*models.DeviceStyle{}
+
+	for _, style := range dd.R.DeviceStyles {
+		newStyles = append(newStyles, style)
+	}
+
+	// add new style
+	newStyles = append(newStyles, &models.DeviceStyle{
+		ID:                 ksuid.New().String(),
+		Name:               "New Style",
+		DeviceDefinitionID: dd.ID,
+		Source:             "New Source",
+		SubModel:           "New SubModel",
+		ExternalStyleID:    ksuid.New().String(),
+	})
+
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, newStyles, []*models.DeviceIntegration{}, nil)
+
+	s.NoError(err)
+	assert.Equal(s.T(), dd.ID, dd2.ID)
+	assert.Equal(s.T(), dd.Model, dd2.Model)
+	assert.Equal(s.T(), dd.Year, dd2.Year)
+	assert.Equal(s.T(), dd.Source, dd2.Source)
+}
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_NewIntegration_Success() {
+	ctx := context.Background()
+
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	i := setupIntegrationForDeviceIntegration(s.T(), s.pdb)
+	dd := setupDeviceDefinitionWithIntegrations(s.T(), s.pdb, mk, model, year)
+
+	newDeviceIntegrations := []*models.DeviceIntegration{}
+
+	for _, integration := range dd.R.DeviceIntegrations {
+		newDeviceIntegrations = append(newDeviceIntegrations, integration)
+	}
+
+	// add new integrations
+	newDeviceIntegrations = append(newDeviceIntegrations, &models.DeviceIntegration{
+		IntegrationID:      i.ID,
+		DeviceDefinitionID: dd.ID,
+		Region:             "east-us",
+	})
+
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, newDeviceIntegrations, nil)
+
+	s.NoError(err)
+	assert.Equal(s.T(), dd.ID, dd2.ID)
+}
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_Vehicle_DeviceTypes_Success() {
+	ctx := context.Background()
+
+	model := "Hilux"
+	mk := "Toyota"
+	year := 2022
+
+	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
+	dt, _ := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(dd.DeviceTypeID.String)).One(ctx, s.pdb.DBS().Reader)
+
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
+	var ai map[string][]interface{}
+	defaultValue := "defaultValue"
+	if err := dt.Properties.Unmarshal(&ai); err == nil {
+		metaData["MPG"] = defaultValue
+	}
+	deviceTypeInfo[dt.Metadatakey] = metaData
+	// current logic returns existing DD if duplicate
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, deviceTypeInfo)
+
+	s.NoError(err)
+	assert.Equal(s.T(), dd.ID, dd2.ID)
+
+}
+
 func setupDeviceDefinition(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+
+	return dd
+}
+
+func setupDeviceDefinitionWithStyles(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
+	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+
+	ds1 := dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr SUV 4WD", "edmunds", "Wagon", pdb)
+	ds2 := dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceStyles = append(dd.R.DeviceStyles, &ds1)
+	dd.R.DeviceStyles = append(dd.R.DeviceStyles, &ds2)
+
+	return dd
+}
+
+func setupDeviceDefinitionWithIntegrations(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
+	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+
+	i := dbtesthelper.SetupCreateHardwareIntegration(t, pdb)
+	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceIntegrations = append(dd.R.DeviceIntegrations, di)
+
 	return dd
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -23,13 +24,7 @@ type CreateDeviceDefinitionCommand struct {
 	// DeviceTypeID comes from the device_types.id table, determines what kind of device this is, typically a vehicle
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
-	DeviceAttributes []*UpdateDeviceDefinitionAttributeModel `json:"deviceAttributes"`
-}
-
-type UpdateDeviceDefinitionAttributeModel struct {
-	// Name should match one of the name keys in the allowed device_types.properties
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
 }
 
 type CreateDeviceDefinitionCommandResult struct {
@@ -50,12 +45,8 @@ func NewCreateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	command := query.(*CreateDeviceDefinitionCommand)
 
-	const (
-		defaultDeviceType = "vehicle"
-	)
-
 	if len(command.DeviceTypeID) == 0 {
-		command.DeviceTypeID = defaultDeviceType
+		command.DeviceTypeID = common.DefaultDeviceType
 	}
 
 	// Resolve attributes by device types
@@ -70,42 +61,12 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	// attribute info
-	deviceTypeInfo := make(map[string]interface{})
-	metaData := make(map[string]interface{})
-	var ai map[string][]coremodels.GetDeviceTypeAttributeQueryResult
-	if err := dt.Properties.Unmarshal(&ai); err == nil {
-		filterProperty := func(name string, items []coremodels.GetDeviceTypeAttributeQueryResult) *coremodels.GetDeviceTypeAttributeQueryResult {
-			for _, attribute := range items {
-				if name == attribute.Name {
-					return &attribute
-				}
-			}
-			return nil
-		}
-
-		for _, prop := range command.DeviceAttributes {
-			property := filterProperty(prop.Name, ai["properties"])
-
-			if property == nil {
-				return nil, &exceptions.ValidationError{
-					Err: fmt.Errorf("invalid property %s", prop.Name),
-				}
-			}
-
-			if property.Required && len(prop.Value) == 0 {
-				return nil, &exceptions.ValidationError{
-					Err: fmt.Errorf("property %s is required", prop.Name),
-				}
-			}
-
-			metaData[property.Name] = prop.Value
-		}
+	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
+	if err != nil {
+		return nil, err
 	}
 
-	deviceTypeInfo[dt.Metadatakey] = metaData
-
 	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo)
-
 	if err != nil {
 		return nil, err
 	}
