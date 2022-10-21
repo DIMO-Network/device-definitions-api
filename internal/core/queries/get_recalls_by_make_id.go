@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -54,7 +53,7 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 	all, err := models.DeviceNhtsaRecalls(qm.AndIn("device_definition_id in ?", ddIDs)).All(ctx, qh.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []coremodels.GetIntegrationQueryResult{}, nil
+			return &p_grpc.GetRecallsResponse{}, nil
 		}
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get integrations"),
