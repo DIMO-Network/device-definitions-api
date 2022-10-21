@@ -9,6 +9,7 @@ message RecallItem {
   string name = 2;
   string year = 3;
   string description = 4;
+  // todo add recall date
 }
 
 message GetRecallsByMakeRequest {

@@ -7,6 +7,7 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
@@ -60,6 +61,8 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 		}
 	}
 
+	// todo: return array of nhtsa recalls with properties same as proto
+
 	result := make([]coremodels.GetIntegrationQueryResult, len(all))
 	for i, v := range all {
 		im := new(coremodels.IntegrationsMetadata)
@@ -72,7 +75,7 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 				}
 			}
 		}
-		result[i] = coremodels.GetIntegrationQueryResult{
+		result[i] = p_grpc.RecallItem{ // se puede? only for grpc no rest
 			ID:                      v.ID,
 			Type:                    v.Type,
 			Style:                   v.Style,
