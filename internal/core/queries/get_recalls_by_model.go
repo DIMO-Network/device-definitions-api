@@ -15,30 +15,28 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type GetRecallsByMakeQuery struct {
-	MakeID string `json:"make_id"`
+type GetRecallsByModelQuery struct {
+	Model string `json:"model"`
 }
 
-func (*GetRecallsByMakeQuery) Key() string { return "GetRecallsByMakeQuery" }
+func (*GetRecallsByModelQuery) Key() string { return "GetRecallsByModelQuery" }
 
-type GetRecallsByMakeQueryHandler struct {
+type GetRecallsByModelQueryHandler struct {
 	DBS func() *db.ReaderWriter
 }
 
-func NewGetRecallsByMakeQueryHandler(dbs func() *db.ReaderWriter) GetRecallsByMakeQueryHandler {
-	return GetRecallsByMakeQueryHandler{DBS: dbs}
+func NewGetRecallsByModelQueryHandler(dbs func() *db.ReaderWriter) GetRecallsByModelQueryHandler {
+	return GetRecallsByModelQueryHandler{DBS: dbs}
 }
 
-const cutoffYear = 2005
+func (qh GetRecallsByModelQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+	qry := query.(*GetRecallsByModelQuery)
 
-func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-	qry := query.(*GetRecallsByMakeQuery)
-
-	dds, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(qry.MakeID),
+	dds, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Model.EQ(qry.Model),
 		models.DeviceDefinitionWhere.Year.GTE(cutoffYear), qm.Select(models.DeviceDefinitionColumns.ID)).All(ctx, qh.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return p_grpc.GetRecallsResponse{}, nil
+			return []p_grpc.RecallItem{}, nil
 		}
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definitions"),

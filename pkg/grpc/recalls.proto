@@ -1,23 +1,24 @@
 syntax = "proto3";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
 package grpc;
 
 message RecallItem {
-  string deviceDefinitionID = 1;
+  string device_definition_id = 1;
   string name = 2;
-  string year = 3;
+  int32 year = 3;
   string description = 4;
-  // todo add recall date
+  google.protobuf.Timestamp date = 5;
 }
 
 message GetRecallsByMakeRequest {
-  string makeID = 1;
+  string make_id = 1;
 }
 
 message GetRecallsByModelRequest {
-  string deviceDefinitionID = 1;
+  string model = 1;
 }
 
 message GetRecallsResponse {
