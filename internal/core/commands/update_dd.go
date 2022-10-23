@@ -95,6 +95,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
 
 	if err != nil {
+		// if dd is not found, we'll try to create it
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.InternalError{
 				Err: err,
@@ -106,10 +107,8 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get device makes"),
-			}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device makes with make id: %s", command.DeviceMakeID),
 		}
 	}
 
@@ -117,10 +116,13 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
 
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get device types"),
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.ValidationError{
+				Err: fmt.Errorf("device type id: %s not found when updating a definition", command.DeviceTypeID),
 			}
+		}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
 
@@ -130,7 +132,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			DeviceMakeID: command.DeviceMakeID,
 			Model:        command.Model,
 			Year:         command.Year,
-			Verified:     false,
+			Verified:     command.Verified,
 			ModelSlug:    common.SlugString(command.Model),
 			DeviceTypeID: null.StringFrom(dt.ID),
 		}
@@ -205,8 +207,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	dd.Source = command.Source
 	dd.ImageURL = command.ImageURL
-	dd.Verified = command.Verified
-
+	// if a definition was previously marked as verified, we do not want to go back and un-verify it, at least not in this flow. This will only mark DD's as verified
+	if command.Verified == true {
+		dd.Verified = command.Verified
+	}
 	var deviceStyles []*models.DeviceStyle
 	var deviceIntegrations []*models.DeviceIntegration
 
