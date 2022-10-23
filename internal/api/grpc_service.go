@@ -82,11 +82,11 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		},
 		//nolint
 		VehicleData: &p_grpc.VehicleInfo{
-			FuelType: dd.VehicleInfo.FuelType,
-			DrivenWheels:  dd.VehicleInfo.DrivenWheels,
-			NumberOfDoors: int32(numberOfDoors),
-			Base_MSRP: int32(dd.VehicleInfo.BaseMSRP),
-			EPAClass: dd.VehicleInfo.EPAClass,
+			FuelType:            dd.VehicleInfo.FuelType,
+			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
+			NumberOfDoors:       int32(numberOfDoors),
+			Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
+			EPAClass:            dd.VehicleInfo.EPAClass,
 			VehicleType:         dd.VehicleInfo.VehicleType,
 			MPGHighway:          float32(mpgHighway),
 			MPGCity:             float32(mpgCity),
@@ -395,12 +395,12 @@ func (s *GrpcService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIn
 }
 
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
-
+	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		Source:             null.StringFrom(in.Source),
+		Source:             in.Source,
 		ExternalID:         in.ExternalId,
-		ImageURL:           null.StringFrom(in.ImageUrl),
+		ImageURL:           in.ImageUrl,
 		Year:               int16(in.Year),
 		Model:              in.Model,
 		Verified:           in.Verified,
