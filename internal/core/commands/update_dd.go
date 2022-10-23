@@ -20,10 +20,10 @@ import (
 )
 
 type UpdateDeviceDefinitionCommand struct {
-	DeviceDefinitionID string      `json:"deviceDefinitionId"`
-	Source             null.String `json:"source"`
-	ExternalID         string      `json:"external_id"`
-	ImageURL           null.String `json:"image_url"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	Source             string `json:"source"`
+	ExternalID         string `json:"external_id"`
+	ImageURL           string `json:"image_url"`
 	VehicleInfo        *UpdateDeviceVehicleInfo
 	Verified           bool                       `json:"verified"`
 	Model              string                     `json:"model"`
@@ -93,8 +93,8 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
-
 	if err != nil {
+		// if dd is not found, we'll try to create it
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.InternalError{
 				Err: err,
@@ -104,23 +104,22 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	// Resolve make
 	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
-
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get device makes"),
-			}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device makes with make id: %s", command.DeviceMakeID),
 		}
 	}
 
 	// Resolve attributes by device types
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
-
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get device types"),
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.ValidationError{
+				Err: fmt.Errorf("device type id: %s not found when updating a definition", command.DeviceTypeID),
 			}
+		}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
 
@@ -130,7 +129,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			DeviceMakeID: command.DeviceMakeID,
 			Model:        command.Model,
 			Year:         command.Year,
-			Verified:     false,
 			ModelSlug:    common.SlugString(command.Model),
 			DeviceTypeID: null.StringFrom(dt.ID),
 		}
@@ -203,10 +201,18 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.ExternalID = null.StringFrom(command.ExternalID)
 	}
 
-	dd.Source = command.Source
-	dd.ImageURL = command.ImageURL
-	dd.Verified = command.Verified
+	if len(command.Source) > 0 {
+		dd.Source = null.StringFrom(command.Source)
+		dd.ExternalID = null.StringFrom(command.ExternalID)
+	}
+	if len(command.ImageURL) > 0 {
+		dd.ImageURL = null.StringFrom(command.ImageURL)
+	}
 
+	// if a definition was previously marked as verified, we do not want to go back and un-verify it, at least not in this flow. This will only mark DD's as verified
+	if command.Verified {
+		dd.Verified = command.Verified // tech debt, there may be real case where we want to un-verify eg. admin tool
+	}
 	var deviceStyles []*models.DeviceStyle
 	var deviceIntegrations []*models.DeviceIntegration
 
