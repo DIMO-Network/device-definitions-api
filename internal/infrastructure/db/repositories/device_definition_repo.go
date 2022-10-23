@@ -197,6 +197,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
 	}
+	// by default add autopi compatibility
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
 		IntegrationID:      integration.ID,

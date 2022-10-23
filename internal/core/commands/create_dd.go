@@ -51,12 +51,14 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	// Resolve attributes by device types
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
-
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get device types"),
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.ValidationError{
+				Err: fmt.Errorf("device type id: %s not found when updating a definition", command.DeviceTypeID),
 			}
+		}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
 

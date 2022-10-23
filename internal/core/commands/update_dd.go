@@ -93,7 +93,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
-
 	if err != nil {
 		// if dd is not found, we'll try to create it
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -105,7 +104,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	// Resolve make
 	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
-
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device makes with make id: %s", command.DeviceMakeID),
@@ -114,7 +112,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	// Resolve attributes by device types
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.ValidationError{
