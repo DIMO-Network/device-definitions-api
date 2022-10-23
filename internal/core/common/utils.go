@@ -148,7 +148,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 					for key, value := range attributes {
 						rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
 							Name:  key,
-							Value: value.(string),
+							Value: fmt.Sprint(value),
 						})
 					}
 				}
