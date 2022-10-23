@@ -143,7 +143,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 		var ai map[string]any
 		if err := dd.Metadata.Unmarshal(&ai); err == nil {
 			if ai != nil {
-				if _, ok := ai[dd.R.DeviceType.Metadatakey]; ok {
+				if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
 					attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
 					for key, value := range attributes {
 						rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
