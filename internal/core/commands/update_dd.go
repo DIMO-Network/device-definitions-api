@@ -211,7 +211,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 
 	// if a definition was previously marked as verified, we do not want to go back and un-verify it, at least not in this flow. This will only mark DD's as verified
 	if command.Verified {
-		dd.Verified = command.Verified
+		dd.Verified = command.Verified // tech debt, there may be real case where we want to un-verify eg. admin tool
 	}
 	var deviceStyles []*models.DeviceStyle
 	var deviceIntegrations []*models.DeviceIntegration
