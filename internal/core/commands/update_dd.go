@@ -208,7 +208,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dd.Source = command.Source
 	dd.ImageURL = command.ImageURL
 	// if a definition was previously marked as verified, we do not want to go back and un-verify it, at least not in this flow. This will only mark DD's as verified
-	if command.Verified == true {
+	if command.Verified {
 		dd.Verified = command.Verified
 	}
 	var deviceStyles []*models.DeviceStyle
