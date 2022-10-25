@@ -5,7 +5,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -24,7 +23,8 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
+	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error)
 }
 
@@ -43,6 +43,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 		qm.And("model ilike ?", model),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
 	}
 	if loadIntegrations {
 		qms = append(qms,
@@ -85,6 +86,7 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 		models.DeviceDefinitionWhere.ID.EQ(id),
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles)).
 		One(ctx, r.DBS().Reader)
@@ -123,7 +125,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -179,12 +181,23 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Source:       null.StringFrom(source),
 		Verified:     false,
 		ModelSlug:    common.SlugString(model),
+		DeviceTypeID: null.StringFrom(deviceTypeID),
+	}
+
+	if metaData != nil {
+		err = dd.Metadata.Marshal(metaData)
+		if err != nil {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
 	}
 
 	err = dd.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
 	}
+	// by default add autopi compatibility
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
 		IntegrationID:      integration.ID,
@@ -208,6 +221,94 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
 	}
+	return dd, nil
+}
+
+// CreateOrUpdate does an upsert to persist the device definition. Includes metadata as a parameter, device styles will be created on the fly
+// uses a transaction to rollback if any part does not get written
+func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
+
+	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
+	defer tx.Rollback() //nolint
+
+	if metaData != nil {
+		err := dd.Metadata.Marshal(metaData)
+		if err != nil {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
+	}
+
+	if err := dd.Upsert(ctx, tx, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
+		return nil, &exceptions.InternalError{
+			Err: err,
+		}
+	}
+
+	if len(deviceStyles) > 0 {
+		// Remove Device Styles
+		_, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).
+			DeleteAll(ctx, tx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
+
+		// Update Device Styles
+		for _, ds := range deviceStyles {
+			subModels := &models.DeviceStyle{
+				ID:                 ds.ID,
+				DeviceDefinitionID: dd.ID,
+				Name:               ds.Name,
+				ExternalStyleID:    ds.ExternalStyleID,
+				Source:             ds.Source,
+				CreatedAt:          ds.CreatedAt,
+				UpdatedAt:          ds.UpdatedAt,
+				SubModel:           ds.SubModel,
+			}
+			err = subModels.Insert(ctx, tx, boil.Infer())
+			if err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
+			}
+		}
+	}
+
+	if len(deviceIntegrations) > 0 {
+		// Remove Device Integrations
+		_, err := models.DeviceIntegrations(models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(dd.ID)).
+			DeleteAll(ctx, tx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
+
+		for _, di := range deviceIntegrations {
+			deviceIntegration := &models.DeviceIntegration{
+				DeviceDefinitionID: dd.ID,
+				IntegrationID:      di.IntegrationID,
+				CreatedAt:          di.CreatedAt,
+				UpdatedAt:          di.UpdatedAt,
+				Region:             di.Region,
+			}
+			err = deviceIntegration.Insert(ctx, tx, boil.Infer())
+			if err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
+			}
+		}
+	}
+
+	err := tx.Commit()
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
 	return dd, nil
 }
 

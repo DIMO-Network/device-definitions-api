@@ -24,12 +24,13 @@ import (
 
 // IntegrationFeature is an object representing the database table.
 type IntegrationFeature struct {
-	FeatureKey      string      `boil:"feature_key" json:"feature_key" toml:"feature_key" yaml:"feature_key"`
-	ElasticProperty string      `boil:"elastic_property" json:"elastic_property" toml:"elastic_property" yaml:"elastic_property"`
-	DisplayName     string      `boil:"display_name" json:"display_name" toml:"display_name" yaml:"display_name"`
-	CSSIcon         null.String `boil:"css_icon" json:"css_icon,omitempty" toml:"css_icon" yaml:"css_icon,omitempty"`
-	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt       time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	FeatureKey      string       `boil:"feature_key" json:"feature_key" toml:"feature_key" yaml:"feature_key"`
+	ElasticProperty string       `boil:"elastic_property" json:"elastic_property" toml:"elastic_property" yaml:"elastic_property"`
+	DisplayName     string       `boil:"display_name" json:"display_name" toml:"display_name" yaml:"display_name"`
+	CSSIcon         null.String  `boil:"css_icon" json:"css_icon,omitempty" toml:"css_icon" yaml:"css_icon,omitempty"`
+	CreatedAt       time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt       time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	FeatureWeight   null.Float64 `boil:"feature_weight" json:"feature_weight,omitempty" toml:"feature_weight" yaml:"feature_weight,omitempty"`
 
 	R *integrationFeatureR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L integrationFeatureL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +43,7 @@ var IntegrationFeatureColumns = struct {
 	CSSIcon         string
 	CreatedAt       string
 	UpdatedAt       string
+	FeatureWeight   string
 }{
 	FeatureKey:      "feature_key",
 	ElasticProperty: "elastic_property",
@@ -49,6 +51,7 @@ var IntegrationFeatureColumns = struct {
 	CSSIcon:         "css_icon",
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
+	FeatureWeight:   "feature_weight",
 }
 
 var IntegrationFeatureTableColumns = struct {
@@ -58,6 +61,7 @@ var IntegrationFeatureTableColumns = struct {
 	CSSIcon         string
 	CreatedAt       string
 	UpdatedAt       string
+	FeatureWeight   string
 }{
 	FeatureKey:      "integration_features.feature_key",
 	ElasticProperty: "integration_features.elastic_property",
@@ -65,9 +69,48 @@ var IntegrationFeatureTableColumns = struct {
 	CSSIcon:         "integration_features.css_icon",
 	CreatedAt:       "integration_features.created_at",
 	UpdatedAt:       "integration_features.updated_at",
+	FeatureWeight:   "integration_features.feature_weight",
 }
 
 // Generated where
+
+type whereHelpernull_Float64 struct{ field string }
+
+func (w whereHelpernull_Float64) EQ(x null.Float64) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Float64) NEQ(x null.Float64) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Float64) LT(x null.Float64) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Float64) LTE(x null.Float64) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Float64) GT(x null.Float64) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Float64) GTE(x null.Float64) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Float64) IN(slice []float64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Float64) NIN(slice []float64) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Float64) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Float64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var IntegrationFeatureWhere = struct {
 	FeatureKey      whereHelperstring
@@ -76,6 +119,7 @@ var IntegrationFeatureWhere = struct {
 	CSSIcon         whereHelpernull_String
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
+	FeatureWeight   whereHelpernull_Float64
 }{
 	FeatureKey:      whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"feature_key\""},
 	ElasticProperty: whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"elastic_property\""},
@@ -83,6 +127,7 @@ var IntegrationFeatureWhere = struct {
 	CSSIcon:         whereHelpernull_String{field: "\"device_definitions_api\".\"integration_features\".\"css_icon\""},
 	CreatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"updated_at\""},
+	FeatureWeight:   whereHelpernull_Float64{field: "\"device_definitions_api\".\"integration_features\".\"feature_weight\""},
 }
 
 // IntegrationFeatureRels is where relationship names are stored.
@@ -102,9 +147,9 @@ func (*integrationFeatureR) NewStruct() *integrationFeatureR {
 type integrationFeatureL struct{}
 
 var (
-	integrationFeatureAllColumns            = []string{"feature_key", "elastic_property", "display_name", "css_icon", "created_at", "updated_at"}
+	integrationFeatureAllColumns            = []string{"feature_key", "elastic_property", "display_name", "css_icon", "created_at", "updated_at", "feature_weight"}
 	integrationFeatureColumnsWithoutDefault = []string{"feature_key", "elastic_property", "display_name"}
-	integrationFeatureColumnsWithDefault    = []string{"css_icon", "created_at", "updated_at"}
+	integrationFeatureColumnsWithDefault    = []string{"css_icon", "created_at", "updated_at", "feature_weight"}
 	integrationFeaturePrimaryKeyColumns     = []string{"feature_key"}
 	integrationFeatureGeneratedColumns      = []string{}
 )

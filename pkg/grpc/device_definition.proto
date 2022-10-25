@@ -20,13 +20,30 @@ message GetDeviceDefinitionItemResponse {
 	string name = 2;
 	string image_url = 3;
 	DeviceType type = 4;
-	VehicleInfo vehicle_data = 5;
+	VehicleInfo vehicle_data = 5 [deprecated = true];
 	bool  verified = 6;
 	repeated  DeviceIntegration device_integrations = 7;
 	DeviceMake make = 8;
 	repeated DeviceStyle device_styles = 9;
 	string source = 10;
 	string external_id = 11;
+	repeated DeviceTypeAttribute device_attributes = 12;
+}
+
+message DeviceTypeAttribute {
+	string name = 1;
+	string label = 2;
+	string type = 3;
+	bool required = 4;
+	string defaultValue = 5;
+	string value = 6;
+	repeated string options = 7;
+	string description = 8;
+}
+
+message DeviceTypeAttributeRequest {
+	string name = 1;
+	string value = 2;
 }
 
 message DeviceType {
@@ -122,6 +139,8 @@ message CreateDeviceDefinitionRequest {
  string model = 2;
  int32 year = 3;
  string source = 4;
+ string device_type_id = 5;
+ repeated DeviceTypeAttributeRequest device_attributes = 6;
 }
 
 message CreateDeviceIntegrationRequest {
@@ -136,7 +155,7 @@ message BaseResponse {
 
 message UpdateDeviceDefinitionRequest {
 	string device_definition_id = 1;
-	VehicleInfo vehicle_data = 2;
+	VehicleInfo vehicle_data = 2 [deprecated = true];
 	string source = 3;
 	string image_url = 4;
 	bool verified = 5;
@@ -146,6 +165,8 @@ message UpdateDeviceDefinitionRequest {
 	repeated DeviceStyles device_styles = 9;
 	repeated DeviceIntegrations device_integrations = 10;
 	string external_id = 11;
+	string device_type_id = 12;
+	repeated DeviceTypeAttributeRequest device_attributes = 13;
 
 	message DeviceStyles {
 		string id = 1;
@@ -256,6 +277,7 @@ message Feature {
 message DeviceCompatibilities {
 	int32 year = 1;
 	repeated Feature features = 2;
+	string level = 3;
 }
 
 message DeviceCompatibilityList {
@@ -315,6 +337,16 @@ message GetDeviceStyleFilterRequest {
 	string sub_model = 4;
 }
 
+message GetDeviceTypeByIDRequest {
+	string id = 1;
+}
+
+message GetDeviceTypeResponse {
+	string id = 1;
+	string name = 2;
+	repeated DeviceTypeAttribute attributes = 3;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
@@ -342,4 +374,5 @@ service DeviceDefinitionService {
 	rpc GetDeviceStylesByFilter(GetDeviceStyleFilterRequest) returns (GetDeviceStyleResponse);
 	rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
 	rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
+	rpc GetDeviceTypesByID(GetDeviceTypeByIDRequest) returns (GetDeviceTypeResponse);
 }

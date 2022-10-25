@@ -35,6 +35,21 @@ func (m *MockDeviceDefinitionRepository) EXPECT() *MockDeviceDefinitionRepositor
 	return m.recorder
 }
 
+// CreateOrUpdate mocks base method.
+func (m *MockDeviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrUpdate", ctx, dd, deviceStyles, deviceIntegrations, metaData)
+	ret0, _ := ret[0].(*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrUpdate indicates an expected call of CreateOrUpdate.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, metaData interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations, metaData)
+}
+
 // FetchDeviceCompatibility mocks base method.
 func (m *MockDeviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
 	m.ctrl.T.Helper()
@@ -96,18 +111,18 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, make, model, year)
+	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, make, model, year, deviceTypeID, metaData)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreate indicates an expected call of GetOrCreate.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, source, make, model, year interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, source, make, model, year, deviceTypeID, metaData interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, source, make, model, year)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, source, make, model, year, deviceTypeID, metaData)
 }
 
 // GetWithIntegrations mocks base method.

@@ -9,14 +9,22 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
+const (
+	GoldLevel   = "Gold"
+	SilverLevel = "Silver"
+	BronzeLevel = "Bronze"
+)
+
 type GetDeviceCompatibilityQueryHandler struct {
 	Repository repositories.DeviceDefinitionRepository
 	DBS        func() *db.ReaderWriter
 }
 
 type FeatureDetails struct {
-	DisplayName string
-	CSSIcon     string
+	DisplayName   string
+	CSSIcon       string
+	FeatureWeight float64
+	SupportLevel  int32
 }
 
 type GetDeviceCompatibilityQueryResult struct {
@@ -39,6 +47,31 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 	}
 }
 
+func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights float64) string {
+	level := ""
+	total := 0.0
+
+	for _, v := range fd {
+		if v.SupportLevel > 0 {
+			total += v.FeatureWeight
+		}
+	}
+
+	if total != 0 && total <= totalWeights {
+		p := (total / totalWeights) * 100
+
+		if p >= 75 {
+			level = GoldLevel
+		} else if p > 50 {
+			level = SilverLevel
+		} else {
+			level = BronzeLevel
+		}
+	}
+
+	return level
+}
+
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetDeviceCompatibilityQuery)
 
@@ -50,8 +83,9 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	integFeats := make(map[string]FeatureDetails, len(inf))
 	for _, k := range inf {
 		integFeats[k.FeatureKey] = FeatureDetails{
-			DisplayName: k.DisplayName,
-			CSSIcon:     k.CSSIcon.String,
+			DisplayName:   k.DisplayName,
+			CSSIcon:       k.CSSIcon.String,
+			FeatureWeight: k.FeatureWeight.Float64,
 		}
 	}
 

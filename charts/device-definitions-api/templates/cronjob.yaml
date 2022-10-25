@@ -26,7 +26,7 @@ spec:
               {{- toYaml .Values.securityContext | nindent 14 }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
             command: ['/bin/sh']
-            args: ['-c', '/device-definitions-api edmunds-vehicles-sync && /device-definitions-api smartcar-sync && /device-definitions-api search-sync-dds; CODE=$?; echo "edmunds-vehicles-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
+            args: ['-c', '/device-definitions-api smartcar-sync && /device-definitions-api search-sync-dds && /device-definitions-api populate-device-features; CODE=$?; echo "smart-car-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
             envFrom:
             - configMapRef:
                 name: {{ include "device-definitions-api.fullname" . }}-config

@@ -48,10 +48,15 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 
 	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
+	//nolint
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
+	//nolint
 	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
+	//nolint
 	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
+	//nolint
 	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
+	//nolint
 	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
 
 	result := &p_grpc.GetDeviceDefinitionItemResponse{
@@ -75,6 +80,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
 			NameSlug:        dd.DeviceMake.NameSlug,
 		},
+		//nolint
 		VehicleData: &p_grpc.VehicleInfo{
 			FuelType:            dd.VehicleInfo.FuelType,
 			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
@@ -103,6 +109,28 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 			},
 			Region:             integration.Region,
 			DeviceDefinitionId: dd.DeviceDefinitionID,
+		})
+	}
+
+	for _, deviceStyle := range dd.DeviceStyles {
+		result.DeviceStyles = append(result.DeviceStyles, &p_grpc.DeviceStyle{
+			Id:                 deviceStyle.ID,
+			Name:               deviceStyle.Name,
+			DeviceDefinitionId: deviceStyle.DeviceDefinitionID,
+			SubModel:           deviceStyle.SubModel,
+			Source:             deviceStyle.Source,
+			ExternalStyleId:    deviceStyle.ExternalStyleID,
+		})
+	}
+
+	for _, deviceAttribute := range dd.DeviceAttributes {
+		result.DeviceAttributes = append(result.DeviceAttributes, &p_grpc.DeviceTypeAttribute{
+			Name:        deviceAttribute.Name,
+			Options:     deviceAttribute.Option,
+			Type:        deviceAttribute.Type,
+			Value:       deviceAttribute.Value,
+			Required:    deviceAttribute.Required,
+			Description: deviceAttribute.Description,
 		})
 	}
 
@@ -240,13 +268,24 @@ func (s *GrpcService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_
 
 func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
 
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceDefinitionCommand{
-		Source: in.Source,
-		Make:   in.Make,
-		Model:  in.Model,
-		Year:   int(in.Year),
-	})
+	command := &commands.CreateDeviceDefinitionCommand{
+		Source:       in.Source,
+		Make:         in.Make,
+		Model:        in.Model,
+		Year:         int(in.Year),
+		DeviceTypeID: in.DeviceTypeId,
+	}
 
+	if len(in.DeviceAttributes) > 0 {
+		for _, attribute := range in.DeviceAttributes {
+			command.DeviceAttributes = append(command.DeviceAttributes, &models.UpdateDeviceTypeAttribute{
+				Name:  attribute.Name,
+				Value: attribute.Value,
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
@@ -356,30 +395,25 @@ func (s *GrpcService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIn
 }
 
 func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
-
+	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		Source:             null.StringFrom(in.Source),
+		Source:             in.Source,
 		ExternalID:         in.ExternalId,
-		ImageURL:           null.StringFrom(in.ImageUrl),
+		ImageURL:           in.ImageUrl,
 		Year:               int16(in.Year),
 		Model:              in.Model,
 		Verified:           in.Verified,
 		DeviceMakeID:       in.DeviceMakeId,
+		DeviceTypeID:       in.DeviceTypeId,
 	}
 
-	if in.VehicleData != nil {
-		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
-			FuelType:            in.VehicleData.FuelType,
-			DrivenWheels:        in.VehicleData.DrivenWheels,
-			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
-			BaseMSRP:            int(in.VehicleData.Base_MSRP),
-			EPAClass:            in.VehicleData.EPAClass,
-			VehicleType:         in.VehicleData.VehicleType,
-			MPGHighway:          fmt.Sprintf("%f", in.VehicleData.MPGHighway),
-			FuelTankCapacityGal: fmt.Sprintf("%f", in.VehicleData.FuelTankCapacityGal),
-			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
-			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
+	if len(in.DeviceAttributes) > 0 {
+		for _, attribute := range in.DeviceAttributes {
+			command.DeviceAttributes = append(command.DeviceAttributes, &models.UpdateDeviceTypeAttribute{
+				Name:  attribute.Name,
+				Value: attribute.Value,
+			})
 		}
 	}
 
@@ -405,6 +439,22 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 				CreatedAt:     integration.CreatedAt.AsTime(),
 				UpdatedAt:     integration.UpdatedAt.AsTime(),
 			})
+		}
+	}
+
+	//nolint
+	if in.VehicleData != nil {
+		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
+			FuelType:            in.VehicleData.FuelType,
+			DrivenWheels:        in.VehicleData.DrivenWheels,
+			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
+			BaseMSRP:            int(in.VehicleData.Base_MSRP),
+			EPAClass:            in.VehicleData.EPAClass,
+			VehicleType:         in.VehicleData.VehicleType,
+			MPGHighway:          fmt.Sprintf("%f", in.VehicleData.MPGHighway),
+			FuelTankCapacityGal: fmt.Sprintf("%f", in.VehicleData.FuelTankCapacityGal),
+			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
+			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
 		}
 	}
 
@@ -475,6 +525,10 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
 	integFeats := deviceCompatibilities.IntegrationFeatures
+	totalWeightsCount := 0.0
+	for _, v := range deviceCompatibilities.IntegrationFeatures {
+		totalWeightsCount += v.FeatureWeight
+	}
 	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
 
 	// Group by model name.
@@ -506,6 +560,8 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 			continue
 		}
 
+		ifeat := map[string]queries.FeatureDetails{}
+
 		for _, f := range features {
 			ft := &p_grpc.Feature{
 				Key:          integFeats[f.FeatureKey].DisplayName,
@@ -513,10 +569,19 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 				SupportLevel: int32(f.SupportLevel),
 			}
 
+			fts := queries.FeatureDetails{
+				FeatureWeight: integFeats[f.FeatureKey].FeatureWeight,
+				SupportLevel:  int32(f.SupportLevel),
+			}
+
+			ifeat[f.FeatureKey] = fts
+
 			feats = append(feats, ft)
 		}
 
+		level := queries.GetDeviceCompatibilityLevel(ifeat, totalWeightsCount)
 		res.Features = feats
+		res.Level = level
 		dcMap[v.Model] = append(dcMap[v.Model], res)
 	}
 
@@ -657,4 +722,29 @@ func (s *GrpcService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDe
 	result := commandResult.(commands.UpdateDeviceStyleCommandResult)
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDeviceTypeByIDRequest) (*p_grpc.GetDeviceTypeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceTypeByIDQuery{
+		DeviceTypeID: in.Id,
+	})
+
+	dt := qryResult.(models.GetDeviceTypeQueryResult)
+	result := &p_grpc.GetDeviceTypeResponse{
+		Id:   dt.ID,
+		Name: dt.Name,
+	}
+
+	for _, prop := range dt.Attributes {
+		result.Attributes = append(result.Attributes, &p_grpc.DeviceTypeAttribute{
+			Name:         prop.Name,
+			Label:        prop.Label,
+			Description:  prop.Description,
+			Required:     prop.Required,
+			DefaultValue: prop.DefaultValue,
+			Options:      prop.Option,
+		})
+	}
+
+	return result, nil
 }

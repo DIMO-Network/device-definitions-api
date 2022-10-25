@@ -3,6 +3,7 @@ package dbtest
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"os"
 	"testing"
@@ -20,8 +21,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
+
+//go:embed device_type_vehicle_properties.json
+var deviceTypeVehiclePropertyDataSample []byte
 
 // StartContainerDatabase starts postgres container with default test settings, and migrates the db. Caller must terminate container.
 func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, migrationsDirRelPath string) (db.Store, testcontainers.Container) {
@@ -134,16 +139,35 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 }
 
 func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
+	dt := SetupCreateDeviceType(t, pdb)
 	dd := &models.DeviceDefinition{
 		ID:           ksuid.New().String(),
 		DeviceMakeID: dm.ID,
 		Model:        model,
 		Year:         int16(year),
 		Verified:     true,
+		DeviceTypeID: null.StringFrom(dt.ID),
 	}
 	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "database error")
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceMake = &dm
+	dd.R.DeviceType = dt
+
 	return dd
+}
+
+func SetupCreateDeviceType(t *testing.T, pdb db.Store) *models.DeviceType {
+	dt := &models.DeviceType{
+		ID:          ksuid.New().String(),
+		Name:        "vehicle",
+		Metadatakey: "vehicle_info",
+		Properties:  null.JSONFrom(deviceTypeVehiclePropertyDataSample),
+	}
+	err := dt.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	assert.NoError(t, err, "database error")
+	return dt
 }
 
 func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {

@@ -66,8 +66,28 @@ If you get a command not found error with sqlboiler, make sure your go install i
 
 ### Adding migrations
 
+To install goose in GO:
+```bash
+$ go get github.com/pressly/goose/v3/cmd/goose@v3.5.3
+export GOOSE_DRIVER=postgres
+```
+
+To install goose CLI:
+```bash
+$ go install github.com/pressly/goose/v3/cmd/goose
+export GOOSE_DRIVER=postgres
+```
+
 Have goose installed, then:
 
 `goose -dir internal/infrastructure/db/migrations create slugs-not-null sql`
+
+## Local development
+
+Importing data: Device definition exports are [here]([url](https://drive.google.com/drive/u/1/folders/1WymEqZo-bCH2Zw-m5L9u_ynMSwPeEARL))
+You can use sqlboiler to import or this command:
+```sh
+psql "host=localhost port=5432 dbname=device_definitions_api user=dimo password=dimo" -c "\COPY device_definitions_api.integrations (id, type, style, vendor, created_at, updated_at, refresh_limit_secs, metadata) FROM '/Users/aenglish/Downloads/drive-download-20221020T172636Z-001/integrations.csv' DELIMITER ',' CSV HEADER"
+```
 
 

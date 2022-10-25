@@ -36,6 +36,7 @@ type DeviceDefinition struct {
 	ExternalID   null.String `boil:"external_id" json:"external_id,omitempty" toml:"external_id" yaml:"external_id,omitempty"`
 	DeviceMakeID string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
 	ModelSlug    string      `boil:"model_slug" json:"model_slug" toml:"model_slug" yaml:"model_slug"`
+	DeviceTypeID null.String `boil:"device_type_id" json:"device_type_id,omitempty" toml:"device_type_id" yaml:"device_type_id,omitempty"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,6 +55,7 @@ var DeviceDefinitionColumns = struct {
 	ExternalID   string
 	DeviceMakeID string
 	ModelSlug    string
+	DeviceTypeID string
 }{
 	ID:           "id",
 	Model:        "model",
@@ -67,6 +69,7 @@ var DeviceDefinitionColumns = struct {
 	ExternalID:   "external_id",
 	DeviceMakeID: "device_make_id",
 	ModelSlug:    "model_slug",
+	DeviceTypeID: "device_type_id",
 }
 
 var DeviceDefinitionTableColumns = struct {
@@ -82,6 +85,7 @@ var DeviceDefinitionTableColumns = struct {
 	ExternalID   string
 	DeviceMakeID string
 	ModelSlug    string
+	DeviceTypeID string
 }{
 	ID:           "device_definitions.id",
 	Model:        "device_definitions.model",
@@ -95,6 +99,7 @@ var DeviceDefinitionTableColumns = struct {
 	ExternalID:   "device_definitions.external_id",
 	DeviceMakeID: "device_definitions.device_make_id",
 	ModelSlug:    "device_definitions.model_slug",
+	DeviceTypeID: "device_definitions.device_type_id",
 }
 
 // Generated where
@@ -250,6 +255,7 @@ var DeviceDefinitionWhere = struct {
 	ExternalID   whereHelpernull_String
 	DeviceMakeID whereHelperstring
 	ModelSlug    whereHelperstring
+	DeviceTypeID whereHelpernull_String
 }{
 	ID:           whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:        whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
@@ -263,16 +269,19 @@ var DeviceDefinitionWhere = struct {
 	ExternalID:   whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"external_id\""},
 	DeviceMakeID: whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"device_make_id\""},
 	ModelSlug:    whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
+	DeviceTypeID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"device_type_id\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
 var DeviceDefinitionRels = struct {
 	DeviceMake         string
+	DeviceType         string
 	DeviceIntegrations string
 	DeviceNhtsaRecalls string
 	DeviceStyles       string
 }{
 	DeviceMake:         "DeviceMake",
+	DeviceType:         "DeviceType",
 	DeviceIntegrations: "DeviceIntegrations",
 	DeviceNhtsaRecalls: "DeviceNhtsaRecalls",
 	DeviceStyles:       "DeviceStyles",
@@ -281,6 +290,7 @@ var DeviceDefinitionRels = struct {
 // deviceDefinitionR is where relationships are stored.
 type deviceDefinitionR struct {
 	DeviceMake         *DeviceMake            `boil:"DeviceMake" json:"DeviceMake" toml:"DeviceMake" yaml:"DeviceMake"`
+	DeviceType         *DeviceType            `boil:"DeviceType" json:"DeviceType" toml:"DeviceType" yaml:"DeviceType"`
 	DeviceIntegrations DeviceIntegrationSlice `boil:"DeviceIntegrations" json:"DeviceIntegrations" toml:"DeviceIntegrations" yaml:"DeviceIntegrations"`
 	DeviceNhtsaRecalls DeviceNhtsaRecallSlice `boil:"DeviceNhtsaRecalls" json:"DeviceNhtsaRecalls" toml:"DeviceNhtsaRecalls" yaml:"DeviceNhtsaRecalls"`
 	DeviceStyles       DeviceStyleSlice       `boil:"DeviceStyles" json:"DeviceStyles" toml:"DeviceStyles" yaml:"DeviceStyles"`
@@ -296,6 +306,13 @@ func (r *deviceDefinitionR) GetDeviceMake() *DeviceMake {
 		return nil
 	}
 	return r.DeviceMake
+}
+
+func (r *deviceDefinitionR) GetDeviceType() *DeviceType {
+	if r == nil {
+		return nil
+	}
+	return r.DeviceType
 }
 
 func (r *deviceDefinitionR) GetDeviceIntegrations() DeviceIntegrationSlice {
@@ -323,9 +340,9 @@ func (r *deviceDefinitionR) GetDeviceStyles() DeviceStyleSlice {
 type deviceDefinitionL struct{}
 
 var (
-	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug"}
+	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id"}
 	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id"}
+	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )
@@ -619,6 +636,17 @@ func (o *DeviceDefinition) DeviceMake(mods ...qm.QueryMod) deviceMakeQuery {
 	return DeviceMakes(queryMods...)
 }
 
+// DeviceType pointed to by the foreign key.
+func (o *DeviceDefinition) DeviceType(mods ...qm.QueryMod) deviceTypeQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.DeviceTypeID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return DeviceTypes(queryMods...)
+}
+
 // DeviceIntegrations retrieves all the device_integration's DeviceIntegrations with an executor.
 func (o *DeviceDefinition) DeviceIntegrations(mods ...qm.QueryMod) deviceIntegrationQuery {
 	var queryMods []qm.QueryMod
@@ -771,6 +799,130 @@ func (deviceDefinitionL) LoadDeviceMake(ctx context.Context, e boil.ContextExecu
 				local.R.DeviceMake = foreign
 				if foreign.R == nil {
 					foreign.R = &deviceMakeR{}
+				}
+				foreign.R.DeviceDefinitions = append(foreign.R.DeviceDefinitions, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadDeviceType allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (deviceDefinitionL) LoadDeviceType(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceDefinition interface{}, mods queries.Applicator) error {
+	var slice []*DeviceDefinition
+	var object *DeviceDefinition
+
+	if singular {
+		var ok bool
+		object, ok = maybeDeviceDefinition.(*DeviceDefinition)
+		if !ok {
+			object = new(DeviceDefinition)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceDefinition)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceDefinition))
+			}
+		}
+	} else {
+		s, ok := maybeDeviceDefinition.(*[]*DeviceDefinition)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceDefinition)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceDefinition))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &deviceDefinitionR{}
+		}
+		if !queries.IsNil(object.DeviceTypeID) {
+			args = append(args, object.DeviceTypeID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &deviceDefinitionR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.DeviceTypeID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.DeviceTypeID) {
+				args = append(args, obj.DeviceTypeID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.device_types`),
+		qm.WhereIn(`device_definitions_api.device_types.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load DeviceType")
+	}
+
+	var resultSlice []*DeviceType
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice DeviceType")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for device_types")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_types")
+	}
+
+	if len(deviceDefinitionAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.DeviceType = foreign
+		if foreign.R == nil {
+			foreign.R = &deviceTypeR{}
+		}
+		foreign.R.DeviceDefinitions = append(foreign.R.DeviceDefinitions, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.DeviceTypeID, foreign.ID) {
+				local.R.DeviceType = foreign
+				if foreign.R == nil {
+					foreign.R = &deviceTypeR{}
 				}
 				foreign.R.DeviceDefinitions = append(foreign.R.DeviceDefinitions, local)
 				break
@@ -1167,6 +1319,86 @@ func (o *DeviceDefinition) SetDeviceMake(ctx context.Context, exec boil.ContextE
 		related.R.DeviceDefinitions = append(related.R.DeviceDefinitions, o)
 	}
 
+	return nil
+}
+
+// SetDeviceType of the deviceDefinition to the related item.
+// Sets o.R.DeviceType to related.
+// Adds o to related.R.DeviceDefinitions.
+func (o *DeviceDefinition) SetDeviceType(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceType) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"device_definitions_api\".\"device_definitions\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"device_type_id"}),
+		strmangle.WhereClause("\"", "\"", 2, deviceDefinitionPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.DeviceTypeID, related.ID)
+	if o.R == nil {
+		o.R = &deviceDefinitionR{
+			DeviceType: related,
+		}
+	} else {
+		o.R.DeviceType = related
+	}
+
+	if related.R == nil {
+		related.R = &deviceTypeR{
+			DeviceDefinitions: DeviceDefinitionSlice{o},
+		}
+	} else {
+		related.R.DeviceDefinitions = append(related.R.DeviceDefinitions, o)
+	}
+
+	return nil
+}
+
+// RemoveDeviceType relationship.
+// Sets o.R.DeviceType to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *DeviceDefinition) RemoveDeviceType(ctx context.Context, exec boil.ContextExecutor, related *DeviceType) error {
+	var err error
+
+	queries.SetScanner(&o.DeviceTypeID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("device_type_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.DeviceType = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.DeviceDefinitions {
+		if queries.Equal(o.DeviceTypeID, ri.DeviceTypeID) {
+			continue
+		}
+
+		ln := len(related.R.DeviceDefinitions)
+		if ln > 1 && i < ln-1 {
+			related.R.DeviceDefinitions[i] = related.R.DeviceDefinitions[ln-1]
+		}
+		related.R.DeviceDefinitions = related.R.DeviceDefinitions[:ln-1]
+		break
+	}
 	return nil
 }
 

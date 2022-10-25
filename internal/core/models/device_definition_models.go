@@ -8,21 +8,31 @@ import (
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string     `json:"deviceDefinitionId"`
-	ExternalID         string     `json:"external_id"`
-	Name               string     `json:"name"`
-	ImageURL           string     `json:"imageUrl"`
-	Source             string     `json:"source"`
-	DeviceMake         DeviceMake `json:"make"`
-	Type               DeviceType `json:"type"`
-	// VehicleInfo will be empty if not a vehicle type
-	VehicleInfo VehicleInfo `json:"vehicleData,omitempty"`
-	Metadata    interface{} `json:"metadata"`
-	Verified    bool        `json:"verified"`
+	DeviceDefinitionID string      `json:"deviceDefinitionId"`
+	ExternalID         string      `json:"external_id"`
+	Name               string      `json:"name"`
+	ImageURL           string      `json:"imageUrl"`
+	Source             string      `json:"source"`
+	DeviceMake         DeviceMake  `json:"make"`
+	Type               DeviceType  `json:"type"`
+	VehicleInfo        VehicleInfo `json:"vehicleData,omitempty"`
+	Metadata           interface{} `json:"metadata"`
+	Verified           bool        `json:"verified"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
-	DeviceIntegrations     []DeviceIntegration `json:"deviceIntegrations"`
-	CompatibleIntegrations []DeviceIntegration `json:"compatibleIntegrations"`
-	DeviceStyles           []DeviceStyle       `json:"deviceStyles"`
+	DeviceIntegrations     []DeviceIntegration   `json:"deviceIntegrations"`
+	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
+	DeviceStyles           []DeviceStyle         `json:"deviceStyles"`
+	DeviceAttributes       []DeviceTypeAttribute `json:"deviceAttributes"`
+}
+
+type DeviceTypeAttribute struct {
+	Name        string   `json:"name"`
+	Label       string   `json:"label"`
+	Description string   `json:"description"`
+	Type        string   `json:"type"`
+	Required    bool     `json:"required"`
+	Value       string   `json:"value"`
+	Option      []string `json:"options"`
 }
 
 // VehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
