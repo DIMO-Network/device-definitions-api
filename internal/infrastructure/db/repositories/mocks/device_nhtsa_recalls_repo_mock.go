@@ -37,33 +37,18 @@ func (m *MockDeviceNHTSARecallsRepository) EXPECT() *MockDeviceNHTSARecallsRepos
 }
 
 // Create mocks base method.
-func (m *MockDeviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON) (*models.DeviceNhtsaRecall, error) {
+func (m *MockDeviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON, hash []byte) (*models.DeviceNhtsaRecall, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, data, metadata)
+	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, data, metadata, hash)
 	ret0, _ := ret[0].(*models.DeviceNhtsaRecall)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) Create(ctx, deviceDefinitionID, data, metadata interface{}) *gomock.Call {
+func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) Create(ctx, deviceDefinitionID, data, metadata, hash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).Create), ctx, deviceDefinitionID, data, metadata)
-}
-
-// GetByID mocks base method.
-func (m *MockDeviceNHTSARecallsRepository) GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", ctx, id)
-	ret0, _ := ret[0].(*models.DeviceNhtsaRecall)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByID indicates an expected call of GetByID.
-func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).GetByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).Create), ctx, deviceDefinitionID, data, metadata, hash)
 }
 
 // GetLastDataRecordID mocks base method.
@@ -94,18 +79,4 @@ func (m *MockDeviceNHTSARecallsRepository) MatchDeviceDefinition(ctx context.Con
 func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) MatchDeviceDefinition(ctx, matchingVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MatchDeviceDefinition", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).MatchDeviceDefinition), ctx, matchingVersion)
-}
-
-// SetDDAndMetadata mocks base method.
-func (m *MockDeviceNHTSARecallsRepository) SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetDDAndMetadata", ctx, recall, deviceDefinitionID, metadata)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetDDAndMetadata indicates an expected call of SetDDAndMetadata.
-func (mr *MockDeviceNHTSARecallsRepositoryMockRecorder) SetDDAndMetadata(ctx, recall, deviceDefinitionID, metadata interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDDAndMetadata", reflect.TypeOf((*MockDeviceNHTSARecallsRepository)(nil).SetDDAndMetadata), ctx, recall, deviceDefinitionID, metadata)
 }

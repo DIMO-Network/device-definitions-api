@@ -83,6 +83,8 @@ type DeviceNhtsaRecall struct {
 	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt       time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	Metadata        null.JSON `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	// A SHA1 hash of the entire row from the data file
+	Hash []byte `boil:"hash" json:"hash" toml:"hash" yaml:"hash"`
 
 	R *deviceNhtsaRecallR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceNhtsaRecallL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -121,6 +123,7 @@ var DeviceNhtsaRecallColumns = struct {
 	CreatedAt            string
 	UpdatedAt            string
 	Metadata             string
+	Hash                 string
 }{
 	ID:                   "id",
 	DeviceDefinitionID:   "device_definition_id",
@@ -154,6 +157,7 @@ var DeviceNhtsaRecallColumns = struct {
 	CreatedAt:            "created_at",
 	UpdatedAt:            "updated_at",
 	Metadata:             "metadata",
+	Hash:                 "hash",
 }
 
 var DeviceNhtsaRecallTableColumns = struct {
@@ -189,6 +193,7 @@ var DeviceNhtsaRecallTableColumns = struct {
 	CreatedAt            string
 	UpdatedAt            string
 	Metadata             string
+	Hash                 string
 }{
 	ID:                   "device_nhtsa_recalls.id",
 	DeviceDefinitionID:   "device_nhtsa_recalls.device_definition_id",
@@ -222,6 +227,7 @@ var DeviceNhtsaRecallTableColumns = struct {
 	CreatedAt:            "device_nhtsa_recalls.created_at",
 	UpdatedAt:            "device_nhtsa_recalls.updated_at",
 	Metadata:             "device_nhtsa_recalls.metadata",
+	Hash:                 "device_nhtsa_recalls.hash",
 }
 
 // Generated where
@@ -311,6 +317,15 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelper__byte struct{ field string }
+
+func (w whereHelper__byte) EQ(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelper__byte) NEQ(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelper__byte) LT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelper__byte) LTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelper__byte) GT(x []byte) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelper__byte) GTE(x []byte) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var DeviceNhtsaRecallWhere = struct {
 	ID                   whereHelperstring
 	DeviceDefinitionID   whereHelpernull_String
@@ -344,6 +359,7 @@ var DeviceNhtsaRecallWhere = struct {
 	CreatedAt            whereHelpertime_Time
 	UpdatedAt            whereHelpertime_Time
 	Metadata             whereHelpernull_JSON
+	Hash                 whereHelper__byte
 }{
 	ID:                   whereHelperstring{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"id\""},
 	DeviceDefinitionID:   whereHelpernull_String{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"device_definition_id\""},
@@ -377,6 +393,7 @@ var DeviceNhtsaRecallWhere = struct {
 	CreatedAt:            whereHelpertime_Time{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"created_at\""},
 	UpdatedAt:            whereHelpertime_Time{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"updated_at\""},
 	Metadata:             whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"metadata\""},
+	Hash:                 whereHelper__byte{field: "\"device_definitions_api\".\"device_nhtsa_recalls\".\"hash\""},
 }
 
 // DeviceNhtsaRecallRels is where relationship names are stored.
@@ -407,8 +424,8 @@ func (r *deviceNhtsaRecallR) GetDeviceDefinition() *DeviceDefinition {
 type deviceNhtsaRecallL struct{}
 
 var (
-	deviceNhtsaRecallAllColumns            = []string{"id", "device_definition_id", "data_record_id", "data_campno", "data_maketxt", "data_modeltxt", "data_yeartxt", "data_mfgcampno", "data_compname", "data_mfgname", "data_bgman", "data_endman", "data_rcltypecd", "data_potaff", "data_odate", "data_influenced_by", "data_mfgtxt", "data_rcdate", "data_datea", "data_rpno", "data_fmvss", "data_desc_defect", "data_conequence_defect", "data_corrective_action", "data_notes", "data_rcl_cmpt_id", "data_mfr_comp_name", "data_mfr_comp_desc", "data_mfr_comp_ptno", "created_at", "updated_at", "metadata"}
-	deviceNhtsaRecallColumnsWithoutDefault = []string{"id", "data_record_id", "data_campno", "data_maketxt", "data_modeltxt", "data_yeartxt", "data_mfgcampno", "data_compname", "data_mfgname", "data_rcltypecd", "data_influenced_by", "data_mfgtxt", "data_rcdate", "data_datea", "data_rpno", "data_fmvss", "data_desc_defect", "data_conequence_defect", "data_corrective_action", "data_notes", "data_rcl_cmpt_id", "data_mfr_comp_name", "data_mfr_comp_desc", "data_mfr_comp_ptno"}
+	deviceNhtsaRecallAllColumns            = []string{"id", "device_definition_id", "data_record_id", "data_campno", "data_maketxt", "data_modeltxt", "data_yeartxt", "data_mfgcampno", "data_compname", "data_mfgname", "data_bgman", "data_endman", "data_rcltypecd", "data_potaff", "data_odate", "data_influenced_by", "data_mfgtxt", "data_rcdate", "data_datea", "data_rpno", "data_fmvss", "data_desc_defect", "data_conequence_defect", "data_corrective_action", "data_notes", "data_rcl_cmpt_id", "data_mfr_comp_name", "data_mfr_comp_desc", "data_mfr_comp_ptno", "created_at", "updated_at", "metadata", "hash"}
+	deviceNhtsaRecallColumnsWithoutDefault = []string{"id", "data_record_id", "data_campno", "data_maketxt", "data_modeltxt", "data_yeartxt", "data_mfgcampno", "data_compname", "data_mfgname", "data_rcltypecd", "data_influenced_by", "data_mfgtxt", "data_rcdate", "data_datea", "data_rpno", "data_fmvss", "data_desc_defect", "data_conequence_defect", "data_corrective_action", "data_notes", "data_rcl_cmpt_id", "data_mfr_comp_name", "data_mfr_comp_desc", "data_mfr_comp_ptno", "hash"}
 	deviceNhtsaRecallColumnsWithDefault    = []string{"device_definition_id", "data_bgman", "data_endman", "data_potaff", "data_odate", "created_at", "updated_at", "metadata"}
 	deviceNhtsaRecallPrimaryKeyColumns     = []string{"id"}
 	deviceNhtsaRecallGeneratedColumns      = []string{}

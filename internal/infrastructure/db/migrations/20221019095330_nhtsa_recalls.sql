@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS device_nhtsa_recalls
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     metadata jsonb NULL,
+    hash bytea NOT NULL,
     CONSTRAINT device_nhtsa_recalls_pkey PRIMARY KEY (id),
     CONSTRAINT fk_device_definition FOREIGN KEY (device_definition_id)
         REFERENCES device_definitions (id) MATCH SIMPLE
@@ -76,6 +77,11 @@ COMMENT ON COLUMN device_nhtsa_recalls.data_rcl_cmpt_id       IS '24. NUMBER THA
 COMMENT ON COLUMN device_nhtsa_recalls.data_mfr_comp_name     IS '25. MANUFACTURER-SUPPLIED COMPONENT NAME';
 COMMENT ON COLUMN device_nhtsa_recalls.data_mfr_comp_desc     IS '26. MANUFACTURER-SUPPLIED COMPONENT DESCRIPTION';
 COMMENT ON COLUMN device_nhtsa_recalls.data_mfr_comp_ptno     IS '27. MANUFACTURER-SUPPLIED COMPONENT PART NUMBER';
+
+COMMENT ON COLUMN device_nhtsa_recalls.hash                   IS 'A SHA1 hash of the entire row from the data file';
+
+CREATE UNIQUE INDEX device_nhtsa_recalls_hash
+    ON device_definitions_api.device_nhtsa_recalls (hash);
 
 -- +goose StatementEnd
 

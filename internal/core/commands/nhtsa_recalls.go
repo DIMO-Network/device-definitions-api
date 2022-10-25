@@ -4,19 +4,21 @@ import (
 	"archive/zip"
 	"bufio"
 	"context"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
-	"github.com/volatiletech/null/v8"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
 )
 
 type SyncNHTSARecallsCommand struct {
@@ -30,18 +32,18 @@ type SyncNHTSARecallsCommandResult struct {
 func (*SyncNHTSARecallsCommand) Key() string { return "SyncNHTSARecallsCommand" }
 
 type SyncNHTSARecallsCommandHandler struct {
-	DBS         func() *db.ReaderWriter
-	RecallsRepo repositories.DeviceNHTSARecallsRepository
-	DDRepo      repositories.DeviceDefinitionRepository
-	MakesRepo   repositories.DeviceMakeRepository
-	FileURL     *string
+	dbs         func() *db.ReaderWriter
+	log         *zerolog.Logger
+	recallsRepo repositories.DeviceNHTSARecallsRepository
+	ddRepo      repositories.DeviceDefinitionRepository
+	fileURL     *string
 }
 
-func NewSyncNHTSARecallsCommandHandler(dbs func() *db.ReaderWriter, recallsRepo repositories.DeviceNHTSARecallsRepository, ddRepo repositories.DeviceDefinitionRepository, makesRepo repositories.DeviceMakeRepository, file *string) SyncNHTSARecallsCommandHandler {
-	return SyncNHTSARecallsCommandHandler{DBS: dbs, RecallsRepo: recallsRepo, DDRepo: ddRepo, MakesRepo: makesRepo, FileURL: file}
+func NewSyncNHTSARecallsCommandHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger, recallsRepo repositories.DeviceNHTSARecallsRepository, ddRepo repositories.DeviceDefinitionRepository, file *string) SyncNHTSARecallsCommandHandler {
+	return SyncNHTSARecallsCommandHandler{dbs: dbs, log: logger, recallsRepo: recallsRepo, ddRepo: ddRepo, fileURL: file}
 }
 
-const NHTSARecallsMatchingVersion = "2022.10.18.0"
+const NHTSARecallsMatchingVersion = "2022.10.20.0"
 const NHTSARecallsColumnCount = 27
 
 type NHTSARecallMetadata struct {
@@ -58,7 +60,10 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 
 	_ = query.(*SyncNHTSARecallsCommand)
 
-	filePath, err := ch.DownloadFileToTemp("", *ch.FileURL)
+	filePath, err := ch.DownloadFileToTemp("", *ch.fileURL)
+	if err != nil {
+		return nil, err
+	}
 
 	fmt.Printf("Tmp file: %s\n", *filePath)
 
@@ -69,11 +74,11 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 	defer func() {
 		err = r.Close()
 		if err != nil {
-			log.Fatal(err)
+			ch.log.Fatal().Err(err)
 		}
 		err = os.Remove(*filePath)
 		if err != nil {
-			log.Fatal(err)
+			ch.log.Fatal().Err(err)
 		}
 		fmt.Println("Removed tmp file")
 	}()
@@ -94,13 +99,8 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 		}
 	}(rc)
 
-	lastID, err := ch.RecallsRepo.GetLastDataRecordID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
 	expectID := 1
 	insertCount := 0
-	matchCount := 0
 
 	fmt.Print("\rReading file...")
 
@@ -109,15 +109,25 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 	scanLine.Split(bufio.ScanLines)
 	for scanLine.Scan() {
 		scanFields := strings.Split(scanLine.Text(), "\t")
+		if len(scanFields) < NHTSARecallsColumnCount {
+			// too short? add empty fields to end
+			scanFields = append(scanFields, make([]string, NHTSARecallsColumnCount-len(scanFields))...)
+		}
 		id, err := strconv.Atoi(scanFields[0])
 		if err != nil {
 			return nil, err
 		}
 		if expectID != id {
-			log.Printf("NHTSA Recall record ID is %d, expected %d\n", id, expectID)
+			ch.log.Printf("NHTSA Recall record ID is %d, expected %d\n", id, expectID)
 		}
 
 		mdJSON := null.JSON{}
+
+		// calculate unique hash from data
+		hasher := sha1.New()
+		hasher.Write(scanLine.Bytes())
+		hash := hasher.Sum(nil)
+
 		if len(scanFields) > NHTSARecallsColumnCount {
 			//log.Printf("NHTSA Recall record ID %d has %d columns, expected %d\n", id, len(scanFields), NHTSARecallsColumnCount)
 			//fmt.Println(scanFields[NHTSARecallsColumnCount:])
@@ -126,19 +136,19 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 			}
 			medtadataJSON, err := json.Marshal(md)
 			if err != nil {
-				log.Fatal(err)
+				ch.log.Fatal().Err(err)
 			}
 			mdJSON = null.JSONFrom(medtadataJSON)
 		}
 
 		// Add to DB if last ID is less than this ID
-		if lastID.IsZero() || lastID.Int < id {
-			_, err = ch.RecallsRepo.Create(ctx, null.String{}, scanFields, mdJSON)
-			if err != nil {
-				log.Print(err)
-				fmt.Println("Aborting...")
-				break
-			}
+		insertedRecall, err := ch.recallsRepo.Create(ctx, null.String{}, scanFields, mdJSON, hash)
+		if err != nil {
+			ch.log.Print(err)
+			fmt.Println("Aborting...")
+			break
+		}
+		if insertedRecall != nil {
 			fmt.Printf("\rInserted data record ID %d", id)
 			insertCount++
 		}
@@ -146,24 +156,20 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 		expectID = id + 1
 	}
 
-	if lastID.IsZero() {
-		fmt.Printf("\rInserted %d rows\n", insertCount)
-	} else {
-		fmt.Printf("\rInserted %d rows after data record ID %d\n", insertCount, lastID.Int)
-	}
+	fmt.Println("\r...")
+	fmt.Print("\033[1A\033[K") // clear line
+	fmt.Printf("\rInserted %d rows\n", insertCount)
 
 	fmt.Print("Finding matching device definitions...")
 
-	matchedCount, err := ch.RecallsRepo.MatchDeviceDefinition(ctx, NHTSARecallsMatchingVersion)
+	matchCount, err := ch.recallsRepo.MatchDeviceDefinition(ctx, NHTSARecallsMatchingVersion)
 	if err != nil {
-		log.Fatal(err)
+		ch.log.Fatal().Err(err)
 	}
 
-	//fmt.Println("\r...")
-	//fmt.Print("\033[1A\033[K") // clear line
-	fmt.Printf("\rProcessed %d records using device definition matching version %s\n", matchedCount, NHTSARecallsMatchingVersion)
+	fmt.Printf("\rProcessed %d records using device definition matching version %s\n", matchCount, NHTSARecallsMatchingVersion)
 
-	return SyncNHTSARecallsCommandResult{insertCount, matchCount}, nil
+	return SyncNHTSARecallsCommandResult{insertCount, int(matchCount)}, nil
 }
 
 func (ch SyncNHTSARecallsCommandHandler) DownloadFileToTemp(filename string, url string) (localpath *string, err error) {

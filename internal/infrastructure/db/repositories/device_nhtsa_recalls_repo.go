@@ -5,25 +5,25 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"strconv"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type DeviceNHTSARecallsRepository interface {
-	Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON) (*models.DeviceNhtsaRecall, error)
+	Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON, hash []byte) (*models.DeviceNhtsaRecall, error)
 	GetLastDataRecordID(ctx context.Context) (*null.Int, error)
 	MatchDeviceDefinition(ctx context.Context, matchingVersion string) (int64, error)
-	GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error)
-	SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error
 }
 
 type deviceNHTSARecallsRepository struct {
@@ -34,56 +34,62 @@ func NewDeviceNHTSARecallsRepository(dbs func() *db.ReaderWriter) DeviceNHTSARec
 	return &deviceNHTSARecallsRepository{DBS: dbs}
 }
 
-func (r *deviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON) (*models.DeviceNhtsaRecall, error) {
+func (r *deviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinitionID null.String, row []string, metadata null.JSON, hash []byte) (*models.DeviceNhtsaRecall, error) {
 
 	if !deviceDefinitionID.IsZero() && deviceDefinitionID.String == "" {
 		deviceDefinitionID = null.String{}
 	}
 
-	if len(data) == 0 {
+	if len(row) == 0 {
 		return nil, errors.New("NHTSA Recall record can not be empty")
 	}
-	drID, err := strconv.Atoi(data[0])
+	drID, err := strconv.Atoi(row[0])
 	if err != nil {
 		return nil, errors.New("NHTSA Recall record ID must be a number")
 	}
-	if len(data) < 27 {
-		return nil, errors.Errorf("NHTSA Recall record ID %d has %d columns, expected %d at minimum", drID, len(data), 27)
+	if len(row) < 27 {
+		return nil, errors.Errorf("NHTSA Recall record ID %d has %d columns, expected %d at minimum", drID, len(row), 27)
 	}
+
 	dnr := &models.DeviceNhtsaRecall{
 		ID:                   ksuid.New().String(),
 		DeviceDefinitionID:   deviceDefinitionID,
 		DataRecordID:         drID,
-		DataCampno:           data[1],
-		DataMaketxt:          data[2],
-		DataModeltxt:         data[3],
-		DataYeartxt:          r.nullableInt(data[4]).Int,
-		DataMfgcampno:        data[5],
-		DataCompname:         data[6],
-		DataMfgname:          data[7],
-		DataBgman:            r.nullableDate(data[8]),
-		DataEndman:           r.nullableDate(data[9]),
-		DataRcltypecd:        data[10],
-		DataPotaff:           r.nullableInt(data[11]),
-		DataOdate:            r.nullableDate(data[12]),
-		DataInfluencedBy:     data[13],
-		DataMFGTXT:           data[14],
-		DataRcdate:           r.nullableDate(data[15]).Time,
-		DataDatea:            r.nullableDate(data[16]).Time,
-		DataRpno:             data[17],
-		DataFMVSS:            data[18],
-		DataDescDefect:       data[19],
-		DataConequenceDefect: data[20],
-		DataCorrectiveAction: data[21],
-		DataNotes:            data[22],
-		DataRCLCMPTID:        data[23],
-		DataMFRCompName:      data[24],
-		DataMFRCompDesc:      data[25],
-		DataMFRCompPtno:      data[26],
+		DataCampno:           row[1],
+		DataMaketxt:          row[2],
+		DataModeltxt:         row[3],
+		DataYeartxt:          r.nullableInt(row[4]).Int,
+		DataMfgcampno:        row[5],
+		DataCompname:         row[6],
+		DataMfgname:          row[7],
+		DataBgman:            r.nullableDate(row[8]),
+		DataEndman:           r.nullableDate(row[9]),
+		DataRcltypecd:        row[10],
+		DataPotaff:           r.nullableInt(row[11]),
+		DataOdate:            r.nullableDate(row[12]),
+		DataInfluencedBy:     row[13],
+		DataMFGTXT:           row[14],
+		DataRcdate:           r.nullableDate(row[15]).Time,
+		DataDatea:            r.nullableDate(row[16]).Time,
+		DataRpno:             row[17],
+		DataFMVSS:            row[18],
+		DataDescDefect:       row[19],
+		DataConequenceDefect: row[20],
+		DataCorrectiveAction: row[21],
+		DataNotes:            row[22],
+		DataRCLCMPTID:        row[23],
+		DataMFRCompName:      row[24],
+		DataMFRCompDesc:      row[25],
+		DataMFRCompPtno:      row[26],
 		Metadata:             metadata,
+		Hash:                 hash,
 	}
 	err = dnr.Insert(ctx, r.DBS().Writer, boil.Infer())
 	if err != nil {
+		// ignore duplicate key errors
+		if strings.Contains(err.Error(), `pq: duplicate key value violates unique constraint "device_nhtsa_recalls_hash"`) {
+			return nil, nil
+		}
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
@@ -157,37 +163,6 @@ func (r *deviceNHTSARecallsRepository) MatchDeviceDefinition(ctx context.Context
 		}
 	}
 	return matchedCount, nil
-}
-
-func (r *deviceNHTSARecallsRepository) GetByID(ctx context.Context, id string) (*models.DeviceNhtsaRecall, error) {
-	recall, err := models.DeviceNhtsaRecalls(
-		qm.Where("id = ?", id),
-	).One(ctx, r.DBS().Reader)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return &models.DeviceNhtsaRecall{}, nil
-		}
-		return nil, &exceptions.InternalError{
-			Err: err,
-		}
-	}
-	return recall, nil
-}
-
-func (r *deviceNHTSARecallsRepository) SetDDAndMetadata(ctx context.Context, recall models.DeviceNhtsaRecall, deviceDefinitionID *string, metadata *null.JSON) error {
-	if deviceDefinitionID == nil {
-		recall.DeviceDefinitionID = null.StringFromPtr(deviceDefinitionID)
-	}
-	if metadata == nil {
-		recall.Metadata = *metadata
-	}
-	_, err := recall.Update(ctx, r.DBS().Writer, boil.Infer())
-	if err != nil {
-		return &exceptions.InternalError{
-			Err: err,
-		}
-	}
-	return nil
 }
 
 func (r *deviceNHTSARecallsRepository) nullableInt(value string) null.Int {
