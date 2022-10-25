@@ -38,12 +38,17 @@ type model struct {
 	DeviceDefinitionID string
 }
 
+type deviceImages struct {
+	FuelAPIID string  `boil:"fuelID"`
+	Width     int     `boil:"width"`
+	Height    int     `boil:"height"`
+	Angle     string  `boil:"angle"`
+	Images    []image `boil:"images"`
+	validURL  bool
+}
+
 type image struct {
-	FuelAPIID string `boil:"fuel_api_id"`
-	Width     int    `boil:"width"`
-	Height    int    `boil:"height"`
-	Angle     string `boil:"angle"`
-	SourceURL string `boil:"source_url"`
+	SourceURL string `boil:"sourceURL"`
 	Color     string `boil:"color"`
 }
 
@@ -84,25 +89,28 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 
 	for _, d := range data {
 		for n := range d.Models {
-
 			img, err := fs.fetchDeviceImage(d.Make, d.Models[n].Model, d.Models[n].Year, prodID, prodFormat)
 			if err != nil {
+				fs.log.Info().Msgf("unable to fetch device image for: %d %s %s", d.Models[n].Year, d.Make, d.Models[n].Model)
 				continue
 			}
-
 			var p models.Image
-			p.ID = ksuid.New().String()
-			p.DeviceDefinitionID = d.Models[n].DeviceDefinitionID
-			p.FuelAPIID = null.StringFrom(img.FuelAPIID)
-			p.Width = null.IntFrom(img.Width)
-			p.Height = null.IntFrom(img.Height)
-			p.SourceURL = img.SourceURL
-			p.DimoS3URL = null.StringFrom("")
-			p.Color = img.Color
 
-			err = p.Upsert(ctx, fs.db.Writer, false, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
-			if err != nil {
-				return err
+			// loop through all images (color variations)
+			for _, device := range img.Images {
+				p.ID = ksuid.New().String()
+				p.DeviceDefinitionID = d.Models[n].DeviceDefinitionID
+				p.FuelAPIID = null.StringFrom(img.FuelAPIID)
+				p.Width = null.IntFrom(img.Width)
+				p.Height = null.IntFrom(img.Height)
+				p.SourceURL = device.SourceURL
+				p.DimoS3URL = null.StringFrom("")
+				p.Color = device.Color
+
+				err = p.Upsert(ctx, fs.db.Writer, false, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -110,63 +118,87 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 	return nil
 }
 
-func (fs *FuelServiceAPI) fetchDeviceImage(mk, mdl string, yr int, prodID int, prodFormat int) (image, error) {
+func (fs *FuelServiceAPI) fetchDeviceImage(mk, mdl string, yr int, prodID int, prodFormat int) (deviceImages, error) {
 
+	// search for exact MMY image
 	img, err := fs.imageRequest(mk, mdl, yr, prodID, prodFormat)
 	if err != nil {
-		return image{}, err
+		return deviceImages{}, err
 	}
 
-	if img.SourceURL == "" {
+	// search for model and make (remove year)
+	if !img.validURL {
 		img, err = fs.imageRequest(mk, mdl, 0, prodID, prodFormat)
 		if err != nil {
-			return image{}, err
+			return deviceImages{}, err
 		}
 
-		if img.SourceURL == "" {
+		// search for model and first work of make
+		// ex: Wrangler Sport -> Wrangler
+		if !img.validURL {
 			m := strings.Split(mdl, " ")
 			img, err = fs.imageRequest(mk, m[0], 0, prodID, prodFormat)
 			if err != nil {
-				return image{}, err
+				return deviceImages{}, err
 			}
 		}
 	}
 
-	if img.SourceURL == "" {
+	if !img.validURL {
 		fs.log.Log().Msgf("request for device image unsuccessful: %s %s %d", mk, mdl, yr)
-		return image{}, errors.New("request for device image unsuccessful")
+		return deviceImages{}, errors.New("request for device image unsuccessful")
 	}
 
 	return img, nil
 
 }
 
-func (fs *FuelServiceAPI) imageRequest(mk, mdl string, yr int, prodID int, prodFormat int) (image, error) {
+func (fs *FuelServiceAPI) imageRequest(mk, mdl string, yr int, prodID int, prodFormat int) (deviceImages, error) {
 	vehicleReqURL := fmt.Sprintf("?year=%d&make=%s&model=%s&api_key=%s", yr, mk, mdl, fs.Key)
 	vehicleResp, err := http.Get(fs.VehicleURL + vehicleReqURL)
 	if err != nil {
-		return image{}, err
+		return deviceImages{}, err
 	}
+	if vehicleResp.StatusCode >= 400 {
+		fs.log.Info().Msgf("bad request status: %d", vehicleResp.StatusCode)
+		return deviceImages{}, errors.New("unable to fetch vehicle data: bad requset")
+	}
+
 	vehicleData, err := ioutil.ReadAll(vehicleResp.Body)
 	if err != nil {
-		return image{}, err
+		return deviceImages{}, err
 	}
 	vehicleID := gjson.Get(string(vehicleData), "0.id").Str
 	imageReqURL := fmt.Sprintf("/%s?api_key=%s&productID=%d&productFormatIDs=%d", vehicleID, fs.Key, prodID, prodFormat)
 	imageResp, err := http.Get(fs.ImageURL + imageReqURL)
 	if err != nil {
-		return image{}, err
+		return deviceImages{}, err
 	}
-	imageData, err := ioutil.ReadAll(imageResp.Body)
+	if imageResp.StatusCode >= 400 {
+		fs.log.Info().Msgf("bad request status: %d", imageResp.StatusCode)
+		return deviceImages{}, errors.New("unable to fetch image: bad requset")
+	}
+
+	response, err := ioutil.ReadAll(imageResp.Body)
 	if err != nil {
-		return image{}, err
+		return deviceImages{}, err
 	}
-	imageURL := gjson.Get(string(imageData), "products.0.productFormats.0.assets.0.url").Str
-	width := gjson.Get(string(imageData), "products.0.productFormats.0.width").Int()
-	height := gjson.Get(string(imageData), "products.0.productFormats.0.height").Int()
-	angle := gjson.Get(string(imageData), "products.0.productFormats.0.angle").String()
-	color := gjson.Get(string(imageData), "products.0.productFormats.0.assets.0.shotCode.color.simple_name").Str
-	img := image{FuelAPIID: vehicleID, Width: int(width), Height: int(height), Angle: angle, SourceURL: imageURL, Color: color}
+	imageData := string(response)
+
+	width := gjson.Get(imageData, "products.0.productFormats.0.width").Int()
+	height := gjson.Get(imageData, "products.0.productFormats.0.height").Int()
+	angle := gjson.Get(imageData, "products.0.productFormats.0.angle").String()
+	img := deviceImages{FuelAPIID: vehicleID, Width: int(width), Height: int(height), Angle: angle, Images: make([]image, 0)}
+	gjson.Get(imageData, "products.0.productFormats.0.assets").ForEach(func(key gjson.Result, value gjson.Result) bool {
+		imageURL := value.Get("url").Str
+		color := value.Get("shotCode.color.simple_name").Str
+		img.Images = append(img.Images, image{SourceURL: imageURL, Color: color})
+		if !img.validURL && imageURL != "" {
+			img.validURL = true
+		}
+		return true
+	})
+
 	return img, nil
 
 }
