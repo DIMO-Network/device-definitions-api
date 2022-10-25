@@ -44,7 +44,6 @@ func NewSyncNHTSARecallsCommandHandler(dbs func() *db.ReaderWriter, logger *zero
 }
 
 const NHTSARecallsMatchingVersion = "2022.10.20.0"
-const NHTSARecallsColumnCount = 27
 
 type NHTSARecallMetadata struct {
 	MatchingVersion string   `json:"matchingVersion,omitempty"`
@@ -109,9 +108,9 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 	scanLine.Split(bufio.ScanLines)
 	for scanLine.Scan() {
 		scanFields := strings.Split(scanLine.Text(), "\t")
-		if len(scanFields) < NHTSARecallsColumnCount {
+		if len(scanFields) < repositories.NHTSARecallsColumnCount {
 			// too short? add empty fields to end
-			scanFields = append(scanFields, make([]string, NHTSARecallsColumnCount-len(scanFields))...)
+			scanFields = append(scanFields, make([]string, repositories.NHTSARecallsColumnCount-len(scanFields))...)
 		}
 		id, err := strconv.Atoi(scanFields[0])
 		if err != nil {
@@ -128,11 +127,11 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 		hasher.Write(scanLine.Bytes())
 		hash := hasher.Sum(nil)
 
-		if len(scanFields) > NHTSARecallsColumnCount {
+		if len(scanFields) > repositories.NHTSARecallsColumnCount {
 			//log.Printf("NHTSA Recall record ID %d has %d columns, expected %d\n", id, len(scanFields), NHTSARecallsColumnCount)
 			//fmt.Println(scanFields[NHTSARecallsColumnCount:])
 			md := NHTSARecallMetadata{
-				AdditionalData: scanFields[NHTSARecallsColumnCount:],
+				AdditionalData: scanFields[repositories.NHTSARecallsColumnCount:],
 			}
 			medtadataJSON, err := json.Marshal(md)
 			if err != nil {

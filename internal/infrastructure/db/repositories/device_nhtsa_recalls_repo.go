@@ -20,6 +20,8 @@ import (
 	"github.com/DIMO-Network/shared/db"
 )
 
+const NHTSARecallsColumnCount = 27
+
 type DeviceNHTSARecallsRepository interface {
 	Create(ctx context.Context, deviceDefinitionID null.String, data []string, metadata null.JSON, hash []byte) (*models.DeviceNhtsaRecall, error)
 	GetLastDataRecordID(ctx context.Context) (*null.Int, error)
@@ -47,8 +49,8 @@ func (r *deviceNHTSARecallsRepository) Create(ctx context.Context, deviceDefinit
 	if err != nil {
 		return nil, errors.New("NHTSA Recall record ID must be a number")
 	}
-	if len(row) < 27 {
-		return nil, errors.Errorf("NHTSA Recall record ID %d has %d columns, expected %d at minimum", drID, len(row), 27)
+	if len(row) < NHTSARecallsColumnCount {
+		return nil, errors.Errorf("NHTSA Recall record ID %d has %d columns, expected %d at minimum", drID, len(row), NHTSARecallsColumnCount)
 	}
 
 	dnr := &models.DeviceNhtsaRecall{
