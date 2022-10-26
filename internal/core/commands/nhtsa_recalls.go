@@ -43,6 +43,7 @@ func NewSyncNHTSARecallsCommandHandler(dbs func() *db.ReaderWriter, logger *zero
 	return SyncNHTSARecallsCommandHandler{dbs: dbs, log: logger, recallsRepo: recallsRepo, ddRepo: ddRepo, fileURL: file}
 }
 
+// NHTSARecallsMatchingVersion is a YYYY.MM.DD.N version used for matching. Update this version if you change how matching works and existing matches will be rematched.
 const NHTSARecallsMatchingVersion = "2022.10.20.0"
 
 type NHTSARecallMetadata struct {
