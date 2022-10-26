@@ -91,6 +91,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceCompatibilityQuery{}, queries.NewGetDeviceCompatibilityQueryHandler(pdb.DBS, deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceMakeCommand{}, commands.NewUpdateDeviceMakeCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateDeviceStyleCommand{}, commands.NewUpdateDeviceStyleCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetAllDeviceTypeQuery{}, queries.NewGetAllDeviceTypeQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.UpdateDeviceTypeCommand{}, commands.NewUpdateDeviceTypeCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.CreateDeviceTypeCommand{}, commands.NewCreateDeviceTypeCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.DeleteDeviceTypeCommand{}, commands.NewDeleteDeviceTypeCommandHandler(pdb.DBS)),
 	)
 
 	//fiber
