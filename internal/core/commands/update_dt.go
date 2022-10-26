@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"database/sql"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
