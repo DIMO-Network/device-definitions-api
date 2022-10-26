@@ -748,3 +748,86 @@ func (s *GrpcService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDevi
 
 	return result, nil
 }
+
+func (s *GrpcService) GetDeviceTypes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceTypeListResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceTypeQuery{})
+
+	dt := qryResult.([]models.GetDeviceTypeQueryResult)
+
+	items := make([]*p_grpc.GetDeviceTypeResponse, len(dt))
+	for i, v := range dt {
+		items[i] = &p_grpc.GetDeviceTypeResponse{
+			Id:   v.ID,
+			Name: v.Name,
+		}
+
+		items[i].Attributes = make([]*p_grpc.DeviceTypeAttribute, len(v.Attributes))
+		for x, attr := range v.Attributes {
+			items[i].Attributes[x] = &p_grpc.DeviceTypeAttribute{
+				Name:         attr.Name,
+				Type:         attr.Type,
+				Description:  attr.Description,
+				Required:     attr.Required,
+				DefaultValue: attr.DefaultValue,
+				Options:      attr.Option,
+			}
+		}
+
+	}
+
+	result := &p_grpc.GetDeviceTypeListResponse{DeviceTypes: items}
+
+	return result, nil
+}
+
+func (s *GrpcService) CreateDeviceType(ctx context.Context, in *p_grpc.CreateDeviceTypeRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.CreateDeviceTypeCommand{
+		ID:   in.Id,
+		Name: in.Name,
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.CreateDeviceTypeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) UpdateDeviceType(ctx context.Context, in *p_grpc.UpdateDeviceTypeRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.UpdateDeviceTypeCommand{
+		ID:   in.Id,
+		Name: in.Name,
+	}
+
+	if len(in.Attributes) > 0 {
+		for _, attr := range in.Attributes {
+			command.DeviceAttributes = append(command.DeviceAttributes, &models.CreateDeviceTypeAttribute{
+				Name:         attr.Name,
+				Type:         attr.Type,
+				Label:        attr.Label,
+				Description:  attr.Description,
+				Option:       attr.Options,
+				Required:     attr.Required,
+				DefaultValue: attr.DefaultValue,
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.UpdateDeviceTypeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) DeleteDeviceType(ctx context.Context, in *p_grpc.DeleteDeviceTypeRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.DeleteDeviceTypeCommand{
+		ID: in.Id,
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.DeleteDeviceTypeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}

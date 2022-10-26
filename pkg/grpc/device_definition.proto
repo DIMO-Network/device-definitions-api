@@ -347,6 +347,35 @@ message GetDeviceTypeResponse {
 	repeated DeviceTypeAttribute attributes = 3;
 }
 
+message GetDeviceTypeListResponse {
+	repeated GetDeviceTypeResponse device_types = 2;
+}
+
+message CreateDeviceTypeRequest {
+	string id = 1;
+	string name = 2;
+}
+
+message UpdateDeviceTypeRequest {
+	string id = 1;
+	string name = 2;
+	repeated CreateDeviceTypeAttributeRequest attributes = 3;
+}
+
+message CreateDeviceTypeAttributeRequest {
+	string name = 1;
+	string label = 2;
+	string type = 3;
+	bool required = 4;
+	string defaultValue = 5;
+	repeated string options = 6;
+	string description = 7;
+}
+
+message DeleteDeviceTypeRequest {
+	string id = 1;
+}
+
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
@@ -375,4 +404,8 @@ service DeviceDefinitionService {
 	rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
 	rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
 	rpc GetDeviceTypesByID(GetDeviceTypeByIDRequest) returns (GetDeviceTypeResponse);
+	rpc GetDeviceTypes(google.protobuf.Empty) returns (GetDeviceTypeListResponse);
+	rpc CreateDeviceType(CreateDeviceTypeRequest) returns (BaseResponse);
+	rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
+	rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
 }
