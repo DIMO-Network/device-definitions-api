@@ -23,13 +23,17 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 		grpc_recovery.WithRecoveryHandler(common.GrpcConfig),
 	}
 
-	service := NewGrpcService(m, &logger)
+	deviceDefinitionService := NewGrpcService(m, &logger)
+	recallsService := NewGrpcRecallsService(m, &logger)
+
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(opts...),
 		)),
 	)
-	pkggrpc.RegisterDeviceDefinitionServiceServer(server, service)
+
+	pkggrpc.RegisterDeviceDefinitionServiceServer(server, deviceDefinitionService)
+	pkggrpc.RegisterRecallsServiceServer(server, recallsService)
 
 	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 
