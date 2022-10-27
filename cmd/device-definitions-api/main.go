@@ -49,6 +49,8 @@ func main() {
 		if err := populateDeviceFeaturesFromEs(ctx, logger, &settings); err != nil {
 			logger.Fatal().Err(err).Msg("Failed to populate device features from elastic search")
 		}
+	case "nhtsa-sync-recalls":
+		nhtsaSyncRecalls(ctx, &settings, logger)
 	default:
 		api.Run(ctx, logger, &settings)
 	}

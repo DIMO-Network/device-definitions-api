@@ -24,4 +24,5 @@ type Settings struct {
 	DrivlyVINAPIURL                string         `yaml:"DRIVLY_VIN_API_URL"`
 	DrivlyOfferAPIURL              string         `yaml:"DRIVLY_OFFER_API_URL"`
 	Redis                          redis.Settings `yaml:"REDIS"`
+	NHTSARecallsFileURL            string         `yaml:"NHTSA_RECALLS_FILE_URL"`
 }
