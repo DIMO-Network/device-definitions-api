@@ -66,21 +66,22 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		}
 
 		for _, img := range definition.R.Images {
-			docs[i] = elastic.DeviceDefinitionSearchDoc{
-				ID:            definition.ID,
-				SearchDisplay: sd,
-				Make:          definition.R.DeviceMake.Name,
-				Model:         definition.Model,
-				Year:          int(definition.Year),
-				SubModels:     sm,
-				ImageURL:      img.SourceURL,
-				MakeSlug:      definition.R.DeviceMake.NameSlug,
-				ModelSlug:     definition.ModelSlug,
-				ImageHeight:   img.Height.Int,
-				ImageWidth:    img.Width.Int,
-				ImageColor:    img.Color,
+			if img.Width.Int < docs[i].ImageWidth || docs[i].ImageWidth == 0 {
+				docs[i] = elastic.DeviceDefinitionSearchDoc{
+					ID:            definition.ID,
+					SearchDisplay: sd,
+					Make:          definition.R.DeviceMake.Name,
+					Model:         definition.Model,
+					Year:          int(definition.Year),
+					SubModels:     sm,
+					ImageURL:      img.SourceURL,
+					MakeSlug:      definition.R.DeviceMake.NameSlug,
+					ModelSlug:     definition.ModelSlug,
+					ImageHeight:   img.Height.Int,
+					ImageWidth:    img.Width.Int,
+					ImageColor:    img.Color,
+				}
 			}
-			break
 		}
 	}
 	ch.logger.Info().Msgf("completed building list of docs to index, count: %d", len(docs))
