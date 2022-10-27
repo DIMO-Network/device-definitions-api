@@ -2,6 +2,8 @@ package queries
 
 import (
 	"context"
+	"crypto/sha1"
+	"fmt"
 	"testing"
 
 	"github.com/segmentio/ksuid"
@@ -58,8 +60,8 @@ func (s *GetRecallsByMakeQueryHandlerSuite) TestGetRecallsByMakeQuery_Success() 
 	model2 := "Prado"
 
 	dm := setupDeviceMake(s.T(), mk, s.pdb)
-	_ = setupDeviceDefinitionWithNhtsa(s.T(), dm, model1, int(cutoffYear), s.pdb)
-	_ = setupDeviceDefinitionWithNhtsa(s.T(), dm, model2, int(cutoffYear), s.pdb)
+	_ = setupDeviceDefinitionWithNhtsa(s.T(), dm, model1, cutoffYear, s.pdb)
+	_ = setupDeviceDefinitionWithNhtsa(s.T(), dm, model2, cutoffYear, s.pdb)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetRecallsByMakeQuery{
 		MakeID: dm.ID,
@@ -99,7 +101,12 @@ func setupDeviceDefinitionWithNhtsa(t *testing.T, dm models.DeviceMake, modelNam
 		ID:                 ksuid.New().String(),
 		DeviceDefinitionID: null.StringFrom(dd.ID),
 		DataYeartxt:        year,
+		DataDescDefect:     fmt.Sprintf("description %s %d", modelName, year),
 	}
+	hasher := sha1.New()
+	hasher.Write([]byte(recall.ID + recall.DataDescDefect))
+	recall.Hash = hasher.Sum(nil)
+
 	err := recall.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "database error")
 
