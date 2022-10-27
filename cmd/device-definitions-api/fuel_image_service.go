@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-// ElasticSearchService client
+// FuelServiceAPI client
 type FuelServiceAPI struct {
 	VehicleURL string
 	ImageURL   string
@@ -164,7 +164,7 @@ func (fs *FuelServiceAPI) imageRequest(mk, mdl string, yr int, prodID int, prodF
 		return deviceImages{}, errors.New("unable to fetch vehicle data: bad requset")
 	}
 
-	vehicleData, err := ioutil.ReadAll(vehicleResp.Body)
+	vehicleData, err := io.ReadAll(vehicleResp.Body)
 	if err != nil {
 		return deviceImages{}, err
 	}
@@ -179,7 +179,7 @@ func (fs *FuelServiceAPI) imageRequest(mk, mdl string, yr int, prodID int, prodF
 		return deviceImages{}, errors.New("unable to fetch image: bad requset")
 	}
 
-	response, err := ioutil.ReadAll(imageResp.Body)
+	response, err := io.ReadAll(imageResp.Body)
 	if err != nil {
 		return deviceImages{}, err
 	}
