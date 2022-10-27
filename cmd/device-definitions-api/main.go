@@ -49,6 +49,10 @@ func main() {
 		if err := populateDeviceFeaturesFromEs(ctx, logger, &settings); err != nil {
 			logger.Fatal().Err(err).Msg("Failed to populate device features from elastic search")
 		}
+	case "images":
+		if err := fetchFuelAPIImages(ctx, logger, &settings); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to populate images")
+		}
 	case "nhtsa-sync-recalls":
 		nhtsaSyncRecalls(ctx, &settings, logger)
 	default:

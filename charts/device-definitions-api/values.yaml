@@ -45,6 +45,8 @@ env:
   IPFS_NODE_ENDPOINT: http://cluster-ipfs-cluster.web3.svc.cluster.local:9094
   DRIVLY_VIN_API_URL: https://vin-git-fc.dev.driv.ly
   DRIVLY_OFFER_API_URL: https://offers.dev.driv.ly
+  FUEL_API_SEARCH_VEHICLES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicles
+  FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
 service:
   type: ClusterIP

@@ -10,6 +10,7 @@ var TableNames = struct {
 	DeviceNhtsaRecalls  string
 	DeviceStyles        string
 	DeviceTypes         string
+	Images              string
 	IntegrationFeatures string
 	Integrations        string
 }{
@@ -19,6 +20,7 @@ var TableNames = struct {
 	DeviceNhtsaRecalls:  "device_nhtsa_recalls",
 	DeviceStyles:        "device_styles",
 	DeviceTypes:         "device_types",
+	Images:              "images",
 	IntegrationFeatures: "integration_features",
 	Integrations:        "integrations",
 }
