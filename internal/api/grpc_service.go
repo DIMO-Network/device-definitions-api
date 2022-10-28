@@ -44,6 +44,7 @@ func (s *GrpcService) GetDeviceDefinitionBySlug(ctx context.Context, in *p_grpc.
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugQuery{
 		Slug: in.Slug,
+		Year: int(in.Year),
 	})
 
 	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
