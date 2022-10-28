@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -38,6 +40,17 @@ func (s *GrpcService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.Ge
 	return result, nil
 }
 
+func (s *GrpcService) GetDeviceDefinitionBySlug(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugQuery{
+		Slug: in.Slug,
+	})
+
+	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
+	result := common.BuildFromQueryResultToGRPC(dd)
+	return result, nil
+}
+
 func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMMYRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByMakeModelYearQuery{
@@ -47,92 +60,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 	})
 
 	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
-
-	//nolint
-	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
-	//nolint
-	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
-	//nolint
-	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
-	//nolint
-	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
-	//nolint
-	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
-
-	result := &p_grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: dd.DeviceDefinitionID,
-		Name:               dd.Name,
-		ImageUrl:           dd.ImageURL,
-		Source:             dd.Source,
-		Type: &p_grpc.DeviceType{
-			Type:      dd.Type.Type,
-			Make:      dd.Type.Make,
-			Model:     dd.Type.Model,
-			Year:      int32(dd.Type.Year),
-			MakeSlug:  dd.Type.MakeSlug,
-			ModelSlug: dd.Type.ModelSlug,
-			SubModels: dd.Type.SubModels,
-		},
-		Make: &p_grpc.DeviceMake{
-			Id:              dd.DeviceMake.ID,
-			Name:            dd.DeviceMake.Name,
-			LogoUrl:         dd.DeviceMake.LogoURL.String,
-			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
-			NameSlug:        dd.DeviceMake.NameSlug,
-		},
-		//nolint
-		VehicleData: &p_grpc.VehicleInfo{
-			FuelType:            dd.VehicleInfo.FuelType,
-			DrivenWheels:        dd.VehicleInfo.DrivenWheels,
-			NumberOfDoors:       int32(numberOfDoors),
-			Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
-			EPAClass:            dd.VehicleInfo.EPAClass,
-			VehicleType:         dd.VehicleInfo.VehicleType,
-			MPGHighway:          float32(mpgHighway),
-			MPGCity:             float32(mpgCity),
-			FuelTankCapacityGal: float32(fuelTankCapacityGal),
-			MPG:                 float32(mpg),
-		},
-		Verified: dd.Verified,
-	}
-	if dd.DeviceMake.TokenID != nil {
-		result.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
-	}
-
-	for _, integration := range dd.DeviceIntegrations {
-		result.DeviceIntegrations = append(result.DeviceIntegrations, &p_grpc.DeviceIntegration{
-			Integration: &p_grpc.Integration{
-				Id:     integration.ID,
-				Type:   integration.Type,
-				Style:  integration.Style,
-				Vendor: integration.Vendor,
-			},
-			Region:             integration.Region,
-			DeviceDefinitionId: dd.DeviceDefinitionID,
-		})
-	}
-
-	for _, deviceStyle := range dd.DeviceStyles {
-		result.DeviceStyles = append(result.DeviceStyles, &p_grpc.DeviceStyle{
-			Id:                 deviceStyle.ID,
-			Name:               deviceStyle.Name,
-			DeviceDefinitionId: deviceStyle.DeviceDefinitionID,
-			SubModel:           deviceStyle.SubModel,
-			Source:             deviceStyle.Source,
-			ExternalStyleId:    deviceStyle.ExternalStyleID,
-		})
-	}
-
-	for _, deviceAttribute := range dd.DeviceAttributes {
-		result.DeviceAttributes = append(result.DeviceAttributes, &p_grpc.DeviceTypeAttribute{
-			Name:        deviceAttribute.Name,
-			Options:     deviceAttribute.Option,
-			Type:        deviceAttribute.Type,
-			Value:       deviceAttribute.Value,
-			Required:    deviceAttribute.Required,
-			Description: deviceAttribute.Description,
-		})
-	}
+	result := common.BuildFromQueryResultToGRPC(dd)
 
 	return result, nil
 }
@@ -322,6 +250,29 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{
 		Name: in.Name,
+	})
+
+	deviceMake := qryResult.(models.DeviceMake)
+
+	result := &p_grpc.DeviceMake{
+		Id:              deviceMake.ID,
+		Name:            deviceMake.Name,
+		NameSlug:        deviceMake.NameSlug,
+		LogoUrl:         deviceMake.LogoURL.String,
+		OemPlatformName: deviceMake.OemPlatformName.String,
+		ExternalIds:     string(deviceMake.ExternalIds),
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDeviceMakeBySlugRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeBySlugQuery{
+		Slug: in.Slug,
 	})
 
 	deviceMake := qryResult.(models.DeviceMake)

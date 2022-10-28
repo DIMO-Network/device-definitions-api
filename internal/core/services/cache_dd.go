@@ -16,9 +16,11 @@ import (
 
 type DeviceDefinitionCacheService interface {
 	GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error)
+	GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	DeleteDeviceDefinitionCacheByID(ctx context.Context, id string)
 	DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int)
+	DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int)
 }
 
 type deviceDefinitionCacheService struct {
@@ -31,9 +33,10 @@ func NewDeviceDefinitionCacheService(cache redis.CacheService, repository reposi
 }
 
 const (
-	cacheLenghtHours            = 48
-	cacheDeviceDefinitionKey    = "device-definition-by-id-"
-	cacheDeviceDefinitionMMYKey = "device-definition-by-mmy-"
+	cacheLenghtHours             = 48
+	cacheDeviceDefinitionKey     = "device-definition-by-id-"
+	cacheDeviceDefinitionMMYKey  = "device-definition-by-mmy-"
+	cacheDeviceDefinitionSlugKey = "device-definition-by-slug-"
 )
 
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
@@ -112,4 +115,42 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
 
 	return rp, nil
+}
+
+func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
+
+	cache := fmt.Sprintf("%s-%s-%d", cacheDeviceDefinitionSlugKey, slug, year)
+	cacheData := c.Cache.Get(ctx, cache)
+
+	rp := &models.GetDeviceDefinitionQueryResult{}
+
+	if cacheData != nil {
+		val, _ := cacheData.Bytes()
+		if val != nil {
+			_ = json.Unmarshal(val, rp)
+			return rp, nil
+		}
+	}
+
+	dd, err := c.Repository.GetBySlugAndYears(ctx, slug, year, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if dd == nil {
+		return nil, nil
+	}
+
+	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
+
+	rpJSON, _ := json.Marshal(rp)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
+
+	return rp, nil
+}
+
+func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int) {
+	cache := fmt.Sprintf("%s-%s-%d", cacheDeviceDefinitionSlugKey, slug, year)
+	c.Cache.Del(ctx, cache)
 }

@@ -59,6 +59,18 @@ func (mr *MockDeviceDefinitionCacheServiceMockRecorder) DeleteDeviceDefinitionCa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDeviceDefinitionCacheByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).DeleteDeviceDefinitionCacheByMakeModelAndYears), ctx, make, model, year)
 }
 
+// DeleteDeviceDefinitionCacheBySlug mocks base method.
+func (m *MockDeviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteDeviceDefinitionCacheBySlug", ctx, slug, year)
+}
+
+// DeleteDeviceDefinitionCacheBySlug indicates an expected call of DeleteDeviceDefinitionCacheBySlug.
+func (mr *MockDeviceDefinitionCacheServiceMockRecorder) DeleteDeviceDefinitionCacheBySlug(ctx, slug, year interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDeviceDefinitionCacheBySlug", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).DeleteDeviceDefinitionCacheBySlug), ctx, slug, year)
+}
+
 // GetDeviceDefinitionByID mocks base method.
 func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
 	m.ctrl.T.Helper()
@@ -87,4 +99,19 @@ func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYear
 func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionByMakeModelAndYears(ctx, make, model, year interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionByMakeModelAndYears), ctx, make, model, year)
+}
+
+// GetDeviceDefinitionBySlug mocks base method.
+func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeviceDefinitionBySlug", ctx, slug, year)
+	ret0, _ := ret[0].(*models.GetDeviceDefinitionQueryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeviceDefinitionBySlug indicates an expected call of GetDeviceDefinitionBySlug.
+func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionBySlug(ctx, slug, year interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionBySlug", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionBySlug), ctx, slug, year)
 }

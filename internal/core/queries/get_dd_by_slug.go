@@ -31,7 +31,7 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionBySlugQuery)
 
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.Slug, qry.Year) // todo need new method
+	dd, err := ch.DDCache.GetDeviceDefinitionBySlug(ctx, qry.Slug, qry.Year) // todo need new method
 
 	if err != nil {
 		return nil, err

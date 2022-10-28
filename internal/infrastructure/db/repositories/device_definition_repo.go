@@ -21,6 +21,7 @@ import (
 type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetBySlugAndYears(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
@@ -41,6 +42,33 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		qm.Where("dm.name ilike ?", make),
 		qm.And("model ilike ?", model),
+		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
+	}
+	if loadIntegrations {
+		qms = append(qms,
+			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
+			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
+	}
+
+	query := models.DeviceDefinitions(qms...)
+	dd, err := query.One(ctx, r.DBS().Reader)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{Err: err}
+		}
+
+		return nil, nil
+	}
+
+	return dd, nil
+}
+
+func (r *deviceDefinitionRepository) GetBySlugAndYears(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+	qms := []qm.QueryMod{
+		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
+		qm.Where("dm.name_slug ilike ?", slug),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),

@@ -172,8 +172,9 @@ func SetupCreateDeviceType(t *testing.T, pdb db.Store) *models.DeviceType {
 
 func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	dm := models.DeviceMake{
-		ID:   ksuid.New().String(),
-		Name: mk,
+		ID:       ksuid.New().String(),
+		Name:     mk,
+		NameSlug: common.SlugString(mk),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "no db error expected")
