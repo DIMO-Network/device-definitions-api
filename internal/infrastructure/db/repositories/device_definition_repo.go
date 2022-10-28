@@ -21,7 +21,7 @@ import (
 type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
-	GetBySlugAndYears(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
@@ -65,10 +65,10 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetBySlugAndYears(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
-		qm.Where("dm.name_slug ilike ?", slug),
+		models.DeviceDefinitionWhere.ModelSlug.EQ(slug),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),

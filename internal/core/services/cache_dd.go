@@ -132,7 +132,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 		}
 	}
 
-	dd, err := c.Repository.GetBySlugAndYears(ctx, slug, year, true)
+	dd, err := c.Repository.GetBySlugAndYear(ctx, slug, year, true)
 
 	if err != nil {
 		return nil, err
