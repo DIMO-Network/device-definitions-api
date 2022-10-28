@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 
+SET search_path = device_definitions_api, public;
 
 CREATE TABLE IF NOT EXISTS images
 (
@@ -18,11 +19,12 @@ CREATE TABLE IF NOT EXISTS images
 ALTER TABLE images 
 ADD CONSTRAINT fkey_device_definition_id 
 FOREIGN KEY (device_definition_id) 
-REFERENCES device_definitions_api.device_definitions(id) ON DELETE CASCADE;
+REFERENCES device_definitions(id) ON DELETE CASCADE;
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
+SET search_path = device_definitions_api, public;
 DROP TABLE IF EXISTS images;
 -- +goose StatementEnd
