@@ -65,6 +65,7 @@ func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) TestUpdateDeviceDefinit
 	dd := setupDeviceDefinitionForUpdateImage(s.T(), s.pdb, mk, model, year)
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
+	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionImageCommand{

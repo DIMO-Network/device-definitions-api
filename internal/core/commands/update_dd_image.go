@@ -71,6 +71,7 @@ func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, 
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
 	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dd.R.DeviceMake.Name, dd.Model, int(dd.Year))
+	ch.DDCache.DeleteDeviceDefinitionCacheBySlug(ctx, dd.R.DeviceMake.NameSlug, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
