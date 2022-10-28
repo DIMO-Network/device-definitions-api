@@ -10,6 +10,10 @@ package grpc;
 message GetDeviceDefinitionRequest {
 	repeated string ids = 1;
 }
+message GetDeviceDefinitionBySlugRequest {
+	string slug = 1;
+	int32 year = 2;
+}
 
 message GetDeviceDefinitionResponse {
 	repeated GetDeviceDefinitionItemResponse device_definitions = 1;
@@ -306,6 +310,9 @@ message CreateIntegrationRequest {
 message GetDeviceMakeByNameRequest {
 	string name = 1;
 }
+message GetDeviceMakeBySlugRequest {
+	string slug = 1;
+}
 
 message GetDeviceMakeResponse {
 	repeated DeviceMake device_makes = 1;
@@ -378,10 +385,15 @@ message DeleteDeviceTypeRequest {
 
 service DeviceDefinitionService {
 	rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
+	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
+	rpc GetDeviceMakeBySlug(GetDeviceMakeBySlugRequest) returns (DeviceMake);
+	rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
 	rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
 	rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
 	rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
@@ -392,9 +404,6 @@ service DeviceDefinitionService {
 	rpc CreateIntegration(CreateIntegrationRequest) returns (BaseResponse);
 	rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
 	rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
-	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
-	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
-	rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
 	rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
 	rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
 	rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
