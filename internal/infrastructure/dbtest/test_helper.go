@@ -147,6 +147,7 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 		Year:         int16(year),
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
+		ModelSlug:    common.SlugString(model),
 	}
 	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "database error")

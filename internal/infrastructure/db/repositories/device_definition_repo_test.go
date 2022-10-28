@@ -283,7 +283,7 @@ func (s *DeviceDefinitionRepositorySuite) TestGetDeviceDefinition_By_Slug_Succes
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.GetBySlugAndYear(ctx, mk, year, true)
+	dd2, err := s.repository.GetBySlugAndYear(ctx, dd.ModelSlug, year, true)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd2.ID, dd.ID)
