@@ -312,13 +312,10 @@ type DeviceDefinitionSearchDoc struct {
 	Model         string `json:"model"`
 	Year          int    `json:"year"`
 	// SubModels: M+M+Y+Submodel name
-	SubModels   []string `json:"sub_models"`
-	ImageURL    string   `json:"image_url"`
-	MakeSlug    string   `json:"make_slug"`
-	ModelSlug   string   `json:"model_slug"`
-	ImageHeight int      `json:"height"`
-	ImageWidth  int      `json:"width"`
-	ImageColor  string   `json:"color"`
+	SubModels []string `json:"sub_models"`
+	ImageURL  string   `json:"image_url"`
+	MakeSlug  string   `json:"make_slug"`
+	ModelSlug string   `json:"model_slug"`
 	// future: we might add styles
 }
 
