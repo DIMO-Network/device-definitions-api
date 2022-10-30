@@ -90,10 +90,11 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{}, commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
+		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{},
+			commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
 
-	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
+	_, _ = m.Send(ctx, &commands.SyncSmartCartCompatibilityCommand{})
 
 }
 
@@ -111,7 +112,7 @@ func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolo
 		mediator.WithHandler(&commands.SyncTeslaIntegrationCommand{}, commands.NewSyncTestlaIntegrationCommandHandler(pdb.DBS, &logger)),
 	)
 
-	_, _ = m.Send(ctx, &commands.SyncSmartCartForwardCompatibilityCommand{})
+	_, _ = m.Send(ctx, &commands.SyncTeslaIntegrationCommand{})
 
 }
 
