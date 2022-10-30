@@ -81,9 +81,10 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand_Success() 
 	s.mockElasticSearch.EXPECT().UpdateSearchSettingsForDeviceDefs(gomock.Any()).Return(nil).Times(2)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncSearchDataCommand{})
+	require.NoError(s.T(), err, "handler failed to execute")
+
 	result := qryResult.(SyncSearchDataCommandResult)
 
-	s.NoError(err)
 	assert.Equal(s.T(), result.Status, true)
 }
 
@@ -97,6 +98,8 @@ func setupDeviceDefinitionForSearchData(t *testing.T, pdb db.Store, makeName str
 		Height:             null.IntFrom(480),
 		SourceURL:          "https://some-image.com/img.jpg",
 	}
-	_ = img.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err := img.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
 	return dd
 }

@@ -45,7 +45,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 
 	// get all devices from DB.
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
-		qm.Load(models.ImageRels.DeviceDefinition),
+		qm.Load(models.DeviceDefinitionRels.Images),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)
 	if err != nil {
