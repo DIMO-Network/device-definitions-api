@@ -45,6 +45,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 
 	// get all devices from DB.
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
+		qm.Load(models.DeviceDefinitionRels.Images),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)
 	if err != nil {
@@ -52,7 +53,6 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	}
 
 	ch.logger.Info().Msgf("found %d device definitions verified, starting process...", len(all))
-
 	if len(all) == 0 {
 		return nil, errors.New("0 items found to index, stopping")
 	}
@@ -64,6 +64,16 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		for i2, s := range sm {
 			sm[i2] = sd + " " + s
 		}
+		// find the smallest image
+		imageURL := ""
+		lastImageWidth := 3000 // just use some big number that we'll likely be below
+		for _, img := range definition.R.Images {
+			if img.Width.Valid && img.Width.Int < lastImageWidth {
+				imageURL = img.SourceURL
+				lastImageWidth = img.Width.Int
+			}
+		}
+
 		docs[i] = elastic.DeviceDefinitionSearchDoc{
 			ID:            definition.ID,
 			SearchDisplay: sd,
@@ -71,7 +81,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Model:         definition.Model,
 			Year:          int(definition.Year),
 			SubModels:     sm,
-			ImageURL:      definition.ImageURL.String,
+			ImageURL:      imageURL,
 			MakeSlug:      definition.R.DeviceMake.NameSlug,
 			ModelSlug:     definition.ModelSlug,
 		}

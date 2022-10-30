@@ -18,7 +18,7 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/volatiletech/null/v8"
@@ -150,7 +150,7 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 		ModelSlug:    common.SlugString(model),
 	}
 	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "database error")
+	require.NoError(t, err, "database error")
 
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceMake = &dm
@@ -167,7 +167,7 @@ func SetupCreateDeviceType(t *testing.T, pdb db.Store) *models.DeviceType {
 		Properties:  null.JSONFrom(deviceTypeVehiclePropertyDataSample),
 	}
 	err := dt.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "database error")
+	require.NoError(t, err, "database error")
 	return dt
 }
 
@@ -178,7 +178,7 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 		NameSlug: common.SlugString(mk),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "no db error expected")
+	require.NoError(t, err, "no db error expected")
 	return dm
 }
 
@@ -192,7 +192,7 @@ func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, sour
 		ExternalStyleID:    ksuid.New().String(),
 	}
 	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "no db error expected")
+	require.NoError(t, err, "no db error expected")
 	return ds
 }
 
@@ -205,7 +205,7 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 		RefreshLimitSecs: 1800,
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "database error")
+	require.NoError(t, err, "database error")
 	return integration
 }
 
@@ -218,7 +218,7 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		RefreshLimitSecs: 1800,
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "database error")
+	require.NoError(t, err, "database error")
 	return integration
 }
 
@@ -231,7 +231,7 @@ func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		RefreshLimitSecs: 1800,
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err, "database error")
+	require.NoError(t, err, "database error")
 	return integration
 }
 
@@ -242,7 +242,7 @@ func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, int
 		Region:             "Americas",
 	}
 	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return di
 }
 
