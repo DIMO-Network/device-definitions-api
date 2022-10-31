@@ -53,7 +53,10 @@ func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context
 	response := &grpc.GetDeviceDefinitionResponse{}
 
 	for _, v := range all {
-		dd := common.BuildFromDeviceDefinitionToQueryResult(v)
+		dd, err := common.BuildFromDeviceDefinitionToQueryResult(v)
+		if err != nil {
+			return nil, err
+		}
 		rp := common.BuildFromQueryResultToGRPC(dd)
 		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
 	}

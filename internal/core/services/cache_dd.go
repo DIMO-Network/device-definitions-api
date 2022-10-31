@@ -66,7 +66,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 		return nil, nil
 	}
 
-	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	if err != nil {
+		return nil, err
+	}
 
 	rpJSON, _ := json.Marshal(rp)
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
@@ -109,7 +112,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 		return nil, nil
 	}
 
-	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	if err != nil {
+		return nil, err
+	}
 
 	rpJSON, _ := json.Marshal(rp)
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
@@ -142,7 +148,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 		return nil, nil
 	}
 
-	rp = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	if err != nil {
+		return nil, err
+	}
 
 	rpJSON, _ := json.Marshal(rp)
 	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)

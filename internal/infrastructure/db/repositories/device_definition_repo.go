@@ -22,7 +22,7 @@ type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
-	GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error)
+	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error)
@@ -92,9 +92,11 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
 
-	dd, err := models.DeviceDefinitions(qm.Where("verified = true"),
+	dd, err := models.DeviceDefinitions(
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 
 	if err != nil {

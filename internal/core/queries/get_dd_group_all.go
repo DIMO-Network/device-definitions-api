@@ -41,7 +41,7 @@ func NewGetAllDeviceDefinitionGroupQueryHandler(repository repositories.DeviceDe
 
 func (ch GetAllDeviceDefinitionGroupQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	all, _ := ch.Repository.GetAll(ctx, true)
+	all, _ := ch.Repository.GetAll(ctx)
 	allMakes, _ := ch.MakeRepository.GetAll(ctx)
 
 	var result []GetAllDeviceDefinitionGroupQueryResult

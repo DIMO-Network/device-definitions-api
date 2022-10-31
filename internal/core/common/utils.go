@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-
 	"math/big"
 	"sort"
 	"strconv"
@@ -14,7 +13,7 @@ import (
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-
+	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -93,7 +92,10 @@ func SlugString(term string) string {
 
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *models.GetDeviceDefinitionQueryResult {
+func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
+	if dd.R == nil || dd.R.DeviceMake == nil {
+		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
+	}
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
 		ExternalID:         dd.ExternalID.String,
@@ -180,7 +182,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) *mod
 		}
 	}
 
-	return rp
+	return rp, nil
 }
 
 func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {

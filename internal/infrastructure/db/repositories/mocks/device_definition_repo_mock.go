@@ -66,9 +66,9 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) FetchDeviceCompatibility(c
 }
 
 // GetAll mocks base method.
-func (m *MockDeviceDefinitionRepository) GetAll(ctx context.Context, verified bool) ([]*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", ctx, verified)
+	ret := m.ctrl.Call(m, "GetAll", ctx)
 	ret0, _ := ret[0].([]*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
