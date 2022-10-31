@@ -75,9 +75,9 @@ func (m *MockDeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAll(ctx, verified interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAll(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetAll), ctx, verified)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetAll), ctx)
 }
 
 // GetByID mocks base method.
@@ -110,7 +110,7 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByMakeModelAndYears), ctx, make, model, year, loadIntegrations)
 }
 
-// GetBySlugAndYears mocks base method.
+// GetBySlugAndYear mocks base method.
 func (m *MockDeviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBySlugAndYear", ctx, slug, year, loadIntegrations)
@@ -119,8 +119,8 @@ func (m *MockDeviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, s
 	return ret0, ret1
 }
 
-// GetBySlugAndYears indicates an expected call of GetBySlugAndYears.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYears(ctx, slug, year, loadIntegrations interface{}) *gomock.Call {
+// GetBySlugAndYear indicates an expected call of GetBySlugAndYear.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug, year, loadIntegrations interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugAndYear", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugAndYear), ctx, slug, year, loadIntegrations)
 }

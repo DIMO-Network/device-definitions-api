@@ -49,22 +49,25 @@ func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) TestGetAllDeviceDefi
 	makeID := "1"
 	mk := "Toyota"
 
-	var dd []*models.DeviceDefinition
-	dd = append(dd, &models.DeviceDefinition{
+	var makes []*models.DeviceMake
+	mkDb := &models.DeviceMake{
+		ID:   makeID,
+		Name: mk,
+	}
+	makes = append(makes, mkDb)
+	var dds []*models.DeviceDefinition
+	dd := &models.DeviceDefinition{
 		ID:           deviceDefinitionID,
 		Model:        model,
 		Year:         2000,
 		DeviceMakeID: makeID,
-	})
-
-	var makes []*models.DeviceMake
-	makes = append(makes, &models.DeviceMake{
-		ID:   makeID,
-		Name: mk,
-	})
+		R:            models.DeviceDefinition{}.R.NewStruct(),
+	}
+	dd.R.DeviceMake = mkDb
+	dds = append(dds, dd)
 
 	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
-	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetAll(ctx).Return(dds, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionGroupQuery{})
 	result := qryResult.([]GetAllDeviceDefinitionGroupQueryResult)
@@ -81,7 +84,7 @@ func (s *GetAllDeviceDefinitionGroupGroupQueryHandlerSuite) TestGetAllDeviceDefi
 	var makes []*models.DeviceMake
 
 	s.mockMakeRepository.EXPECT().GetAll(ctx).Return(makes, nil).Times(1)
-	s.mockRepository.EXPECT().GetAll(ctx, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetAll(ctx).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetAllDeviceDefinitionGroupQuery{})
 	result := qryResult.([]GetAllDeviceDefinitionGroupQueryResult)
