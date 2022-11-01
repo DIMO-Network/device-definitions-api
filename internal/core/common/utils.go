@@ -93,7 +93,7 @@ func SlugString(term string) string {
 }
 
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
-	if dd.R == nil || dd.R.DeviceMake == nil {
+	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
 		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
 	}
 	rp := &models.GetDeviceDefinitionQueryResult{
@@ -139,24 +139,23 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp.CompatibleIntegrations = []models.DeviceIntegration{}
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
-	if dd.R != nil {
-		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
-
-		var ai map[string]any
-		if err := dd.Metadata.Unmarshal(&ai); err == nil {
-			if ai != nil {
-				if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
-					attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
-					for key, value := range attributes {
-						rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
-							Name:  key,
-							Value: fmt.Sprint(value),
-						})
-					}
+	// pull out the device type device attributes, eg. vehicle information
+	var ai map[string]any
+	if err := dd.Metadata.Unmarshal(&ai); err == nil {
+		if ai != nil {
+			if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
+				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
+				for key, value := range attributes {
+					rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
+						Name:  key,
+						Value: fmt.Sprint(value),
+					})
 				}
 			}
 		}
+	}
 
+	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
 				ID:           di.R.Integration.ID,
@@ -169,6 +168,10 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 
 			rp.CompatibleIntegrations = rp.DeviceIntegrations
 		}
+	}
+
+	if dd.R.DeviceStyles != nil {
+		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
 
 		for _, ds := range dd.R.DeviceStyles {
 			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
