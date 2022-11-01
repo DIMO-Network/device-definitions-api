@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -53,8 +54,11 @@ func (qh GetRecallsByModelQueryHandler) Handle(ctx context.Context, query mediat
 			DeviceDefinitionId: v.DeviceDefinitionID.String,
 			Name:               fmt.Sprintf("%d %s %s", v.R.DeviceDefinition.Year, v.R.DeviceDefinition.R.DeviceMake.Name, v.R.DeviceDefinition.Model),
 			Description:        v.DataDescDefect,
-			//Date:               v.DataRcdate.UnixMilli(),
-			Year: int32(v.DataYeartxt),
+			Date:               timestamppb.New(v.DataRcdate),
+			Year:               int32(v.DataYeartxt),
+			ComponentName:      v.DataCompname,
+			ManufactureCampNo:  v.DataMfgcampno,
+			ConsequenceDefect:  v.DataConequenceDefect,
 		})
 	}
 

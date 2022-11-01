@@ -11,7 +11,9 @@ message RecallItem {
   int32 year = 3;
   string description = 4;
   string componentName = 5;
-  google.protobuf.Timestamp date = 6;
+  string consequenceDefect = 6;
+  string manufactureCampNo = 7;
+  google.protobuf.Timestamp date = 8;
 }
 
 message GetRecallsByMakeRequest {

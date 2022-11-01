@@ -74,6 +74,8 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 			Date:               timestamppb.New(v.DataRcdate),
 			Year:               int32(v.DataYeartxt),
 			ComponentName:      v.DataCompname,
+			ManufactureCampNo:  v.DataMfgcampno,
+			ConsequenceDefect:  v.DataConequenceDefect,
 		})
 	}
 
