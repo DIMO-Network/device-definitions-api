@@ -22,7 +22,7 @@ func NewLoggingBehavior(log *zerolog.Logger, settings *config.Settings) LoggingB
 }
 
 func (p LoggingBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
-	p.log.Info().Msg(fmt.Sprintf("%s request logging : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
+	p.log.Debug().Msg(fmt.Sprintf("%s request logging : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
 
 	return next(ctx)
 }
