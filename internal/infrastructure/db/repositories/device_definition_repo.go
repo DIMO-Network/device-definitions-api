@@ -95,7 +95,10 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
+		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 
