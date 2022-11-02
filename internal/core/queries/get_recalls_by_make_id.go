@@ -12,6 +12,7 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GetRecallsByMakeQuery struct {
@@ -70,8 +71,11 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 			DeviceDefinitionId: v.DeviceDefinitionID.String,
 			Name:               fmt.Sprintf("%d %s %s", v.R.DeviceDefinition.Year, v.R.DeviceDefinition.R.DeviceMake.Name, v.R.DeviceDefinition.Model),
 			Description:        v.DataDescDefect,
-			//Date:               v.DataRcdate.UnixMilli(),
-			Year: int32(v.DataYeartxt),
+			Date:               timestamppb.New(v.DataRcdate),
+			Year:               int32(v.DataYeartxt),
+			ComponentName:      v.DataCompname,
+			ManufactureCampNo:  v.DataMfgcampno,
+			ConsequenceDefect:  v.DataConequenceDefect,
 		})
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GetRecallsByModelQuery struct {
@@ -53,8 +54,11 @@ func (qh GetRecallsByModelQueryHandler) Handle(ctx context.Context, query mediat
 			DeviceDefinitionId: v.DeviceDefinitionID.String,
 			Name:               fmt.Sprintf("%d %s %s", v.R.DeviceDefinition.Year, v.R.DeviceDefinition.R.DeviceMake.Name, v.R.DeviceDefinition.Model),
 			Description:        v.DataDescDefect,
-			//Date:               v.DataRcdate.UnixMilli(),
-			Year: int32(v.DataYeartxt),
+			Date:               timestamppb.New(v.DataRcdate),
+			Year:               int32(v.DataYeartxt),
+			ComponentName:      v.DataCompname,
+			ManufactureCampNo:  v.DataMfgcampno,
+			ConsequenceDefect:  v.DataConequenceDefect,
 		})
 	}
 
