@@ -44,7 +44,8 @@ func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, qu
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
 		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
-		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles)).All(ctx, ch.DBS().Reader)
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceType)).All(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		return nil, &exceptions.InternalError{

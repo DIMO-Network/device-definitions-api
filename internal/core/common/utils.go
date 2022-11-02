@@ -92,6 +92,22 @@ func SlugString(term string) string {
 
 }
 
+func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
+	var externalIds []models.ExternalID
+	var ei map[string]string
+	if err := externalIdsJSON.Unmarshal(&ei); err == nil {
+		if ei != nil {
+			for vendor, id := range ei {
+				externalIds = append(externalIds, models.ExternalID{
+					Vendor: vendor,
+					ID:     id,
+				})
+			}
+		}
+	}
+	return externalIds
+}
+
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
 	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
 		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
@@ -103,12 +119,13 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
-			ID:              dd.R.DeviceMake.ID,
-			Name:            dd.R.DeviceMake.Name,
-			LogoURL:         dd.R.DeviceMake.LogoURL,
-			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
-			NameSlug:        dd.R.DeviceMake.NameSlug,
-			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ID:               dd.R.DeviceMake.ID,
+			Name:             dd.R.DeviceMake.Name,
+			LogoURL:          dd.R.DeviceMake.LogoURL,
+			OemPlatformName:  dd.R.DeviceMake.OemPlatformName,
+			NameSlug:         dd.R.DeviceMake.NameSlug,
+			ExternalIds:      JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIdsTyped: BuildExternalIds(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
 			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
@@ -118,8 +135,9 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			MakeSlug:  dd.R.DeviceMake.NameSlug,
 			ModelSlug: dd.ModelSlug,
 		},
-		Metadata: string(dd.Metadata.JSON),
-		Verified: dd.Verified,
+		Metadata:    string(dd.Metadata.JSON),
+		Verified:    dd.Verified,
+		ExternalIds: BuildExternalIds(dd.ExternalIds),
 	}
 
 	if !dd.R.DeviceMake.TokenID.IsZero() {
@@ -211,6 +229,14 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			ModelSlug: dd.Type.ModelSlug,
 		},
 		Verified: dd.Verified,
+	}
+
+	rp.ExternalIds = []*grpc.ExternalID{}
+	for _, ei := range dd.ExternalIds {
+		rp.ExternalIds = append(rp.ExternalIds, &grpc.ExternalID{
+			Vendor: ei.Vendor,
+			Id:     ei.ID,
+		})
 	}
 
 	if dd.DeviceMake.TokenID != nil {

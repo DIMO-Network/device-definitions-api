@@ -20,7 +20,7 @@ go run ./cmd/device-definitions-api
 ```bash
 brew install protobuf
 go install google.golang.org/protobuf/cmd/protoc-gen-go
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
 2. Run protoc in the root directory

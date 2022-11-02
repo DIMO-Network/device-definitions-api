@@ -83,6 +83,18 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 	result := &p_grpc.GetFilteredDeviceDefinitionsResponse{}
 
 	for _, deviceDefinition := range ddResult {
+		var ei map[string]string
+		var extIds []*p_grpc.ExternalID
+		if err := deviceDefinition.ExternalIds.Unmarshal(&ei); err != nil {
+			if ei != nil {
+				for vendor, id := range ei {
+					extIds = append(extIds, &p_grpc.ExternalID{
+						Vendor: vendor,
+						Id:     id,
+					})
+				}
+			}
+		}
 		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
 			Id:           deviceDefinition.ID,
 			Model:        deviceDefinition.Model,
@@ -96,6 +108,7 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 			External:     deviceDefinition.ExternalID.String,
 			DeviceMakeId: deviceDefinition.DeviceMakeID,
 			Make:         deviceDefinition.Make,
+			ExternalIds:  extIds,
 		})
 	}
 
@@ -268,6 +281,14 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 		result.TokenId = deviceMake.TokenID.Uint64()
 	}
 
+	result.ExternalIdsTyped = []*p_grpc.ExternalID{}
+	for _, ei := range deviceMake.ExternalIdsTyped {
+		result.ExternalIdsTyped = append(result.ExternalIdsTyped, &p_grpc.ExternalID{
+			Vendor: ei.Vendor,
+			Id:     ei.ID,
+		})
+	}
+
 	return result, nil
 }
 
@@ -289,6 +310,14 @@ func (s *GrpcService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDev
 
 	if deviceMake.TokenID != nil {
 		result.TokenId = deviceMake.TokenID.Uint64()
+	}
+
+	result.ExternalIdsTyped = []*p_grpc.ExternalID{}
+	for _, ei := range deviceMake.ExternalIdsTyped {
+		result.ExternalIdsTyped = append(result.ExternalIdsTyped, &p_grpc.ExternalID{
+			Vendor: ei.Vendor,
+			Id:     ei.ID,
+		})
 	}
 
 	return result, nil
@@ -314,6 +343,14 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 
 		if deviceMake.TokenID != nil {
 			make.TokenId = deviceMake.TokenID.Uint64()
+		}
+
+		make.ExternalIdsTyped = []*p_grpc.ExternalID{}
+		for _, ei := range deviceMake.ExternalIdsTyped {
+			make.ExternalIdsTyped = append(make.ExternalIdsTyped, &p_grpc.ExternalID{
+				Vendor: ei.Vendor,
+				Id:     ei.ID,
+			})
 		}
 
 		result.DeviceMakes = append(result.DeviceMakes, make)

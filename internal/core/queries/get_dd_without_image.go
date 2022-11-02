@@ -41,6 +41,7 @@ func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
 		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(repoModel.DeviceDefinitionRels.DeviceType),
 		repoModel.DeviceDefinitionWhere.ImageURL.IsNull()).
 		All(ctx, ch.DBS().Reader)
 

@@ -8,16 +8,17 @@ import (
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string      `json:"deviceDefinitionId"`
-	ExternalID         string      `json:"external_id"`
-	Name               string      `json:"name"`
-	ImageURL           string      `json:"imageUrl"`
-	Source             string      `json:"source"`
-	DeviceMake         DeviceMake  `json:"make"`
-	Type               DeviceType  `json:"type"`
-	VehicleInfo        VehicleInfo `json:"vehicleData,omitempty"`
-	Metadata           interface{} `json:"metadata"`
-	Verified           bool        `json:"verified"`
+	DeviceDefinitionID string       `json:"deviceDefinitionId"`
+	ExternalID         string       `json:"external_id"`
+	Name               string       `json:"name"`
+	ImageURL           string       `json:"imageUrl"`
+	Source             string       `json:"source"`
+	DeviceMake         DeviceMake   `json:"make"`
+	Type               DeviceType   `json:"type"`
+	VehicleInfo        VehicleInfo  `json:"vehicleData,omitempty"`
+	Metadata           interface{}  `json:"metadata"`
+	Verified           bool         `json:"verified"`
+	ExternalIds        []ExternalID `json:"externalIds"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
 	DeviceIntegrations     []DeviceIntegration   `json:"deviceIntegrations"`
 	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
@@ -80,11 +81,17 @@ type DeviceStyle struct {
 }
 
 type DeviceMake struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	LogoURL         null.String     `json:"logo_url"`
-	OemPlatformName null.String     `json:"oem_platform_name"`
-	TokenID         *big.Int        `json:"tokenId,omitempty"`
-	NameSlug        string          `json:"nameSlug"`
-	ExternalIds     json.RawMessage `json:"external_ids"`
+	ID               string          `json:"id"`
+	Name             string          `json:"name"`
+	LogoURL          null.String     `json:"logo_url"`
+	OemPlatformName  null.String     `json:"oem_platform_name"`
+	TokenID          *big.Int        `json:"tokenId,omitempty"`
+	NameSlug         string          `json:"nameSlug"`
+	ExternalIds      json.RawMessage `json:"external_ids"`
+	ExternalIdsTyped []ExternalID    `json:"externalIdsTyped"`
+}
+
+type ExternalID struct {
+	Vendor string `json:"vendor"`
+	ID     string `json:"id"`
 }
