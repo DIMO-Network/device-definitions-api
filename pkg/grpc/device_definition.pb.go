@@ -4896,7 +4896,7 @@ var file_pkg_grpc_device_definition_proto_depIdxs = []int32{
 	3,  // 69: grpc.DeviceDefinitionService.GetDeviceDefinitionBySlug:output_type -> grpc.GetDeviceDefinitionItemResponse
 	2,  // 70: grpc.DeviceDefinitionService.GetDeviceDefinitions:output_type -> grpc.GetDeviceDefinitionResponse
 	3,  // 71: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:output_type -> grpc.GetDeviceDefinitionItemResponse
-	2,  // 72: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionResponse
+	3,  // 72: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionItemResponse
 	2,  // 73: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:output_type -> grpc.GetDeviceDefinitionResponse
 	23, // 74: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
 	9,  // 75: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake

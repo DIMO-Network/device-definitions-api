@@ -20,7 +20,7 @@ import (
 )
 
 type GrpcService struct {
-	p_grpc.UnimplementedDeviceDefinitionServiceServer
+	p_grpc.DeviceDefinitionServiceServer
 	Mediator mediator.Mediator
 	logger   *zerolog.Logger
 }
@@ -113,14 +113,20 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 	return result, nil
 }
 
-func (s *GrpcService) GetDeviceDefinitionBySource(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySourceRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySourceQuery{
+func (s *GrpcService) GetDeviceDefinitionBySource(in *p_grpc.GetDeviceDefinitionBySourceRequest, stream p_grpc.DeviceDefinitionService_GetDeviceDefinitionBySourceServer) error {
+	qryResult, _ := s.Mediator.Send(context.Background(), &queries.GetDeviceDefinitionBySourceQuery{
 		Source: in.Source,
 	})
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
-	return result, nil
+	for _, dd := range result.DeviceDefinitions {
+		if err := stream.Send(dd); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *GrpcService) GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
