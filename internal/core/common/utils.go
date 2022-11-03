@@ -96,13 +96,11 @@ func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
 	var externalIds []models.ExternalID
 	var ei map[string]string
 	if err := externalIdsJSON.Unmarshal(&ei); err == nil {
-		if ei != nil {
-			for vendor, id := range ei {
-				externalIds = append(externalIds, models.ExternalID{
-					Vendor: vendor,
-					ID:     id,
-				})
-			}
+		for vendor, id := range ei {
+			externalIds = append(externalIds, models.ExternalID{
+				Vendor: vendor,
+				ID:     id,
+			})
 		}
 	}
 	return externalIds

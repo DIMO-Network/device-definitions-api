@@ -86,13 +86,11 @@ func (s *GrpcService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grp
 		var ei map[string]string
 		var extIds []*p_grpc.ExternalID
 		if err := deviceDefinition.ExternalIds.Unmarshal(&ei); err != nil {
-			if ei != nil {
-				for vendor, id := range ei {
-					extIds = append(extIds, &p_grpc.ExternalID{
-						Vendor: vendor,
-						Id:     id,
-					})
-				}
+			for vendor, id := range ei {
+				extIds = append(extIds, &p_grpc.ExternalID{
+					Vendor: vendor,
+					Id:     id,
+				})
 			}
 		}
 		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
