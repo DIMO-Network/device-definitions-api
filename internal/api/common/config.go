@@ -16,6 +16,10 @@ func FiberConfig(disableStartupMsg bool) fiber.Config {
 			_type := "https://tools.ietf.org/html/rfc7231#section-6.6.1"
 			title := "An error occurred while processing your request."
 
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+
 			if _, ok := err.(*exceptions.ValidationError); ok {
 				code = fiber.StatusBadRequest
 				_type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
