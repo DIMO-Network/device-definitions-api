@@ -106,6 +106,17 @@ func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
 	return externalIds
 }
 
+func ExternalIdsToGRPC(externalIds []models.ExternalID) []*grpc.ExternalID {
+	externalIdsGRPC := make([]*grpc.ExternalID, len(externalIds))
+	for i, ei := range externalIds {
+		externalIdsGRPC[i] = &grpc.ExternalID{
+			Vendor: ei.Vendor,
+			Id:     ei.ID,
+		}
+	}
+	return externalIdsGRPC
+}
+
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
 	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
 		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")

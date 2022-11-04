@@ -267,24 +267,17 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 	deviceMake := qryResult.(models.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
-		Id:              deviceMake.ID,
-		Name:            deviceMake.Name,
-		NameSlug:        deviceMake.NameSlug,
-		LogoUrl:         deviceMake.LogoURL.String,
-		OemPlatformName: deviceMake.OemPlatformName.String,
-		ExternalIds:     string(deviceMake.ExternalIds),
+		Id:               deviceMake.ID,
+		Name:             deviceMake.Name,
+		NameSlug:         deviceMake.NameSlug,
+		LogoUrl:          deviceMake.LogoURL.String,
+		OemPlatformName:  deviceMake.OemPlatformName.String,
+		ExternalIds:      string(deviceMake.ExternalIds),
+		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
 	}
 
 	if deviceMake.TokenID != nil {
 		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	result.ExternalIdsTyped = []*p_grpc.ExternalID{}
-	for _, ei := range deviceMake.ExternalIdsTyped {
-		result.ExternalIdsTyped = append(result.ExternalIdsTyped, &p_grpc.ExternalID{
-			Vendor: ei.Vendor,
-			Id:     ei.ID,
-		})
 	}
 
 	return result, nil
@@ -298,24 +291,17 @@ func (s *GrpcService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDev
 	deviceMake := qryResult.(models.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
-		Id:              deviceMake.ID,
-		Name:            deviceMake.Name,
-		NameSlug:        deviceMake.NameSlug,
-		LogoUrl:         deviceMake.LogoURL.String,
-		OemPlatformName: deviceMake.OemPlatformName.String,
-		ExternalIds:     string(deviceMake.ExternalIds),
+		Id:               deviceMake.ID,
+		Name:             deviceMake.Name,
+		NameSlug:         deviceMake.NameSlug,
+		LogoUrl:          deviceMake.LogoURL.String,
+		OemPlatformName:  deviceMake.OemPlatformName.String,
+		ExternalIds:      string(deviceMake.ExternalIds),
+		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
 	}
 
 	if deviceMake.TokenID != nil {
 		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	result.ExternalIdsTyped = []*p_grpc.ExternalID{}
-	for _, ei := range deviceMake.ExternalIdsTyped {
-		result.ExternalIdsTyped = append(result.ExternalIdsTyped, &p_grpc.ExternalID{
-			Vendor: ei.Vendor,
-			Id:     ei.ID,
-		})
 	}
 
 	return result, nil
@@ -331,24 +317,17 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 	for _, deviceMake := range deviceMakes {
 
 		make := &p_grpc.DeviceMake{
-			Id:              deviceMake.ID,
-			Name:            deviceMake.Name,
-			NameSlug:        deviceMake.NameSlug,
-			LogoUrl:         deviceMake.LogoURL.String,
-			OemPlatformName: deviceMake.OemPlatformName.String,
-			ExternalIds:     string(deviceMake.ExternalIds),
+			Id:               deviceMake.ID,
+			Name:             deviceMake.Name,
+			NameSlug:         deviceMake.NameSlug,
+			LogoUrl:          deviceMake.LogoURL.String,
+			OemPlatformName:  deviceMake.OemPlatformName.String,
+			ExternalIds:      string(deviceMake.ExternalIds),
+			ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
 		}
 
 		if deviceMake.TokenID != nil {
 			make.TokenId = deviceMake.TokenID.Uint64()
-		}
-
-		make.ExternalIdsTyped = []*p_grpc.ExternalID{}
-		for _, ei := range deviceMake.ExternalIdsTyped {
-			make.ExternalIdsTyped = append(make.ExternalIdsTyped, &p_grpc.ExternalID{
-				Vendor: ei.Vendor,
-				Id:     ei.ID,
-			})
 		}
 
 		result.DeviceMakes = append(result.DeviceMakes, make)
