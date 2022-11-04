@@ -13,6 +13,7 @@ var TableNames = struct {
 	Images              string
 	IntegrationFeatures string
 	Integrations        string
+	Reviews             string
 }{
 	DeviceDefinitions:   "device_definitions",
 	DeviceIntegrations:  "device_integrations",
@@ -23,4 +24,5 @@ var TableNames = struct {
 	Images:              "images",
 	IntegrationFeatures: "integration_features",
 	Integrations:        "integrations",
+	Reviews:             "reviews",
 }

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
+
+package grpc;
+
+message DeviceReview {
+  string device_definition_id = 1;
+  string url = 2;
+  string imageURL = 3;
+  string channel = 4;
+}
+
+// allyson todo-- check if we want to also be able to pull reviews by make
+// message GetReviewsByMakeRequest {
+//   string make_id = 1;
+// }
+
+message GetReviewsByModelRequest {
+  string device_definition_id = 1;
+}
+
+message GetReviewsResponse {
+  repeated DeviceReview reviews = 1;
+}
+
+service ReviewsService {
+//   rpc GetReviewsByMake(GetReviewsByMakeRequest) returns (GetReviewsResponse);
+  rpc GetReviewsByModel(GetReviewsByModelRequest) returns (GetReviewsResponse);
+}
