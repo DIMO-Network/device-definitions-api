@@ -237,15 +237,8 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			MakeSlug:  dd.Type.MakeSlug,
 			ModelSlug: dd.Type.ModelSlug,
 		},
-		Verified: dd.Verified,
-	}
-
-	rp.ExternalIds = []*grpc.ExternalID{}
-	for _, ei := range dd.ExternalIds {
-		rp.ExternalIds = append(rp.ExternalIds, &grpc.ExternalID{
-			Vendor: ei.Vendor,
-			Id:     ei.ID,
-		})
+		Verified:    dd.Verified,
+		ExternalIds: ExternalIdsToGRPC(dd.ExternalIds),
 	}
 
 	if dd.DeviceMake.TokenID != nil {
