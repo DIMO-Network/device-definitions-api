@@ -47,12 +47,13 @@ func (ch GetDeviceMakeByNameQueryHandler) Handle(ctx context.Context, query medi
 	}
 
 	result := coremodels.DeviceMake{
-		ID:              v.ID,
-		Name:            v.Name,
-		LogoURL:         v.LogoURL,
-		OemPlatformName: v.OemPlatformName,
-		NameSlug:        v.NameSlug,
-		ExternalIds:     common.JSONOrDefault(v.ExternalIds),
+		ID:               v.ID,
+		Name:             v.Name,
+		LogoURL:          v.LogoURL,
+		OemPlatformName:  v.OemPlatformName,
+		NameSlug:         v.NameSlug,
+		ExternalIds:      common.JSONOrDefault(v.ExternalIds),
+		ExternalIdsTyped: common.BuildExternalIds(v.ExternalIds),
 	}
 
 	if !v.TokenID.IsZero() {

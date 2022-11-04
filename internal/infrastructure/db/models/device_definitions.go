@@ -37,6 +37,7 @@ type DeviceDefinition struct {
 	DeviceMakeID string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
 	ModelSlug    string      `boil:"model_slug" json:"model_slug" toml:"model_slug" yaml:"model_slug"`
 	DeviceTypeID null.String `boil:"device_type_id" json:"device_type_id,omitempty" toml:"device_type_id" yaml:"device_type_id,omitempty"`
+	ExternalIds  null.JSON   `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -56,6 +57,7 @@ var DeviceDefinitionColumns = struct {
 	DeviceMakeID string
 	ModelSlug    string
 	DeviceTypeID string
+	ExternalIds  string
 }{
 	ID:           "id",
 	Model:        "model",
@@ -70,6 +72,7 @@ var DeviceDefinitionColumns = struct {
 	DeviceMakeID: "device_make_id",
 	ModelSlug:    "model_slug",
 	DeviceTypeID: "device_type_id",
+	ExternalIds:  "external_ids",
 }
 
 var DeviceDefinitionTableColumns = struct {
@@ -86,6 +89,7 @@ var DeviceDefinitionTableColumns = struct {
 	DeviceMakeID string
 	ModelSlug    string
 	DeviceTypeID string
+	ExternalIds  string
 }{
 	ID:           "device_definitions.id",
 	Model:        "device_definitions.model",
@@ -100,6 +104,7 @@ var DeviceDefinitionTableColumns = struct {
 	DeviceMakeID: "device_definitions.device_make_id",
 	ModelSlug:    "device_definitions.model_slug",
 	DeviceTypeID: "device_definitions.device_type_id",
+	ExternalIds:  "device_definitions.external_ids",
 }
 
 // Generated where
@@ -256,6 +261,7 @@ var DeviceDefinitionWhere = struct {
 	DeviceMakeID whereHelperstring
 	ModelSlug    whereHelperstring
 	DeviceTypeID whereHelpernull_String
+	ExternalIds  whereHelpernull_JSON
 }{
 	ID:           whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:        whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
@@ -270,6 +276,7 @@ var DeviceDefinitionWhere = struct {
 	DeviceMakeID: whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"device_make_id\""},
 	ModelSlug:    whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
 	DeviceTypeID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"device_type_id\""},
+	ExternalIds:  whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"external_ids\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
@@ -350,9 +357,9 @@ func (r *deviceDefinitionR) GetImages() ImageSlice {
 type deviceDefinitionL struct{}
 
 var (
-	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id"}
+	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids"}
 	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id"}
+	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )
