@@ -3,10 +3,9 @@ package common
 import (
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 )
 
 func TestBuildExternalIds(t *testing.T) {
@@ -15,16 +14,9 @@ func TestBuildExternalIds(t *testing.T) {
 
 	got := BuildExternalIds(json)
 
-	assert.Equal(t, 3, len(got))
-
-	assert.Equal(t, "edmunds", got[0].Vendor)
-	assert.Equal(t, "123", got[0].ID)
-
-	assert.Equal(t, "nhtsa", got[1].Vendor)
-	assert.Equal(t, "qwert", got[1].ID)
-
-	assert.Equal(t, "adac", got[2].Vendor)
-	assert.Equal(t, "890", got[2].ID)
+	assert.Contains(t, got, models.ExternalID{Vendor: "edmunds", ID: "123"})
+	assert.Contains(t, got, models.ExternalID{Vendor: "nhtsa", ID: "qwert"})
+	assert.Contains(t, got, models.ExternalID{Vendor: "adac", ID: "890"})
 }
 
 func TestExternalIdsToGRPC(t *testing.T) {
