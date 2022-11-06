@@ -23,7 +23,7 @@ type ElasticSearch struct {
 
 func NewElasticSearch(settings *config.Settings, logger zerolog.Logger) (*ElasticSearch, error) {
 	var netClient = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 20,
 	}
 	return &ElasticSearch{
 		BaseURL:    settings.ElasticSearchDeviceStatusHost,
