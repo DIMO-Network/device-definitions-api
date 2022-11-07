@@ -85,7 +85,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetRecallsByMakeQuery{}, queries.NewGetRecallsByMakeQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetRecallsByModelQuery{}, queries.NewGetRecallsByModelQueryHandler(pdb.DBS)),
-		// mediator.WithHandler(&queries.GetReviewsByMakeQuery{}, queries.NewGetReviewsByMakeQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetReviewsByModelQuery{}, queries.NewGetReviewsByModelQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
