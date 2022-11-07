@@ -45,6 +45,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(models.DeviceDefinitionRels.Images),
 	}
 	if loadIntegrations {
 		qms = append(qms,
@@ -72,6 +73,7 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(models.DeviceDefinitionRels.Images),
 	}
 	if loadIntegrations {
 		qms = append(qms,
@@ -120,6 +122,7 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(models.DeviceDefinitionRels.Images),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles)).
 		One(ctx, r.DBS().Reader)

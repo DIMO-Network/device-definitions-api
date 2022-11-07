@@ -35,6 +35,7 @@ func NewSyncSmartCartCompatibilityCommandHandler(dbs func() *db.ReaderWriter, sc
 	return SyncSmartCartCompatibilityCommandHandler{DBS: dbs, scSvc: scSvc, Repository: repository}
 }
 
+// Handle adds device_integrations for any makes and years that are found on the smartcar website
 func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	AmericasRegion := "Americas"
 	EuropeRegion := "Europe"
@@ -87,7 +88,7 @@ func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, q
 						//mkLogger.Err(err).Msg("Couldn't parse range string, skipping")
 						continue
 					}
-					if startYear < 2000 {
+					if startYear < 2012 {
 						//mkLogger.Error().Msgf("Start year %d is suspiciously low, skipping", startYear)
 						continue
 					}
