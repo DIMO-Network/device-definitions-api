@@ -211,6 +211,16 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			})
 		}
 	}
+	// trying pulling fuel images if no image_url, pick the biggest one
+	if (dd.ImageURL.IsZero() || dd.ImageURL.String == "") && dd.R.Images != nil {
+		w := 0
+		for _, image := range dd.R.Images {
+			if image.Width.Int > w {
+				w = image.Width.Int
+				rp.ImageURL = image.SourceURL
+			}
+		}
+	}
 
 	return rp, nil
 }
