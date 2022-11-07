@@ -11,11 +11,6 @@ message DeviceReview {
   string channel = 4;
 }
 
-// allyson todo-- check if we want to also be able to pull reviews by make
-// message GetReviewsByMakeRequest {
-//   string make_id = 1;
-// }
-
 message GetReviewsByModelRequest {
   string device_definition_id = 1;
 }
@@ -25,6 +20,5 @@ message GetReviewsResponse {
 }
 
 service ReviewsService {
-//   rpc GetReviewsByMake(GetReviewsByMakeRequest) returns (GetReviewsResponse);
   rpc GetReviewsByModel(GetReviewsByModelRequest) returns (GetReviewsResponse);
 }

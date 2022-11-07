@@ -38,7 +38,7 @@ func (qh GetReviewsByModelQueryHandler) Handle(ctx context.Context, query mediat
 			return &p_grpc.GetReviewsResponse{}, nil
 		}
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get nthsa"),
+			Err: fmt.Errorf("failed to get reviews"),
 		}
 	}
 

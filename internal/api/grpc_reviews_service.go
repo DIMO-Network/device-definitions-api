@@ -19,24 +19,13 @@ func NewGrpcReviewsService(mediator mediator.Mediator, logger *zerolog.Logger) p
 	return &GrpcReviewsService{Mediator: mediator, logger: logger}
 }
 
-func (s *GrpcRecallsService) GetReviewsByMake(ctx context.Context, in *p_grpc.GetRecallsByMakeRequest) (*p_grpc.GetRecallsResponse, error) {
+func (s *GrpcReviewsService) GetReviewsByModel(ctx context.Context, in *p_grpc.GetReviewsByModelRequest) (*p_grpc.GetReviewsResponse, error) {
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetRecallsByMakeQuery{
-		MakeID: in.MakeId,
-	})
-
-	result := qryResult.(*p_grpc.GetRecallsResponse)
-
-	return result, nil
-}
-
-func (s *GrpcRecallsService) GetReviewsByModel(ctx context.Context, in *p_grpc.GetRecallsByModelRequest) (*p_grpc.GetRecallsResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetRecallsByModelQuery{
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetReviewsByModelQuery{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 	})
 
-	result := qryResult.(*p_grpc.GetRecallsResponse)
+	result := qryResult.(*p_grpc.GetReviewsResponse)
 
 	return result, nil
 }
