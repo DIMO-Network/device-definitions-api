@@ -25,6 +25,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 
 	deviceDefinitionService := NewGrpcService(m, &logger)
 	recallsService := NewGrpcRecallsService(m, &logger)
+	reviewsService := NewGrpcReviewsService(m, &logger)
 
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
@@ -34,6 +35,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 
 	pkggrpc.RegisterDeviceDefinitionServiceServer(server, deviceDefinitionService)
 	pkggrpc.RegisterRecallsServiceServer(server, recallsService)
+	pkggrpc.RegisterReviewsServiceServer(server, reviewsService)
 
 	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 
