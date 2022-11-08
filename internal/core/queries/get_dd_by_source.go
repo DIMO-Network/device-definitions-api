@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -40,7 +39,7 @@ func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, qu
 	qry := query.(*GetDeviceDefinitionBySourceQuery)
 
 	all, err := repoModel.DeviceDefinitions(
-		repoModel.DeviceDefinitionWhere.Source.EQ(null.StringFrom(qry.Source)),
+		qm.Where("external_ids->>? IS NOT NULL", qry.Source),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
 		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
