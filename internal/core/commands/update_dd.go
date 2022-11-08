@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -35,6 +36,7 @@ type UpdateDeviceDefinitionCommand struct {
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
+	ExternalIds      []coremodels.ExternalID                 `json:"externalIds"`
 }
 
 type UpdateDeviceIntegrations struct {
@@ -201,10 +203,23 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.ExternalID = null.StringFrom(command.ExternalID)
 	}
 
+	extIds := map[string]string{}
 	if len(command.Source) > 0 {
 		dd.Source = null.StringFrom(command.Source)
 		dd.ExternalID = null.StringFrom(command.ExternalID)
+		extIds[command.Source] = command.ExternalID
 	}
+	if len(command.ExternalIds) > 0 {
+		for _, ei := range command.ExternalIds {
+			extIds[ei.Vendor] = ei.ID
+		}
+	}
+	extIdsJSON, err := json.Marshal(extIds)
+	if err != nil {
+		return nil, err
+	}
+	dd.ExternalIds = null.JSONFrom(extIdsJSON)
+
 	if len(command.ImageURL) > 0 {
 		dd.ImageURL = null.StringFrom(command.ImageURL)
 	}

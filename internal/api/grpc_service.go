@@ -370,14 +370,15 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		Source:             in.Source,
-		ExternalID:         in.ExternalId,
-		ImageURL:           in.ImageUrl,
-		Year:               int16(in.Year),
-		Model:              in.Model,
-		Verified:           in.Verified,
-		DeviceMakeID:       in.DeviceMakeId,
-		DeviceTypeID:       in.DeviceTypeId,
+		//Source:             in.Source,
+		//ExternalID:         in.ExternalId,
+		ImageURL:     in.ImageUrl,
+		Year:         int16(in.Year),
+		Model:        in.Model,
+		Verified:     in.Verified,
+		DeviceMakeID: in.DeviceMakeId,
+		DeviceTypeID: in.DeviceTypeId,
+		ExternalIds:  common.ExternalIdsFromGRPC(in.ExternalIds),
 	}
 
 	if len(in.DeviceAttributes) > 0 {
