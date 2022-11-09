@@ -307,16 +307,23 @@ func (d *elasticAppSearchService) buildAndExecRequest(method, url string, obj in
 type DeviceDefinitionSearchDoc struct {
 	ID string `json:"id"`
 	// SearchDisplay M+M+Y
-	SearchDisplay string `json:"search_display"`
-	Make          string `json:"make"`
-	Model         string `json:"model"`
-	Year          int    `json:"year"`
+	SearchDisplay string                               `json:"search_display"`
+	Make          string                               `json:"make"`
+	Model         string                               `json:"model"`
+	Year          int                                  `json:"year"`
+	Type          string                               `json:"type"`
+	Attributes    []DeviceDefinitionAttributeSearchDoc `json:"device_attributes"`
 	// SubModels: M+M+Y+Submodel name
 	SubModels []string `json:"sub_models"`
 	ImageURL  string   `json:"image_url"`
 	MakeSlug  string   `json:"make_slug"`
 	ModelSlug string   `json:"model_slug"`
 	// future: we might add styles
+}
+
+type DeviceDefinitionAttributeSearchDoc struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type GetEnginesResp struct {
