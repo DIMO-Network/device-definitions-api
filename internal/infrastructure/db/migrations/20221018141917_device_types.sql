@@ -54,7 +54,7 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "options": []
     },
     {
-      "name": "base_MSRP",
+      "name": "base_msrp",
       "label": "Base MSRP",
       "description": "",
       "type": "number",
@@ -63,7 +63,7 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "options": []
     },
     {
-      "name": "EPA_class",
+      "name": "epa_class",
       "label": "EPA Class",
       "description": "",
       "type": "string",
@@ -81,7 +81,7 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "options": []
     },
     {
-      "name": "MPG_highway",
+      "name": "mpg_highway",
       "label": "MPG Highway",
       "description": "",
       "type": "number",
@@ -90,7 +90,7 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "options": []
     },
     {
-      "name": "MPG_city",
+      "name": "mpg_city",
       "label": "MPG City",
       "description": "",
       "type": "number",
@@ -108,7 +108,7 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "options": []
     },
     {
-      "name": "MPG",
+      "name": "mpg",
       "label": "MPG",
       "description": "",
       "type": "number",
