@@ -360,6 +360,7 @@ message GetDeviceTypeResponse {
 	string id = 1;
 	string name = 2;
 	repeated DeviceTypeAttribute attributes = 3;
+	string metadata_key = 4;
 }
 
 message GetDeviceTypeListResponse {
