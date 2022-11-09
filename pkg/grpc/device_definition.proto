@@ -29,9 +29,15 @@ message GetDeviceDefinitionItemResponse {
 	repeated  DeviceIntegration device_integrations = 7;
 	DeviceMake make = 8;
 	repeated DeviceStyle device_styles = 9;
-	string source = 10;
-	string external_id = 11;
+	string source = 10 [deprecated = true];
+	string external_id = 11 [deprecated = true];
 	repeated DeviceTypeAttribute device_attributes = 12;
+	repeated ExternalID external_ids = 13;
+}
+
+message ExternalID {
+	string vendor = 1;
+	string id = 2;
 }
 
 message DeviceTypeAttribute {
@@ -76,7 +82,8 @@ message DeviceMake {
 	string oem_platform_name = 4;
 	uint64 token_id = 5;
 	string name_slug = 6;
-	string external_ids = 7;
+	string external_ids = 7 [deprecated = true];
+	repeated ExternalID external_ids_typed = 8;
 }
 
 message VehicleInfo {
@@ -239,11 +246,12 @@ message FilterDeviceDefinitionsReponse {
 	int64 created_at = 5;
 	int64 updated_at = 6;
 	string metadata = 7;
-	string source = 8;
+	string source = 8 [deprecated = true];
 	bool verified = 9;
-	string external = 10;
+	string external = 10 [deprecated = true];
 	string device_make_id = 11;
 	string make = 12;
+	repeated ExternalID external_ids = 13;
 }
 
 message CreateDeviceStyleRequest {

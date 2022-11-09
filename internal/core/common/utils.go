@@ -92,6 +92,31 @@ func SlugString(term string) string {
 
 }
 
+func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
+	var externalIds []models.ExternalID
+	var ei map[string]string
+	if err := externalIdsJSON.Unmarshal(&ei); err == nil {
+		for vendor, id := range ei {
+			externalIds = append(externalIds, models.ExternalID{
+				Vendor: vendor,
+				ID:     id,
+			})
+		}
+	}
+	return externalIds
+}
+
+func ExternalIdsToGRPC(externalIds []models.ExternalID) []*grpc.ExternalID {
+	externalIdsGRPC := make([]*grpc.ExternalID, len(externalIds))
+	for i, ei := range externalIds {
+		externalIdsGRPC[i] = &grpc.ExternalID{
+			Vendor: ei.Vendor,
+			Id:     ei.ID,
+		}
+	}
+	return externalIdsGRPC
+}
+
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
 	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
 		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
@@ -103,12 +128,13 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
-			ID:              dd.R.DeviceMake.ID,
-			Name:            dd.R.DeviceMake.Name,
-			LogoURL:         dd.R.DeviceMake.LogoURL,
-			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
-			NameSlug:        dd.R.DeviceMake.NameSlug,
-			ExternalIds:     JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ID:               dd.R.DeviceMake.ID,
+			Name:             dd.R.DeviceMake.Name,
+			LogoURL:          dd.R.DeviceMake.LogoURL,
+			OemPlatformName:  dd.R.DeviceMake.OemPlatformName,
+			NameSlug:         dd.R.DeviceMake.NameSlug,
+			ExternalIds:      JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIdsTyped: BuildExternalIds(dd.R.DeviceMake.ExternalIds),
 		},
 		Type: models.DeviceType{
 			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
@@ -118,8 +144,9 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			MakeSlug:  dd.R.DeviceMake.NameSlug,
 			ModelSlug: dd.ModelSlug,
 		},
-		Metadata: string(dd.Metadata.JSON),
-		Verified: dd.Verified,
+		Metadata:    string(dd.Metadata.JSON),
+		Verified:    dd.Verified,
+		ExternalIds: BuildExternalIds(dd.ExternalIds),
 	}
 
 	if !dd.R.DeviceMake.TokenID.IsZero() {
@@ -184,6 +211,16 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			})
 		}
 	}
+	// trying pulling fuel images if no image_url, pick the biggest one
+	if (dd.ImageURL.IsZero() || dd.ImageURL.String == "") && dd.R.Images != nil {
+		w := 0
+		for _, image := range dd.R.Images {
+			if image.Width.Int > w {
+				w = image.Width.Int
+				rp.ImageURL = image.SourceURL
+			}
+		}
+	}
 
 	return rp, nil
 }
@@ -210,7 +247,8 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			MakeSlug:  dd.Type.MakeSlug,
 			ModelSlug: dd.Type.ModelSlug,
 		},
-		Verified: dd.Verified,
+		Verified:    dd.Verified,
+		ExternalIds: ExternalIdsToGRPC(dd.ExternalIds),
 	}
 
 	if dd.DeviceMake.TokenID != nil {

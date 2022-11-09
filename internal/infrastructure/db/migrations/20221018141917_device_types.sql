@@ -115,6 +115,33 @@ VALUES ('vehicle', 'Vehicle information', 'vehicle_info', '{
       "required": false,
       "defaultValue": "",
       "options": []
+    },
+    {
+      "name": "generation",
+      "type": "number",
+      "label": "Generation",
+      "options": [],
+      "required": false,
+      "description": "Manufacturer Model generation",
+      "default_value": ""
+    },
+    {
+      "name": "manufacturer_code",
+      "type": "string",
+      "label": "Manufacturer Code",
+      "options": [],
+      "required": false,
+      "description": "Manufacturer internal code to describe model body",
+      "default_value": ""
+    },
+    {
+      "name": "wheelbase",
+      "type": "number",
+      "label": "Wheelbase",
+      "options": [],
+      "required": false,
+      "description": "wheelbase is the distance between front and rear wheels",
+      "default_value": ""
     }
   ]
 }');

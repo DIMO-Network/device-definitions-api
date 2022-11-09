@@ -38,12 +38,13 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 	result := make([]coremodels.DeviceMake, len(all))
 	for i, v := range all {
 		result[i] = coremodels.DeviceMake{
-			ID:              v.ID,
-			Name:            v.Name,
-			LogoURL:         v.LogoURL,
-			OemPlatformName: v.OemPlatformName,
-			NameSlug:        v.NameSlug,
-			ExternalIds:     common.JSONOrDefault(v.ExternalIds),
+			ID:               v.ID,
+			Name:             v.Name,
+			LogoURL:          v.LogoURL,
+			OemPlatformName:  v.OemPlatformName,
+			NameSlug:         v.NameSlug,
+			ExternalIds:      common.JSONOrDefault(v.ExternalIds),
+			ExternalIdsTyped: common.BuildExternalIds(v.ExternalIds),
 		}
 
 		if !v.TokenID.IsZero() {
