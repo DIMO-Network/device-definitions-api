@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"time"
 
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/shared/db"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
@@ -86,6 +86,7 @@ func NewUpdateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 	return UpdateDeviceDefinitionCommandHandler{DDCache: cache, Repository: repository, DBS: dbs}
 }
 
+// Handle will update an existing device def, or if it doesn't exist create it on the fly
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*UpdateDeviceDefinitionCommand)
@@ -93,7 +94,12 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	if len(command.DeviceTypeID) == 0 {
 		command.DeviceTypeID = common.DefaultDeviceType
 	}
-
+	if err := command.Validate(); err != nil {
+		return nil, &exceptions.ValidationError{
+			Err: errors.Wrap(err, "failed model validation"),
+		}
+	}
+	// future: either rename method to be CreateOrUpdate, and remove Create method, or only allow Updating in this method
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
 	if err != nil {
 		// if dd is not found, we'll try to create it
@@ -124,7 +130,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
-
+	// creates if does not exist
 	if dd == nil {
 		dd = &models.DeviceDefinition{
 			ID:           command.DeviceDefinitionID,
@@ -270,4 +276,18 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	ch.DDCache.DeleteDeviceDefinitionCacheBySlug(ctx, dm.NameSlug, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
+}
+
+// Validate validates the contents of a UpdateDeviceDefinitionCommand
+func (udc *UpdateDeviceDefinitionCommand) Validate() error {
+	return validation.ValidateStruct(udc,
+		validation.Field(&udc.DeviceDefinitionID, validation.Required),
+		validation.Field(&udc.DeviceDefinitionID, validation.Length(27, 27)),
+		validation.Field(&udc.DeviceMakeID, validation.Required),
+		validation.Field(&udc.DeviceTypeID, validation.Required),
+		validation.Field(&udc.Model, validation.Required),
+		validation.Field(&udc.Model, validation.Length(1, 40)),
+		validation.Field(&udc.Year, validation.Required),
+		validation.Field(&udc.Year, validation.Min(1980)),
+	)
 }
