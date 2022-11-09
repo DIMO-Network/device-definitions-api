@@ -167,7 +167,7 @@ message BaseResponse {
 message UpdateDeviceDefinitionRequest {
 	string device_definition_id = 1;
 	VehicleInfo vehicle_data = 2 [deprecated = true];
-	string source = 3;
+	string source = 3 [deprecated = true];
 	string image_url = 4;
 	bool verified = 5;
 	string model = 6;
@@ -175,9 +175,10 @@ message UpdateDeviceDefinitionRequest {
 	string device_make_id = 8;
 	repeated DeviceStyles device_styles = 9;
 	repeated DeviceIntegrations device_integrations = 10;
-	string external_id = 11;
+	string external_id = 11 [deprecated = true];
 	string device_type_id = 12;
 	repeated DeviceTypeAttributeRequest device_attributes = 13;
+	repeated ExternalID external_ids = 14;
 
 	message DeviceStyles {
 		string id = 1;
@@ -397,7 +398,7 @@ service DeviceDefinitionService {
 	rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
-	rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (GetDeviceDefinitionResponse);
+	rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (stream GetDeviceDefinitionItemResponse);
 	rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
 	rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
 	rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);

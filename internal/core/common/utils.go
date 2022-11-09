@@ -92,12 +92,12 @@ func SlugString(term string) string {
 
 }
 
-func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
-	var externalIds []models.ExternalID
+func BuildExternalIds(externalIdsJSON null.JSON) []*models.ExternalID {
+	var externalIds []*models.ExternalID
 	var ei map[string]string
 	if err := externalIdsJSON.Unmarshal(&ei); err == nil {
 		for vendor, id := range ei {
-			externalIds = append(externalIds, models.ExternalID{
+			externalIds = append(externalIds, &models.ExternalID{
 				Vendor: vendor,
 				ID:     id,
 			})
@@ -106,7 +106,7 @@ func BuildExternalIds(externalIdsJSON null.JSON) []models.ExternalID {
 	return externalIds
 }
 
-func ExternalIdsToGRPC(externalIds []models.ExternalID) []*grpc.ExternalID {
+func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
 	externalIdsGRPC := make([]*grpc.ExternalID, len(externalIds))
 	for i, ei := range externalIds {
 		externalIdsGRPC[i] = &grpc.ExternalID{
@@ -115,6 +115,17 @@ func ExternalIdsToGRPC(externalIds []models.ExternalID) []*grpc.ExternalID {
 		}
 	}
 	return externalIdsGRPC
+}
+
+func ExternalIdsFromGRPC(externalIdsGRPC []*grpc.ExternalID) []*models.ExternalID {
+	externalIds := make([]*models.ExternalID, len(externalIdsGRPC))
+	for i, ei := range externalIdsGRPC {
+		externalIds[i] = &models.ExternalID{
+			Vendor: ei.Vendor,
+			ID:     ei.Id,
+		}
+	}
+	return externalIds
 }
 
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {

@@ -8,17 +8,17 @@ import (
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string       `json:"deviceDefinitionId"`
-	ExternalID         string       `json:"external_id"`
-	Name               string       `json:"name"`
-	ImageURL           string       `json:"imageUrl"`
-	Source             string       `json:"source"`
-	DeviceMake         DeviceMake   `json:"make"`
-	Type               DeviceType   `json:"type"`
-	VehicleInfo        VehicleInfo  `json:"vehicleData,omitempty"`
-	Metadata           interface{}  `json:"metadata"`
-	Verified           bool         `json:"verified"`
-	ExternalIds        []ExternalID `json:"externalIds"`
+	DeviceDefinitionID string        `json:"deviceDefinitionId"`
+	ExternalID         string        `json:"external_id"`
+	Name               string        `json:"name"`
+	ImageURL           string        `json:"imageUrl"`
+	Source             string        `json:"source"`
+	DeviceMake         DeviceMake    `json:"make"`
+	Type               DeviceType    `json:"type"`
+	VehicleInfo        VehicleInfo   `json:"vehicleData,omitempty"`
+	Metadata           interface{}   `json:"metadata"`
+	Verified           bool          `json:"verified"`
+	ExternalIds        []*ExternalID `json:"externalIds"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
 	DeviceIntegrations     []DeviceIntegration   `json:"deviceIntegrations"`
 	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
@@ -88,7 +88,7 @@ type DeviceMake struct {
 	TokenID          *big.Int        `json:"tokenId,omitempty"`
 	NameSlug         string          `json:"nameSlug"`
 	ExternalIds      json.RawMessage `json:"external_ids"`
-	ExternalIdsTyped []ExternalID    `json:"externalIdsTyped"`
+	ExternalIdsTyped []*ExternalID   `json:"externalIdsTyped"`
 }
 
 type ExternalID struct {
