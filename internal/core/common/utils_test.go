@@ -14,14 +14,14 @@ func TestBuildExternalIds(t *testing.T) {
 
 	got := BuildExternalIds(json)
 
-	assert.Contains(t, got, models.ExternalID{Vendor: "edmunds", ID: "123"})
-	assert.Contains(t, got, models.ExternalID{Vendor: "nhtsa", ID: "qwert"})
-	assert.Contains(t, got, models.ExternalID{Vendor: "adac", ID: "890"})
+	assert.Contains(t, got, &models.ExternalID{Vendor: "edmunds", ID: "123"})
+	assert.Contains(t, got, &models.ExternalID{Vendor: "nhtsa", ID: "qwert"})
+	assert.Contains(t, got, &models.ExternalID{Vendor: "adac", ID: "890"})
 }
 
 func TestExternalIdsToGRPC(t *testing.T) {
 
-	extIds := []models.ExternalID{
+	extIds := []*models.ExternalID{
 		{Vendor: "edmunds", ID: "123"},
 		{Vendor: "nhtsa", ID: "qwert"},
 		{Vendor: "adac", ID: "890"},

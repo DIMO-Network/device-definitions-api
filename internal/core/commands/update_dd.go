@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -15,7 +14,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
+
 	"github.com/TheFellow/go-mediator/mediator"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 )
@@ -36,7 +37,7 @@ type UpdateDeviceDefinitionCommand struct {
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
-	ExternalIds      []coremodels.ExternalID                 `json:"externalIds"`
+	ExternalIds      []*coremodels.ExternalID                `json:"externalIds"`
 }
 
 type UpdateDeviceIntegrations struct {
