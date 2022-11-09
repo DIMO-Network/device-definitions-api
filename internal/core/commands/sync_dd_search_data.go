@@ -47,6 +47,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.Load(models.DeviceDefinitionRels.Images),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		return nil, err
@@ -80,10 +81,27 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Make:          definition.R.DeviceMake.Name,
 			Model:         definition.Model,
 			Year:          int(definition.Year),
+			Type:          definition.R.DeviceType.Metadatakey,
 			SubModels:     sm,
 			ImageURL:      imageURL,
 			MakeSlug:      definition.R.DeviceMake.NameSlug,
 			ModelSlug:     definition.ModelSlug,
+		}
+
+		// set device attributes, eg. vehicle information
+		var attr map[string]any
+		if err := definition.Metadata.Unmarshal(&attr); err == nil {
+			if attr != nil {
+				if a, ok := attr[definition.R.DeviceType.Metadatakey]; ok && a != nil {
+					attributes := attr[definition.R.DeviceType.Metadatakey].(map[string]any)
+					for key, value := range attributes {
+						docs[i].Attributes = append(docs[i].Attributes, elastic.DeviceDefinitionAttributeSearchDoc{
+							Name:  key,
+							Value: fmt.Sprint(value),
+						})
+					}
+				}
+			}
 		}
 	}
 	ch.logger.Info().Msgf("completed building list of docs to index, count: %d", len(docs))

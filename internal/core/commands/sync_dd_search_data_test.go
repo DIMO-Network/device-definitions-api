@@ -90,7 +90,7 @@ func (s *SyncSearchDataCommandHandlerSuite) TestSyncSearchDataCommand_Success() 
 
 func setupDeviceDefinitionForSearchData(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
-	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(t, dm, modelName, year, pdb)
 	img := models.Image{
 		ID:                 ksuid.New().String(),
 		DeviceDefinitionID: dd.ID,
