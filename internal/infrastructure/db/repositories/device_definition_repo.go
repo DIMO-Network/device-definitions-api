@@ -361,7 +361,7 @@ func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Contex
 	var yearQuery int16
 	var modelQuery string
 	if size == 0 {
-		size = 50
+		size = 10
 	}
 	if cursor != "" {
 		res, err := models.DeviceDefinitions(
@@ -397,7 +397,7 @@ func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Contex
 		models.DeviceIntegrationWhere.Region.EQ(region),
 		models.DeviceIntegrationWhere.Features.IsNotNull(),
 	))
-	qms = append(qms, qm.OrderBy("? ASC, ? ASC", models.DeviceDefinitionColumns.Model, models.DeviceDefinitionColumns.Year))
+	qms = append(qms, qm.OrderBy("? ASC, ? DESC", models.DeviceDefinitionColumns.Model, models.DeviceDefinitionColumns.Year))
 	qms = append(qms, qm.Limit(int(size)))
 
 	query := models.DeviceDefinitions(qms...)

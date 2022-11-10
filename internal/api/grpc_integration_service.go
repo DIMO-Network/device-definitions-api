@@ -87,7 +87,7 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 		}
 		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
 
-		feats := []*p_grpc.Feature{}
+		var feats []*p_grpc.Feature
 		var features []elasticModels.DeviceIntegrationFeatures
 
 		err := di.Features.Unmarshal(&features)
