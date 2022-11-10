@@ -3,10 +3,9 @@ package commands
 import (
 	"context"
 	_ "embed"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/golang/mock/gomock"
@@ -20,11 +19,10 @@ type UpdateIntegrationFeatureCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl           *gomock.Controller
-	pdb            db.Store
-	container      testcontainers.Container
-	ctx            context.Context
-	mockRepository *repositoryMock.MockDeviceDefinitionRepository
+	ctrl      *gomock.Controller
+	pdb       db.Store
+	container testcontainers.Container
+	ctx       context.Context
 
 	commandHandler UpdateIntegrationFeatureCommandHandler
 }

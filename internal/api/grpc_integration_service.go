@@ -1,0 +1,105 @@
+package api
+
+import (
+	"context"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/rs/zerolog"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+)
+
+type GrpcIntegrationService struct {
+	p_grpc.UnimplementedIntegrationServiceServer
+	Mediator mediator.Mediator
+	logger   *zerolog.Logger
+}
+
+func NewGrpcIntegrationService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.IntegrationServiceServer {
+	return &GrpcIntegrationService{Mediator: mediator, logger: logger}
+}
+
+func (s *GrpcService) GetIntegrationFeatureByID(ctx context.Context, in *p_grpc.GetIntegrationFeatureByIDRequest) (*p_grpc.GetIntegrationFeatureResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationFeatureByIDQuery{
+		ID: in.Id,
+	})
+
+	feature := qryResult.(models.GetIntegrationFeatureQueryResult)
+	result := &p_grpc.GetIntegrationFeatureResponse{
+		FeatureKey:      feature.FeatureKey,
+		CssIcon:         feature.CSSIcon,
+		DisplayName:     feature.DisplayName,
+		ElasticProperty: feature.ElasticProperty,
+		FeatureWeight:   float32(feature.FeatureWeight),
+	}
+
+	return result, nil
+}
+
+func (s *GrpcService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationFeatureQuery{})
+
+	dt := qryResult.([]models.GetIntegrationFeatureQueryResult)
+
+	items := make([]*p_grpc.GetIntegrationFeatureResponse, len(dt))
+	for i, feature := range dt {
+		items[i] = &p_grpc.GetIntegrationFeatureResponse{
+			FeatureKey:      feature.FeatureKey,
+			CssIcon:         feature.CSSIcon,
+			DisplayName:     feature.DisplayName,
+			ElasticProperty: feature.ElasticProperty,
+			FeatureWeight:   float32(feature.FeatureWeight),
+		}
+	}
+
+	result := &p_grpc.GetIntegrationFeatureListResponse{IntegrationFeatures: items}
+
+	return result, nil
+}
+
+func (s *GrpcService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.CreateIntegrationFeatureCommand{
+		ID:              in.Id,
+		CSSIcon:         in.CssIcon,
+		DisplayName:     in.DisplayName,
+		ElasticProperty: in.ElasticProperty,
+		FeatureWeight:   float64(in.FeatureWeight),
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.CreateIntegrationFeatureCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) UpdateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.UpdateIntegrationFeatureCommand{
+		ID:              in.Id,
+		CSSIcon:         in.CssIcon,
+		DisplayName:     in.DisplayName,
+		ElasticProperty: in.ElasticProperty,
+		FeatureWeight:   float64(in.FeatureWeight),
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.UpdateIntegrationFeatureResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) DeleteIntegrationFeature(ctx context.Context, in *p_grpc.DeleteIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+	command := &commands.DeleteIntegrationFeatureCommand{
+		ID: in.Id,
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.DeleteIntegrationFeatureCommand)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
