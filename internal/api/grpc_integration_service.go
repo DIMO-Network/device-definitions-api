@@ -10,7 +10,7 @@ import (
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GrpcIntegrationService struct {
@@ -40,12 +40,14 @@ func (s *GrpcIntegrationService) GetIntegrationFeatureByID(ctx context.Context, 
 	return result, nil
 }
 
-func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
 	logger := s.logger.With().Str("rpc", "GetDeviceCompatibilities").Logger()
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
 		MakeID:        in.MakeId,
 		IntegrationID: in.IntegrationId,
 		Region:        in.Region,
+		Cursor:        in.Cursor,
+		Size:          in.Size,
 	})
 
 	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
@@ -61,6 +63,10 @@ func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, i
 	}
 	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
 
+	cursor := ""
+	if len(deviceCompatibilities.DeviceDefinitions) > 0 {
+		cursor = deviceCompatibilities.DeviceDefinitions[len(deviceCompatibilities.DeviceDefinitions)-1].ID
+	}
 	// Group by model name.
 	for _, v := range deviceCompatibilities.DeviceDefinitions {
 		logger := logger.With().Str("modelName", v.Model).Str("deviceDefinitionId", v.ID).Logger()
@@ -118,11 +124,11 @@ func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, i
 	for k, v := range dcMap {
 		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
 		result.Models = append(result.Models, dcr)
+		result.Cursor = cursor
 	}
 
 	return result, nil
 }
-
 func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationFeatureQuery{})
 
