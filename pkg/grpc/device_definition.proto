@@ -275,33 +275,6 @@ message GetDeviceStyleByIDRequest {
   string id = 1;
 }
 
-message GetDeviceCompatibilityListRequest {
-  string make_id = 1;
-  string integration_id = 2;
-  string region = 3;
-}
-
-message Feature {
-  string key = 1;
-  int32 support_level = 2;
-  string css_icon = 3;
-}
-
-message DeviceCompatibilities {
-  int32 year = 1;
-  repeated Feature features = 2;
-  string level = 3;
-}
-
-message DeviceCompatibilityList {
-  string name = 1;
-  repeated DeviceCompatibilities years = 2;
-}
-
-message GetDeviceCompatibilityListResponse {
-  repeated DeviceCompatibilityList models = 1;
-}
-
 message GetDeviceStyleByDeviceDefinitionIDRequest {
   string id = 1;
 }
@@ -415,7 +388,6 @@ service DeviceDefinitionService {
   rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
   rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
   rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
-  rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
   rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
@@ -427,4 +399,5 @@ service DeviceDefinitionService {
   rpc CreateDeviceType(CreateDeviceTypeRequest) returns (BaseResponse);
   rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
+
 }

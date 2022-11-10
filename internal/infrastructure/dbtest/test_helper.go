@@ -281,6 +281,19 @@ func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, int
 	return di
 }
 
+func SetupIntegrationFeature(t *testing.T, pdb db.Store) *models.IntegrationFeature {
+	feature := &models.IntegrationFeature{
+		FeatureKey:      ksuid.New().String(),
+		DisplayName:     ksuid.New().String(),
+		ElasticProperty: ksuid.New().String(),
+		FeatureWeight:   null.Float64From(1),
+		CSSIcon:         null.StringFrom("css"),
+	}
+	err := feature.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+	return feature
+}
+
 func Logger() *zerolog.Logger {
 	l := zerolog.New(os.Stdout).With().
 		Timestamp().
