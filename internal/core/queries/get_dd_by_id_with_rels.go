@@ -60,7 +60,7 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 				Style:        di.R.Integration.Style,
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
-				Capabilities: common.JSONOrDefault(di.Capabilities),
+				Capabilities: common.JSONOrDefault(di.Features),
 			})
 		}
 	}

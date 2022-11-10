@@ -26,7 +26,6 @@ import (
 type DeviceIntegration struct {
 	DeviceDefinitionID string    `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
 	IntegrationID      string    `boil:"integration_id" json:"integration_id" toml:"integration_id" yaml:"integration_id"`
-	Capabilities       null.JSON `boil:"capabilities" json:"capabilities,omitempty" toml:"capabilities" yaml:"capabilities,omitempty"`
 	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	Region             string    `boil:"region" json:"region" toml:"region" yaml:"region"`
@@ -39,7 +38,6 @@ type DeviceIntegration struct {
 var DeviceIntegrationColumns = struct {
 	DeviceDefinitionID string
 	IntegrationID      string
-	Capabilities       string
 	CreatedAt          string
 	UpdatedAt          string
 	Region             string
@@ -47,7 +45,6 @@ var DeviceIntegrationColumns = struct {
 }{
 	DeviceDefinitionID: "device_definition_id",
 	IntegrationID:      "integration_id",
-	Capabilities:       "capabilities",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	Region:             "region",
@@ -57,7 +54,6 @@ var DeviceIntegrationColumns = struct {
 var DeviceIntegrationTableColumns = struct {
 	DeviceDefinitionID string
 	IntegrationID      string
-	Capabilities       string
 	CreatedAt          string
 	UpdatedAt          string
 	Region             string
@@ -65,7 +61,6 @@ var DeviceIntegrationTableColumns = struct {
 }{
 	DeviceDefinitionID: "device_integrations.device_definition_id",
 	IntegrationID:      "device_integrations.integration_id",
-	Capabilities:       "device_integrations.capabilities",
 	CreatedAt:          "device_integrations.created_at",
 	UpdatedAt:          "device_integrations.updated_at",
 	Region:             "device_integrations.region",
@@ -77,7 +72,6 @@ var DeviceIntegrationTableColumns = struct {
 var DeviceIntegrationWhere = struct {
 	DeviceDefinitionID whereHelperstring
 	IntegrationID      whereHelperstring
-	Capabilities       whereHelpernull_JSON
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 	Region             whereHelperstring
@@ -85,7 +79,6 @@ var DeviceIntegrationWhere = struct {
 }{
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"device_integrations\".\"device_definition_id\""},
 	IntegrationID:      whereHelperstring{field: "\"device_definitions_api\".\"device_integrations\".\"integration_id\""},
-	Capabilities:       whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_integrations\".\"capabilities\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_integrations\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_integrations\".\"updated_at\""},
 	Region:             whereHelperstring{field: "\"device_definitions_api\".\"device_integrations\".\"region\""},
@@ -130,9 +123,9 @@ func (r *deviceIntegrationR) GetIntegration() *Integration {
 type deviceIntegrationL struct{}
 
 var (
-	deviceIntegrationAllColumns            = []string{"device_definition_id", "integration_id", "capabilities", "created_at", "updated_at", "region", "features"}
+	deviceIntegrationAllColumns            = []string{"device_definition_id", "integration_id", "created_at", "updated_at", "region", "features"}
 	deviceIntegrationColumnsWithoutDefault = []string{"device_definition_id", "integration_id", "region"}
-	deviceIntegrationColumnsWithDefault    = []string{"capabilities", "created_at", "updated_at", "features"}
+	deviceIntegrationColumnsWithDefault    = []string{"created_at", "updated_at", "features"}
 	deviceIntegrationPrimaryKeyColumns     = []string{"device_definition_id", "integration_id", "region"}
 	deviceIntegrationGeneratedColumns      = []string{}
 )

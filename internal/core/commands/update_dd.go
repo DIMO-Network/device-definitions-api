@@ -3,18 +3,20 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/shared/db"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/shared/db"
+
 	"github.com/TheFellow/go-mediator/mediator"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 )
@@ -35,6 +37,7 @@ type UpdateDeviceDefinitionCommand struct {
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
+	ExternalIds      []*coremodels.ExternalID                `json:"externalIds"`
 }
 
 type UpdateDeviceIntegrations struct {
@@ -84,6 +87,7 @@ func NewUpdateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 	return UpdateDeviceDefinitionCommandHandler{DDCache: cache, Repository: repository, DBS: dbs}
 }
 
+// Handle will update an existing device def, or if it doesn't exist create it on the fly
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*UpdateDeviceDefinitionCommand)
@@ -91,7 +95,12 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	if len(command.DeviceTypeID) == 0 {
 		command.DeviceTypeID = common.DefaultDeviceType
 	}
-
+	if err := command.Validate(); err != nil {
+		return nil, &exceptions.ValidationError{
+			Err: errors.Wrap(err, "failed model validation"),
+		}
+	}
+	// future: either rename method to be CreateOrUpdate, and remove Create method, or only allow Updating in this method
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
 	if err != nil {
 		// if dd is not found, we'll try to create it
@@ -122,7 +131,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
-
+	// creates if does not exist
 	if dd == nil {
 		dd = &models.DeviceDefinition{
 			ID:           command.DeviceDefinitionID,
@@ -150,11 +159,11 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Value: command.VehicleInfo.NumberOfDoors,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "base_MSRP",
+			Name:  "base_msrp",
 			Value: fmt.Sprintf("%d", command.VehicleInfo.BaseMSRP),
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "EPA_class",
+			Name:  "epa_class",
 			Value: command.VehicleInfo.EPAClass,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
@@ -162,15 +171,15 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Value: command.VehicleInfo.VehicleType,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG_city",
+			Name:  "mpg_city",
 			Value: command.VehicleInfo.MPGCity,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG_highway",
+			Name:  "mpg_highway",
 			Value: command.VehicleInfo.MPGHighway,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG",
+			Name:  "mpg",
 			Value: command.VehicleInfo.MPG,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
@@ -201,10 +210,23 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.ExternalID = null.StringFrom(command.ExternalID)
 	}
 
+	extIds := map[string]string{}
 	if len(command.Source) > 0 {
 		dd.Source = null.StringFrom(command.Source)
 		dd.ExternalID = null.StringFrom(command.ExternalID)
+		extIds[command.Source] = command.ExternalID
 	}
+	if len(command.ExternalIds) > 0 {
+		for _, ei := range command.ExternalIds {
+			extIds[ei.Vendor] = ei.ID
+		}
+	}
+	extIdsJSON, err := json.Marshal(extIds)
+	if err != nil {
+		return nil, err
+	}
+	dd.ExternalIds = null.JSONFrom(extIdsJSON)
+
 	if len(command.ImageURL) > 0 {
 		dd.ImageURL = null.StringFrom(command.ImageURL)
 	}
@@ -255,4 +277,18 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	ch.DDCache.DeleteDeviceDefinitionCacheBySlug(ctx, dm.NameSlug, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
+}
+
+// Validate validates the contents of a UpdateDeviceDefinitionCommand
+func (udc *UpdateDeviceDefinitionCommand) Validate() error {
+	return validation.ValidateStruct(udc,
+		validation.Field(&udc.DeviceDefinitionID, validation.Required),
+		validation.Field(&udc.DeviceDefinitionID, validation.Length(27, 27)),
+		validation.Field(&udc.DeviceMakeID, validation.Required),
+		validation.Field(&udc.DeviceTypeID, validation.Required),
+		validation.Field(&udc.Model, validation.Required),
+		validation.Field(&udc.Model, validation.Length(1, 40)),
+		validation.Field(&udc.Year, validation.Required),
+		validation.Field(&udc.Year, validation.Min(1980)),
+	)
 }

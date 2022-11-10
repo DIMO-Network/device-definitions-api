@@ -12,7 +12,6 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -86,7 +85,6 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 							DeviceDefinitionID: gapDd.ID,
 							IntegrationID:      integrationID,
 							Region:             common.AmericasRegion.String(), // default
-							Capabilities:       null.JSON{},                    // we'd need to copy from previous dd?
 						}
 						err = diGap.Insert(ctx, ch.DBS().Writer, boil.Infer())
 						if err != nil {
@@ -115,7 +113,6 @@ func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Con
 					DeviceDefinitionID: nextYearDd.ID,
 					IntegrationID:      integrationID,
 					Region:             common.AmericasRegion.String(), // default
-					Capabilities:       null.JSON{},                    // we'd need to copy from previous dd?
 				}
 				err = diGap.Insert(ctx, ch.DBS().Writer, boil.Infer())
 				if err != nil {

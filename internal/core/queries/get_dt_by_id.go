@@ -45,8 +45,9 @@ func (ch GetDeviceTypeByIDQueryHandler) Handle(ctx context.Context, query mediat
 	}
 
 	result := coremodels.GetDeviceTypeQueryResult{
-		ID:   v.ID,
-		Name: v.Name,
+		ID:          v.ID,
+		Name:        v.Name,
+		Metadatakey: v.Metadatakey,
 	}
 
 	// attribute info

@@ -77,6 +77,8 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	commandResult, err := s.commandHandler.Handle(ctx, &UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: dd.ID,
 		DeviceMakeID:       dd.R.DeviceMake.ID,
+		Model:              model,
+		Year:               int16(year),
 		VehicleInfo: &UpdateDeviceVehicleInfo{
 			FuelType:            "test",
 			DrivenWheels:        "test",
@@ -92,7 +94,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	})
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 }
 
@@ -183,7 +185,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 
 }
@@ -234,7 +236,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	})
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 }
 
