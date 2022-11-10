@@ -63,12 +63,13 @@ type DeviceType struct {
 }
 
 type DeviceIntegration struct {
-	ID           string          `json:"id"`
-	Type         string          `json:"type"`
-	Style        string          `json:"style"`
-	Vendor       string          `json:"vendor"`
-	Region       string          `json:"region"`
-	Capabilities json.RawMessage `json:"capabilities"`
+	ID     string `json:"id"`
+	Type   string `json:"type"`
+	Style  string `json:"style"`
+	Vendor string `json:"vendor"`
+	Region string `json:"region"`
+	// Features is what specific features this device supports, previously known as capabilities
+	Features json.RawMessage `json:"capabilities"`
 }
 
 type DeviceStyle struct {

@@ -196,12 +196,12 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
-				ID:           di.R.Integration.ID,
-				Type:         di.R.Integration.Type,
-				Style:        di.R.Integration.Style,
-				Vendor:       di.R.Integration.Vendor,
-				Region:       di.Region,
-				Capabilities: JSONOrDefault(di.Capabilities),
+				ID:       di.R.Integration.ID,
+				Type:     di.R.Integration.Type,
+				Style:    di.R.Integration.Style,
+				Vendor:   di.R.Integration.Vendor,
+				Region:   di.Region,
+				Features: JSONOrDefault(di.Features),
 			})
 
 			rp.CompatibleIntegrations = rp.DeviceIntegrations
@@ -307,7 +307,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 				Vendor: di.Vendor,
 			},
 			Region:       di.Region,
-			Capabilities: string(di.Capabilities),
+			Capabilities: string(di.Features),
 		})
 	}
 

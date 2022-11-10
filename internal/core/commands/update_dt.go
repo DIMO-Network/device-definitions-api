@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
@@ -58,6 +59,10 @@ func (ch UpdateDeviceTypeCommandHandler) Handle(ctx context.Context, query media
 	}
 
 	dt.Name = command.Name
+	// make sure lowercased
+	for i, attribute := range command.DeviceAttributes {
+		command.DeviceAttributes[i].Name = strings.ToLower(attribute.Name)
+	}
 
 	metaData := make(map[string]interface{})
 	metaData["properties"] = command.DeviceAttributes

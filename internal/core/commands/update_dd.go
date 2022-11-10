@@ -159,11 +159,11 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Value: command.VehicleInfo.NumberOfDoors,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "base_MSRP",
+			Name:  "base_msrp",
 			Value: fmt.Sprintf("%d", command.VehicleInfo.BaseMSRP),
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "EPA_class",
+			Name:  "epa_class",
 			Value: command.VehicleInfo.EPAClass,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
@@ -171,15 +171,15 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Value: command.VehicleInfo.VehicleType,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG_city",
+			Name:  "mpg_city",
 			Value: command.VehicleInfo.MPGCity,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG_highway",
+			Name:  "mpg_highway",
 			Value: command.VehicleInfo.MPGHighway,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG",
+			Name:  "mpg",
 			Value: command.VehicleInfo.MPG,
 		})
 		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
