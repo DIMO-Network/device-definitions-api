@@ -56,6 +56,11 @@ type DeviceDefinitionServiceClient interface {
 	CreateDeviceType(ctx context.Context, in *CreateDeviceTypeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	UpdateDeviceType(ctx context.Context, in *UpdateDeviceTypeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	DeleteDeviceType(ctx context.Context, in *DeleteDeviceTypeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	GetIntegrationFeatureByID(ctx context.Context, in *GetIntegrationFeatureByIDRequest, opts ...grpc.CallOption) (*GetIntegrationFeatureResponse, error)
+	GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error)
+	CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	UpdateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error)
+	DeleteIntegrationFeature(ctx context.Context, in *DeleteIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -386,6 +391,51 @@ func (c *deviceDefinitionServiceClient) DeleteDeviceType(ctx context.Context, in
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetIntegrationFeatureByID(ctx context.Context, in *GetIntegrationFeatureByIDRequest, opts ...grpc.CallOption) (*GetIntegrationFeatureResponse, error) {
+	out := new(GetIntegrationFeatureResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetIntegrationFeatureByID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error) {
+	out := new(GetIntegrationFeatureListResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetIntegrationFeatures", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
+	out := new(BaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/CreateIntegrationFeature", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) UpdateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
+	out := new(BaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/UpdateIntegrationFeature", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) DeleteIntegrationFeature(ctx context.Context, in *DeleteIntegrationFeatureRequest, opts ...grpc.CallOption) (*BaseResponse, error) {
+	out := new(BaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/DeleteIntegrationFeature", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -423,6 +473,11 @@ type DeviceDefinitionServiceServer interface {
 	CreateDeviceType(context.Context, *CreateDeviceTypeRequest) (*BaseResponse, error)
 	UpdateDeviceType(context.Context, *UpdateDeviceTypeRequest) (*BaseResponse, error)
 	DeleteDeviceType(context.Context, *DeleteDeviceTypeRequest) (*BaseResponse, error)
+	GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error)
+	GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error)
+	CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*BaseResponse, error)
+	UpdateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*BaseResponse, error)
+	DeleteIntegrationFeature(context.Context, *DeleteIntegrationFeatureRequest) (*BaseResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -528,6 +583,21 @@ func (UnimplementedDeviceDefinitionServiceServer) UpdateDeviceType(context.Conte
 }
 func (UnimplementedDeviceDefinitionServiceServer) DeleteDeviceType(context.Context, *DeleteDeviceTypeRequest) (*BaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteDeviceType not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationFeatureByID not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationFeatures not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*BaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateIntegrationFeature not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) UpdateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*BaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateIntegrationFeature not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) DeleteIntegrationFeature(context.Context, *DeleteIntegrationFeatureRequest) (*BaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteIntegrationFeature not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -1140,6 +1210,96 @@ func _DeviceDefinitionService_DeleteDeviceType_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetIntegrationFeatureByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIntegrationFeatureByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationFeatureByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetIntegrationFeatureByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationFeatureByID(ctx, req.(*GetIntegrationFeatureByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_GetIntegrationFeatures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationFeatures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetIntegrationFeatures",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationFeatures(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_CreateIntegrationFeature_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrUpdateIntegrationFeatureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).CreateIntegrationFeature(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/CreateIntegrationFeature",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).CreateIntegrationFeature(ctx, req.(*CreateOrUpdateIntegrationFeatureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_UpdateIntegrationFeature_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrUpdateIntegrationFeatureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).UpdateIntegrationFeature(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/UpdateIntegrationFeature",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).UpdateIntegrationFeature(ctx, req.(*CreateOrUpdateIntegrationFeatureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_DeleteIntegrationFeature_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteIntegrationFeatureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).DeleteIntegrationFeature(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/DeleteIntegrationFeature",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).DeleteIntegrationFeature(ctx, req.(*DeleteIntegrationFeatureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1274,6 +1434,26 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteDeviceType",
 			Handler:    _DeviceDefinitionService_DeleteDeviceType_Handler,
+		},
+		{
+			MethodName: "GetIntegrationFeatureByID",
+			Handler:    _DeviceDefinitionService_GetIntegrationFeatureByID_Handler,
+		},
+		{
+			MethodName: "GetIntegrationFeatures",
+			Handler:    _DeviceDefinitionService_GetIntegrationFeatures_Handler,
+		},
+		{
+			MethodName: "CreateIntegrationFeature",
+			Handler:    _DeviceDefinitionService_CreateIntegrationFeature_Handler,
+		},
+		{
+			MethodName: "UpdateIntegrationFeature",
+			Handler:    _DeviceDefinitionService_UpdateIntegrationFeature_Handler,
+		},
+		{
+			MethodName: "DeleteIntegrationFeature",
+			Handler:    _DeviceDefinitionService_DeleteIntegrationFeature_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

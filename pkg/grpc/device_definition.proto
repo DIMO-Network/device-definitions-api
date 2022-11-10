@@ -393,6 +393,34 @@ message DeleteDeviceTypeRequest {
   string id = 1;
 }
 
+message GetIntegrationFeatureByIDRequest {
+  string id = 1;
+}
+
+message CreateOrUpdateIntegrationFeatureRequest {
+  string id = 1;
+  string elastic_property = 2;
+  string display_name = 3;
+  string css_icon = 4;
+  float feature_weight = 5;
+}
+
+message DeleteIntegrationFeatureRequest {
+  string id = 1;
+}
+
+message GetIntegrationFeatureListResponse {
+  repeated GetIntegrationFeatureResponse integration_features = 2;
+}
+
+message GetIntegrationFeatureResponse {
+  string feature_key = 1;
+  string elastic_property = 2;
+  string display_name = 3;
+  string css_icon = 4;
+  float feature_weight = 5;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -427,4 +455,10 @@ service DeviceDefinitionService {
   rpc CreateDeviceType(CreateDeviceTypeRequest) returns (BaseResponse);
   rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
+
+  rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
+  rpc GetIntegrationFeatures(google.protobuf.Empty) returns (GetIntegrationFeatureListResponse);
+  rpc CreateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (BaseResponse);
+  rpc UpdateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (BaseResponse);
+  rpc DeleteIntegrationFeature(DeleteIntegrationFeatureRequest) returns (BaseResponse);
 }
