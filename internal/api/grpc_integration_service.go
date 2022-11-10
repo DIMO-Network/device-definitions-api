@@ -13,7 +13,7 @@ import (
 )
 
 type GrpcIntegrationService struct {
-	p_grpc.UnimplementedIntegrationServiceServer
+	p_grpc.IntegrationServiceServer
 	Mediator mediator.Mediator
 	logger   *zerolog.Logger
 }
@@ -22,7 +22,7 @@ func NewGrpcIntegrationService(mediator mediator.Mediator, logger *zerolog.Logge
 	return &GrpcIntegrationService{Mediator: mediator, logger: logger}
 }
 
-func (s *GrpcService) GetIntegrationFeatureByID(ctx context.Context, in *p_grpc.GetIntegrationFeatureByIDRequest) (*p_grpc.GetIntegrationFeatureResponse, error) {
+func (s *GrpcIntegrationService) GetIntegrationFeatureByID(ctx context.Context, in *p_grpc.GetIntegrationFeatureByIDRequest) (*p_grpc.GetIntegrationFeatureResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationFeatureByIDQuery{
 		ID: in.Id,
 	})
@@ -39,7 +39,7 @@ func (s *GrpcService) GetIntegrationFeatureByID(ctx context.Context, in *p_grpc.
 	return result, nil
 }
 
-func (s *GrpcService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
+func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationFeatureQuery{})
 
 	dt := qryResult.([]models.GetIntegrationFeatureQueryResult)
@@ -60,7 +60,7 @@ func (s *GrpcService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Em
 	return result, nil
 }
 
-func (s *GrpcService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcIntegrationService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
 	command := &commands.CreateIntegrationFeatureCommand{
 		ID:              in.Id,
 		CSSIcon:         in.CssIcon,
@@ -73,10 +73,10 @@ func (s *GrpcService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.C
 
 	result := commandResult.(commands.CreateIntegrationFeatureCommandResult)
 
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+	return &p_grpc.IntegrationBaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcService) UpdateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcIntegrationService) UpdateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
 	command := &commands.UpdateIntegrationFeatureCommand{
 		ID:              in.Id,
 		CSSIcon:         in.CssIcon,
@@ -89,10 +89,10 @@ func (s *GrpcService) UpdateIntegrationFeature(ctx context.Context, in *p_grpc.C
 
 	result := commandResult.(commands.UpdateIntegrationFeatureResult)
 
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+	return &p_grpc.IntegrationBaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcService) DeleteIntegrationFeature(ctx context.Context, in *p_grpc.DeleteIntegrationFeatureRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcIntegrationService) DeleteIntegrationFeature(ctx context.Context, in *p_grpc.DeleteIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
 	command := &commands.DeleteIntegrationFeatureCommand{
 		ID: in.Id,
 	}
@@ -101,5 +101,5 @@ func (s *GrpcService) DeleteIntegrationFeature(ctx context.Context, in *p_grpc.D
 
 	result := commandResult.(commands.DeleteIntegrationFeatureCommand)
 
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+	return &p_grpc.IntegrationBaseResponse{Id: result.ID}, nil
 }
