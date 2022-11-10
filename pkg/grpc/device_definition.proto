@@ -133,8 +133,9 @@ message Integration {
 message DeviceIntegration {
   Integration integration = 1;
   string region = 2;
-  string capabilities = 3 [deprecated = true];
-  string deviceDefinitionId = 4;
+  string deviceDefinitionId = 3;
+  // only gets populated for the get device integration rpc call, maybe have simpler model for other use case
+  DeviceCompatibilities features = 4;
 }
 
 message GetDeviceDefinitionIntegrationResponse{
@@ -195,7 +196,6 @@ message UpdateDeviceDefinitionRequest {
     string region = 2;
     google.protobuf.Timestamp created_at = 3;
     google.protobuf.Timestamp updated_at = 4;
-    string capabilities = 5 [deprecated = true];
   }
 
 }
