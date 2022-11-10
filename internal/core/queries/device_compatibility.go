@@ -36,6 +36,8 @@ type GetDeviceCompatibilityQuery struct {
 	MakeID        string `json:"makeId" validate:"required"`
 	IntegrationID string `json:"integrationId" validate:"required"`
 	Region        string `json:"region" validate:"required"`
+	Cursor        string `json:"cursor"`
+	Size          int64  `json:"size"`
 }
 
 func (*GetDeviceCompatibilityQuery) Key() string { return "GetDeviceCompatibilityQuery" }
@@ -74,7 +76,6 @@ func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights floa
 
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetDeviceCompatibilityQuery)
-
 	inf, err := models.IntegrationFeatures().All(ctx, dc.DBS().Reader)
 	if err != nil {
 		return GetDeviceCompatibilityQueryResult{}, err
@@ -89,7 +90,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		}
 	}
 
-	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region)
+	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region, qry.Cursor, qry.Size)
 	if err != nil {
 		return GetDeviceCompatibilityQueryResult{}, err
 	}

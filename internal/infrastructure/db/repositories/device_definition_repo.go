@@ -18,6 +18,14 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+type GetDeviceCompatibilityRequest struct {
+	MakeID        string `json:"makeId" validate:"required"`
+	IntegrationID string `json:"integrationId" validate:"required"`
+	Region        string `json:"region" validate:"required"`
+	Cursor        string `json:"cursor"`
+	Size          int64  `json:"size"`
+}
+
 type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
@@ -26,7 +34,7 @@ type DeviceDefinitionRepository interface {
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error)
-	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error)
+	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
 
 type deviceDefinitionRepository struct {
@@ -348,24 +356,52 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region string) (models.DeviceDefinitionSlice, error) {
-	res, err := models.DeviceDefinitions(
+func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error) {
+	boil.DebugMode = true
+	var yearQuery int16
+	var modelQuery string
+	if size == 0 {
+		size = 50
+	}
+	if cursor != "" {
+		res, err := models.DeviceDefinitions(
+			models.DeviceDefinitionWhere.ID.EQ(cursor),
+		).One(ctx, r.DBS().Reader)
+		if err != nil {
+			return nil, &exceptions.InternalError{Err: err}
+		}
+		yearQuery = res.Year
+		modelQuery = res.Model
+	}
+	qms := []qm.QueryMod{
 		qm.InnerJoin(
-			models.TableNames.DeviceIntegrations+" ON "+models.DeviceDefinitionTableColumns.ID+" = "+models.DeviceIntegrationTableColumns.DeviceDefinitionID,
+			models.TableNames.DeviceIntegrations + " ON " + models.DeviceDefinitionTableColumns.ID + " = " + models.DeviceIntegrationTableColumns.DeviceDefinitionID,
 		),
 		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
 		models.DeviceDefinitionWhere.Year.GTE(2008),
 		models.DeviceIntegrationWhere.Features.IsNotNull(),
 		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
 		models.DeviceIntegrationWhere.Region.EQ(region),
-		qm.Load(
-			models.DeviceDefinitionRels.DeviceIntegrations,
-			models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
-			models.DeviceIntegrationWhere.Region.EQ(region),
-			models.DeviceIntegrationWhere.Features.IsNotNull(),
-		),
-	).All(ctx, r.DBS().Reader)
+	}
 
+	if yearQuery != 0 && modelQuery != "" {
+		qms = append(qms, qm.And(
+			"("+models.DeviceDefinitionColumns.Model+" = ? AND "+models.DeviceDefinitionColumns.Year+" > ? OR "+models.DeviceDefinitionColumns.Model+" > ?)",
+			modelQuery, yearQuery, modelQuery,
+		))
+	}
+
+	qms = append(qms, qm.Load(
+		models.DeviceDefinitionRels.DeviceIntegrations,
+		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
+		models.DeviceIntegrationWhere.Region.EQ(region),
+		models.DeviceIntegrationWhere.Features.IsNotNull(),
+	))
+	qms = append(qms, qm.OrderBy("? ASC, ? ASC", models.DeviceDefinitionColumns.Model, models.DeviceDefinitionColumns.Year))
+	qms = append(qms, qm.Limit(int(size)))
+
+	query := models.DeviceDefinitions(qms...)
+	res, err := query.All(ctx, r.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
 	}
