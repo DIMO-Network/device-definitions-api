@@ -6,6 +6,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
@@ -34,6 +35,89 @@ func (s *GrpcIntegrationService) GetIntegrationFeatureByID(ctx context.Context, 
 		DisplayName:     feature.DisplayName,
 		ElasticProperty: feature.ElasticProperty,
 		FeatureWeight:   float32(feature.FeatureWeight),
+	}
+
+	return result, nil
+}
+
+func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+	logger := s.logger.With().Str("rpc", "GetDeviceCompatibilities").Logger()
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
+		MakeID:        in.MakeId,
+		IntegrationID: in.IntegrationId,
+		Region:        in.Region,
+	})
+
+	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
+
+	logger.Debug().Interface("queryResult", deviceCompatibilities).Msg("Completed compatibility query.")
+
+	result := &p_grpc.GetDeviceCompatibilityListResponse{}
+
+	integFeats := deviceCompatibilities.IntegrationFeatures
+	totalWeightsCount := 0.0
+	for _, v := range deviceCompatibilities.IntegrationFeatures {
+		totalWeightsCount += v.FeatureWeight
+	}
+	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
+
+	// Group by model name.
+	for _, v := range deviceCompatibilities.DeviceDefinitions {
+		logger := logger.With().Str("modelName", v.Model).Str("deviceDefinitionId", v.ID).Logger()
+		if len(v.R.DeviceIntegrations) == 0 {
+			// This should never happen, because of the inner join.
+			logger.Error().Msg("No integrations for this definition.")
+			continue
+		}
+
+		di := v.R.DeviceIntegrations[0]
+
+		logger.Debug().Interface("deviceIntegration", di).Msg("Loaded device integration.")
+
+		if di.Features.IsZero() {
+			// This should never happen, because we filtered for "features IS NOT NULL".
+			logger.Error().Msg("Feature column was null.")
+			continue
+		}
+		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
+
+		feats := []*p_grpc.Feature{}
+		var features []elasticModels.DeviceIntegrationFeatures
+
+		err := di.Features.Unmarshal(&features)
+		if err != nil {
+			logger.Err(err).Msg("Error unmarshaling features JSON blob.")
+			continue
+		}
+
+		ifeat := map[string]queries.FeatureDetails{}
+
+		for _, f := range features {
+			ft := &p_grpc.Feature{
+				Key:          integFeats[f.FeatureKey].DisplayName,
+				CssIcon:      integFeats[f.FeatureKey].CSSIcon,
+				SupportLevel: int32(f.SupportLevel),
+			}
+
+			fts := queries.FeatureDetails{
+				FeatureWeight: integFeats[f.FeatureKey].FeatureWeight,
+				SupportLevel:  int32(f.SupportLevel),
+			}
+
+			ifeat[f.FeatureKey] = fts
+
+			feats = append(feats, ft)
+		}
+
+		level := queries.GetDeviceCompatibilityLevel(ifeat, totalWeightsCount)
+		res.Features = feats
+		res.Level = level
+		dcMap[v.Model] = append(dcMap[v.Model], res)
+	}
+
+	for k, v := range dcMap {
+		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
+		result.Models = append(result.Models, dcr)
 	}
 
 	return result, nil
