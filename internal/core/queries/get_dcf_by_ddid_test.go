@@ -18,10 +18,12 @@ func Test_buildFeatures(t *testing.T) {
 	assert.Equal(t, int32(0), findFeat("tires", fs).SupportLevel)
 	assert.Equal(t, "tires", findFeat("tires", fs).CssIcon)
 	assert.Equal(t, "tires", findFeat("tires", fs).Key)
+	assert.Equal(t, "Tires", findFeat("tires", fs).DisplayName)
 
 	assert.Equal(t, int32(2), findFeat("cell_tower", fs).SupportLevel)
 	assert.Equal(t, "cell_tower", findFeat("cell_tower", fs).CssIcon)
 	assert.Equal(t, "cell_tower", findFeat("cell_tower", fs).Key)
+	assert.Equal(t, "Cell Tower", findFeat("cell_tower", fs).DisplayName)
 }
 
 func findFeat(key string, fs []*p_grpc.Feature) *p_grpc.Feature {

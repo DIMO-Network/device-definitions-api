@@ -83,6 +83,7 @@ func buildFeatures(featuresJson null.JSON, feats models.IntegrationFeatureSlice)
 			Key:          feat.FeatureKey,
 			SupportLevel: slInt,
 			CssIcon:      feat.CSSIcon.String,
+			DisplayName:  feat.DisplayName,
 		}
 	}
 	return gfs
