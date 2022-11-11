@@ -60,6 +60,10 @@ message DeviceCompatibilities {
   int32 year = 1;
   repeated Feature features = 2;
   string level = 3;
+
+  string integration_id = 4;
+  string integration_vendor = 5;
+  string region = 6;
 }
 
 message Feature {
@@ -68,8 +72,18 @@ message Feature {
   string css_icon = 3;
 }
 
+message GetCompatibilityByDeviceDefinitionRequest {
+  string device_definition_id = 1;
+}
+
+message GetDeviceCompatibilitiesResponse {
+  repeated DeviceCompatibilities compatibilities = 4;
+}
+
 service IntegrationService {
+  // todo rename to: GetCompatibilitiesByMake
   rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
+  rpc GetCompatibilityByDeviceDefinition(GetCompatibilityByDeviceDefinitionRequest) returns (GetDeviceCompatibilitiesResponse);
   rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
   rpc GetIntegrationFeatures(google.protobuf.Empty) returns (GetIntegrationFeatureListResponse);
   rpc CreateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (IntegrationBaseResponse);
