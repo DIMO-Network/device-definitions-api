@@ -23,7 +23,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IntegrationServiceClient interface {
+	// todo rename to: GetCompatibilitiesByMake
 	GetDeviceCompatibilities(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error)
+	GetCompatibilityByDeviceDefinition(ctx context.Context, in *GetCompatibilityByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(ctx context.Context, in *GetIntegrationFeatureByIDRequest, opts ...grpc.CallOption) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error)
 	CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
@@ -42,6 +44,15 @@ func NewIntegrationServiceClient(cc grpc.ClientConnInterface) IntegrationService
 func (c *integrationServiceClient) GetDeviceCompatibilities(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error) {
 	out := new(GetDeviceCompatibilityListResponse)
 	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetDeviceCompatibilities", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *integrationServiceClient) GetCompatibilityByDeviceDefinition(ctx context.Context, in *GetCompatibilityByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilitiesResponse, error) {
+	out := new(GetDeviceCompatibilitiesResponse)
+	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetCompatibilityByDeviceDefinition", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +108,9 @@ func (c *integrationServiceClient) DeleteIntegrationFeature(ctx context.Context,
 // All implementations must embed UnimplementedIntegrationServiceServer
 // for forward compatibility
 type IntegrationServiceServer interface {
+	// todo rename to: GetCompatibilitiesByMake
 	GetDeviceCompatibilities(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error)
+	GetCompatibilityByDeviceDefinition(context.Context, *GetCompatibilityByDeviceDefinitionRequest) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error)
 	CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
@@ -112,6 +125,9 @@ type UnimplementedIntegrationServiceServer struct {
 
 func (UnimplementedIntegrationServiceServer) GetDeviceCompatibilities(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceCompatibilities not implemented")
+}
+func (UnimplementedIntegrationServiceServer) GetCompatibilityByDeviceDefinition(context.Context, *GetCompatibilityByDeviceDefinitionRequest) (*GetDeviceCompatibilitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCompatibilityByDeviceDefinition not implemented")
 }
 func (UnimplementedIntegrationServiceServer) GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationFeatureByID not implemented")
@@ -155,6 +171,24 @@ func _IntegrationService_GetDeviceCompatibilities_Handler(srv interface{}, ctx c
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IntegrationServiceServer).GetDeviceCompatibilities(ctx, req.(*GetDeviceCompatibilityListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IntegrationService_GetCompatibilityByDeviceDefinition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCompatibilityByDeviceDefinitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IntegrationServiceServer).GetCompatibilityByDeviceDefinition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.IntegrationService/GetCompatibilityByDeviceDefinition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IntegrationServiceServer).GetCompatibilityByDeviceDefinition(ctx, req.(*GetCompatibilityByDeviceDefinitionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -259,6 +293,10 @@ var IntegrationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceCompatibilities",
 			Handler:    _IntegrationService_GetDeviceCompatibilities_Handler,
+		},
+		{
+			MethodName: "GetCompatibilityByDeviceDefinition",
+			Handler:    _IntegrationService_GetCompatibilityByDeviceDefinition_Handler,
 		},
 		{
 			MethodName: "GetIntegrationFeatureByID",

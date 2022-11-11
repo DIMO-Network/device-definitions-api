@@ -266,7 +266,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
 	}
 
-	// vehicle info
+	// todo: remove this in future, now using device_attributes vehicle info
 	//nolint
 	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
 	//nolint
@@ -306,8 +306,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 				Style:  di.Style,
 				Vendor: di.Vendor,
 			},
-			Region:       di.Region,
-			Capabilities: string(di.Features),
+			Region: di.Region,
 		})
 	}
 

@@ -124,6 +124,7 @@ func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, i
 
 	return result, nil
 }
+
 func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationFeatureQuery{})
 
@@ -143,6 +144,12 @@ func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, in 
 	result := &p_grpc.GetIntegrationFeatureListResponse{IntegrationFeatures: items}
 
 	return result, nil
+}
+
+func (s *GrpcIntegrationService) GetCompatibilityByDeviceDefinition(ctx context.Context, in *p_grpc.GetCompatibilityByDeviceDefinitionRequest) (*p_grpc.GetDeviceCompatibilitiesResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetCompatibilityByDeviceDefinitionQuery{DeviceDefinitionID: in.DeviceDefinitionId})
+
+	return qryResult.(*p_grpc.GetDeviceCompatibilitiesResponse), nil
 }
 
 func (s *GrpcIntegrationService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
