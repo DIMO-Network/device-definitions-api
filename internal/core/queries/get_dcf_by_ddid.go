@@ -38,6 +38,11 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 			Err: fmt.Errorf("failed to get integration_features"),
 		}
 	}
+	totalWeights := 0.0
+	for _, v := range integFeats {
+		totalWeights += v.FeatureWeight.Float64
+	}
+
 	response := &p_grpc.GetDeviceCompatibilitiesResponse{}
 	dis, err := models.DeviceIntegrations(
 		qm.Load(models.DeviceIntegrationRels.Integration),
@@ -54,8 +59,8 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 			IntegrationVendor: di.R.Integration.Vendor,
 			Region:            di.Region,
 			Features:          buildFeatures(di.Features, integFeats),
-			Level:             SilverLevel, // todo calculate
 		}
+		response.Compatibilities[i].Level = calculateCompatibilityLevel(response.Compatibilities[i].Features, totalWeights)
 	}
 	// build up grpc object
 	return response, nil
@@ -81,4 +86,14 @@ func buildFeatures(featuresJson null.JSON, feats models.IntegrationFeatureSlice)
 		}
 	}
 	return gfs
+}
+
+func calculateCompatibilityLevel(gfs []*p_grpc.Feature, weights float64) string {
+	integFeats := make(map[string]FeatureDetails, len(gfs))
+	for _, k := range gfs {
+		integFeats[k.Key] = FeatureDetails{
+			SupportLevel: k.SupportLevel,
+		}
+	}
+	return GetDeviceCompatibilityLevel(integFeats, weights)
 }

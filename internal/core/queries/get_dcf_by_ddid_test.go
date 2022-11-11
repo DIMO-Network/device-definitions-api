@@ -10,7 +10,7 @@ import (
 )
 
 func Test_buildFeatures(t *testing.T) {
-	json := null.JSONFrom([]byte(deviceIntegrationFeatures1))
+	json := null.JSONFrom([]byte(deviceIntegrationFeaturesJSON))
 
 	fs := buildFeatures(json, integrationFeatures)
 
@@ -48,7 +48,7 @@ var integrationFeatures = models.IntegrationFeatureSlice{
 	},
 }
 
-var deviceIntegrationFeatures1 = `
+var deviceIntegrationFeaturesJSON = `
 	[{"featureKey": "tires", "supportLevel": 0}, 
 {"featureKey": "vin", "supportLevel": 0}, 
 {"featureKey": "cell_tower", "supportLevel": 2}, 
