@@ -34,8 +34,7 @@ INSERT INTO integration_features (feature_key, display_name, elastic_property) V
     ('coolant_temperature', 'Coolant Temperature', 'coolantTemp'),
     ('engine_load', 'Engine Load', 'engineLoad'),
     ('engine_speed', 'Engine Speed', 'engineSpeed'),
-    ('throttle_position', 'Gas Pedal Position', 'throttlePosition'),
-    ('fuel_type', 'Fuel Type', 'fuelType');
+    ('throttle_position', 'Gas Pedal Position', 'throttlePosition');
 
 -- +goose StatementEnd
 

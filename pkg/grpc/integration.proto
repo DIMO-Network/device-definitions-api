@@ -42,10 +42,13 @@ message GetDeviceCompatibilityListRequest {
   string make_id = 1;
   string integration_id = 2;
   string region = 3;
+  int64 size = 4;
+  string cursor = 5;
 }
 
 message GetDeviceCompatibilityListResponse {
   repeated DeviceCompatibilityList models = 1;
+  string cursor = 2;
 }
 
 message DeviceCompatibilityList {
