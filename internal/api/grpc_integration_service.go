@@ -40,7 +40,7 @@ func (s *GrpcIntegrationService) GetIntegrationFeatureByID(ctx context.Context, 
 	return result, nil
 }
 
-func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
+func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
 	logger := s.logger.With().Str("rpc", "GetDeviceCompatibilities").Logger()
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
 		MakeID:        in.MakeId,
@@ -51,8 +51,6 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 	})
 
 	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
-
-	logger.Debug().Interface("queryResult", deviceCompatibilities).Msg("Completed compatibility query.")
 
 	result := &p_grpc.GetDeviceCompatibilityListResponse{}
 
@@ -69,7 +67,6 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 	}
 	// Group by model name.
 	for _, v := range deviceCompatibilities.DeviceDefinitions {
-		logger := logger.With().Str("modelName", v.Model).Str("deviceDefinitionId", v.ID).Logger()
 		if len(v.R.DeviceIntegrations) == 0 {
 			// This should never happen, because of the inner join.
 			logger.Error().Msg("No integrations for this definition.")
@@ -77,8 +74,6 @@ func (s *GrpcService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.G
 		}
 
 		di := v.R.DeviceIntegrations[0]
-
-		logger.Debug().Interface("deviceIntegration", di).Msg("Loaded device integration.")
 
 		if di.Features.IsZero() {
 			// This should never happen, because we filtered for "features IS NOT NULL".
