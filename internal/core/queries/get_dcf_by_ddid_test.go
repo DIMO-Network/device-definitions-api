@@ -14,7 +14,7 @@ func Test_buildFeatures(t *testing.T) {
 
 	fs := buildFeatures(json, integrationFeatures)
 
-	assert.Len(t, fs, 2)
+	assert.Len(t, fs, 3)
 	assert.Equal(t, int32(0), findFeat("tires", fs).SupportLevel)
 	assert.Equal(t, "tires", findFeat("tires", fs).CssIcon)
 	assert.Equal(t, "tires", findFeat("tires", fs).Key)
@@ -46,6 +46,12 @@ var integrationFeatures = models.IntegrationFeatureSlice{
 		FeatureKey:    "cell_tower",
 		DisplayName:   "Cell Tower",
 		CSSIcon:       null.StringFrom("cell_tower"),
+		FeatureWeight: null.Float64From(0.50),
+	},
+	// css icon not set
+	&models.IntegrationFeature{
+		FeatureKey:    "engine_speed",
+		DisplayName:   "Engine Speed",
 		FeatureWeight: null.Float64From(0.50),
 	},
 }

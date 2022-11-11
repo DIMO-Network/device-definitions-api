@@ -40,7 +40,9 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 	}
 	totalWeights := 0.0
 	for _, v := range integFeats {
-		totalWeights += v.FeatureWeight.Float64
+		if !v.FeatureWeight.IsZero() {
+			totalWeights += v.FeatureWeight.Float64
+		}
 	}
 
 	response := &p_grpc.GetDeviceCompatibilitiesResponse{}
@@ -54,6 +56,9 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 	}
 	response.Compatibilities = make([]*p_grpc.DeviceCompatibilities, len(dis))
 	for i, di := range dis {
+		if di.R.Integration == nil {
+			return nil, &exceptions.ConflictError{Err: fmt.Errorf("integration not set or found")}
+		}
 		response.Compatibilities[i] = &p_grpc.DeviceCompatibilities{
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
