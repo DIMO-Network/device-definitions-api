@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -59,26 +60,27 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 		if di.R.Integration == nil {
 			return nil, &exceptions.ConflictError{Err: fmt.Errorf("integration not set or found")}
 		}
+		gfs := buildFeatures(di.Features, integFeats)
 		response.Compatibilities[i] = &p_grpc.DeviceCompatibilities{
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
 			Region:            di.Region,
-			Features:          buildFeatures(di.Features, integFeats),
+			Features:          gfs,
+			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
 		}
-		response.Compatibilities[i].Level = calculateCompatibilityLevel(response.Compatibilities[i].Features, totalWeights)
 	}
 	// build up grpc object
 	return response, nil
 }
 
 // buildFeatures pulls out support level from features json in device_integrations based on integration_features passed in. Will include entry for all feats
-func buildFeatures(featuresJson null.JSON, feats models.IntegrationFeatureSlice) []*p_grpc.Feature {
+func buildFeatures(featuresJSON null.JSON, feats models.IntegrationFeatureSlice) []*p_grpc.Feature {
 	gfs := make([]*p_grpc.Feature, len(feats))
-	if featuresJson.IsZero() {
-		return gfs
+	if featuresJSON.IsZero() {
+		return nil
 	}
 	for i, feat := range feats {
-		supportLevel := gjson.GetBytes(featuresJson.JSON, fmt.Sprintf(`#(featureKey=="%s").supportLevel`, feat.FeatureKey))
+		supportLevel := gjson.GetBytes(featuresJSON.JSON, fmt.Sprintf(`#(featureKey=="%s").supportLevel`, feat.FeatureKey))
 		slInt := int32(0)
 		if supportLevel.Exists() {
 			slInt = int32(supportLevel.Int())
@@ -94,12 +96,20 @@ func buildFeatures(featuresJson null.JSON, feats models.IntegrationFeatureSlice)
 	return gfs
 }
 
-func calculateCompatibilityLevel(gfs []*p_grpc.Feature, weights float64) string {
-	integFeats := make(map[string]FeatureDetails, len(gfs))
-	for _, k := range gfs {
-		integFeats[k.Key] = FeatureDetails{
-			SupportLevel: k.SupportLevel,
+func calculateCompatibilityLevel(gfs []*p_grpc.Feature, feats models.IntegrationFeatureSlice, weights float64) CompatibilityLevel {
+	if gfs == nil {
+		return NoDataLevel
+	}
+	featureWeight := 0.0
+	for _, gf := range gfs {
+		// match the feature to get the FeatureWeight
+		for _, feat := range feats {
+			if feat.FeatureKey == gf.Key && gf.SupportLevel > 0 {
+				featureWeight += feat.FeatureWeight.Float64
+				break
+			}
 		}
 	}
-	return GetDeviceCompatibilityLevel(integFeats, weights)
+
+	return calculateMathForLevel(featureWeight, weights)
 }

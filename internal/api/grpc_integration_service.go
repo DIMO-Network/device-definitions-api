@@ -112,7 +112,7 @@ func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, i
 
 		level := queries.GetDeviceCompatibilityLevel(ifeat, totalWeightsCount)
 		res.Features = feats
-		res.Level = level
+		res.Level = level.String()
 		dcMap[v.Model] = append(dcMap[v.Model], res)
 	}
 

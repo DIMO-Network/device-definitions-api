@@ -9,11 +9,19 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
+// CompatibilityLevel enum for overall device compatibility
+type CompatibilityLevel string
+
 const (
-	GoldLevel   = "Gold"
-	SilverLevel = "Silver"
-	BronzeLevel = "Bronze"
+	GoldLevel   CompatibilityLevel = "Gold"
+	SilverLevel CompatibilityLevel = "Silver"
+	BronzeLevel CompatibilityLevel = "Bronze"
+	NoDataLevel CompatibilityLevel = "No Data"
 )
+
+func (r CompatibilityLevel) String() string {
+	return string(r)
+}
 
 type GetDeviceCompatibilityQueryHandler struct {
 	Repository repositories.DeviceDefinitionRepository
@@ -49,29 +57,30 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 	}
 }
 
-func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights float64) string {
-	level := ""
-	total := 0.0
+func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights float64) CompatibilityLevel {
+	featureWeight := 0.0
 
 	for _, v := range fd {
 		if v.SupportLevel > 0 {
-			total += v.FeatureWeight
+			featureWeight += v.FeatureWeight
 		}
 	}
+	return calculateMathForLevel(featureWeight, totalWeights)
+}
 
-	if total != 0 && total <= totalWeights {
-		p := (total / totalWeights) * 100
-
+// calculateMathForLevel does the math to figure out compatibility level based on sum of all weights and total weights of all available features
+func calculateMathForLevel(featuresWeight, totalWeights float64) CompatibilityLevel {
+	if featuresWeight != 0 && featuresWeight <= totalWeights {
+		p := (featuresWeight / totalWeights) * 100
 		if p >= 75 {
-			level = GoldLevel
-		} else if p > 50 {
-			level = SilverLevel
+			return GoldLevel
+		} else if p >= 50 {
+			return SilverLevel
 		} else {
-			level = BronzeLevel
+			return BronzeLevel
 		}
 	}
-
-	return level
+	return NoDataLevel
 }
 
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {

@@ -14,7 +14,7 @@ func Test_buildFeatures(t *testing.T) {
 
 	fs := buildFeatures(json, integrationFeatures)
 
-	assert.Len(t, fs, 3)
+	assert.Len(t, fs, 4)
 	assert.Equal(t, int32(0), findFeat("tires", fs).SupportLevel)
 	assert.Equal(t, "tires", findFeat("tires", fs).CssIcon)
 	assert.Equal(t, "tires", findFeat("tires", fs).Key)
@@ -24,6 +24,28 @@ func Test_buildFeatures(t *testing.T) {
 	assert.Equal(t, "cell_tower", findFeat("cell_tower", fs).CssIcon)
 	assert.Equal(t, "cell_tower", findFeat("cell_tower", fs).Key)
 	assert.Equal(t, "Cell Tower", findFeat("cell_tower", fs).DisplayName)
+	// support level should be 0 b/c not in the JSON
+	assert.Equal(t, int32(0), findFeat("something_else", fs).SupportLevel)
+	assert.Equal(t, "something_else", findFeat("something_else", fs).Key)
+	assert.Equal(t, "Something Else", findFeat("something_else", fs).DisplayName)
+}
+
+func Test_buildFeatures_noData(t *testing.T) {
+	json := null.JSON{}
+
+	fs := buildFeatures(json, integrationFeatures)
+
+	assert.Nil(t, fs)
+}
+
+func Test_calculateCompatibilityLevel(t *testing.T) {
+	json := null.JSONFrom([]byte(deviceIntegrationFeaturesJSON))
+
+	fs := buildFeatures(json, integrationFeatures)
+
+	level := calculateCompatibilityLevel(fs, integrationFeatures, 2.0)
+	// 50%
+	assert.Equal(t, SilverLevel, level)
 }
 
 func findFeat(key string, fs []*p_grpc.Feature) *p_grpc.Feature {
@@ -52,6 +74,12 @@ var integrationFeatures = models.IntegrationFeatureSlice{
 	&models.IntegrationFeature{
 		FeatureKey:    "engine_speed",
 		DisplayName:   "Engine Speed",
+		FeatureWeight: null.Float64From(0.50),
+	},
+	// feature that does not exist in json
+	&models.IntegrationFeature{
+		FeatureKey:    "something_else",
+		DisplayName:   "Something Else",
 		FeatureWeight: null.Float64From(0.50),
 	},
 }
