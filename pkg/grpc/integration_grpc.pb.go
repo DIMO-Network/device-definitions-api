@@ -25,9 +25,12 @@ const _ = grpc.SupportPackageIsVersion7
 type IntegrationServiceClient interface {
 	// todo rename to: GetCompatibilitiesByMake
 	GetDeviceCompatibilities(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error)
+	// GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
 	GetCompatibilityByDeviceDefinition(ctx context.Context, in *GetCompatibilityByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(ctx context.Context, in *GetIntegrationFeatureByIDRequest, opts ...grpc.CallOption) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error)
+	// GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
+	GetIntegrationOptions(ctx context.Context, in *GetIntegrationOptionsRequest, opts ...grpc.CallOption) (*GetIntegrationOptionsResponse, error)
 	CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
 	UpdateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
 	DeleteIntegrationFeature(ctx context.Context, in *DeleteIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
@@ -77,6 +80,15 @@ func (c *integrationServiceClient) GetIntegrationFeatures(ctx context.Context, i
 	return out, nil
 }
 
+func (c *integrationServiceClient) GetIntegrationOptions(ctx context.Context, in *GetIntegrationOptionsRequest, opts ...grpc.CallOption) (*GetIntegrationOptionsResponse, error) {
+	out := new(GetIntegrationOptionsResponse)
+	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetIntegrationOptions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *integrationServiceClient) CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error) {
 	out := new(IntegrationBaseResponse)
 	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/CreateIntegrationFeature", in, out, opts...)
@@ -110,9 +122,12 @@ func (c *integrationServiceClient) DeleteIntegrationFeature(ctx context.Context,
 type IntegrationServiceServer interface {
 	// todo rename to: GetCompatibilitiesByMake
 	GetDeviceCompatibilities(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error)
+	// GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
 	GetCompatibilityByDeviceDefinition(context.Context, *GetCompatibilityByDeviceDefinitionRequest) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error)
+	// GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
+	GetIntegrationOptions(context.Context, *GetIntegrationOptionsRequest) (*GetIntegrationOptionsResponse, error)
 	CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
 	UpdateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
 	DeleteIntegrationFeature(context.Context, *DeleteIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
@@ -134,6 +149,9 @@ func (UnimplementedIntegrationServiceServer) GetIntegrationFeatureByID(context.C
 }
 func (UnimplementedIntegrationServiceServer) GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationFeatures not implemented")
+}
+func (UnimplementedIntegrationServiceServer) GetIntegrationOptions(context.Context, *GetIntegrationOptionsRequest) (*GetIntegrationOptionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationOptions not implemented")
 }
 func (UnimplementedIntegrationServiceServer) CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateIntegrationFeature not implemented")
@@ -229,6 +247,24 @@ func _IntegrationService_GetIntegrationFeatures_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IntegrationService_GetIntegrationOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIntegrationOptionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IntegrationServiceServer).GetIntegrationOptions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.IntegrationService/GetIntegrationOptions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IntegrationServiceServer).GetIntegrationOptions(ctx, req.(*GetIntegrationOptionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IntegrationService_CreateIntegrationFeature_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateOrUpdateIntegrationFeatureRequest)
 	if err := dec(in); err != nil {
@@ -305,6 +341,10 @@ var IntegrationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetIntegrationFeatures",
 			Handler:    _IntegrationService_GetIntegrationFeatures_Handler,
+		},
+		{
+			MethodName: "GetIntegrationOptions",
+			Handler:    _IntegrationService_GetIntegrationOptions_Handler,
 		},
 		{
 			MethodName: "CreateIntegrationFeature",
