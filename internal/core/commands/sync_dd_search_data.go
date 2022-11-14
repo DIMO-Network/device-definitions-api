@@ -74,6 +74,12 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 				lastImageWidth = img.Width.Int
 			}
 		}
+		def := *definition.R
+		dType := def.DeviceType
+		var deviceType string
+		if dType != nil {
+			deviceType = definition.R.DeviceType.Metadatakey
+		}
 
 		docs[i] = elastic.DeviceDefinitionSearchDoc{
 			ID:            definition.ID,
@@ -81,7 +87,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Make:          definition.R.DeviceMake.Name,
 			Model:         definition.Model,
 			Year:          int(definition.Year),
-			Type:          definition.R.DeviceType.Metadatakey,
+			Type:          deviceType,
 			SubModels:     sm,
 			ImageURL:      imageURL,
 			MakeSlug:      definition.R.DeviceMake.NameSlug,
@@ -92,8 +98,8 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		var attr map[string]any
 		if err := definition.Metadata.Unmarshal(&attr); err == nil {
 			if attr != nil {
-				if a, ok := attr[definition.R.DeviceType.Metadatakey]; ok && a != nil {
-					attributes := attr[definition.R.DeviceType.Metadatakey].(map[string]any)
+				if a, ok := attr[deviceType]; ok && a != nil {
+					attributes := attr[deviceType].(map[string]any)
 					for key, value := range attributes {
 						docs[i].Attributes = append(docs[i].Attributes, elastic.DeviceDefinitionAttributeSearchDoc{
 							Name:  key,
