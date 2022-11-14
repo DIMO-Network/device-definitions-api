@@ -2,6 +2,10 @@ package queries
 
 import (
 	"context"
+	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
@@ -9,38 +13,17 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
-// CompatibilityLevel enum for overall device compatibility
-type CompatibilityLevel string
-
-const (
-	GoldLevel   CompatibilityLevel = "Gold"
-	SilverLevel CompatibilityLevel = "Silver"
-	BronzeLevel CompatibilityLevel = "Bronze"
-	NoDataLevel CompatibilityLevel = "No Data"
-)
-
-func (r CompatibilityLevel) String() string {
-	return string(r)
-}
-
 type GetDeviceCompatibilityQueryHandler struct {
 	Repository repositories.DeviceDefinitionRepository
 	DBS        func() *db.ReaderWriter
 }
 
-type FeatureDetails struct {
-	DisplayName   string
-	CSSIcon       string
-	FeatureWeight float64
-	SupportLevel  int32
-}
-
-type GetDeviceCompatibilityQueryResult struct {
+type GetCompatibilitiesByMakeQueryResult struct {
 	DeviceDefinitions   models.DeviceDefinitionSlice
 	IntegrationFeatures map[string]FeatureDetails
 }
 
-type GetDeviceCompatibilityQuery struct {
+type GetCompatibilitiesByMakeQuery struct {
 	MakeID        string `json:"makeId" validate:"required"`
 	IntegrationID string `json:"integrationId" validate:"required"`
 	Region        string `json:"region" validate:"required"`
@@ -48,7 +31,7 @@ type GetDeviceCompatibilityQuery struct {
 	Size          int64  `json:"size"`
 }
 
-func (*GetDeviceCompatibilityQuery) Key() string { return "GetDeviceCompatibilityQuery" }
+func (*GetCompatibilitiesByMakeQuery) Key() string { return "GetCompatibilitiesByMakeQuery" }
 
 func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, repository repositories.DeviceDefinitionRepository) GetDeviceCompatibilityQueryHandler {
 	return GetDeviceCompatibilityQueryHandler{
@@ -57,6 +40,34 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 	}
 }
 
+func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+	qry := query.(*GetCompatibilitiesByMakeQuery)
+	integFeats, err := models.IntegrationFeatures(qm.Limit(100)).All(ctx, dc.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get integration_features"),
+		}
+	}
+	// todo review what this is doing.
+	// I think I should just do what i do in GetCompatibilityByDeviceDefinitionQueryHandler but by make
+	// order by desc year, model slug
+	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region, qry.Cursor, qry.Size)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device_integrations"),
+		}
+	}
+	for i, re := range res {
+
+	}
+
+	return &p_grpc.GetCompatibilitiesByMakeResponse{
+		Models: nil,
+		Cursor: "",
+	}, nil
+}
+
+// todo delete this when ready
 func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights float64) CompatibilityLevel {
 	featureWeight := 0.0
 
@@ -83,29 +94,23 @@ func calculateMathForLevel(featuresWeight, totalWeights float64) CompatibilityLe
 	return NoDataLevel
 }
 
-func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-	qry := query.(*GetDeviceCompatibilityQuery)
-	inf, err := models.IntegrationFeatures().All(ctx, dc.DBS().Reader)
-	if err != nil {
-		return GetDeviceCompatibilityQueryResult{}, err
-	}
+type FeatureDetails struct {
+	DisplayName   string
+	CSSIcon       string
+	FeatureWeight float64
+	SupportLevel  int32
+}
 
-	integFeats := make(map[string]FeatureDetails, len(inf))
-	for _, k := range inf {
-		integFeats[k.FeatureKey] = FeatureDetails{
-			DisplayName:   k.DisplayName,
-			CSSIcon:       k.CSSIcon.String,
-			FeatureWeight: k.FeatureWeight.Float64,
-		}
-	}
+// CompatibilityLevel enum for overall device compatibility
+type CompatibilityLevel string
 
-	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region, qry.Cursor, qry.Size)
-	if err != nil {
-		return GetDeviceCompatibilityQueryResult{}, err
-	}
+const (
+	GoldLevel   CompatibilityLevel = "Gold"
+	SilverLevel CompatibilityLevel = "Silver"
+	BronzeLevel CompatibilityLevel = "Bronze"
+	NoDataLevel CompatibilityLevel = "No Data"
+)
 
-	return GetDeviceCompatibilityQueryResult{
-		DeviceDefinitions:   res,
-		IntegrationFeatures: integFeats,
-	}, nil
+func (r CompatibilityLevel) String() string {
+	return string(r)
 }
