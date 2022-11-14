@@ -152,6 +152,12 @@ func (s *GrpcIntegrationService) GetCompatibilityByDeviceDefinition(ctx context.
 	return qryResult.(*p_grpc.GetDeviceCompatibilitiesResponse), nil
 }
 
+func (s *GrpcIntegrationService) GetIntegrationOptions(ctx context.Context, in *p_grpc.GetIntegrationOptionsRequest) (*p_grpc.GetIntegrationOptionsResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationOptionsQuery{MakeID: in.MakeId})
+
+	return qryResult.(*p_grpc.GetIntegrationOptionsResponse), nil
+}
+
 func (s *GrpcIntegrationService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
 	command := &commands.CreateIntegrationFeatureCommand{
 		ID:              in.Id,

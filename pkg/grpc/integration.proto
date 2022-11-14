@@ -81,12 +81,28 @@ message GetDeviceCompatibilitiesResponse {
   repeated DeviceCompatibilities compatibilities = 4;
 }
 
+message GetIntegrationOptionsRequest {
+  string make_id = 1;
+}
+
+message GetIntegrationOptionsResponse {
+  repeated GetIntegrationOptionItem integration_options =1;
+}
+message GetIntegrationOptionItem {
+  string integration_id =1;
+  string integration_vendor =2;
+  string region = 3;
+}
+
 service IntegrationService {
   // todo rename to: GetCompatibilitiesByMake
   rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
+  // GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
   rpc GetCompatibilityByDeviceDefinition(GetCompatibilityByDeviceDefinitionRequest) returns (GetDeviceCompatibilitiesResponse);
   rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
   rpc GetIntegrationFeatures(google.protobuf.Empty) returns (GetIntegrationFeatureListResponse);
+  // GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
+  rpc GetIntegrationOptions(GetIntegrationOptionsRequest) returns (GetIntegrationOptionsResponse);
   rpc CreateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (IntegrationBaseResponse);
   rpc UpdateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (IntegrationBaseResponse);
   rpc DeleteIntegrationFeature(DeleteIntegrationFeatureRequest) returns (IntegrationBaseResponse);
