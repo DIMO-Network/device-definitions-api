@@ -102,12 +102,13 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.DeleteDeviceTypeCommand{}, commands.NewDeleteDeviceTypeCommandHandler(pdb.DBS)),
 
 		mediator.WithHandler(&queries.GetAllIntegrationFeatureQuery{}, queries.NewGetAllIntegrationFeatureQuery(pdb.DBS)),
+		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionQuery{}, queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationFeatureByIDQuery{}, queries.NewGetIntegrationFeatureByIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
+
 		mediator.WithHandler(&commands.CreateIntegrationFeatureCommand{}, commands.NewCreateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateIntegrationFeatureCommand{}, commands.NewUpdateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteIntegrationFeatureCommand{}, commands.NewDeleteIntegrationFeatureCommandHandler(pdb.DBS)),
-
-		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionQuery{}, queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
 	)
 
 	//fiber

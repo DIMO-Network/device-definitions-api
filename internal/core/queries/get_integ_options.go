@@ -44,7 +44,7 @@ func (ch GetIntegrationOptionsQueryHandler) Handle(ctx context.Context, query me
 	}
 
 	// build up grpc object
-	resp := p_grpc.GetIntegrationOptionsResponse{IntegrationOptions: make([]*p_grpc.GetIntegrationOptionItem, len(options))}
+	resp := &p_grpc.GetIntegrationOptionsResponse{IntegrationOptions: make([]*p_grpc.GetIntegrationOptionItem, len(options))}
 	for i, option := range options {
 		resp.IntegrationOptions[i] = &p_grpc.GetIntegrationOptionItem{
 			IntegrationId:     option.IntegrationID,
