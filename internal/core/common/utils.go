@@ -196,12 +196,11 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
 			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
-				ID:       di.R.Integration.ID,
-				Type:     di.R.Integration.Type,
-				Style:    di.R.Integration.Style,
-				Vendor:   di.R.Integration.Vendor,
-				Region:   di.Region,
-				Features: JSONOrDefault(di.Features),
+				ID:     di.R.Integration.ID,
+				Type:   di.R.Integration.Type,
+				Style:  di.R.Integration.Style,
+				Vendor: di.R.Integration.Vendor,
+				Region: di.Region,
 			})
 
 			rp.CompatibleIntegrations = rp.DeviceIntegrations
