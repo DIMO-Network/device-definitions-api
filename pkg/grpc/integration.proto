@@ -38,22 +38,17 @@ message GetIntegrationFeatureResponse {
   float feature_weight = 5;
 }
 
-message GetDeviceCompatibilityListRequest {
+message GetCompatibilitiesByMakeRequest {
   string make_id = 1;
   string integration_id = 2;
   string region = 3;
-  int64 size = 4;
-  string cursor = 5;
+  int64 skip = 4;
+  int64 take = 5;
 }
 
-message GetDeviceCompatibilityListResponse {
-  repeated DeviceCompatibilityList models = 1;
+message GetCompatibilitiesByMakeResponse {
+  repeated DeviceCompatibilities models = 1;
   string cursor = 2;
-}
-
-message DeviceCompatibilityList {
-  string name = 1;
-  repeated DeviceCompatibilities years = 2;
 }
 
 message DeviceCompatibilities {
@@ -64,6 +59,9 @@ message DeviceCompatibilities {
   string integration_id = 4;
   string integration_vendor = 5;
   string region = 6;
+
+  string model = 7;
+  string model_slug = 8;
 }
 
 message Feature {
@@ -95,8 +93,8 @@ message GetIntegrationOptionItem {
 }
 
 service IntegrationService {
-  // todo rename to: GetCompatibilitiesByMake
-  rpc GetDeviceCompatibilities(GetDeviceCompatibilityListRequest) returns (GetDeviceCompatibilityListResponse);
+  // GetCompatibilitiesByMake for explorer makes page, get by makeId
+  rpc GetCompatibilitiesByMake(GetCompatibilitiesByMakeRequest) returns (GetCompatibilitiesByMakeResponse);
   // GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
   rpc GetCompatibilityByDeviceDefinition(GetCompatibilityByDeviceDefinitionRequest) returns (GetDeviceCompatibilitiesResponse);
   rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
