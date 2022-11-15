@@ -42,8 +42,8 @@ message GetCompatibilitiesByMakeRequest {
   string make_id = 1;
   string integration_id = 2;
   string region = 3;
-  int64 size = 4;
-  string cursor = 5;
+  int64 skip = 4;
+  int64 take = 5;
 }
 
 message GetCompatibilitiesByMakeResponse {

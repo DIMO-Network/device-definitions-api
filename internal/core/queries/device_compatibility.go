@@ -28,8 +28,8 @@ type GetCompatibilitiesByMakeQuery struct {
 	MakeID        string `json:"makeId" validate:"required"`
 	IntegrationID string `json:"integrationId" validate:"required"`
 	Region        string `json:"region" validate:"required"`
-	Cursor        string `json:"cursor"`
-	Size          int64  `json:"size"`
+	Skip          int64  `json:"skip"`
+	Take          int64  `json:"take"`
 }
 
 func (*GetCompatibilitiesByMakeQuery) Key() string { return "GetCompatibilitiesByMakeQuery" }
@@ -43,8 +43,8 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetCompatibilitiesByMakeQuery)
-	if qry.Size == 0 {
-		qry.Size = 50
+	if qry.Take == 0 {
+		qry.Take = 50
 	}
 	const columns = 6 // number of columns to get, highest weighted first
 	const cutoffYear = 2011
@@ -69,11 +69,11 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		models.DeviceIntegrationWhere.IntegrationID.EQ(qry.IntegrationID),
 		models.DeviceIntegrationWhere.Region.EQ(qry.Region),
 		qm.And("dd.year > ?", cutoffYear),
-		//models.DeviceIntegrationWhere.DeviceDefinitionID.GT(qry.Cursor),
 		qm.Load(models.DeviceIntegrationRels.DeviceDefinition),
 		qm.Load(models.DeviceIntegrationRels.Integration),
 		qm.OrderBy("dd.year DESC, dd.model_slug ASC, (features IS NOT NULL) desc"), // optimal & fast sorting, but breaks ability to use dd.id as cursor
-		qm.Limit(int(qry.Size))). // also order by year desc? but need index on that for fast sorting
+		qm.Offset(int(qry.Skip)),                                                   // doing regular paging since cursor breaks with current sorting setup
+		qm.Limit(int(qry.Take))).
 		All(ctx, dc.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
