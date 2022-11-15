@@ -2,8 +2,6 @@ package queries
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -97,12 +95,9 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 			ModelSlug:         di.R.DeviceDefinition.ModelSlug,
 		}
 	}
-	lastItem := dis[len(dis)-1]
-	lastCursor := fmt.Sprintf("%d_%s", lastItem.R.DeviceDefinition.Year, lastItem.R.DeviceDefinition.ModelSlug)
 
 	return &p_grpc.GetCompatibilitiesByMakeResponse{
 		Models: modelCompats,
-		Cursor: lastCursor,
 	}, nil
 }
 

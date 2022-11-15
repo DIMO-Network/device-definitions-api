@@ -48,7 +48,6 @@ message GetCompatibilitiesByMakeRequest {
 
 message GetCompatibilitiesByMakeResponse {
   repeated DeviceCompatibilities models = 1;
-  string cursor = 2;
 }
 
 message DeviceCompatibilities {
