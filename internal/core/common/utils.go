@@ -339,6 +339,9 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 
 func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (map[string]interface{}, error) {
 	// attribute info
+	if attributes == nil {
+		return nil, nil
+	}
 	deviceTypeInfo := make(map[string]interface{})
 	metaData := make(map[string]interface{})
 	var ai map[string][]models.GetDeviceTypeAttributeQueryResult

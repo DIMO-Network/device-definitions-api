@@ -143,52 +143,14 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	// check if vehicleInfo is set and load the attributes, so that we don't break existing code. In the future we may remove this if all
-	// clients update to send in metadata as DeviceAttributes
-	if command.VehicleInfo != nil && len(command.DeviceAttributes) == 0 {
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "fuel_type",
-			Value: command.VehicleInfo.FuelType,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "driven_wheels",
-			Value: command.VehicleInfo.DrivenWheels,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "number_of_doors",
-			Value: command.VehicleInfo.NumberOfDoors,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "base_msrp",
-			Value: fmt.Sprintf("%d", command.VehicleInfo.BaseMSRP),
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "epa_class",
-			Value: command.VehicleInfo.EPAClass,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "vehicle_type",
-			Value: command.VehicleInfo.VehicleType,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "mpg_city",
-			Value: command.VehicleInfo.MPGCity,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "mpg_highway",
-			Value: command.VehicleInfo.MPGHighway,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "mpg",
-			Value: command.VehicleInfo.MPG,
-		})
-		command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "fuel_tank_capacity_gal",
-			Value: command.VehicleInfo.FuelTankCapacityGal,
-		})
+	// check if vehicleInfo is set and error if it is
+	if command.VehicleInfo != nil {
+		return nil, &exceptions.ValidationError{
+			Err: errors.New("vehicleInfo is no longer accepted, use deviceAttributes instead"),
+		}
 	}
 
-	// attribute info
+	// attribute info - deviceTypeInfo will be nil if command.DeviceAttributes is nil
 	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
 	if err != nil {
 		return nil, err
@@ -265,6 +227,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
+	// if deviceTypeInfo is nil, no metadata will be updated
 	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, deviceTypeInfo)
 
 	if err != nil {
