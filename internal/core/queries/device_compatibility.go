@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/pkg/errors"
@@ -42,7 +43,11 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetCompatibilitiesByMakeQuery)
+	if qry.Size == 0 {
+		qry.Size = 50
+	}
 	const columns = 6 // number of columns to get, highest weighted first
+	const cutoffYear = 2011
 	// todo refactor with GetCompatibilityByDeviceDefinitionQueryHandler
 	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC"), qm.Limit(columns)).All(ctx, dc.DBS().Reader)
 	if err != nil {
@@ -63,16 +68,20 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qm.Where("dd.device_make_id = ?", qry.MakeID),
 		models.DeviceIntegrationWhere.IntegrationID.EQ(qry.IntegrationID),
 		models.DeviceIntegrationWhere.Region.EQ(qry.Region),
-		models.DeviceIntegrationWhere.DeviceDefinitionID.GT(qry.Cursor),
+		qm.And("dd.year > ?", cutoffYear),
+		//models.DeviceIntegrationWhere.DeviceDefinitionID.GT(qry.Cursor),
 		qm.Load(models.DeviceIntegrationRels.DeviceDefinition),
 		qm.Load(models.DeviceIntegrationRels.Integration),
-		qm.OrderBy("? ASC", models.DeviceIntegrationColumns.DeviceDefinitionID), // device definition id for cursor
-		qm.Limit(int(qry.Size))). // also order by year desc? but need index on that for fast sorting
+		qm.OrderBy("dd.year DESC, dd.model_slug ASC"), // optimal & fast sorting, but breaks ability to use dd.id as cursor
+		qm.Limit(int(qry.Size))).                      // also order by year desc? but need index on that for fast sorting
 		All(ctx, dc.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: errors.Wrapf(err, "failed to get device_integrations by makeId: %s", qry.MakeID),
 		}
+	}
+	if len(dis) == 0 {
+		return &p_grpc.GetCompatibilitiesByMakeResponse{}, nil
 	}
 	var modelCompats = make([]*p_grpc.DeviceCompatibilities, len(dis))
 	for i, di := range dis {
@@ -88,7 +97,8 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 			ModelSlug:         di.R.DeviceDefinition.ModelSlug,
 		}
 	}
-	lastCursor := dis[len(dis)-1].DeviceDefinitionID
+	lastItem := dis[len(dis)-1]
+	lastCursor := fmt.Sprintf("%d_%s", lastItem.R.DeviceDefinition.Year, lastItem.R.DeviceDefinition.ModelSlug)
 
 	return &p_grpc.GetCompatibilitiesByMakeResponse{
 		Models: modelCompats,
