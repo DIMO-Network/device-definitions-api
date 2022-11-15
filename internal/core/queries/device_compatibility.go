@@ -2,9 +2,9 @@ package queries
 
 import (
 	"context"
-	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -42,41 +42,58 @@ func NewGetDeviceCompatibilityQueryHandler(dbs func() *db.ReaderWriter, reposito
 
 func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetCompatibilitiesByMakeQuery)
-	integFeats, err := models.IntegrationFeatures(qm.Limit(100)).All(ctx, dc.DBS().Reader)
+	const columns = 6 // number of columns to get, highest weighted first
+	// todo refactor with GetCompatibilityByDeviceDefinitionQueryHandler
+	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC"), qm.Limit(columns)).All(ctx, dc.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get integration_features"),
+			Err: errors.Wrap(err, "failed to get integration_features"),
 		}
 	}
-	// todo review what this is doing.
-	// I think I should just do what i do in GetCompatibilityByDeviceDefinitionQueryHandler but by make
-	// order by desc year, model slug
-	res, err := dc.Repository.FetchDeviceCompatibility(ctx, qry.MakeID, qry.IntegrationID, qry.Region, qry.Cursor, qry.Size)
+	totalWeights := 0.0
+	for _, v := range integFeats {
+		if !v.FeatureWeight.IsZero() {
+			totalWeights += v.FeatureWeight.Float64
+		}
+	}
+	// end refactor
+	dis, err := models.DeviceIntegrations(
+		qm.InnerJoin("integrations i on i.id = device_integrations.integration_id"),
+		qm.InnerJoin("device_definitions dd on dd.id = device_integrations.device_definition_id"),
+		qm.Where("dd.device_make_id = ?", qry.MakeID),
+		models.DeviceIntegrationWhere.IntegrationID.EQ(qry.IntegrationID),
+		models.DeviceIntegrationWhere.Region.EQ(qry.Region),
+		models.DeviceIntegrationWhere.DeviceDefinitionID.GT(qry.Cursor),
+		qm.Load(models.DeviceIntegrationRels.DeviceDefinition),
+		qm.Load(models.DeviceIntegrationRels.Integration),
+		qm.OrderBy("? ASC", models.DeviceIntegrationColumns.DeviceDefinitionID), // device definition id for cursor
+		qm.Limit(int(qry.Size))). // also order by year desc? but need index on that for fast sorting
+		All(ctx, dc.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device_integrations"),
+			Err: errors.Wrapf(err, "failed to get device_integrations by makeId: %s", qry.MakeID),
 		}
 	}
-	for i, re := range res {
-
+	var modelCompats = make([]*p_grpc.DeviceCompatibilities, len(dis))
+	for i, di := range dis {
+		gfs := buildFeatures(di.Features, integFeats)
+		modelCompats[i] = &p_grpc.DeviceCompatibilities{
+			Year:              int32(di.R.DeviceDefinition.Year),
+			Features:          gfs,
+			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
+			IntegrationId:     di.IntegrationID,
+			IntegrationVendor: di.R.Integration.Vendor,
+			Region:            di.Region,
+			Model:             di.R.DeviceDefinition.Model,
+			ModelSlug:         di.R.DeviceDefinition.ModelSlug,
+		}
 	}
+	lastCursor := dis[len(dis)-1].DeviceDefinitionID
 
 	return &p_grpc.GetCompatibilitiesByMakeResponse{
-		Models: nil,
-		Cursor: "",
+		Models: modelCompats,
+		Cursor: lastCursor,
 	}, nil
-}
-
-// todo delete this when ready
-func GetDeviceCompatibilityLevel(fd map[string]FeatureDetails, totalWeights float64) CompatibilityLevel {
-	featureWeight := 0.0
-
-	for _, v := range fd {
-		if v.SupportLevel > 0 {
-			featureWeight += v.FeatureWeight
-		}
-	}
-	return calculateMathForLevel(featureWeight, totalWeights)
 }
 
 // calculateMathForLevel does the math to figure out compatibility level based on sum of all weights and total weights of all available features

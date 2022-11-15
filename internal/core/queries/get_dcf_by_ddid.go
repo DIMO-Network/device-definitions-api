@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -36,7 +37,7 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 	integFeats, err := models.IntegrationFeatures(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get integration_features"),
+			Err: errors.Wrap(err, "failed to get integration_features"),
 		}
 	}
 	totalWeights := 0.0
@@ -52,7 +53,7 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 		models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device_integrations"),
+			Err: errors.Wrap(err, "failed to get device_integrations"),
 		}
 	}
 	response.Compatibilities = make([]*p_grpc.DeviceCompatibilities, len(dis))
