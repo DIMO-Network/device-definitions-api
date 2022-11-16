@@ -9,9 +9,13 @@ message DeviceReview {
   string url = 2;
   string imageURL = 3;
   string channel = 4;
+  bool approved = 5;
+  string approved_by = 6;
+  string comments = 7;
+  string id = 8;
 }
 
-message GetReviewsByModelRequest {
+message GetReviewsByDeviceDefinitionRequest {
   string device_definition_id = 1;
 }
 
@@ -19,6 +23,43 @@ message GetReviewsResponse {
   repeated DeviceReview reviews = 1;
 }
 
+message CreateReviewRequest {
+  string device_definition_id = 1;
+  string url = 2;
+  string imageURL = 3;
+  string channel = 4;
+  string comments = 5;
+}
+
+message UpdateReviewRequest {
+  string id = 1;
+  string url = 2;
+  string imageURL = 3;
+  string channel = 4;
+  string comments = 5;
+}
+
+message ReviewBaseResponse {
+  string id = 1;
+}
+
+message ApproveReviewRequest {
+  string id = 1;
+  string approved_by = 2;
+}
+
+message DeleteReviewRequest {
+  string id = 1;
+}
+
+message GetReviewRequest {
+  string id = 1;
+}
 service ReviewsService {
-  rpc GetReviewsByModel(GetReviewsByModelRequest) returns (GetReviewsResponse);
+  rpc GetReviewsByDeviceDefinitionID(GetReviewsByDeviceDefinitionRequest) returns (GetReviewsResponse);
+  rpc GetReviewByID(GetReviewRequest) returns (DeviceReview);
+  rpc CreateReview(CreateReviewRequest) returns (ReviewBaseResponse);
+  rpc UpdateReview(UpdateReviewRequest) returns (ReviewBaseResponse);
+  rpc ApproveReview(ApproveReviewRequest) returns (ReviewBaseResponse);
+  rpc DeleteReview(DeleteReviewRequest) returns (ReviewBaseResponse);
 }
