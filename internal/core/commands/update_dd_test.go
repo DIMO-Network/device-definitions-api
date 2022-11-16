@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"testing"
 
 	_ "embed"
@@ -79,17 +80,17 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		DeviceMakeID:       dd.R.DeviceMake.ID,
 		Model:              model,
 		Year:               int16(year),
-		VehicleInfo: &UpdateDeviceVehicleInfo{
-			FuelType:            "test",
-			DrivenWheels:        "test",
-			NumberOfDoors:       "4",
-			BaseMSRP:            1,
-			EPAClass:            "test",
-			VehicleType:         "test",
-			MPGHighway:          "1",
-			MPGCity:             "1",
-			FuelTankCapacityGal: "1",
-			MPG:                 "1",
+		DeviceTypeID:       "vehicle",
+		DeviceAttributes: []*coremodels.UpdateDeviceTypeAttribute{
+			{Name: "fuel_type", Value: "test"},
+			{Name: "driven_wheels", Value: "test"},
+			{Name: "number_of_doors", Value: "4"},
+			{Name: "base_msrp", Value: "1"},
+			{Name: "epa_class", Value: "test"},
+			{Name: "mpg_highway", Value: "1"},
+			{Name: "mpg_city", Value: "1"},
+			{Name: "fuel_tank_capacity_gal", Value: "1"},
+			{Name: "mpg", Value: "1"},
 		},
 	})
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
@@ -165,17 +166,17 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		Year:               2023,
 		Model:              "M5",
 		DeviceMakeID:       dd.DeviceMakeID,
-		VehicleInfo: &UpdateDeviceVehicleInfo{
-			FuelType:            "test",
-			DrivenWheels:        "test",
-			NumberOfDoors:       "4",
-			BaseMSRP:            1,
-			EPAClass:            "test",
-			VehicleType:         "test",
-			MPGHighway:          "1",
-			MPGCity:             "1",
-			FuelTankCapacityGal: "1",
-			MPG:                 "1",
+		DeviceTypeID:       "vehicle",
+		DeviceAttributes: []*coremodels.UpdateDeviceTypeAttribute{
+			{Name: "fuel_type", Value: "test"},
+			{Name: "driven_wheels", Value: "test"},
+			{Name: "number_of_doors", Value: "4"},
+			{Name: "base_msrp", Value: "1"},
+			{Name: "epa_class", Value: "test"},
+			{Name: "mpg_highway", Value: "1"},
+			{Name: "mpg_city", Value: "1"},
+			{Name: "fuel_tank_capacity_gal", Value: "1"},
+			{Name: "mpg", Value: "1"},
 		},
 		DeviceStyles:       deviceStyles,
 		DeviceIntegrations: deviceIntegrations,
@@ -220,17 +221,17 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		Model:              "M5",
 		DeviceMakeID:       dm.ID,
 		Verified:           true,
-		VehicleInfo: &UpdateDeviceVehicleInfo{
-			FuelType:            "test",
-			DrivenWheels:        "test",
-			NumberOfDoors:       "4",
-			BaseMSRP:            1,
-			EPAClass:            "test",
-			VehicleType:         "test",
-			MPGHighway:          "1",
-			MPGCity:             "1",
-			FuelTankCapacityGal: "1",
-			MPG:                 "1",
+		DeviceTypeID:       "vehicle",
+		DeviceAttributes: []*coremodels.UpdateDeviceTypeAttribute{
+			{Name: "fuel_type", Value: "test"},
+			{Name: "driven_wheels", Value: "test"},
+			{Name: "number_of_doors", Value: "4"},
+			{Name: "base_msrp", Value: "1"},
+			{Name: "epa_class", Value: "test"},
+			{Name: "mpg_highway", Value: "1"},
+			{Name: "mpg_city", Value: "1"},
+			{Name: "fuel_tank_capacity_gal", Value: "1"},
+			{Name: "mpg", Value: "1"},
 		},
 		DeviceIntegrations: deviceIntegrations,
 	})
