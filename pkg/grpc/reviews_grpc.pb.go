@@ -22,7 +22,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReviewsServiceClient interface {
-	GetReviewsByModel(ctx context.Context, in *GetReviewsByModelRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
+	GetReviewsByDeviceDefinitionID(ctx context.Context, in *GetReviewsByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
+	GetReviewByID(ctx context.Context, in *GetReviewRequest, opts ...grpc.CallOption) (*DeviceReview, error)
+	CreateReview(ctx context.Context, in *CreateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
+	UpdateReview(ctx context.Context, in *UpdateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
+	ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
+	DeleteReview(ctx context.Context, in *DeleteReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
 }
 
 type reviewsServiceClient struct {
@@ -33,9 +38,54 @@ func NewReviewsServiceClient(cc grpc.ClientConnInterface) ReviewsServiceClient {
 	return &reviewsServiceClient{cc}
 }
 
-func (c *reviewsServiceClient) GetReviewsByModel(ctx context.Context, in *GetReviewsByModelRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error) {
+func (c *reviewsServiceClient) GetReviewsByDeviceDefinitionID(ctx context.Context, in *GetReviewsByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error) {
 	out := new(GetReviewsResponse)
-	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/GetReviewsByModel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/GetReviewsByDeviceDefinitionID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) GetReviewByID(ctx context.Context, in *GetReviewRequest, opts ...grpc.CallOption) (*DeviceReview, error) {
+	out := new(DeviceReview)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/GetReviewByID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) CreateReview(ctx context.Context, in *CreateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error) {
+	out := new(ReviewBaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/CreateReview", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) UpdateReview(ctx context.Context, in *UpdateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error) {
+	out := new(ReviewBaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/UpdateReview", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error) {
+	out := new(ReviewBaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/ApproveReview", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) DeleteReview(ctx context.Context, in *DeleteReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error) {
+	out := new(ReviewBaseResponse)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/DeleteReview", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +96,12 @@ func (c *reviewsServiceClient) GetReviewsByModel(ctx context.Context, in *GetRev
 // All implementations must embed UnimplementedReviewsServiceServer
 // for forward compatibility
 type ReviewsServiceServer interface {
-	GetReviewsByModel(context.Context, *GetReviewsByModelRequest) (*GetReviewsResponse, error)
+	GetReviewsByDeviceDefinitionID(context.Context, *GetReviewsByDeviceDefinitionRequest) (*GetReviewsResponse, error)
+	GetReviewByID(context.Context, *GetReviewRequest) (*DeviceReview, error)
+	CreateReview(context.Context, *CreateReviewRequest) (*ReviewBaseResponse, error)
+	UpdateReview(context.Context, *UpdateReviewRequest) (*ReviewBaseResponse, error)
+	ApproveReview(context.Context, *ApproveReviewRequest) (*ReviewBaseResponse, error)
+	DeleteReview(context.Context, *DeleteReviewRequest) (*ReviewBaseResponse, error)
 	mustEmbedUnimplementedReviewsServiceServer()
 }
 
@@ -54,8 +109,23 @@ type ReviewsServiceServer interface {
 type UnimplementedReviewsServiceServer struct {
 }
 
-func (UnimplementedReviewsServiceServer) GetReviewsByModel(context.Context, *GetReviewsByModelRequest) (*GetReviewsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetReviewsByModel not implemented")
+func (UnimplementedReviewsServiceServer) GetReviewsByDeviceDefinitionID(context.Context, *GetReviewsByDeviceDefinitionRequest) (*GetReviewsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReviewsByDeviceDefinitionID not implemented")
+}
+func (UnimplementedReviewsServiceServer) GetReviewByID(context.Context, *GetReviewRequest) (*DeviceReview, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReviewByID not implemented")
+}
+func (UnimplementedReviewsServiceServer) CreateReview(context.Context, *CreateReviewRequest) (*ReviewBaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateReview not implemented")
+}
+func (UnimplementedReviewsServiceServer) UpdateReview(context.Context, *UpdateReviewRequest) (*ReviewBaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateReview not implemented")
+}
+func (UnimplementedReviewsServiceServer) ApproveReview(context.Context, *ApproveReviewRequest) (*ReviewBaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApproveReview not implemented")
+}
+func (UnimplementedReviewsServiceServer) DeleteReview(context.Context, *DeleteReviewRequest) (*ReviewBaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteReview not implemented")
 }
 func (UnimplementedReviewsServiceServer) mustEmbedUnimplementedReviewsServiceServer() {}
 
@@ -70,20 +140,110 @@ func RegisterReviewsServiceServer(s grpc.ServiceRegistrar, srv ReviewsServiceSer
 	s.RegisterService(&ReviewsService_ServiceDesc, srv)
 }
 
-func _ReviewsService_GetReviewsByModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetReviewsByModelRequest)
+func _ReviewsService_GetReviewsByDeviceDefinitionID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReviewsByDeviceDefinitionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ReviewsServiceServer).GetReviewsByModel(ctx, in)
+		return srv.(ReviewsServiceServer).GetReviewsByDeviceDefinitionID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc.ReviewsService/GetReviewsByModel",
+		FullMethod: "/grpc.ReviewsService/GetReviewsByDeviceDefinitionID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReviewsServiceServer).GetReviewsByModel(ctx, req.(*GetReviewsByModelRequest))
+		return srv.(ReviewsServiceServer).GetReviewsByDeviceDefinitionID(ctx, req.(*GetReviewsByDeviceDefinitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_GetReviewByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).GetReviewByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/GetReviewByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).GetReviewByID(ctx, req.(*GetReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_CreateReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).CreateReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/CreateReview",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).CreateReview(ctx, req.(*CreateReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_UpdateReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).UpdateReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/UpdateReview",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).UpdateReview(ctx, req.(*UpdateReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_ApproveReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).ApproveReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/ApproveReview",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).ApproveReview(ctx, req.(*ApproveReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_DeleteReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).DeleteReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/DeleteReview",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).DeleteReview(ctx, req.(*DeleteReviewRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +256,28 @@ var ReviewsService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ReviewsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetReviewsByModel",
-			Handler:    _ReviewsService_GetReviewsByModel_Handler,
+			MethodName: "GetReviewsByDeviceDefinitionID",
+			Handler:    _ReviewsService_GetReviewsByDeviceDefinitionID_Handler,
+		},
+		{
+			MethodName: "GetReviewByID",
+			Handler:    _ReviewsService_GetReviewByID_Handler,
+		},
+		{
+			MethodName: "CreateReview",
+			Handler:    _ReviewsService_CreateReview_Handler,
+		},
+		{
+			MethodName: "UpdateReview",
+			Handler:    _ReviewsService_UpdateReview_Handler,
+		},
+		{
+			MethodName: "ApproveReview",
+			Handler:    _ReviewsService_ApproveReview_Handler,
+		},
+		{
+			MethodName: "DeleteReview",
+			Handler:    _ReviewsService_DeleteReview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
