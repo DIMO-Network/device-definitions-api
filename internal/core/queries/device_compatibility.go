@@ -71,7 +71,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qm.And("dd.year > ?", cutoffYear),
 		qm.Load(models.DeviceIntegrationRels.DeviceDefinition),
 		qm.Load(models.DeviceIntegrationRels.Integration),
-		qm.OrderBy("dd.year DESC, dd.model_slug ASC, (features IS NOT NULL) desc"), // optimal & fast sorting, but breaks ability to use dd.id as cursor
+		qm.OrderBy("(features IS NOT NULL) desc, dd.year DESC, dd.model_slug ASC"), // optimal & fast sorting, but breaks ability to use dd.id as cursor
 		qm.Offset(int(qry.Skip)),                                                   // doing regular paging since cursor breaks with current sorting setup
 		qm.Limit(int(qry.Take))).
 		All(ctx, dc.DBS().Reader)
