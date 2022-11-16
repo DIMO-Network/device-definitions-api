@@ -2,11 +2,11 @@ package commands
 
 import (
 	"context"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"testing"
 
 	_ "embed"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
