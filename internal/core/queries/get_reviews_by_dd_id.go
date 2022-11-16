@@ -13,22 +13,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GetReviewsByModelQuery struct {
+type GetReviewsByDeviceDefinitionIDQuery struct {
 	DeviceDefinitionID string `json:"deviceDefinitionID"`
 }
 
-func (*GetReviewsByModelQuery) Key() string { return "GetReviewsByModelQuery" }
+func (*GetReviewsByDeviceDefinitionIDQuery) Key() string {
+	return "GetReviewsByDeviceDefinitionIDQuery"
+}
 
-type GetReviewsByModelQueryHandler struct {
+type GetReviewsByDeviceDefinitionIDQueryHandler struct {
 	DBS func() *db.ReaderWriter
 }
 
-func NewGetReviewsByModelQueryHandler(dbs func() *db.ReaderWriter) GetReviewsByModelQueryHandler {
-	return GetReviewsByModelQueryHandler{DBS: dbs}
+func NewGetReviewsByDeviceDefinitionIDQueryHandler(dbs func() *db.ReaderWriter) GetReviewsByDeviceDefinitionIDQueryHandler {
+	return GetReviewsByDeviceDefinitionIDQueryHandler{DBS: dbs}
 }
 
-func (qh GetReviewsByModelQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-	qry := query.(*GetReviewsByModelQuery)
+func (qh GetReviewsByDeviceDefinitionIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+	qry := query.(*GetReviewsByDeviceDefinitionIDQuery)
 
 	all, err := models.Reviews(models.ReviewWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID)).
 		All(ctx, qh.DBS().Reader)
@@ -44,12 +46,16 @@ func (qh GetReviewsByModelQueryHandler) Handle(ctx context.Context, query mediat
 
 	result := &p_grpc.GetReviewsResponse{}
 
-	for _, v := range all {
+	for _, review := range all {
 		result.Reviews = append(result.Reviews, &p_grpc.DeviceReview{
-			Url:                v.URL,
-			ImageURL:           v.ImageURL,
-			Channel:            v.Channel.String,
-			DeviceDefinitionId: v.DeviceDefinitionID,
+			Id:                 review.ID,
+			Url:                review.URL,
+			ImageURL:           review.ImageURL,
+			Channel:            review.Channel.String,
+			DeviceDefinitionId: review.DeviceDefinitionID,
+			Comments:           review.Comments,
+			Approved:           review.Approved,
+			ApprovedBy:         review.ApprovedBy,
 		})
 	}
 

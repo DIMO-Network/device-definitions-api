@@ -12,29 +12,29 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DeleteIntegrationFeatureCommand struct {
+type DeleteReviewCommand struct {
+	ReviewID string `json:"review_id"`
+}
+
+type DeleteReviewCommandResult struct {
 	ID string `json:"id"`
 }
 
-type DeleteIntegrationFeatureResult struct {
-	ID string `json:"id"`
-}
+func (*DeleteReviewCommand) Key() string { return "DeleteReviewCommand" }
 
-func (*DeleteIntegrationFeatureCommand) Key() string { return "DeleteIntegrationFeatureCommand" }
-
-type DeleteIntegrationFeatureCommandHandler struct {
+type DeleteReviewCommandHandler struct {
 	DBS func() *db.ReaderWriter
 }
 
-func NewDeleteIntegrationFeatureCommandHandler(dbs func() *db.ReaderWriter) DeleteIntegrationFeatureCommandHandler {
-	return DeleteIntegrationFeatureCommandHandler{DBS: dbs}
+func NewDeleteReviewCommandHandler(dbs func() *db.ReaderWriter) DeleteReviewCommandHandler {
+	return DeleteReviewCommandHandler{DBS: dbs}
 }
 
-func (ch DeleteIntegrationFeatureCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch DeleteReviewCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	command := query.(*DeleteIntegrationFeatureCommand)
+	command := query.(*DeleteReviewCommand)
 
-	feature, err := models.IntegrationFeatures(models.IntegrationFeatureWhere.FeatureKey.EQ(command.ID)).One(ctx, ch.DBS().Reader)
+	review, err := models.Reviews(models.ReviewWhere.ID.EQ(command.ReviewID)).One(ctx, ch.DBS().Reader)
 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -45,16 +45,16 @@ func (ch DeleteIntegrationFeatureCommandHandler) Handle(ctx context.Context, que
 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("could not find integration feature id: %s", command.ID),
+				Err: fmt.Errorf("could not find review id: %s", command.ReviewID),
 			}
 		}
 	}
 
-	if _, err := feature.Delete(ctx, ch.DBS().Writer.DB); err != nil {
+	if _, err := review.Delete(ctx, ch.DBS().Writer.DB); err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}
 	}
 
-	return DeleteIntegrationFeatureCommand{ID: feature.FeatureKey}, nil
+	return DeleteReviewCommandResult{ID: review.ID}, nil
 }
