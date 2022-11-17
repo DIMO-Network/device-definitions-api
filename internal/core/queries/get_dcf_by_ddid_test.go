@@ -12,7 +12,7 @@ import (
 func Test_buildFeatures(t *testing.T) {
 	json := null.JSONFrom([]byte(deviceIntegrationFeaturesJSON))
 
-	fs := buildFeatures(json, integrationFeatures)
+	fs := buildFeatures(json, integrationFeatures, nil)
 
 	assert.Len(t, fs, 4)
 	assert.Equal(t, int32(0), findFeat("tires", fs).SupportLevel)
@@ -33,7 +33,7 @@ func Test_buildFeatures(t *testing.T) {
 func Test_buildFeatures_noData(t *testing.T) {
 	json := null.JSON{}
 
-	fs := buildFeatures(json, integrationFeatures)
+	fs := buildFeatures(json, integrationFeatures, nil)
 
 	assert.Nil(t, fs)
 }
@@ -41,7 +41,7 @@ func Test_buildFeatures_noData(t *testing.T) {
 func Test_calculateCompatibilityLevel(t *testing.T) {
 	json := null.JSONFrom([]byte(deviceIntegrationFeaturesJSON))
 
-	fs := buildFeatures(json, integrationFeatures)
+	fs := buildFeatures(json, integrationFeatures, nil)
 
 	level := calculateCompatibilityLevel(fs, integrationFeatures, 2.0)
 	// 50%
