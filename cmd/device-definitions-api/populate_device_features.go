@@ -19,7 +19,6 @@ type jsonObj map[string]any
 
 type SupportLevelEnum int8
 
-// todo i think this could be refactored with what is in core package
 const (
 	NotSupported   SupportLevelEnum = 0
 	MaybeSupported SupportLevelEnum = 1 //nolint
@@ -83,6 +82,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			}
 		}
 	}
+	logger.Info().Msgf("processed %d integrations from elastic", len(resp.Aggregations.Integrations.Buckets))
 
 	return nil
 }
