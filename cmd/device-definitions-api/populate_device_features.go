@@ -18,6 +18,7 @@ type jsonObj map[string]any
 
 type SupportLevelEnum int8
 
+// todo i think this could be refactored with what is in core package
 const (
 	NotSupported   SupportLevelEnum = 0
 	MaybeSupported SupportLevelEnum = 1 //nolint
@@ -59,8 +60,9 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 					logger.Err(err).Msg("Eror occurred fetching device integration.")
 					continue
 				}
+				deviceDef, err := models.FindDeviceDefinition(ctx, pdb.DBS().Reader, ddID)
 
-				feature := prepareFeatureData(r.Features.Buckets)
+				feature := prepareFeatureData(r.Features.Buckets, deviceDef)
 
 				err = deviceInt.Features.Marshal(&feature)
 				if err != nil {
@@ -79,7 +81,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	return nil
 }
 
-func prepareFeatureData(i map[string]elastic.ElasticFilterResult) []elasticModels.DeviceIntegrationFeatures {
+func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.DeviceDefinition) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range i {
@@ -87,6 +89,15 @@ func prepareFeatureData(i map[string]elastic.ElasticFilterResult) []elasticModel
 
 		if v.DocCount > 0 {
 			supportLevel = Supported.Int()
+		}
+		// manual override for VIN support
+		if k == "vin" {
+			if def.Year >= 2011 && def.DeviceMakeID != "26G39PHhD3o2StvEdHqhICfXK7f" { // exclude skoda makeId hardcode
+				supportLevel = Supported.Int()
+			}
+			if def.Year >= 2006 && def.DeviceMakeID == "2681cWyBF5y49B0m3yry4mPX1Mi" { // include mercedes makeId hard code
+				supportLevel = Supported.Int()
+			}
 		}
 
 		feat := elasticModels.DeviceIntegrationFeatures{

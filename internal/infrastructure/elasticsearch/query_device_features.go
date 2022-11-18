@@ -33,6 +33,7 @@ type DeviceFeaturesResp struct {
 	}
 }
 
+// GetDeviceFeatures queries elastic for the presence of the given filterList (integration_features), returns all of them regardless if seen or not
 func (d *ElasticSearch) GetDeviceFeatures(envName, filterList string) (DeviceFeaturesResp, error) {
 	url := fmt.Sprintf("%s/device-status-%s-*/_search", d.BaseURL, envName)
 	body := `
