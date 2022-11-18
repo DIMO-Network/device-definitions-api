@@ -23,11 +23,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IntegrationServiceClient interface {
-	// todo rename to: GetCompatibilitiesByMake
-	GetDeviceCompatibilities(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error)
+	// GetCompatibilitiesByMake for explorer makes page, get by makeId
+	GetCompatibilitiesByMake(ctx context.Context, in *GetCompatibilitiesByMakeRequest, opts ...grpc.CallOption) (*GetCompatibilitiesByMakeResponse, error)
+	// GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
 	GetCompatibilityByDeviceDefinition(ctx context.Context, in *GetCompatibilityByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(ctx context.Context, in *GetIntegrationFeatureByIDRequest, opts ...grpc.CallOption) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error)
+	// GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
+	GetIntegrationOptions(ctx context.Context, in *GetIntegrationOptionsRequest, opts ...grpc.CallOption) (*GetIntegrationOptionsResponse, error)
 	CreateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
 	UpdateIntegrationFeature(ctx context.Context, in *CreateOrUpdateIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
 	DeleteIntegrationFeature(ctx context.Context, in *DeleteIntegrationFeatureRequest, opts ...grpc.CallOption) (*IntegrationBaseResponse, error)
@@ -41,9 +44,9 @@ func NewIntegrationServiceClient(cc grpc.ClientConnInterface) IntegrationService
 	return &integrationServiceClient{cc}
 }
 
-func (c *integrationServiceClient) GetDeviceCompatibilities(ctx context.Context, in *GetDeviceCompatibilityListRequest, opts ...grpc.CallOption) (*GetDeviceCompatibilityListResponse, error) {
-	out := new(GetDeviceCompatibilityListResponse)
-	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetDeviceCompatibilities", in, out, opts...)
+func (c *integrationServiceClient) GetCompatibilitiesByMake(ctx context.Context, in *GetCompatibilitiesByMakeRequest, opts ...grpc.CallOption) (*GetCompatibilitiesByMakeResponse, error) {
+	out := new(GetCompatibilitiesByMakeResponse)
+	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetCompatibilitiesByMake", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +74,15 @@ func (c *integrationServiceClient) GetIntegrationFeatureByID(ctx context.Context
 func (c *integrationServiceClient) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationFeatureListResponse, error) {
 	out := new(GetIntegrationFeatureListResponse)
 	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetIntegrationFeatures", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *integrationServiceClient) GetIntegrationOptions(ctx context.Context, in *GetIntegrationOptionsRequest, opts ...grpc.CallOption) (*GetIntegrationOptionsResponse, error) {
+	out := new(GetIntegrationOptionsResponse)
+	err := c.cc.Invoke(ctx, "/grpc.IntegrationService/GetIntegrationOptions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,11 +120,14 @@ func (c *integrationServiceClient) DeleteIntegrationFeature(ctx context.Context,
 // All implementations must embed UnimplementedIntegrationServiceServer
 // for forward compatibility
 type IntegrationServiceServer interface {
-	// todo rename to: GetCompatibilitiesByMake
-	GetDeviceCompatibilities(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error)
+	// GetCompatibilitiesByMake for explorer makes page, get by makeId
+	GetCompatibilitiesByMake(context.Context, *GetCompatibilitiesByMakeRequest) (*GetCompatibilitiesByMakeResponse, error)
+	// GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
 	GetCompatibilityByDeviceDefinition(context.Context, *GetCompatibilityByDeviceDefinitionRequest) (*GetDeviceCompatibilitiesResponse, error)
 	GetIntegrationFeatureByID(context.Context, *GetIntegrationFeatureByIDRequest) (*GetIntegrationFeatureResponse, error)
 	GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error)
+	// GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
+	GetIntegrationOptions(context.Context, *GetIntegrationOptionsRequest) (*GetIntegrationOptionsResponse, error)
 	CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
 	UpdateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
 	DeleteIntegrationFeature(context.Context, *DeleteIntegrationFeatureRequest) (*IntegrationBaseResponse, error)
@@ -123,8 +138,8 @@ type IntegrationServiceServer interface {
 type UnimplementedIntegrationServiceServer struct {
 }
 
-func (UnimplementedIntegrationServiceServer) GetDeviceCompatibilities(context.Context, *GetDeviceCompatibilityListRequest) (*GetDeviceCompatibilityListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceCompatibilities not implemented")
+func (UnimplementedIntegrationServiceServer) GetCompatibilitiesByMake(context.Context, *GetCompatibilitiesByMakeRequest) (*GetCompatibilitiesByMakeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCompatibilitiesByMake not implemented")
 }
 func (UnimplementedIntegrationServiceServer) GetCompatibilityByDeviceDefinition(context.Context, *GetCompatibilityByDeviceDefinitionRequest) (*GetDeviceCompatibilitiesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCompatibilityByDeviceDefinition not implemented")
@@ -134,6 +149,9 @@ func (UnimplementedIntegrationServiceServer) GetIntegrationFeatureByID(context.C
 }
 func (UnimplementedIntegrationServiceServer) GetIntegrationFeatures(context.Context, *emptypb.Empty) (*GetIntegrationFeatureListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationFeatures not implemented")
+}
+func (UnimplementedIntegrationServiceServer) GetIntegrationOptions(context.Context, *GetIntegrationOptionsRequest) (*GetIntegrationOptionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationOptions not implemented")
 }
 func (UnimplementedIntegrationServiceServer) CreateIntegrationFeature(context.Context, *CreateOrUpdateIntegrationFeatureRequest) (*IntegrationBaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateIntegrationFeature not implemented")
@@ -157,20 +175,20 @@ func RegisterIntegrationServiceServer(s grpc.ServiceRegistrar, srv IntegrationSe
 	s.RegisterService(&IntegrationService_ServiceDesc, srv)
 }
 
-func _IntegrationService_GetDeviceCompatibilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeviceCompatibilityListRequest)
+func _IntegrationService_GetCompatibilitiesByMake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCompatibilitiesByMakeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IntegrationServiceServer).GetDeviceCompatibilities(ctx, in)
+		return srv.(IntegrationServiceServer).GetCompatibilitiesByMake(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc.IntegrationService/GetDeviceCompatibilities",
+		FullMethod: "/grpc.IntegrationService/GetCompatibilitiesByMake",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IntegrationServiceServer).GetDeviceCompatibilities(ctx, req.(*GetDeviceCompatibilityListRequest))
+		return srv.(IntegrationServiceServer).GetCompatibilitiesByMake(ctx, req.(*GetCompatibilitiesByMakeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -225,6 +243,24 @@ func _IntegrationService_GetIntegrationFeatures_Handler(srv interface{}, ctx con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IntegrationServiceServer).GetIntegrationFeatures(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IntegrationService_GetIntegrationOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIntegrationOptionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IntegrationServiceServer).GetIntegrationOptions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.IntegrationService/GetIntegrationOptions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IntegrationServiceServer).GetIntegrationOptions(ctx, req.(*GetIntegrationOptionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -291,8 +327,8 @@ var IntegrationService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*IntegrationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetDeviceCompatibilities",
-			Handler:    _IntegrationService_GetDeviceCompatibilities_Handler,
+			MethodName: "GetCompatibilitiesByMake",
+			Handler:    _IntegrationService_GetCompatibilitiesByMake_Handler,
 		},
 		{
 			MethodName: "GetCompatibilityByDeviceDefinition",
@@ -305,6 +341,10 @@ var IntegrationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetIntegrationFeatures",
 			Handler:    _IntegrationService_GetIntegrationFeatures_Handler,
+		},
+		{
+			MethodName: "GetIntegrationOptions",
+			Handler:    _IntegrationService_GetIntegrationOptions_Handler,
 		},
 		{
 			MethodName: "CreateIntegrationFeature",

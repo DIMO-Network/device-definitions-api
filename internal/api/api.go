@@ -85,7 +85,12 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetRecallsByMakeQuery{}, queries.NewGetRecallsByMakeQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetRecallsByModelQuery{}, queries.NewGetRecallsByModelQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetReviewsByModelQuery{}, queries.NewGetReviewsByModelQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetReviewsByDeviceDefinitionIDQuery{}, queries.NewGetReviewsByDeviceDefinitionIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetReviewsByIDQuery{}, queries.NewGetReviewsByIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.CreateReviewCommand{}, commands.NewCreateReviewCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.UpdateReviewCommand{}, commands.NewUpdateReviewCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.DeleteReviewCommand{}, commands.NewDeleteReviewCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.ApproveReviewCommand{}, commands.NewApproveReviewCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository)),
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository, ddCacheService)),
@@ -93,7 +98,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.CreateDeviceMakeCommand{}, commands.NewCreateDeviceMakeCommandHandler(deviceMakeRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&commands.UpdateDeviceDefinitionImageCommand{}, commands.NewUpdateDeviceDefinitionImageCommandHandler(pdb.DBS, ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceCompatibilityQuery{}, queries.NewGetDeviceCompatibilityQueryHandler(pdb.DBS, deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetCompatibilitiesByMakeQuery{}, queries.NewGetDeviceCompatibilityQueryHandler(pdb.DBS, deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceMakeCommand{}, commands.NewUpdateDeviceMakeCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateDeviceStyleCommand{}, commands.NewUpdateDeviceStyleCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllDeviceTypeQuery{}, queries.NewGetAllDeviceTypeQueryHandler(pdb.DBS)),
@@ -102,12 +107,13 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.DeleteDeviceTypeCommand{}, commands.NewDeleteDeviceTypeCommandHandler(pdb.DBS)),
 
 		mediator.WithHandler(&queries.GetAllIntegrationFeatureQuery{}, queries.NewGetAllIntegrationFeatureQuery(pdb.DBS)),
+		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionQuery{}, queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationFeatureByIDQuery{}, queries.NewGetIntegrationFeatureByIDQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
+
 		mediator.WithHandler(&commands.CreateIntegrationFeatureCommand{}, commands.NewCreateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateIntegrationFeatureCommand{}, commands.NewUpdateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteIntegrationFeatureCommand{}, commands.NewDeleteIntegrationFeatureCommandHandler(pdb.DBS)),
-
-		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionQuery{}, queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
 	)
 
 	//fiber

@@ -6,7 +6,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
-	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
@@ -40,88 +39,16 @@ func (s *GrpcIntegrationService) GetIntegrationFeatureByID(ctx context.Context, 
 	return result, nil
 }
 
-func (s *GrpcIntegrationService) GetDeviceCompatibilities(ctx context.Context, in *p_grpc.GetDeviceCompatibilityListRequest) (*p_grpc.GetDeviceCompatibilityListResponse, error) {
-	logger := s.logger.With().Str("rpc", "GetDeviceCompatibilities").Logger()
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceCompatibilityQuery{
+func (s *GrpcIntegrationService) GetCompatibilitiesByMake(ctx context.Context, in *p_grpc.GetCompatibilitiesByMakeRequest) (*p_grpc.GetCompatibilitiesByMakeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetCompatibilitiesByMakeQuery{
 		MakeID:        in.MakeId,
 		IntegrationID: in.IntegrationId,
 		Region:        in.Region,
-		Cursor:        in.Cursor,
-		Size:          in.Size,
+		Skip:          in.Skip,
+		Take:          in.Take,
 	})
 
-	deviceCompatibilities := qryResult.(queries.GetDeviceCompatibilityQueryResult)
-
-	result := &p_grpc.GetDeviceCompatibilityListResponse{}
-
-	integFeats := deviceCompatibilities.IntegrationFeatures
-	totalWeightsCount := 0.0
-	for _, v := range deviceCompatibilities.IntegrationFeatures {
-		totalWeightsCount += v.FeatureWeight
-	}
-	dcMap := make(map[string][]*p_grpc.DeviceCompatibilities)
-
-	cursor := ""
-	if len(deviceCompatibilities.DeviceDefinitions) > 0 {
-		cursor = deviceCompatibilities.DeviceDefinitions[len(deviceCompatibilities.DeviceDefinitions)-1].ID
-	}
-	// Group by model name.
-	for _, v := range deviceCompatibilities.DeviceDefinitions {
-		if len(v.R.DeviceIntegrations) == 0 {
-			// This should never happen, because of the inner join.
-			logger.Error().Msg("No integrations for this definition.")
-			continue
-		}
-
-		di := v.R.DeviceIntegrations[0]
-
-		if di.Features.IsZero() {
-			// This should never happen, because we filtered for "features IS NOT NULL".
-			logger.Error().Msg("Feature column was null.")
-			continue
-		}
-		res := &p_grpc.DeviceCompatibilities{Year: int32(v.Year)}
-
-		var feats []*p_grpc.Feature
-		var features []elasticModels.DeviceIntegrationFeatures
-
-		err := di.Features.Unmarshal(&features)
-		if err != nil {
-			logger.Err(err).Msg("Error unmarshaling features JSON blob.")
-			continue
-		}
-
-		ifeat := map[string]queries.FeatureDetails{}
-
-		for _, f := range features {
-			ft := &p_grpc.Feature{
-				Key:          integFeats[f.FeatureKey].DisplayName,
-				CssIcon:      integFeats[f.FeatureKey].CSSIcon,
-				SupportLevel: int32(f.SupportLevel),
-			}
-
-			fts := queries.FeatureDetails{
-				FeatureWeight: integFeats[f.FeatureKey].FeatureWeight,
-				SupportLevel:  int32(f.SupportLevel),
-			}
-
-			ifeat[f.FeatureKey] = fts
-
-			feats = append(feats, ft)
-		}
-
-		level := queries.GetDeviceCompatibilityLevel(ifeat, totalWeightsCount)
-		res.Features = feats
-		res.Level = level.String()
-		dcMap[v.Model] = append(dcMap[v.Model], res)
-	}
-
-	for k, v := range dcMap {
-		dcr := &p_grpc.DeviceCompatibilityList{Name: k, Years: v}
-		result.Models = append(result.Models, dcr)
-		result.Cursor = cursor
-	}
-
+	result := qryResult.(*p_grpc.GetCompatibilitiesByMakeResponse)
 	return result, nil
 }
 
@@ -150,6 +77,12 @@ func (s *GrpcIntegrationService) GetCompatibilityByDeviceDefinition(ctx context.
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetCompatibilityByDeviceDefinitionQuery{DeviceDefinitionID: in.DeviceDefinitionId})
 
 	return qryResult.(*p_grpc.GetDeviceCompatibilitiesResponse), nil
+}
+
+func (s *GrpcIntegrationService) GetIntegrationOptions(ctx context.Context, in *p_grpc.GetIntegrationOptionsRequest) (*p_grpc.GetIntegrationOptionsResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationOptionsQuery{MakeID: in.MakeId})
+
+	return qryResult.(*p_grpc.GetIntegrationOptionsResponse), nil
 }
 
 func (s *GrpcIntegrationService) CreateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {

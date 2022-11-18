@@ -31,6 +31,10 @@ type Review struct {
 	Approved           bool        `boil:"approved" json:"approved" toml:"approved" yaml:"approved"`
 	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Comments           string      `boil:"comments" json:"comments" toml:"comments" yaml:"comments"`
+	ApprovedBy         string      `boil:"approved_by" json:"approved_by" toml:"approved_by" yaml:"approved_by"`
+	Position           int         `boil:"position" json:"position" toml:"position" yaml:"position"`
 
 	R *reviewR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reviewL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +48,10 @@ var ReviewColumns = struct {
 	Approved           string
 	CreatedAt          string
 	UpdatedAt          string
+	ID                 string
+	Comments           string
+	ApprovedBy         string
+	Position           string
 }{
 	DeviceDefinitionID: "device_definition_id",
 	URL:                "url",
@@ -52,6 +60,10 @@ var ReviewColumns = struct {
 	Approved:           "approved",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
+	ID:                 "id",
+	Comments:           "comments",
+	ApprovedBy:         "approved_by",
+	Position:           "position",
 }
 
 var ReviewTableColumns = struct {
@@ -62,6 +74,10 @@ var ReviewTableColumns = struct {
 	Approved           string
 	CreatedAt          string
 	UpdatedAt          string
+	ID                 string
+	Comments           string
+	ApprovedBy         string
+	Position           string
 }{
 	DeviceDefinitionID: "reviews.device_definition_id",
 	URL:                "reviews.url",
@@ -70,6 +86,10 @@ var ReviewTableColumns = struct {
 	Approved:           "reviews.approved",
 	CreatedAt:          "reviews.created_at",
 	UpdatedAt:          "reviews.updated_at",
+	ID:                 "reviews.id",
+	Comments:           "reviews.comments",
+	ApprovedBy:         "reviews.approved_by",
+	Position:           "reviews.position",
 }
 
 // Generated where
@@ -82,6 +102,10 @@ var ReviewWhere = struct {
 	Approved           whereHelperbool
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
+	ID                 whereHelperstring
+	Comments           whereHelperstring
+	ApprovedBy         whereHelperstring
+	Position           whereHelperint
 }{
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"reviews\".\"device_definition_id\""},
 	URL:                whereHelperstring{field: "\"device_definitions_api\".\"reviews\".\"url\""},
@@ -90,6 +114,10 @@ var ReviewWhere = struct {
 	Approved:           whereHelperbool{field: "\"device_definitions_api\".\"reviews\".\"approved\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"reviews\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"reviews\".\"updated_at\""},
+	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"reviews\".\"id\""},
+	Comments:           whereHelperstring{field: "\"device_definitions_api\".\"reviews\".\"comments\""},
+	ApprovedBy:         whereHelperstring{field: "\"device_definitions_api\".\"reviews\".\"approved_by\""},
+	Position:           whereHelperint{field: "\"device_definitions_api\".\"reviews\".\"position\""},
 }
 
 // ReviewRels is where relationship names are stored.
@@ -109,10 +137,10 @@ func (*reviewR) NewStruct() *reviewR {
 type reviewL struct{}
 
 var (
-	reviewAllColumns            = []string{"device_definition_id", "url", "image_url", "channel", "approved", "created_at", "updated_at"}
-	reviewColumnsWithoutDefault = []string{"device_definition_id", "url", "image_url", "approved"}
+	reviewAllColumns            = []string{"device_definition_id", "url", "image_url", "channel", "approved", "created_at", "updated_at", "id", "comments", "approved_by", "position"}
+	reviewColumnsWithoutDefault = []string{"device_definition_id", "url", "image_url", "approved", "id", "comments", "approved_by", "position"}
 	reviewColumnsWithDefault    = []string{"channel", "created_at", "updated_at"}
-	reviewPrimaryKeyColumns     = []string{"device_definition_id"}
+	reviewPrimaryKeyColumns     = []string{"id"}
 	reviewGeneratedColumns      = []string{}
 )
 
@@ -407,7 +435,7 @@ func Reviews(mods ...qm.QueryMod) reviewQuery {
 
 // FindReview retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindReview(ctx context.Context, exec boil.ContextExecutor, deviceDefinitionID string, selectCols ...string) (*Review, error) {
+func FindReview(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Review, error) {
 	reviewObj := &Review{}
 
 	sel := "*"
@@ -415,10 +443,10 @@ func FindReview(ctx context.Context, exec boil.ContextExecutor, deviceDefinition
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"device_definitions_api\".\"reviews\" where \"device_definition_id\"=$1", sel,
+		"select %s from \"device_definitions_api\".\"reviews\" where \"id\"=$1", sel,
 	)
 
-	q := queries.Raw(query, deviceDefinitionID)
+	q := queries.Raw(query, iD)
 
 	err := q.Bind(ctx, exec, reviewObj)
 	if err != nil {
@@ -794,7 +822,7 @@ func (o *Review) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, 
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), reviewPrimaryKeyMapping)
-	sql := "DELETE FROM \"device_definitions_api\".\"reviews\" WHERE \"device_definition_id\"=$1"
+	sql := "DELETE FROM \"device_definitions_api\".\"reviews\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -891,7 +919,7 @@ func (o ReviewSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Review) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindReview(ctx, exec, o.DeviceDefinitionID)
+	ret, err := FindReview(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -930,16 +958,16 @@ func (o *ReviewSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) 
 }
 
 // ReviewExists checks if the Review row exists.
-func ReviewExists(ctx context.Context, exec boil.ContextExecutor, deviceDefinitionID string) (bool, error) {
+func ReviewExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"device_definitions_api\".\"reviews\" where \"device_definition_id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"device_definitions_api\".\"reviews\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, deviceDefinitionID)
+		fmt.Fprintln(writer, iD)
 	}
-	row := exec.QueryRowContext(ctx, sql, deviceDefinitionID)
+	row := exec.QueryRowContext(ctx, sql, iD)
 
 	err := row.Scan(&exists)
 	if err != nil {
