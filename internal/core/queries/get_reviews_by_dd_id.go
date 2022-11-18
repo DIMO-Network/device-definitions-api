@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -60,7 +61,7 @@ func (qh GetReviewsByDeviceDefinitionIDQueryHandler) Handle(ctx context.Context,
 			Comments:           review.Comments,
 			Approved:           review.Approved,
 			ApprovedBy:         review.ApprovedBy,
-			Name:               fmt.Sprintf("%d %s %s", review.R.DeviceDefinition.Year, review.R.DeviceDefinition.R.DeviceMake.Name, review.R.DeviceDefinition.Model),
+			Name:               common.BuildDeviceDefinitionName(review.R.DeviceDefinition.Year, review.R.DeviceDefinition.R.DeviceMake.Name, review.R.DeviceDefinition.Model),
 		})
 	}
 

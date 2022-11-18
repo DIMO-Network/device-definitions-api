@@ -135,7 +135,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
 		ExternalID:         dd.ExternalID.String,
-		Name:               fmt.Sprintf("%d %s %s", dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
@@ -377,4 +377,8 @@ func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, d
 	deviceTypeInfo[dt.Metadatakey] = metaData
 
 	return deviceTypeInfo, nil
+}
+
+func BuildDeviceDefinitionName(year int16, make string, model string) string {
+	return fmt.Sprintf("%d %s %s", year, make, model)
 }
