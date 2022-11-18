@@ -3,7 +3,6 @@ package queries
 import (
 	"context"
 	"fmt"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -74,9 +73,13 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	var modelCompats = make([]*p_grpc.DeviceCompatibilities, len(dis))
 	for i, di := range dis {
 		gfs := buildFeatures(di.Features, integFeats)
+		var reduced []*p_grpc.Feature
+		if len(gfs) > 6 {
+			reduced = gfs[:columns]
+		}
 		modelCompats[i] = &p_grpc.DeviceCompatibilities{
 			Year:              int32(di.R.DeviceDefinition.Year),
-			Features:          gfs[:columns],
+			Features:          reduced,
 			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
@@ -93,7 +96,8 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 
 // getIntegrationFeatures refactos out calling db and getting total weights for all integration features
 func getIntegrationFeatures(ctx context.Context, dc *db.DB) (models.IntegrationFeatureSlice, float64, error) {
-	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC"), qm.Limit(50)).All(ctx, dc)
+	// todo cache this
+	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC, feature_key"), qm.Limit(50)).All(ctx, dc)
 	if err != nil {
 		return nil, 0, &exceptions.InternalError{
 			Err: errors.Wrap(err, "failed to get integration_features"),
