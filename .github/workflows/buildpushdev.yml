@@ -39,3 +39,4 @@ jobs:
           value: ${{ steps.slug.outputs.sha7 }}
           branch: main
           message: 'Update Image Version to ${{ steps.slug.outputs.sha7 }}'
+          noCompatMode: true
