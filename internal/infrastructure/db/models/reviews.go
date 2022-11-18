@@ -122,15 +122,26 @@ var ReviewWhere = struct {
 
 // ReviewRels is where relationship names are stored.
 var ReviewRels = struct {
-}{}
+	DeviceDefinition string
+}{
+	DeviceDefinition: "DeviceDefinition",
+}
 
 // reviewR is where relationships are stored.
 type reviewR struct {
+	DeviceDefinition *DeviceDefinition `boil:"DeviceDefinition" json:"DeviceDefinition" toml:"DeviceDefinition" yaml:"DeviceDefinition"`
 }
 
 // NewStruct creates a new relationship struct
 func (*reviewR) NewStruct() *reviewR {
 	return &reviewR{}
+}
+
+func (r *reviewR) GetDeviceDefinition() *DeviceDefinition {
+	if r == nil {
+		return nil
+	}
+	return r.DeviceDefinition
 }
 
 // reviewL is where Load methods for each relationship are stored.
@@ -420,6 +431,184 @@ func (q reviewQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (boo
 	}
 
 	return count > 0, nil
+}
+
+// DeviceDefinition pointed to by the foreign key.
+func (o *Review) DeviceDefinition(mods ...qm.QueryMod) deviceDefinitionQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.DeviceDefinitionID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return DeviceDefinitions(queryMods...)
+}
+
+// LoadDeviceDefinition allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (reviewL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeReview interface{}, mods queries.Applicator) error {
+	var slice []*Review
+	var object *Review
+
+	if singular {
+		var ok bool
+		object, ok = maybeReview.(*Review)
+		if !ok {
+			object = new(Review)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeReview)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeReview))
+			}
+		}
+	} else {
+		s, ok := maybeReview.(*[]*Review)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeReview)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeReview))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &reviewR{}
+		}
+		args = append(args, object.DeviceDefinitionID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &reviewR{}
+			}
+
+			for _, a := range args {
+				if a == obj.DeviceDefinitionID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.DeviceDefinitionID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.device_definitions`),
+		qm.WhereIn(`device_definitions_api.device_definitions.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load DeviceDefinition")
+	}
+
+	var resultSlice []*DeviceDefinition
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice DeviceDefinition")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for device_definitions")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_definitions")
+	}
+
+	if len(reviewAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.DeviceDefinition = foreign
+		if foreign.R == nil {
+			foreign.R = &deviceDefinitionR{}
+		}
+		foreign.R.Reviews = append(foreign.R.Reviews, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.DeviceDefinitionID == foreign.ID {
+				local.R.DeviceDefinition = foreign
+				if foreign.R == nil {
+					foreign.R = &deviceDefinitionR{}
+				}
+				foreign.R.Reviews = append(foreign.R.Reviews, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetDeviceDefinition of the review to the related item.
+// Sets o.R.DeviceDefinition to related.
+// Adds o to related.R.Reviews.
+func (o *Review) SetDeviceDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"device_definitions_api\".\"reviews\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"device_definition_id"}),
+		strmangle.WhereClause("\"", "\"", 2, reviewPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.DeviceDefinitionID = related.ID
+	if o.R == nil {
+		o.R = &reviewR{
+			DeviceDefinition: related,
+		}
+	} else {
+		o.R.DeviceDefinition = related
+	}
+
+	if related.R == nil {
+		related.R = &deviceDefinitionR{
+			Reviews: ReviewSlice{o},
+		}
+	} else {
+		related.R.Reviews = append(related.R.Reviews, o)
+	}
+
+	return nil
 }
 
 // Reviews retrieves all the records using an executor.

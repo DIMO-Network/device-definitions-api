@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -30,7 +33,9 @@ func NewGetReviewsByIDQueryHandler(dbs func() *db.ReaderWriter) GetReviewsByIDQu
 func (qh GetReviewsByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetReviewsByIDQuery)
 
-	review, err := models.Reviews(models.ReviewWhere.ID.EQ(qry.ReviewID)).
+	review, err := models.Reviews(models.ReviewWhere.ID.EQ(qry.ReviewID),
+		qm.Load(models.ReviewRels.DeviceDefinition),
+		qm.Load(qm.Rels(models.ReviewRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake))).
 		One(ctx, qh.DBS().Reader)
 
 	if err != nil {
@@ -53,6 +58,7 @@ func (qh GetReviewsByIDQueryHandler) Handle(ctx context.Context, query mediator.
 		Comments:           review.Comments,
 		Approved:           review.Approved,
 		ApprovedBy:         review.ApprovedBy,
+		Name:               common.BuildDeviceDefinitionName(review.R.DeviceDefinition.Year, review.R.DeviceDefinition.R.DeviceMake.Name, review.R.DeviceDefinition.Model),
 	}
 
 	return result, nil

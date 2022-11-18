@@ -30,6 +30,21 @@ func (s *GrpcReviewsService) GetReviewsByDeviceDefinitionID(ctx context.Context,
 	return result, nil
 }
 
+func (s *GrpcReviewsService) GetReviews(ctx context.Context, in *p_grpc.GetReviewFilterRequest) (*p_grpc.GetReviewsResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetReviewsDynamicFilterQuery{
+		MakeID:             in.MakeId,
+		Model:              in.Model,
+		Year:               int(in.Year),
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		PageIndex:          int(in.PageIndex),
+		PageSize:           int(in.PageSize),
+	})
+
+	result := qryResult.(*p_grpc.GetReviewsResponse)
+
+	return result, nil
+}
+
 func (s *GrpcReviewsService) GetReviewByID(ctx context.Context, in *p_grpc.GetReviewRequest) (*p_grpc.DeviceReview, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetReviewsByIDQuery{
 		ReviewID: in.Id,
