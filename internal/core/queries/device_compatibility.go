@@ -2,26 +2,23 @@ package queries
 
 import (
 	"context"
-
-	"github.com/TheFellow/go-mediator/mediator"
-	"github.com/pkg/errors"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type GetDeviceCompatibilityQueryHandler struct {
 	Repository repositories.DeviceDefinitionRepository
 	DBS        func() *db.ReaderWriter
-}
-
-type GetCompatibilitiesByMakeQueryResult struct {
-	DeviceDefinitions   models.DeviceDefinitionSlice
-	IntegrationFeatures map[string]FeatureDetails
 }
 
 type GetCompatibilitiesByMakeQuery struct {
@@ -47,21 +44,12 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qry.Take = 50
 	}
 	const columns = 6 // number of columns to get, highest weighted first
-	const cutoffYear = 2011
-	// todo refactor with GetCompatibilityByDeviceDefinitionQueryHandler
-	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC"), qm.Limit(columns)).All(ctx, dc.DBS().Reader)
+	const cutoffYear = 2010
+
+	integFeats, totalWeights, err := getIntegrationFeatures(ctx, dc.DBS().Reader)
 	if err != nil {
-		return nil, &exceptions.InternalError{
-			Err: errors.Wrap(err, "failed to get integration_features"),
-		}
+		return nil, err
 	}
-	totalWeights := 0.0
-	for _, v := range integFeats {
-		if !v.FeatureWeight.IsZero() {
-			totalWeights += v.FeatureWeight.Float64
-		}
-	}
-	// end refactor
 	dis, err := models.DeviceIntegrations(
 		qm.InnerJoin("integrations i on i.id = device_integrations.integration_id"),
 		qm.InnerJoin("device_definitions dd on dd.id = device_integrations.device_definition_id"),
@@ -88,7 +76,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		gfs := buildFeatures(di.Features, integFeats)
 		modelCompats[i] = &p_grpc.DeviceCompatibilities{
 			Year:              int32(di.R.DeviceDefinition.Year),
-			Features:          gfs,
+			Features:          gfs[:columns],
 			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
@@ -101,6 +89,67 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	return &p_grpc.GetCompatibilitiesByMakeResponse{
 		Models: modelCompats,
 	}, nil
+}
+
+// getIntegrationFeatures refactos out calling db and getting total weights for all integration features
+func getIntegrationFeatures(ctx context.Context, dc *db.DB) (models.IntegrationFeatureSlice, float64, error) {
+	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC"), qm.Limit(50)).All(ctx, dc)
+	if err != nil {
+		return nil, 0, &exceptions.InternalError{
+			Err: errors.Wrap(err, "failed to get integration_features"),
+		}
+	}
+	totalWeights := 0.0
+	for _, v := range integFeats {
+		if !v.FeatureWeight.IsZero() {
+			totalWeights += v.FeatureWeight.Float64
+		}
+	}
+	return integFeats, totalWeights, nil
+}
+
+// buildFeatures pulls out support level from features json in device_integrations based on integration_features passed in.
+// Will include entry for all feats if limit is 0, otherwise cuts off first {limit} features
+func buildFeatures(featuresJSON null.JSON, feats models.IntegrationFeatureSlice) []*p_grpc.Feature {
+	gfs := make([]*p_grpc.Feature, len(feats))
+	if featuresJSON.IsZero() {
+		return nil
+	}
+	for i, feat := range feats {
+		supportLevel := gjson.GetBytes(featuresJSON.JSON, fmt.Sprintf(`#(featureKey=="%s").supportLevel`, feat.FeatureKey))
+		slInt := int32(0)
+		if supportLevel.Exists() {
+			slInt = int32(supportLevel.Int())
+		}
+
+		gfs[i] = &p_grpc.Feature{
+			Key:          feat.FeatureKey,
+			SupportLevel: slInt,
+			CssIcon:      feat.CSSIcon.String,
+			DisplayName:  feat.DisplayName,
+		}
+	}
+	return gfs
+}
+
+// calculateCompatibilityLevel calculates whether devices is bronze silver gold etc based on standard math
+// currently only supports if the supportLevel is == 2
+func calculateCompatibilityLevel(gfs []*p_grpc.Feature, feats models.IntegrationFeatureSlice, weights float64) CompatibilityLevel {
+	if gfs == nil {
+		return NoDataLevel
+	}
+	featureWeight := 0.0
+	for _, gf := range gfs {
+		// match the feature to get the FeatureWeight
+		for _, feat := range feats {
+			if feat.FeatureKey == gf.Key && gf.SupportLevel == 2 {
+				featureWeight += feat.FeatureWeight.Float64
+				break
+			}
+		}
+	}
+
+	return calculateMathForLevel(featureWeight, weights)
 }
 
 // calculateMathForLevel does the math to figure out compatibility level based on sum of all weights and total weights of all available features
@@ -116,13 +165,6 @@ func calculateMathForLevel(featuresWeight, totalWeights float64) CompatibilityLe
 		}
 	}
 	return NoDataLevel
-}
-
-type FeatureDetails struct {
-	DisplayName   string
-	CSSIcon       string
-	FeatureWeight float64
-	SupportLevel  int32
 }
 
 // CompatibilityLevel enum for overall device compatibility
