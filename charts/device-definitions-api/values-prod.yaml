@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 95c72a9
+  tag: 3626ed9
 cronJob:
   enabled: true
   schedule: 0 0 * * 0
@@ -26,12 +26,12 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/auth-tls-secret: 'ingress/cf-origin-ca'
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
     nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
     nginx.ingress.kubernetes.io/enable-cors: 'true'
-    nginx.ingress.kubernetes.io/cors-allow-origin: 'https://app.dimo.zone'
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dimo.zone
     nginx.ingress.kubernetes.io/limit-rps: '9'
-    external-dns.alpha.kubernetes.io/hostname: 'device-definitions-api.dimo.zone'
+    external-dns.alpha.kubernetes.io/hostname: device-definitions-api.dimo.zone
   hosts:
     - host: device-definitions-api.dimo.zone
       paths:
