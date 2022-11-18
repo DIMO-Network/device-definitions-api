@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type jsonObj map[string]any
