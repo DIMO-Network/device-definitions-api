@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -60,7 +61,12 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 					logger.Err(err).Msg("Eror occurred fetching device integration.")
 					continue
 				}
-				deviceDef, err := models.FindDeviceDefinition(ctx, pdb.DBS().Reader, ddID)
+				deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
+					qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
+				if err != nil {
+					logger.Err(err).Msg("Eror occurred fetching device definition.")
+					continue
+				}
 
 				feature := prepareFeatureData(r.Features.Buckets, deviceDef)
 
@@ -91,11 +97,10 @@ func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.De
 			supportLevel = Supported.Int()
 		}
 		// manual override for VIN support
-		if k == "vin" {
-			if def.Year >= 2011 && def.DeviceMakeID != "26G39PHhD3o2StvEdHqhICfXK7f" { // exclude skoda makeId hardcode
+		if k == "vin" && def.R.DeviceMake != nil {
+			if def.Year >= 2011 && def.R.DeviceMake.NameSlug != "skoda" { // exclude skoda hardcode
 				supportLevel = Supported.Int()
-			}
-			if def.Year >= 2006 && def.DeviceMakeID == "2681cWyBF5y49B0m3yry4mPX1Mi" { // include mercedes makeId hard code
+			} else if def.Year >= 2006 && def.R.DeviceMake.NameSlug == "mercedes-benz" { // include mercedes hard code
 				supportLevel = Supported.Int()
 			}
 		}
