@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
-	"strings"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"strings"
 )
 
 type jsonObj map[string]any
@@ -56,9 +57,19 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				logger := logger.With().Str("integrationId", intID).Str("deviceDefinitionId", ddID).Str("region", region).Logger()
 
 				deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, region)
+				insert := false
 				if err != nil {
-					logger.Err(err).Msg("Eror occurred fetching device integration.")
-					continue
+					if errors.Is(err, sql.ErrNoRows) {
+						insert = true
+						deviceInt = &models.DeviceIntegration{
+							DeviceDefinitionID: ddID,
+							IntegrationID:      intID,
+							Region:             region,
+						}
+					} else {
+						logger.Err(err).Msg("Eror occurred fetching device integration.")
+						continue
+					}
 				}
 				deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
 					qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
@@ -74,10 +85,15 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 					logger.Err(err).Msg("could not marshal feature information into device integration.")
 					continue
 				}
-
-				if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-					logger.Err(err).Msg("could not update device integration with feature information.")
-					continue
+				if insert {
+					err = deviceInt.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+					if err != nil {
+						logger.Err(err).Msg("could not insert device integration with feature information.")
+					}
+				} else {
+					if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+						logger.Err(err).Msg("could not update device integration with feature information.")
+					}
 				}
 			}
 		}
