@@ -74,11 +74,12 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 				lastImageWidth = img.Width.Int
 			}
 		}
+
 		def := *definition.R
 		dType := def.DeviceType
 		var deviceType string
-		if dType != nil {
-			deviceType = definition.R.DeviceType.Metadatakey
+		if dType == nil {
+			ch.logger.Fatal().Msg("device type metadata key is null")
 		}
 
 		docs[i] = elastic.DeviceDefinitionSearchDoc{
@@ -87,7 +88,7 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			Make:          definition.R.DeviceMake.Name,
 			Model:         definition.Model,
 			Year:          int(definition.Year),
-			Type:          deviceType,
+			Type:          definition.R.DeviceType.Metadatakey,
 			SubModels:     sm,
 			ImageURL:      imageURL,
 			MakeSlug:      definition.R.DeviceMake.NameSlug,
