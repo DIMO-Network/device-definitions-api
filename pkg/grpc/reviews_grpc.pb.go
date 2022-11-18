@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReviewsServiceClient interface {
 	GetReviewsByDeviceDefinitionID(ctx context.Context, in *GetReviewsByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
+	GetReviews(ctx context.Context, in *GetReviewFilterRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
 	GetReviewByID(ctx context.Context, in *GetReviewRequest, opts ...grpc.CallOption) (*DeviceReview, error)
 	CreateReview(ctx context.Context, in *CreateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
 	UpdateReview(ctx context.Context, in *UpdateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
@@ -41,6 +42,15 @@ func NewReviewsServiceClient(cc grpc.ClientConnInterface) ReviewsServiceClient {
 func (c *reviewsServiceClient) GetReviewsByDeviceDefinitionID(ctx context.Context, in *GetReviewsByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error) {
 	out := new(GetReviewsResponse)
 	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/GetReviewsByDeviceDefinitionID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reviewsServiceClient) GetReviews(ctx context.Context, in *GetReviewFilterRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error) {
+	out := new(GetReviewsResponse)
+	err := c.cc.Invoke(ctx, "/grpc.ReviewsService/GetReviews", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +107,7 @@ func (c *reviewsServiceClient) DeleteReview(ctx context.Context, in *DeleteRevie
 // for forward compatibility
 type ReviewsServiceServer interface {
 	GetReviewsByDeviceDefinitionID(context.Context, *GetReviewsByDeviceDefinitionRequest) (*GetReviewsResponse, error)
+	GetReviews(context.Context, *GetReviewFilterRequest) (*GetReviewsResponse, error)
 	GetReviewByID(context.Context, *GetReviewRequest) (*DeviceReview, error)
 	CreateReview(context.Context, *CreateReviewRequest) (*ReviewBaseResponse, error)
 	UpdateReview(context.Context, *UpdateReviewRequest) (*ReviewBaseResponse, error)
@@ -111,6 +122,9 @@ type UnimplementedReviewsServiceServer struct {
 
 func (UnimplementedReviewsServiceServer) GetReviewsByDeviceDefinitionID(context.Context, *GetReviewsByDeviceDefinitionRequest) (*GetReviewsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetReviewsByDeviceDefinitionID not implemented")
+}
+func (UnimplementedReviewsServiceServer) GetReviews(context.Context, *GetReviewFilterRequest) (*GetReviewsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReviews not implemented")
 }
 func (UnimplementedReviewsServiceServer) GetReviewByID(context.Context, *GetReviewRequest) (*DeviceReview, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetReviewByID not implemented")
@@ -154,6 +168,24 @@ func _ReviewsService_GetReviewsByDeviceDefinitionID_Handler(srv interface{}, ctx
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ReviewsServiceServer).GetReviewsByDeviceDefinitionID(ctx, req.(*GetReviewsByDeviceDefinitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReviewsService_GetReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReviewFilterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewsServiceServer).GetReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.ReviewsService/GetReviews",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewsServiceServer).GetReviews(ctx, req.(*GetReviewFilterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -258,6 +290,10 @@ var ReviewsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetReviewsByDeviceDefinitionID",
 			Handler:    _ReviewsService_GetReviewsByDeviceDefinitionID_Handler,
+		},
+		{
+			MethodName: "GetReviews",
+			Handler:    _ReviewsService_GetReviews_Handler,
 		},
 		{
 			MethodName: "GetReviewByID",

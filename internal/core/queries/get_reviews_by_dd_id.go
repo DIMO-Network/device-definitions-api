@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -14,7 +15,7 @@ import (
 )
 
 type GetReviewsByDeviceDefinitionIDQuery struct {
-	DeviceDefinitionID string `json:"deviceDefinitionID"`
+	DeviceDefinitionID string `json:"device_definition_id"`
 }
 
 func (*GetReviewsByDeviceDefinitionIDQuery) Key() string {
@@ -32,7 +33,9 @@ func NewGetReviewsByDeviceDefinitionIDQueryHandler(dbs func() *db.ReaderWriter) 
 func (qh GetReviewsByDeviceDefinitionIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetReviewsByDeviceDefinitionIDQuery)
 
-	all, err := models.Reviews(models.ReviewWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID)).
+	all, err := models.Reviews(models.ReviewWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID),
+		qm.Load(models.ReviewRels.DeviceDefinition),
+		qm.Load(qm.Rels(models.ReviewRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake))).
 		All(ctx, qh.DBS().Reader)
 
 	if err != nil {
@@ -56,6 +59,7 @@ func (qh GetReviewsByDeviceDefinitionIDQueryHandler) Handle(ctx context.Context,
 			Comments:           review.Comments,
 			Approved:           review.Approved,
 			ApprovedBy:         review.ApprovedBy,
+			Name:               fmt.Sprintf("%d %s %s", review.R.DeviceDefinition.Year, review.R.DeviceDefinition.R.DeviceMake.Name, review.R.DeviceDefinition.Model),
 		})
 	}
 
