@@ -2,6 +2,8 @@ package queries
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -9,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"testing"
 )
 
 func Test_buildFeatures(t *testing.T) {
@@ -94,7 +95,7 @@ func Test_getIntegrationFeatures(t *testing.T) {
 		migrationsDirRelPath = "../../infrastructure/db/migrations"
 	)
 	pdb, container := dbtesthelper.StartContainerDatabase(ctx, dbName, t, migrationsDirRelPath)
-	defer container.Terminate(ctx)
+	defer container.Terminate(ctx)                      //nolint
 	dbtesthelper.TruncateTables(pdb.DBS().Writer.DB, t) // clear setup data for integration features
 	// arrange some data
 	feat1 := models.IntegrationFeature{
