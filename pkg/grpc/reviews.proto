@@ -68,6 +68,7 @@ message GetReviewFilterRequest {
 
 service ReviewsService {
   rpc GetReviewsByDeviceDefinitionID(GetReviewsByDeviceDefinitionRequest) returns (GetReviewsResponse);
+  // GetReviews for dimo admin page, get by makeId, model, years
   rpc GetReviews(GetReviewFilterRequest) returns (GetReviewsResponse);
   rpc GetReviewByID(GetReviewRequest) returns (DeviceReview);
   rpc CreateReview(CreateReviewRequest) returns (ReviewBaseResponse);
