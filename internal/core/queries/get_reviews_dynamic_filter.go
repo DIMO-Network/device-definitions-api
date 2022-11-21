@@ -20,6 +20,7 @@ type GetReviewsDynamicFilterQuery struct {
 	DeviceDefinitionID string `json:"device_definition_id"`
 	Year               int    `json:"year"`
 	Model              string `json:"model"`
+	Approved           bool   `json:"approved"`
 	PageIndex          int    `json:"page_index"`
 	PageSize           int    `json:"page_size"`
 }
@@ -41,31 +42,26 @@ func (qh GetReviewsDynamicFilterQueryHandler) Handle(ctx context.Context, query 
 
 	var queryMods []qm.QueryMod
 
+	queryMods = append(queryMods, models.ReviewWhere.Approved.EQ(qry.Approved))
+
 	if len(qry.DeviceDefinitionID) > 1 {
 		queryMods = append(queryMods, models.ReviewWhere.DeviceDefinitionID.EQ(string(qry.DeviceDefinitionID)))
 	}
 
 	if len(qry.MakeID) > 1 || qry.Year > 1980 && qry.Year < 2999 || len(qry.Model) > 1 {
-		queryJoin := qm.InnerJoin(fmt.Sprintf(innerJoinQueryFormat,
-			models.TableNames.Reviews,
-			models.TableNames.Reviews,
-			models.DeviceDefinitionColumns.ID,
-			models.TableNames.Reviews,
-			models.ReviewTableColumns.DeviceDefinitionID),
-		)
-
+		queryJoin := qm.InnerJoin("device_definitions_api.device_definitions dd on dd.id = reviews.device_definition_id")
 		queryMods = append(queryMods, queryJoin)
 
 		if len(qry.MakeID) > 1 {
-			queryMods = append(queryMods, qm.And(fmt.Sprintf(andEqQueryFormat, models.DeviceDefinitionColumns.DeviceMakeID, qry.MakeID)))
+			queryMods = append(queryMods, qm.And("dd.device_make_id = ?", qry.MakeID))
 		}
 
 		if qry.Year > 1980 && qry.Year < 2999 {
-			queryMods = append(queryMods, models.DeviceDefinitionWhere.Year.EQ(int16(qry.Year)))
+			queryMods = append(queryMods, qm.And("dd.year = ?", qry.Year))
 		}
 
 		if len(qry.Model) > 1 {
-			queryMods = append(queryMods, qm.And(fmt.Sprintf(andLikeQueryFormat, models.DeviceDefinitionColumns.Model, qry.Model+"%")))
+			queryMods = append(queryMods, qm.And("dd.model = ?", qry.Model))
 		}
 	}
 

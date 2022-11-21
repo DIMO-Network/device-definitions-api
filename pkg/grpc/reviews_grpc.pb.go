@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReviewsServiceClient interface {
 	GetReviewsByDeviceDefinitionID(ctx context.Context, in *GetReviewsByDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
+	// GetReviews for dimo admin page, get by makeId, model, years
 	GetReviews(ctx context.Context, in *GetReviewFilterRequest, opts ...grpc.CallOption) (*GetReviewsResponse, error)
 	GetReviewByID(ctx context.Context, in *GetReviewRequest, opts ...grpc.CallOption) (*DeviceReview, error)
 	CreateReview(ctx context.Context, in *CreateReviewRequest, opts ...grpc.CallOption) (*ReviewBaseResponse, error)
@@ -107,6 +108,7 @@ func (c *reviewsServiceClient) DeleteReview(ctx context.Context, in *DeleteRevie
 // for forward compatibility
 type ReviewsServiceServer interface {
 	GetReviewsByDeviceDefinitionID(context.Context, *GetReviewsByDeviceDefinitionRequest) (*GetReviewsResponse, error)
+	// GetReviews for dimo admin page, get by makeId, model, years
 	GetReviews(context.Context, *GetReviewFilterRequest) (*GetReviewsResponse, error)
 	GetReviewByID(context.Context, *GetReviewRequest) (*DeviceReview, error)
 	CreateReview(context.Context, *CreateReviewRequest) (*ReviewBaseResponse, error)
