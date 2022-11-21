@@ -44,7 +44,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qry.Take = 50
 	}
 	const columns = 6 // number of columns to get, highest weighted first
-	const cutoffYear = 2010
+	const cutoffYear = 2008
 
 	integFeats, totalWeights, err := getIntegrationFeatures(ctx, dc.DBS().Reader)
 	if err != nil {
@@ -71,6 +71,20 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	if len(dis) == 0 {
 		return &p_grpc.GetCompatibilitiesByMakeResponse{}, nil
 	}
+	// get the total count for pagination. future: cache this count
+	count, err := models.DeviceIntegrations(
+		qm.InnerJoin("device_definitions dd on dd.id = device_integrations.device_definition_id"),
+		qm.Where("dd.device_make_id = ?", qry.MakeID),
+		models.DeviceIntegrationWhere.IntegrationID.EQ(qry.IntegrationID),
+		models.DeviceIntegrationWhere.Region.EQ(qry.Region),
+		qm.And("dd.year > ?", cutoffYear),
+	).Count(ctx, dc.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: errors.Wrapf(err, "failed to get count for device_integrations by makeId: %s", qry.MakeID),
+		}
+	}
+
 	var modelCompats = make([]*p_grpc.DeviceCompatibilities, len(dis))
 	for i, di := range dis {
 		gfs := buildFeatures(di.Features, integFeats)
@@ -91,7 +105,8 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	}
 
 	return &p_grpc.GetCompatibilitiesByMakeResponse{
-		Models: modelCompats,
+		Models:     modelCompats,
+		TotalCount: count,
 	}, nil
 }
 

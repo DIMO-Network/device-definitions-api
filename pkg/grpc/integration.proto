@@ -48,6 +48,7 @@ message GetCompatibilitiesByMakeRequest {
 
 message GetCompatibilitiesByMakeResponse {
   repeated DeviceCompatibilities models = 1;
+  int64 totalCount = 2;
 }
 
 message DeviceCompatibilities {
