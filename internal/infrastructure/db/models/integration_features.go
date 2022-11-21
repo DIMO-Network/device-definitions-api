@@ -31,6 +31,7 @@ type IntegrationFeature struct {
 	CreatedAt       time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt       time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	FeatureWeight   null.Float64 `boil:"feature_weight" json:"feature_weight,omitempty" toml:"feature_weight" yaml:"feature_weight,omitempty"`
+	PowertrainType  null.String  `boil:"powertrain_type" json:"powertrain_type,omitempty" toml:"powertrain_type" yaml:"powertrain_type,omitempty"`
 
 	R *integrationFeatureR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L integrationFeatureL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +45,7 @@ var IntegrationFeatureColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	FeatureWeight   string
+	PowertrainType  string
 }{
 	FeatureKey:      "feature_key",
 	ElasticProperty: "elastic_property",
@@ -52,6 +54,7 @@ var IntegrationFeatureColumns = struct {
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
 	FeatureWeight:   "feature_weight",
+	PowertrainType:  "powertrain_type",
 }
 
 var IntegrationFeatureTableColumns = struct {
@@ -62,6 +65,7 @@ var IntegrationFeatureTableColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	FeatureWeight   string
+	PowertrainType  string
 }{
 	FeatureKey:      "integration_features.feature_key",
 	ElasticProperty: "integration_features.elastic_property",
@@ -70,6 +74,7 @@ var IntegrationFeatureTableColumns = struct {
 	CreatedAt:       "integration_features.created_at",
 	UpdatedAt:       "integration_features.updated_at",
 	FeatureWeight:   "integration_features.feature_weight",
+	PowertrainType:  "integration_features.powertrain_type",
 }
 
 // Generated where
@@ -120,6 +125,7 @@ var IntegrationFeatureWhere = struct {
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
 	FeatureWeight   whereHelpernull_Float64
+	PowertrainType  whereHelpernull_String
 }{
 	FeatureKey:      whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"feature_key\""},
 	ElasticProperty: whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"elastic_property\""},
@@ -128,6 +134,7 @@ var IntegrationFeatureWhere = struct {
 	CreatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"updated_at\""},
 	FeatureWeight:   whereHelpernull_Float64{field: "\"device_definitions_api\".\"integration_features\".\"feature_weight\""},
+	PowertrainType:  whereHelpernull_String{field: "\"device_definitions_api\".\"integration_features\".\"powertrain_type\""},
 }
 
 // IntegrationFeatureRels is where relationship names are stored.
@@ -147,9 +154,9 @@ func (*integrationFeatureR) NewStruct() *integrationFeatureR {
 type integrationFeatureL struct{}
 
 var (
-	integrationFeatureAllColumns            = []string{"feature_key", "elastic_property", "display_name", "css_icon", "created_at", "updated_at", "feature_weight"}
+	integrationFeatureAllColumns            = []string{"feature_key", "elastic_property", "display_name", "css_icon", "created_at", "updated_at", "feature_weight", "powertrain_type"}
 	integrationFeatureColumnsWithoutDefault = []string{"feature_key", "elastic_property", "display_name"}
-	integrationFeatureColumnsWithDefault    = []string{"css_icon", "created_at", "updated_at", "feature_weight"}
+	integrationFeatureColumnsWithDefault    = []string{"css_icon", "created_at", "updated_at", "feature_weight", "powertrain_type"}
 	integrationFeaturePrimaryKeyColumns     = []string{"feature_key"}
 	integrationFeatureGeneratedColumns      = []string{}
 )
