@@ -34,6 +34,7 @@ type DeviceMake struct {
 	LogoURL         null.String       `boil:"logo_url" json:"logo_url,omitempty" toml:"logo_url" yaml:"logo_url,omitempty"`
 	OemPlatformName null.String       `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
 	NameSlug        string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
+	Metadata        null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
 
 	R *deviceMakeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceMakeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -49,6 +50,7 @@ var DeviceMakeColumns = struct {
 	LogoURL         string
 	OemPlatformName string
 	NameSlug        string
+	Metadata        string
 }{
 	ID:              "id",
 	Name:            "name",
@@ -59,6 +61,7 @@ var DeviceMakeColumns = struct {
 	LogoURL:         "logo_url",
 	OemPlatformName: "oem_platform_name",
 	NameSlug:        "name_slug",
+	Metadata:        "metadata",
 }
 
 var DeviceMakeTableColumns = struct {
@@ -71,6 +74,7 @@ var DeviceMakeTableColumns = struct {
 	LogoURL         string
 	OemPlatformName string
 	NameSlug        string
+	Metadata        string
 }{
 	ID:              "device_makes.id",
 	Name:            "device_makes.name",
@@ -81,6 +85,7 @@ var DeviceMakeTableColumns = struct {
 	LogoURL:         "device_makes.logo_url",
 	OemPlatformName: "device_makes.oem_platform_name",
 	NameSlug:        "device_makes.name_slug",
+	Metadata:        "device_makes.metadata",
 }
 
 // Generated where
@@ -121,6 +126,7 @@ var DeviceMakeWhere = struct {
 	LogoURL         whereHelpernull_String
 	OemPlatformName whereHelpernull_String
 	NameSlug        whereHelperstring
+	Metadata        whereHelpernull_JSON
 }{
 	ID:              whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"id\""},
 	Name:            whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name\""},
@@ -131,6 +137,7 @@ var DeviceMakeWhere = struct {
 	LogoURL:         whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"logo_url\""},
 	OemPlatformName: whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"oem_platform_name\""},
 	NameSlug:        whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
+	Metadata:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_makes\".\"metadata\""},
 }
 
 // DeviceMakeRels is where relationship names are stored.
@@ -161,9 +168,9 @@ func (r *deviceMakeR) GetDeviceDefinitions() DeviceDefinitionSlice {
 type deviceMakeL struct{}
 
 var (
-	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug"}
+	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug", "metadata"}
 	deviceMakeColumnsWithoutDefault = []string{"id", "name", "name_slug"}
-	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name"}
+	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "metadata"}
 	deviceMakePrimaryKeyColumns     = []string{"id"}
 	deviceMakeGeneratedColumns      = []string{}
 )
