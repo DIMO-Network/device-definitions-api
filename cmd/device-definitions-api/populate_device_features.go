@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -50,8 +51,25 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	for _, i := range resp.Aggregations.Integrations.Buckets {
 		intID := strings.TrimPrefix(i.Key, "dimo/integration/")
 
+		integration, err := models.FindIntegration(ctx, pdb.DBS().Reader, intID)
+		if err != nil {
+			logger.Err(err).Msg("Error occurred fetching integration.")
+			continue
+		}
+
 		for _, d := range i.DeviceDefinitions.Buckets {
 			ddID := d.Key
+
+			deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
+				qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
+			if err != nil {
+				logger.Err(err).Msg("Error occurred fetching device definition.")
+				continue
+			}
+			// skip smartcar integration if Tesla
+			if integration.Vendor == common.SmartCarVendor && deviceDef.R.DeviceMake.NameSlug == "tesla" {
+				continue
+			}
 
 			for _, r := range d.Regions.Buckets {
 				region := r.Key
@@ -71,12 +89,6 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 						logger.Err(err).Msg("Eror occurred fetching device integration.")
 						continue
 					}
-				}
-				deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
-					qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
-				if err != nil {
-					logger.Err(err).Msg("Eror occurred fetching device definition.")
-					continue
 				}
 
 				feature := prepareFeatureData(r.Features.Buckets, deviceDef)
