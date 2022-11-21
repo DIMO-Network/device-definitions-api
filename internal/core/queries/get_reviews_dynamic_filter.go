@@ -20,6 +20,7 @@ type GetReviewsDynamicFilterQuery struct {
 	DeviceDefinitionID string `json:"device_definition_id"`
 	Year               int    `json:"year"`
 	Model              string `json:"model"`
+	Approved           bool   `json:"approved"`
 	PageIndex          int    `json:"page_index"`
 	PageSize           int    `json:"page_size"`
 }
@@ -40,6 +41,8 @@ func (qh GetReviewsDynamicFilterQueryHandler) Handle(ctx context.Context, query 
 	qry := query.(*GetReviewsDynamicFilterQuery)
 
 	var queryMods []qm.QueryMod
+
+	queryMods = append(queryMods, models.ReviewWhere.Approved.EQ(qry.Approved))
 
 	if len(qry.DeviceDefinitionID) > 1 {
 		queryMods = append(queryMods, models.ReviewWhere.DeviceDefinitionID.EQ(string(qry.DeviceDefinitionID)))

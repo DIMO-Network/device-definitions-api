@@ -36,6 +36,7 @@ func (s *GrpcReviewsService) GetReviews(ctx context.Context, in *p_grpc.GetRevie
 		Model:              in.Model,
 		Year:               int(in.Year),
 		DeviceDefinitionID: in.DeviceDefinitionId,
+		Approved:           in.Approved,
 		PageIndex:          int(in.PageIndex),
 		PageSize:           int(in.PageSize),
 	})
