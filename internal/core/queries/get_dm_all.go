@@ -3,10 +3,10 @@ package queries
 import (
 	"context"
 	"fmt"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -34,21 +34,24 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 			Err: fmt.Errorf("failed to get device makes"),
 		}
 	}
+	result := &p_grpc.GetDeviceMakeResponse{
+		DeviceMakes: make([]*p_grpc.DeviceMake, len(all)),
+	}
 
-	result := make([]coremodels.DeviceMake, len(all))
 	for i, v := range all {
-		result[i] = coremodels.DeviceMake{
-			ID:               v.ID,
+		result.DeviceMakes[i] = &p_grpc.DeviceMake{
+			Id:               v.ID,
 			Name:             v.Name,
-			LogoURL:          v.LogoURL,
-			OemPlatformName:  v.OemPlatformName,
+			LogoUrl:          v.LogoURL.String,
+			OemPlatformName:  v.OemPlatformName.String,
 			NameSlug:         v.NameSlug,
-			ExternalIds:      common.JSONOrDefault(v.ExternalIds),
-			ExternalIdsTyped: common.BuildExternalIds(v.ExternalIds),
+			ExternalIds:      string(v.ExternalIds.JSON),
+			ExternalIdsTyped: common.ExternalIdsToGRPC(v.ExternalIds),
+			Metadata:         common.DeviceMakeMetadataToGRPC(v.Metadata),
 		}
 
 		if !v.TokenID.IsZero() {
-			result[i].TokenID = v.TokenID.Big.Int(new(big.Int))
+			result.DeviceMakes[i].TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
 		}
 	}
 
