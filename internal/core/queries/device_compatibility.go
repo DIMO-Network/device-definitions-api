@@ -92,10 +92,12 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		if len(gfs) > 6 {
 			reduced = gfs[:columns]
 		}
+		level, score := calculateCompatibilityLevel(gfs, integFeats, totalWeights)
 		modelCompats[i] = &p_grpc.DeviceCompatibilities{
 			Year:              int32(di.R.DeviceDefinition.Year),
 			Features:          reduced,
-			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
+			Level:             level.String(),
+			Score:             float32(score),
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
 			Region:            di.Region,
@@ -169,38 +171,40 @@ func buildFeatures(featuresJSON null.JSON, feats models.IntegrationFeatureSlice)
 }
 
 // calculateCompatibilityLevel calculates whether devices is bronze silver gold etc based on standard math
-// currently only supports if the supportLevel is == 2
-func calculateCompatibilityLevel(gfs []*p_grpc.Feature, feats models.IntegrationFeatureSlice, weights float64) CompatibilityLevel {
+// currently only supports if the supportLevel is == 2. also returns the total score percentage
+func calculateCompatibilityLevel(gfs []*p_grpc.Feature, feats models.IntegrationFeatureSlice, weights float64) (CompatibilityLevel, float64) {
 	if gfs == nil {
-		return NoDataLevel
+		return NoDataLevel, 0
 	}
-	featureWeight := 0.0
+	supportedWeight := 0.0
 	for _, gf := range gfs {
 		// match the feature to get the FeatureWeight
 		for _, feat := range feats {
 			if feat.FeatureKey == gf.Key && gf.SupportLevel == 2 {
-				featureWeight += feat.FeatureWeight.Float64
+				supportedWeight += feat.FeatureWeight.Float64
 				break
 			}
 		}
 	}
-
-	return calculateMathForLevel(featureWeight, weights)
+	// return support level and percentage score
+	return calculateMathForLevel(supportedWeight, weights)
 }
 
 // calculateMathForLevel does the math to figure out compatibility level based on sum of all weights and total weights of all available features
-func calculateMathForLevel(featuresWeight, totalWeights float64) CompatibilityLevel {
+// also returns score percent
+func calculateMathForLevel(featuresWeight, totalWeights float64) (CompatibilityLevel, float64) {
+	p := 0.0
 	if featuresWeight != 0 && featuresWeight <= totalWeights {
-		p := (featuresWeight / totalWeights) * 100
+		p = (featuresWeight / totalWeights) * 100
 		if p >= 75 {
-			return GoldLevel
+			return GoldLevel, 0
 		} else if p >= 50 {
-			return SilverLevel
+			return SilverLevel, 0
 		} else {
-			return BronzeLevel
+			return BronzeLevel, 0
 		}
 	}
-	return NoDataLevel
+	return NoDataLevel, p
 }
 
 // remove slice element at index(s) and returns new slice

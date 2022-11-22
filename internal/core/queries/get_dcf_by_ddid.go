@@ -56,12 +56,14 @@ func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Cont
 			return nil, &exceptions.ConflictError{Err: fmt.Errorf("integration not set or found")}
 		}
 		gfs := buildFeatures(di.Features, integFeats)
+		level, score := calculateCompatibilityLevel(gfs, integFeats, totalWeights)
 		response.Compatibilities[i] = &p_grpc.DeviceCompatibilities{
 			IntegrationId:     di.IntegrationID,
 			IntegrationVendor: di.R.Integration.Vendor,
 			Region:            di.Region,
 			Features:          gfs,
-			Level:             calculateCompatibilityLevel(gfs, integFeats, totalWeights).String(),
+			Level:             level.String(),
+			Score:             float32(score),
 		}
 	}
 	// build up grpc object
