@@ -3,13 +3,13 @@ package queries
 import (
 	"context"
 	"fmt"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 )
