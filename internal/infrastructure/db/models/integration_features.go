@@ -31,7 +31,7 @@ type IntegrationFeature struct {
 	CreatedAt       time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt       time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	FeatureWeight   null.Float64 `boil:"feature_weight" json:"feature_weight,omitempty" toml:"feature_weight" yaml:"feature_weight,omitempty"`
-	PowertrainType  null.String  `boil:"powertrain_type" json:"powertrain_type,omitempty" toml:"powertrain_type" yaml:"powertrain_type,omitempty"`
+	PowertrainType  string       `boil:"powertrain_type" json:"powertrain_type" toml:"powertrain_type" yaml:"powertrain_type"`
 
 	R *integrationFeatureR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L integrationFeatureL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -125,7 +125,7 @@ var IntegrationFeatureWhere = struct {
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
 	FeatureWeight   whereHelpernull_Float64
-	PowertrainType  whereHelpernull_String
+	PowertrainType  whereHelperstring
 }{
 	FeatureKey:      whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"feature_key\""},
 	ElasticProperty: whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"elastic_property\""},
@@ -134,7 +134,7 @@ var IntegrationFeatureWhere = struct {
 	CreatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"device_definitions_api\".\"integration_features\".\"updated_at\""},
 	FeatureWeight:   whereHelpernull_Float64{field: "\"device_definitions_api\".\"integration_features\".\"feature_weight\""},
-	PowertrainType:  whereHelpernull_String{field: "\"device_definitions_api\".\"integration_features\".\"powertrain_type\""},
+	PowertrainType:  whereHelperstring{field: "\"device_definitions_api\".\"integration_features\".\"powertrain_type\""},
 }
 
 // IntegrationFeatureRels is where relationship names are stored.

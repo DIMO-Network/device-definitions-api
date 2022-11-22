@@ -46,7 +46,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 	const columns = 6 // number of columns to get, highest weighted first
 	const cutoffYear = 2008
 
-	integFeats, totalWeights, err := getIntegrationFeatures(ctx, dc.DBS().Reader)
+	integFeats, totalWeights, err := getIntegrationFeatures(ctx, qry.MakeID, dc.DBS().Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 }
 
 // getIntegrationFeatures refactos out calling db and getting total weights for all integration features
-func getIntegrationFeatures(ctx context.Context, dc *db.DB) (models.IntegrationFeatureSlice, float64, error) {
+func getIntegrationFeatures(ctx context.Context, makeID string, dc *db.DB) (models.IntegrationFeatureSlice, float64, error) {
 	// todo cache this
 	integFeats, err := models.IntegrationFeatures(qm.OrderBy("feature_weight DESC, feature_key"), qm.Limit(50)).All(ctx, dc)
 	if err != nil {
@@ -119,6 +119,22 @@ func getIntegrationFeatures(ctx context.Context, dc *db.DB) (models.IntegrationF
 			Err: errors.Wrap(err, "failed to get integration_features"),
 		}
 	}
+
+	// if make is tesla, rivian or lucid, integFeats only include BEV and ALL, since EV only manufacturer
+	if makeID == "2681caeN3FuuACJ819ORd1YLvEZ" || makeID == "2681cTvKgR3YDR76NlLKtQoS5lS" || makeID == "2681cVGbl3VrXYA3lElTklibDkR" {
+		var idxs []int
+		for i, feat := range integFeats {
+			if !(feat.PowertrainType == models.PowertrainALL || feat.PowertrainType == models.PowertrainBEV) {
+				idxs = append(idxs, i)
+			}
+		}
+		loop := 0
+		for _, idx := range idxs {
+			integFeats = remove(integFeats, idx-loop)
+			loop++
+		}
+	}
+
 	totalWeights := 0.0
 	for _, v := range integFeats {
 		if !v.FeatureWeight.IsZero() {
@@ -185,6 +201,11 @@ func calculateMathForLevel(featuresWeight, totalWeights float64) CompatibilityLe
 		}
 	}
 	return NoDataLevel
+}
+
+// remove slice element at index(s) and returns new slice
+func remove[T any](slice []T, s int) []T {
+	return append(slice[:s], slice[s+1:]...)
 }
 
 // CompatibilityLevel enum for overall device compatibility

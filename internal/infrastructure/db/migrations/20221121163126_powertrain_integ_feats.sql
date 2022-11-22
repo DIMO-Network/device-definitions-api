@@ -6,7 +6,7 @@ SET search_path = device_definitions_api, public;
 CREATE TYPE powertrain AS ENUM
     ('ALL', 'HybridsAndICE', 'ICE', 'HEV', 'PHEV', 'BEV', 'FCEV');
 
-alter table integration_features add column powertrain_type powertrain default 'ALL';
+alter table integration_features add column powertrain_type powertrain NOT NULL default 'ALL';
 -- set some known expectations for BEV vs hybrids and ICE
 update integration_features set powertrain_type = 'BEV' where feature_key = 'ev_battery';
 update integration_features set powertrain_type = 'HybridsAndICE' where feature_key = 'battery_voltage';
