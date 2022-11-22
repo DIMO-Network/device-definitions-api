@@ -51,6 +51,29 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+// Enum values for Powertrain
+const (
+	PowertrainALL           string = "ALL"
+	PowertrainHybridsAndICE string = "HybridsAndICE"
+	PowertrainICE           string = "ICE"
+	PowertrainHEV           string = "HEV"
+	PowertrainPHEV          string = "PHEV"
+	PowertrainBEV           string = "BEV"
+	PowertrainFCEV          string = "FCEV"
+)
+
+func AllPowertrain() []string {
+	return []string{
+		PowertrainALL,
+		PowertrainHybridsAndICE,
+		PowertrainICE,
+		PowertrainHEV,
+		PowertrainPHEV,
+		PowertrainBEV,
+		PowertrainFCEV,
+	}
+}
+
 // Enum values for IntegrationType
 const (
 	IntegrationTypeHardware string = "Hardware"
