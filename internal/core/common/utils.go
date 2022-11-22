@@ -106,6 +106,18 @@ func BuildExternalIds(externalIdsJSON null.JSON) []*models.ExternalID {
 	return externalIds
 }
 
+func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata {
+	var dmMetadata *models.DeviceMakeMetadata
+	var m map[string]string
+	if err := metadataJSON.Unmarshal(&m); err == nil {
+		dmMetadata = &models.DeviceMakeMetadata{
+			RideGuideLink: m["RideGuideLink"],
+		}
+	}
+
+	return dmMetadata
+}
+
 func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
 	externalIdsGRPC := make([]*grpc.ExternalID, len(externalIds))
 	for i, ei := range externalIds {
@@ -115,6 +127,14 @@ func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
 		}
 	}
 	return externalIdsGRPC
+}
+
+func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
+	dmMetadata := &grpc.Metadata{
+		RideGuideLink: dm.RideGuideLink,
+	}
+
+	return dmMetadata
 }
 
 func ExternalIdsFromGRPC(externalIdsGRPC []*grpc.ExternalID) []*models.ExternalID {

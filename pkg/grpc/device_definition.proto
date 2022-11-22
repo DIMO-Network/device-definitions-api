@@ -40,6 +40,10 @@ message ExternalID {
   string id = 2;
 }
 
+message Metadata {
+  string RideGuideLink = 1;
+}
+
 message DeviceTypeAttribute {
   string name = 1;
   string label = 2;
@@ -84,6 +88,7 @@ message DeviceMake {
   string name_slug = 6;
   string external_ids = 7 [deprecated = true];
   repeated ExternalID external_ids_typed = 8;
+  Metadata metadata = 9;
 }
 
 message VehicleInfo {

@@ -329,6 +329,7 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 			OemPlatformName:  deviceMake.OemPlatformName.String,
 			ExternalIds:      string(deviceMake.ExternalIds),
 			ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
+			Metadata:         common.DeviceMakeMetadataToGRPC(deviceMake.MetadataTyped),
 		}
 
 		if deviceMake.TokenID != nil {

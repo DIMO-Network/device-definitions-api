@@ -23,6 +23,7 @@ type UpdateDeviceMakeCommand struct {
 	OemPlatformName null.String     `json:"oem_platform_name"`
 	TokenID         *big.Int        `json:"tokenId,omitempty"`
 	ExternalIds     json.RawMessage `json:"external_ids"`
+	Metadata        json.RawMessage `json:"metadata"`
 }
 
 type UpdateDeviceMakeCommandResult struct {
@@ -73,6 +74,8 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 	}
 
 	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIds))
+
+	dm.Metadata = null.JSONFrom([]byte(command.Metadata))
 
 	if err := dm.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceMakeColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

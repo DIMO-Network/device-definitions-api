@@ -54,6 +54,8 @@ func (ch GetDeviceMakeByNameQueryHandler) Handle(ctx context.Context, query medi
 		NameSlug:         v.NameSlug,
 		ExternalIds:      common.JSONOrDefault(v.ExternalIds),
 		ExternalIdsTyped: common.BuildExternalIds(v.ExternalIds),
+		Metadata:         common.JSONOrDefault(v.Metadata),
+		MetadataTyped:    common.BuildDeviceMakeMetadata(v.Metadata),
 	}
 
 	if !v.TokenID.IsZero() {
