@@ -93,6 +93,7 @@ func Test_getIntegrationFeatures(t *testing.T) {
 	const (
 		dbName               = "device_definitions_api"
 		migrationsDirRelPath = "../../infrastructure/db/migrations"
+		teslaMakeID          = "2681caeN3FuuACJ819ORd1YLvEZ"
 	)
 	pdb, container := dbtesthelper.StartContainerDatabase(ctx, dbName, t, migrationsDirRelPath)
 	defer container.Terminate(ctx)                      //nolint
@@ -103,6 +104,7 @@ func Test_getIntegrationFeatures(t *testing.T) {
 		ElasticProperty: "tires",
 		DisplayName:     "Tires",
 		FeatureWeight:   null.Float64From(1.0),
+		PowertrainType:  models.PowertrainALL,
 	}
 	err := feat1.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -111,11 +113,22 @@ func Test_getIntegrationFeatures(t *testing.T) {
 		ElasticProperty: "odometer",
 		DisplayName:     "Odometer",
 		FeatureWeight:   null.Float64From(0.75),
+		PowertrainType:  models.PowertrainBEV,
 	}
 	err = feat2.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
+	// this one should be ignored
+	feat3 := models.IntegrationFeature{
+		FeatureKey:      "fuelTankCapacity",
+		ElasticProperty: "fuelTankCapacity",
+		DisplayName:     "FuelTankCapacity",
+		FeatureWeight:   null.Float64From(0.75),
+		PowertrainType:  models.PowertrainHybridsAndICE,
+	}
+	err = feat3.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
-	features, totalWeights, err := getIntegrationFeatures(ctx, pdb.DBS().Reader)
+	features, totalWeights, err := getIntegrationFeatures(ctx, teslaMakeID, pdb.DBS().Reader)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1.75, totalWeights)

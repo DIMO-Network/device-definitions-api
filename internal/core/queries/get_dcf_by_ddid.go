@@ -31,10 +31,14 @@ func NewGetCompatibilityByDeviceDefinitionQueryHandler(dbs func() *db.ReaderWrit
 
 func (ch GetCompatibilityByDeviceDefinitionQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetCompatibilityByDeviceDefinitionQuery)
-	// could pull this one from cache since doesn't change often
-	integFeats, totalWeights, err := getIntegrationFeatures(ctx, ch.DBS().Reader)
+	dd, err := models.FindDeviceDefinition(ctx, ch.DBS().Reader, qry.DeviceDefinitionID)
 	if err != nil {
-		return nil, err
+		return nil, &exceptions.InternalError{Err: err}
+	}
+	// todo will need the powertrain from the metadata for non Tesla, Rivian and Lucid makes. use the dd cache service?
+	integFeats, totalWeights, err := getIntegrationFeatures(ctx, dd.DeviceMakeID, ch.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
 	}
 
 	response := &p_grpc.GetDeviceCompatibilitiesResponse{}
