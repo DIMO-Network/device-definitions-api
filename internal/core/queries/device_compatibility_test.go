@@ -47,7 +47,7 @@ func Test_calculateCompatibilityLevel(t *testing.T) {
 
 	fs := buildFeatures(json, integrationFeatures)
 
-	level := calculateCompatibilityLevel(fs, integrationFeatures, 2.0)
+	level, _ := calculateCompatibilityLevel(fs, integrationFeatures, 2.0)
 	// 50%
 	assert.Equal(t, SilverLevel, level)
 }
