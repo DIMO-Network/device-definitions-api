@@ -129,6 +129,14 @@ func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
 	return externalIdsGRPC
 }
 
+func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
+	dmMetadata := &grpc.Metadata{
+		RideGuideLink: dm.RideGuideLink,
+	}
+
+	return dmMetadata
+}
+
 func ExternalIdsFromGRPC(externalIdsGRPC []*grpc.ExternalID) []*models.ExternalID {
 	externalIds := make([]*models.ExternalID, len(externalIdsGRPC))
 	for i, ei := range externalIdsGRPC {
