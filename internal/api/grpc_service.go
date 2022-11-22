@@ -563,6 +563,7 @@ func (s *GrpcService) UpdateDeviceMake(ctx context.Context, in *p_grpc.UpdateDev
 		LogoURL:         null.StringFrom(in.LogoUrl),
 		OemPlatformName: null.StringFrom(in.OemPlatformName),
 		ExternalIds:     json.RawMessage(in.ExternalIds),
+		Metadata:        json.RawMessage(in.Metadata),
 	}
 
 	commandResult, _ := s.Mediator.Send(ctx, command)

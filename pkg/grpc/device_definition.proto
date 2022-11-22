@@ -313,6 +313,7 @@ message UpdateDeviceMakeRequest {
   uint64 token_id = 5;
   string name_slug = 6;
   string external_ids = 7;
+  string metadata = 8;
 }
 
 message UpdateDeviceStyleRequest {
