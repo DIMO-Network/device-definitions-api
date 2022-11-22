@@ -197,11 +197,11 @@ func calculateMathForLevel(featuresWeight, totalWeights float64) (CompatibilityL
 	if featuresWeight != 0 && featuresWeight <= totalWeights {
 		p = (featuresWeight / totalWeights) * 100
 		if p >= 75 {
-			return GoldLevel, 0
+			return GoldLevel, p
 		} else if p >= 50 {
-			return SilverLevel, 0
+			return SilverLevel, p
 		} else {
-			return BronzeLevel, 0
+			return BronzeLevel, p
 		}
 	}
 	return NoDataLevel, p
