@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"math/big"
 
@@ -39,6 +40,10 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 	}
 
 	for i, v := range all {
+		eids := common.BuildExternalIds(v.ExternalIds)
+		md := &coremodels.DeviceMakeMetadata{}
+		_ = v.Metadata.Unmarshal(md)
+
 		result.DeviceMakes[i] = &p_grpc.DeviceMake{
 			Id:               v.ID,
 			Name:             v.Name,
@@ -46,8 +51,8 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 			OemPlatformName:  v.OemPlatformName.String,
 			NameSlug:         v.NameSlug,
 			ExternalIds:      string(v.ExternalIds.JSON),
-			ExternalIdsTyped: common.ExternalIdsToGRPC(v.ExternalIds),
-			Metadata:         common.DeviceMakeMetadataToGRPC(v.Metadata),
+			ExternalIdsTyped: common.ExternalIdsToGRPC(eids),
+			Metadata:         common.DeviceMakeMetadataToGRPC(md),
 		}
 
 		if !v.TokenID.IsZero() {
