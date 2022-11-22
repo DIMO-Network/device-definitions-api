@@ -73,6 +73,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/whyrusleeping/tar-utils v0.0.0-20201201191210-20a61371de5b // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 

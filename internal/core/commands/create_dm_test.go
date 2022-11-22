@@ -52,7 +52,7 @@ func (s *CreateDeviceMakeCommandHandlerSuite) TestCreateDeviceMakeCommand_Succes
 		Name: name,
 	}
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), name, gomock.Any()).Return(dm, nil).Times(1)
+	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), name, gomock.Any(), gomock.Any(), gomock.Any()).Return(dm, nil).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceMakeCommand{
 		Name: name,
