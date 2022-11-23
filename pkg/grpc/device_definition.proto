@@ -140,6 +140,12 @@ message DeviceIntegration {
   string region = 2;
   string capabilities = 3 [deprecated = true];
   string deviceDefinitionId = 4;
+  repeated DeviceIntegrationFeature features = 5;
+}
+
+message DeviceIntegrationFeature {
+  string feature_key = 1;
+  int32 support_level = 2;
 }
 
 message GetDeviceDefinitionIntegrationResponse{
@@ -163,6 +169,12 @@ message CreateDeviceIntegrationRequest {
   string device_definition_id = 1;
   string integration_id = 2;
   string region = 3;
+  repeated DeviceIntegrationFeatureAttributeRequest features = 4;
+}
+
+message DeviceIntegrationFeatureAttributeRequest {
+  string feature_key = 1;
+  int32 support_level = 2;
 }
 
 message BaseResponse {

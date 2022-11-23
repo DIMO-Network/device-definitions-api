@@ -215,13 +215,22 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 
 	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, models.DeviceIntegration{
+			deviceIntegration := models.DeviceIntegration{
 				ID:     di.R.Integration.ID,
 				Type:   di.R.Integration.Type,
 				Style:  di.R.Integration.Style,
 				Vendor: di.R.Integration.Vendor,
 				Region: di.Region,
-			})
+			}
+
+			if di.Features.Valid {
+				var deviceIntegrationFeature []models.DeviceIntegrationFeature
+				if err := di.Features.Unmarshal(&deviceIntegrationFeature); err == nil {
+					//nolint
+					deviceIntegration.Features = deviceIntegrationFeature
+				}
+			}
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, deviceIntegration)
 
 			rp.CompatibleIntegrations = rp.DeviceIntegrations
 		}
@@ -317,7 +326,8 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
 	for _, di := range dd.DeviceIntegrations {
-		rp.DeviceIntegrations = append(rp.DeviceIntegrations, &grpc.DeviceIntegration{
+
+		deviceIntegration := &grpc.DeviceIntegration{
 			DeviceDefinitionId: dd.DeviceDefinitionID,
 			Integration: &grpc.Integration{
 				Id:     di.ID,
@@ -326,7 +336,18 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 				Vendor: di.Vendor,
 			},
 			Region: di.Region,
-		})
+		}
+
+		if len(di.Features) > 0 {
+			for _, feature := range di.Features {
+				deviceIntegration.Features = append(deviceIntegration.Features, &grpc.DeviceIntegrationFeature{
+					FeatureKey:   feature.FeatureKey,
+					SupportLevel: int32(feature.SupportLevel),
+				})
+			}
+		}
+
+		rp.DeviceIntegrations = append(rp.DeviceIntegrations, deviceIntegration)
 	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}
@@ -401,4 +422,39 @@ func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, d
 
 func BuildDeviceDefinitionName(year int16, make string, model string) string {
 	return fmt.Sprintf("%d %s %s", year, make, model)
+}
+
+func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceIntegrationFeatureAttribute, dt []*repoModel.IntegrationFeature) ([]map[string]interface{}, error) {
+	// attribute info
+	if attributes == nil {
+		return nil, nil
+	}
+
+	var results []map[string]interface{}
+
+	filterProperty := func(key string, items []*repoModel.IntegrationFeature) *repoModel.IntegrationFeature {
+		for _, attribute := range items {
+			if key == attribute.FeatureKey {
+				return attribute
+			}
+		}
+		return nil
+	}
+
+	for _, prop := range attributes {
+		property := filterProperty(prop.FeatureKey, dt)
+		if property == nil {
+			return nil, &exceptions.ValidationError{
+				Err: fmt.Errorf("invalid property %s", prop.FeatureKey),
+			}
+		}
+
+		metaData := make(map[string]interface{})
+		metaData["featureKey"] = property.FeatureKey
+		metaData["supportLevel"] = prop.SupportLevel
+
+		results = append(results, metaData)
+	}
+
+	return results, nil
 }

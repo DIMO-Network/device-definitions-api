@@ -13,3 +13,8 @@ type GetIntegrationFeatureQueryResult struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 	FeatureWeight   float64   `json:"feature_weight,omitempty"`
 }
+
+type UpdateDeviceIntegrationFeatureAttribute struct {
+	FeatureKey   string `json:"featureKey"`
+	SupportLevel int16  `json:"supportLevel"`
+}

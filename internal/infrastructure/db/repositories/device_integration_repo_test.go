@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -63,7 +64,17 @@ func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration_Success()
 	dd := setupDeviceDefinitionForDeviceIntegration(s.T(), s.pdb, mk, model, year)
 	i := setupIntegrationForDeviceIntegration(s.T(), s.pdb)
 
-	di, err := s.repository.Create(ctx, dd.ID, i.ID, region)
+	featureArray := `[
+	  {
+		"featureKey": "fuel_type",
+		"supportLevel": 0
+	  }
+	]`
+
+	var metaData []map[string]interface{}
+	json.Unmarshal([]byte(featureArray), &metaData)
+
+	di, err := s.repository.Create(ctx, dd.ID, i.ID, region, metaData)
 
 	s.NoError(err)
 	assert.Equal(s.T(), di.IntegrationID, i.ID)
@@ -80,7 +91,7 @@ func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration_Exception
 
 	dd := setupDeviceDefinitionForDeviceIntegration(s.T(), s.pdb, mk, model, year)
 
-	di, err := s.repository.Create(ctx, dd.ID, "integration-ID", region)
+	di, err := s.repository.Create(ctx, dd.ID, "integration-ID", region, nil)
 
 	s.Nil(di)
 	s.Error(err)

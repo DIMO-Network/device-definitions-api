@@ -3,6 +3,9 @@ package commands
 import (
 	"context"
 	_ "embed"
+	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/testcontainers/testcontainers-go"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -20,6 +23,8 @@ type CreateDeviceIntegrationCommandHandlerSuite struct {
 	*require.Assertions
 
 	ctrl           *gomock.Controller
+	pdb            db.Store
+	container      testcontainers.Container
 	mockRepository *repositoryMock.MockDeviceIntegrationRepository
 	ctx            context.Context
 
@@ -35,9 +40,12 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
+
+	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
+
 	s.mockRepository = repositoryMock.NewMockDeviceIntegrationRepository(s.ctrl)
 
-	s.queryHandler = NewCreateDeviceIntegrationCommandHandler(s.mockRepository)
+	s.queryHandler = NewCreateDeviceIntegrationCommandHandler(s.mockRepository, s.pdb.DBS)
 }
 
 func (s *CreateDeviceIntegrationCommandHandlerSuite) TearDownTest() {
@@ -57,7 +65,7 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) TestCreateDeviceIntegration
 		Region:             region,
 	}
 
-	s.mockRepository.EXPECT().Create(gomock.Any(), deviceDefinitionID, integrationID, region).Return(di, nil).Times(1)
+	s.mockRepository.EXPECT().Create(gomock.Any(), deviceDefinitionID, integrationID, region, nil).Return(di, nil).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceIntegrationCommand{
 		DeviceDefinitionID: deviceDefinitionID,
@@ -77,7 +85,7 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) TestCreateDeviceIntegration
 	integrationID := "Hummer"
 	region := "es-Us"
 
-	s.mockRepository.EXPECT().Create(gomock.Any(), deviceDefinitionID, integrationID, region).Return(nil, errors.New("Error")).Times(1)
+	s.mockRepository.EXPECT().Create(gomock.Any(), deviceDefinitionID, integrationID, region, nil).Return(nil, errors.New("Error")).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceIntegrationCommand{
 		DeviceDefinitionID: deviceDefinitionID,
