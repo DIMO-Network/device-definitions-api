@@ -238,11 +238,22 @@ func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.Cre
 
 func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
 
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceIntegrationCommand{
+	command := &commands.CreateDeviceIntegrationCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		IntegrationID:      in.IntegrationId,
 		Region:             in.Region,
-	})
+	}
+
+	if len(in.Features) > 0 {
+		for _, feature := range in.Features {
+			command.Features = append(command.Features, &models.UpdateDeviceIntegrationFeatureAttribute{
+				FeatureKey:   feature.FeatureKey,
+				SupportLevel: int16(feature.SupportLevel),
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
 
 	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
 

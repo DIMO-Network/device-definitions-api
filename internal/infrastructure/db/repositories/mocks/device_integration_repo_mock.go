@@ -36,16 +36,16 @@ func (m *MockDeviceIntegrationRepository) EXPECT() *MockDeviceIntegrationReposit
 }
 
 // Create mocks base method.
-func (m *MockDeviceIntegrationRepository) Create(ctx context.Context, deviceDefinitionID, integrationID, region string) (*models.DeviceIntegration, error) {
+func (m *MockDeviceIntegrationRepository) Create(ctx context.Context, deviceDefinitionID, integrationID, region string, features []map[string]interface{}) (*models.DeviceIntegration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, integrationID, region)
+	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, integrationID, region, features)
 	ret0, _ := ret[0].(*models.DeviceIntegration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDeviceIntegrationRepositoryMockRecorder) Create(ctx, deviceDefinitionID, integrationID, region interface{}) *gomock.Call {
+func (mr *MockDeviceIntegrationRepositoryMockRecorder) Create(ctx, deviceDefinitionID, integrationID, region, features interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceIntegrationRepository)(nil).Create), ctx, deviceDefinitionID, integrationID, region)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceIntegrationRepository)(nil).Create), ctx, deviceDefinitionID, integrationID, region, features)
 }

@@ -16,7 +16,7 @@ import (
 )
 
 type DeviceIntegrationRepository interface {
-	Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string) (*models.DeviceIntegration, error)
+	Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string, features []map[string]interface{}) (*models.DeviceIntegration, error)
 }
 
 type deviceIntegrationRepository struct {
@@ -47,7 +47,7 @@ func NewDeviceIntegrationRepository(dbs func() *db.ReaderWriter) DeviceIntegrati
 	return &deviceIntegrationRepository{DBS: dbs}
 }
 
-func (r *deviceIntegrationRepository) Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string) (*models.DeviceIntegration, error) {
+func (r *deviceIntegrationRepository) Create(ctx context.Context, deviceDefinitionID string, integrationID string, region string, features []map[string]interface{}) (*models.DeviceIntegration, error) {
 
 	const (
 		AutoPiVendor      = "AutoPi"
@@ -120,6 +120,16 @@ func (r *deviceIntegrationRepository) Create(ctx context.Context, deviceDefiniti
 			IntegrationID:      integrationID,
 			Region:             region,
 		}
+
+		if features != nil {
+			err = di.Features.Marshal(features)
+			if err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
+			}
+		}
+
 		err = di.Insert(ctx, r.DBS().Writer, boil.Infer())
 		if err != nil {
 			return nil, &exceptions.InternalError{
