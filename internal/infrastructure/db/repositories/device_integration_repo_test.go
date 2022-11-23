@@ -72,7 +72,7 @@ func (s *DeviceIntegrationRepositorySuite) TestCreateDeviceIntegration_Success()
 	]`
 
 	var metaData []map[string]interface{}
-	json.Unmarshal([]byte(featureArray), &metaData)
+	_ = json.Unmarshal([]byte(featureArray), &metaData)
 
 	di, err := s.repository.Create(ctx, dd.ID, i.ID, region, metaData)
 

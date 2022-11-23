@@ -3,10 +3,12 @@ package commands
 import (
 	"context"
 	_ "embed"
+
+	"testing"
+
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/testcontainers/testcontainers-go"
-	"testing"
 
 	"github.com/pkg/errors"
 

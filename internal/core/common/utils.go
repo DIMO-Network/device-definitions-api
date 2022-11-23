@@ -430,7 +430,7 @@ func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceInt
 		return nil, nil
 	}
 
-	var results []map[string]interface{}
+	results := make([]map[string]interface{}, len(dt))
 
 	filterProperty := func(key string, items []*repoModel.IntegrationFeature) *repoModel.IntegrationFeature {
 		for _, attribute := range items {
