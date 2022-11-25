@@ -245,7 +245,6 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 					Err: err,
 				}
 			}
-			
 			deviceIntegrations = append(deviceIntegrations, deviceIntegration)
 		}
 	}
