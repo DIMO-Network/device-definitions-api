@@ -393,12 +393,23 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 
 	if len(in.DeviceIntegrations) > 0 {
 		for _, integration := range in.DeviceIntegrations {
-			command.DeviceIntegrations = append(command.DeviceIntegrations, commands.UpdateDeviceIntegrations{
+			deviceIntegration := commands.UpdateDeviceIntegrations{
 				IntegrationID: integration.IntegrationId,
 				Region:        integration.Region,
 				CreatedAt:     integration.CreatedAt.AsTime(),
 				UpdatedAt:     integration.UpdatedAt.AsTime(),
-			})
+			}
+
+			if len(integration.Features) > 0 {
+				for _, feature := range integration.Features {
+					deviceIntegration.Features = append(deviceIntegration.Features, &models.UpdateDeviceIntegrationFeatureAttribute{
+						FeatureKey:   feature.FeatureKey,
+						SupportLevel: int16(feature.SupportLevel),
+					})
+				}
+			}
+
+			command.DeviceIntegrations = append(command.DeviceIntegrations, deviceIntegration)
 		}
 	}
 
