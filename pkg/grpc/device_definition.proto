@@ -213,6 +213,7 @@ message UpdateDeviceDefinitionRequest {
     google.protobuf.Timestamp created_at = 3;
     google.protobuf.Timestamp updated_at = 4;
     string capabilities = 5 [deprecated = true];
+    repeated DeviceIntegrationFeature features = 6;
   }
 
 }

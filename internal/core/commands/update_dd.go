@@ -41,11 +41,12 @@ type UpdateDeviceDefinitionCommand struct {
 }
 
 type UpdateDeviceIntegrations struct {
-	IntegrationID string    `json:"integration_id"`
-	Capabilities  null.JSON `json:"capabilities,omitempty"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
-	Region        string    `json:"region"`
+	IntegrationID string                                                `json:"integration_id"`
+	Capabilities  null.JSON                                             `json:"capabilities,omitempty"`
+	CreatedAt     time.Time                                             `json:"created_at,omitempty"`
+	UpdatedAt     time.Time                                             `json:"updated_at,omitempty"`
+	Region        string                                                `json:"region"`
+	Features      []*coremodels.UpdateDeviceIntegrationFeatureAttribute `json:"features"`
 }
 
 type UpdateDeviceStyles struct {
@@ -216,14 +217,35 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	if len(command.DeviceIntegrations) > 0 {
+		features, err := models.IntegrationFeatures().All(ctx, ch.DBS().Reader)
+		if err != nil {
+			return nil, &exceptions.InternalError{
+				Err: fmt.Errorf("failed to get integration features"),
+			}
+		}
 		for _, di := range command.DeviceIntegrations {
-			deviceIntegrations = append(deviceIntegrations, &models.DeviceIntegration{
+			deviceIntegration := &models.DeviceIntegration{
 				DeviceDefinitionID: command.DeviceDefinitionID,
 				IntegrationID:      di.IntegrationID,
 				CreatedAt:          di.CreatedAt,
 				UpdatedAt:          di.UpdatedAt,
 				Region:             di.Region,
-			})
+			}
+
+			integrationFeaturesValues, err := common.BuildDeviceIntegrationFeatureAttribute(di.Features, features)
+			if err != nil {
+				return nil, &exceptions.ValidationError{
+					Err: err,
+				}
+			}
+
+			err = deviceIntegration.Features.Marshal(integrationFeaturesValues)
+			if err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
+			}
+			deviceIntegrations = append(deviceIntegrations, deviceIntegration)
 		}
 	}
 
