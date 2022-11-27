@@ -35,7 +35,7 @@ type DeviceMake struct {
 	OemPlatformName null.String       `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
 	NameSlug        string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
 	Metadata        null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	Wmis            null.JSON         `boil:"wmis" json:"wmis,omitempty" toml:"wmis" yaml:"wmis,omitempty"`
+	Wmis            types.StringArray `boil:"wmis" json:"wmis,omitempty" toml:"wmis" yaml:"wmis,omitempty"`
 
 	R *deviceMakeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceMakeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -121,6 +121,32 @@ func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
 	return qmhelper.WhereIsNotNull(w.field)
 }
 
+type whereHelpertypes_StringArray struct{ field string }
+
+func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpertypes_StringArray) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpertypes_StringArray) IsNotNull() qm.QueryMod {
+	return qmhelper.WhereIsNotNull(w.field)
+}
+
 var DeviceMakeWhere = struct {
 	ID              whereHelperstring
 	Name            whereHelperstring
@@ -132,7 +158,7 @@ var DeviceMakeWhere = struct {
 	OemPlatformName whereHelpernull_String
 	NameSlug        whereHelperstring
 	Metadata        whereHelpernull_JSON
-	Wmis            whereHelpernull_JSON
+	Wmis            whereHelpertypes_StringArray
 }{
 	ID:              whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"id\""},
 	Name:            whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name\""},
@@ -144,7 +170,7 @@ var DeviceMakeWhere = struct {
 	OemPlatformName: whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"oem_platform_name\""},
 	NameSlug:        whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
 	Metadata:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_makes\".\"metadata\""},
-	Wmis:            whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_makes\".\"wmis\""},
+	Wmis:            whereHelpertypes_StringArray{field: "\"device_definitions_api\".\"device_makes\".\"wmis\""},
 }
 
 // DeviceMakeRels is where relationship names are stored.

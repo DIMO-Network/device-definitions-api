@@ -35,7 +35,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// todo implement, write a test for this once have DB structure
 	//
 	wmi := qry.VIN[0:3]
-	// query device makes where find wmi - what's best datastructure to query for this?
+	// query device makes where find wmi - what's best datastructure to query for this? change to array varchar(3)
 	resp.DeviceMakeId = wmi // todo
 	vin := shared.VIN(qry.VIN)
 	resp.Year = int32(vin.Year()) // needs to be updated for newer years

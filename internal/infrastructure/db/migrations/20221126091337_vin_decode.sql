@@ -3,7 +3,7 @@
 SELECT 'up SQL query';
 
 SET search_path = device_definitions_api, public;
-ALTER TABLE device_makes ADD wmis jsonb NULL;
+ALTER TABLE device_makes ADD wmis character(3) array NULL;
 
 -- +goose StatementEnd
 
