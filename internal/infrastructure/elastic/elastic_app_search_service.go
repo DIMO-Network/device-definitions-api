@@ -229,9 +229,9 @@ func (d *elasticAppSearchService) UpdateSearchSettingsForDeviceDefs(engineName s
 // and unmarshalling response body to objOut (must be passed in as ptr eg &varName)
 func (d *elasticAppSearchService) buildAndExecRequest(method, url string, obj interface{}, objOut interface{}) (*http.Response, error) {
 	backoffSchedule := []time.Duration{
-		1 * time.Second,
 		3 * time.Second,
 		10 * time.Second,
+		30 * time.Second,
 	}
 
 	var req *http.Request
