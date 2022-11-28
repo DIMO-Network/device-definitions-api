@@ -299,7 +299,7 @@ func (d *elasticAppSearchService) buildAndExecRequest(method, url string, obj in
 				return nil, errors.Wrap(err, "error decoding response json")
 			}
 		} else {
-			d.log.Warn().Msg("error: response body is nil")
+			d.log.Warn().Msg("error: response is nil")
 		}
 	}
 
