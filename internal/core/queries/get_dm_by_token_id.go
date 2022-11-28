@@ -40,7 +40,7 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 	ti, ok := new(big.Int).SetString(qry.TokenID, 10)
 	if !ok {
 		return nil, &exceptions.ValidationError{
-			Err: fmt.Errorf("Couldn't parse token id."),
+			Err: fmt.Errorf("Couldn't parse token id"),
 		}
 	}
 
