@@ -69,9 +69,10 @@ func (d *ElasticSearch) buildAndExecRequest(method, url string, obj interface{},
 	req.Header.Set("Authorization", "ApiKey "+d.Token)
 	var resp *http.Response
 	var err error
+	var nilRespErr error
 
 	for _, backoff := range backoffSchedule {
-		resp, err = d.httpClient.Do(req) // any error resp should return err per docs
+		resp, nilRespErr = d.httpClient.Do(req) // any error resp should return err per docs
 		if resp != nil && resp.StatusCode == http.StatusOK && err == nil {
 			break
 		}
@@ -107,7 +108,7 @@ func (d *ElasticSearch) buildAndExecRequest(method, url string, obj interface{},
 				return nil, errors.Wrap(err, "error decoding response json")
 			}
 		} else {
-			d.log.Warn().Msg("error: response is nil")
+			return resp, nilRespErr
 		}
 	}
 
