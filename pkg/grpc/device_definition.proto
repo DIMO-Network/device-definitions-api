@@ -385,6 +385,10 @@ message DeleteDeviceTypeRequest {
   string id = 1;
 }
 
+message GetDeviceMakeByTokenIdRequest {
+  string token_id = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -395,6 +399,7 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
   rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
   rpc GetDeviceMakeBySlug(GetDeviceMakeBySlugRequest) returns (DeviceMake);
+  rpc GetDeviceMakeByTokenId(GetDeviceMakeByTokenIdRequest) returns (DeviceMake);
   rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
   rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
   rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);

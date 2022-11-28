@@ -32,6 +32,7 @@ type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error)
 	GetDeviceMakeByName(ctx context.Context, in *GetDeviceMakeByNameRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakeBySlug(ctx context.Context, in *GetDeviceMakeBySlugRequest, opts ...grpc.CallOption) (*DeviceMake, error)
+	GetDeviceMakeByTokenId(ctx context.Context, in *GetDeviceMakeByTokenIdRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceMakeResponse, error)
 	GetIntegrations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetIntegrationResponse, error)
 	GetIntegrationByID(ctx context.Context, in *GetIntegrationRequest, opts ...grpc.CallOption) (*Integration, error)
@@ -163,6 +164,15 @@ func (c *deviceDefinitionServiceClient) GetDeviceMakeByName(ctx context.Context,
 func (c *deviceDefinitionServiceClient) GetDeviceMakeBySlug(ctx context.Context, in *GetDeviceMakeBySlugRequest, opts ...grpc.CallOption) (*DeviceMake, error) {
 	out := new(DeviceMake)
 	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceMakeBySlug", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *deviceDefinitionServiceClient) GetDeviceMakeByTokenId(ctx context.Context, in *GetDeviceMakeByTokenIdRequest, opts ...grpc.CallOption) (*DeviceMake, error) {
+	out := new(DeviceMake)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceMakeByTokenId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -389,6 +399,7 @@ type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionAll(context.Context, *emptypb.Empty) (*GetDeviceDefinitionAllResponse, error)
 	GetDeviceMakeByName(context.Context, *GetDeviceMakeByNameRequest) (*DeviceMake, error)
 	GetDeviceMakeBySlug(context.Context, *GetDeviceMakeBySlugRequest) (*DeviceMake, error)
+	GetDeviceMakeByTokenId(context.Context, *GetDeviceMakeByTokenIdRequest) (*DeviceMake, error)
 	GetDeviceMakes(context.Context, *emptypb.Empty) (*GetDeviceMakeResponse, error)
 	GetIntegrations(context.Context, *emptypb.Empty) (*GetIntegrationResponse, error)
 	GetIntegrationByID(context.Context, *GetIntegrationRequest) (*Integration, error)
@@ -445,6 +456,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakeByName(context.Co
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakeBySlug(context.Context, *GetDeviceMakeBySlugRequest) (*DeviceMake, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceMakeBySlug not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakeByTokenId(context.Context, *GetDeviceMakeByTokenIdRequest) (*DeviceMake, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceMakeByTokenId not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakes(context.Context, *emptypb.Empty) (*GetDeviceMakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceMakes not implemented")
@@ -690,6 +704,24 @@ func _DeviceDefinitionService_GetDeviceMakeBySlug_Handler(srv interface{}, ctx c
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeviceDefinitionServiceServer).GetDeviceMakeBySlug(ctx, req.(*GetDeviceMakeBySlugRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DeviceDefinitionService_GetDeviceMakeByTokenId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceMakeByTokenIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceMakeByTokenId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceMakeByTokenId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceMakeByTokenId(ctx, req.(*GetDeviceMakeByTokenIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1146,6 +1178,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceMakeBySlug",
 			Handler:    _DeviceDefinitionService_GetDeviceMakeBySlug_Handler,
+		},
+		{
+			MethodName: "GetDeviceMakeByTokenId",
+			Handler:    _DeviceDefinitionService_GetDeviceMakeByTokenId_Handler,
 		},
 		{
 			MethodName: "GetDeviceMakes",
