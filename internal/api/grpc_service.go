@@ -328,23 +328,9 @@ func (s *GrpcService) GetDeviceMakeByTokenID(ctx context.Context, in *p_grpc.Get
 		TokenID: in.TokenId,
 	})
 
-	deviceMake := qryResult.(models.DeviceMake)
+	deviceMakes := qryResult.(*p_grpc.DeviceMake)
 
-	result := &p_grpc.DeviceMake{
-		Id:               deviceMake.ID,
-		Name:             deviceMake.Name,
-		NameSlug:         deviceMake.NameSlug,
-		LogoUrl:          deviceMake.LogoURL.String,
-		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIds),
-		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
-	}
-
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	return result, nil
+	return deviceMakes, nil
 }
 
 func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
