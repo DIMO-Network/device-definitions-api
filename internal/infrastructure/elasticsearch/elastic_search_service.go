@@ -101,9 +101,13 @@ func (d *ElasticSearch) buildAndExecRequest(method, url string, obj interface{},
 		time.Sleep(backoff)
 	}
 	if objOut != nil {
-		err = json.NewDecoder(resp.Body).Decode(&objOut)
-		if err != nil {
-			return nil, errors.Wrap(err, "error decoding response json")
+		if resp != nil {
+			err = json.NewDecoder(resp.Body).Decode(&objOut)
+			if err != nil {
+				return nil, errors.Wrap(err, "error decoding response json")
+			}
+		} else {
+			d.log.Warn().Msg("error: response body is nil")
 		}
 	}
 
