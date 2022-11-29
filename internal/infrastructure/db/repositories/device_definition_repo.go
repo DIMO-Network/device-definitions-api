@@ -338,6 +338,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 				CreatedAt:          di.CreatedAt,
 				UpdatedAt:          di.UpdatedAt,
 				Region:             di.Region,
+				Features:           di.Features,
 			}
 			err = deviceIntegration.Insert(ctx, tx, boil.Infer())
 			if err != nil {

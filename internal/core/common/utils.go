@@ -432,7 +432,7 @@ func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceInt
 
 	results := make([]map[string]interface{}, len(dt))
 
-	filterProperty := func(key string, items []*repoModel.IntegrationFeature) *repoModel.IntegrationFeature {
+	filterProperty := func(key string, items []*models.UpdateDeviceIntegrationFeatureAttribute) *models.UpdateDeviceIntegrationFeatureAttribute {
 		for _, attribute := range items {
 			if key == attribute.FeatureKey {
 				return attribute
@@ -441,19 +441,19 @@ func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceInt
 		return nil
 	}
 
-	for _, prop := range attributes {
-		property := filterProperty(prop.FeatureKey, dt)
-		if property == nil {
-			return nil, &exceptions.ValidationError{
-				Err: fmt.Errorf("invalid property %s", prop.FeatureKey),
-			}
-		}
+	const DefaultSupportLevel int = 0
 
+	for i, prop := range dt {
+		property := filterProperty(prop.FeatureKey, attributes)
 		metaData := make(map[string]interface{})
-		metaData["featureKey"] = property.FeatureKey
-		metaData["supportLevel"] = prop.SupportLevel
-
-		results = append(results, metaData)
+		if property != nil {
+			metaData["featureKey"] = property.FeatureKey
+			metaData["supportLevel"] = property.SupportLevel
+		} else {
+			metaData["featureKey"] = prop.FeatureKey
+			metaData["supportLevel"] = DefaultSupportLevel
+		}
+		results[i] = metaData
 	}
 
 	return results, nil
