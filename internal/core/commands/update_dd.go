@@ -247,7 +247,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 			deviceIntegrations = append(deviceIntegrations, deviceIntegration)
 		}
-	}
+	}x
 
 	// if deviceTypeInfo is nil, no metadata will be updated
 	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, deviceTypeInfo)
