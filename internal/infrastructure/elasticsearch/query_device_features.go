@@ -90,7 +90,7 @@ func (d *ElasticSearch) GetDeviceFeatures(envName, filterList string) (DeviceFea
 
 	deviceFeatures := DeviceFeaturesResp{}
 
-	_, err := d.buildAndExecRequest("POST", url, body, &deviceFeatures)
+	err := d.buildAndExecRequest("POST", url, body, &deviceFeatures)
 	if err != nil {
 		return DeviceFeaturesResp{}, errors.Wrap(err, "error when trying to fetch device features from elasticsearch")
 	}
