@@ -4595,7 +4595,7 @@ var file_pkg_grpc_device_definition_proto_rawDesc = []byte{
 	0x61, 0x6b, 0x65, 0x42, 0x79, 0x53, 0x6c, 0x75, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x1a, 0x10, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4d, 0x61,
 	0x6b, 0x65, 0x12, 0x4f, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4d,
-	0x61, 0x6b, 0x65, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x23, 0x2e, 0x67,
+	0x61, 0x6b, 0x65, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x12, 0x23, 0x2e, 0x67,
 	0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4d, 0x61, 0x6b,
 	0x65, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x1a, 0x10, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x4d,
@@ -4845,7 +4845,7 @@ var file_pkg_grpc_device_definition_proto_depIdxs = []int32{
 	58, // 43: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:input_type -> google.protobuf.Empty
 	38, // 44: grpc.DeviceDefinitionService.GetDeviceMakeByName:input_type -> grpc.GetDeviceMakeByNameRequest
 	39, // 45: grpc.DeviceDefinitionService.GetDeviceMakeBySlug:input_type -> grpc.GetDeviceMakeBySlugRequest
-	51, // 46: grpc.DeviceDefinitionService.GetDeviceMakeByTokenId:input_type -> grpc.GetDeviceMakeByTokenIdRequest
+	51, // 46: grpc.DeviceDefinitionService.GetDeviceMakeByTokenID:input_type -> grpc.GetDeviceMakeByTokenIdRequest
 	58, // 47: grpc.DeviceDefinitionService.GetDeviceMakes:input_type -> google.protobuf.Empty
 	58, // 48: grpc.DeviceDefinitionService.GetIntegrations:input_type -> google.protobuf.Empty
 	32, // 49: grpc.DeviceDefinitionService.GetIntegrationByID:input_type -> grpc.GetIntegrationRequest
@@ -4878,7 +4878,7 @@ var file_pkg_grpc_device_definition_proto_depIdxs = []int32{
 	26, // 76: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
 	10, // 77: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake
 	10, // 78: grpc.DeviceDefinitionService.GetDeviceMakeBySlug:output_type -> grpc.DeviceMake
-	10, // 79: grpc.DeviceDefinitionService.GetDeviceMakeByTokenId:output_type -> grpc.DeviceMake
+	10, // 79: grpc.DeviceDefinitionService.GetDeviceMakeByTokenID:output_type -> grpc.DeviceMake
 	40, // 80: grpc.DeviceDefinitionService.GetDeviceMakes:output_type -> grpc.GetDeviceMakeResponse
 	14, // 81: grpc.DeviceDefinitionService.GetIntegrations:output_type -> grpc.GetIntegrationResponse
 	15, // 82: grpc.DeviceDefinitionService.GetIntegrationByID:output_type -> grpc.Integration
