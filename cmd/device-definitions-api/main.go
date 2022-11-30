@@ -25,8 +25,11 @@ func main() {
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)
 	}
-
-	logger := zerolog.New(os.Stdout).With().
+	level, err := zerolog.ParseLevel(settings.LogLevel)
+	if err != nil {
+		log.Fatal("could not parse log level: $s", err)
+	}
+	logger := zerolog.New(os.Stdout).Level(level).With().
 		Timestamp().
 		Str("app", settings.ServiceName).
 		Str("git-sha1", gitSha1).
