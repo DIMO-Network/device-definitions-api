@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"strings"
 
 	"github.com/ericlagergren/decimal"
 	"github.com/volatiletech/sqlboiler/v4/types"
@@ -37,6 +39,7 @@ func NewGetDeviceMakeByTokenIDQueryHandler(dbs func() *db.ReaderWriter) GetDevic
 func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetDeviceMakeByTokenIDQuery)
+	qry.TokenID = strings.TrimSpace(qry.TokenID)
 
 	ti, ok := new(big.Int).SetString(qry.TokenID, 10)
 	if !ok {
@@ -47,7 +50,7 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 
 	tid := types.NewNullDecimal(new(decimal.Big).SetBigMantScale(ti, 0))
 
-	v, err := models.DeviceMakes(models.DeviceMakeWhere.TokenID.EQ(tid)).One(ctx, ch.DBS().Reader)
+	v, err := models.DeviceMakes(qm.Where("token_id = ?", qry.TokenID)).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
