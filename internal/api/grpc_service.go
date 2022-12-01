@@ -3,13 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"strconv"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/TheFellow/go-mediator/mediator"
@@ -46,7 +43,7 @@ func (s *GrpcService) GetDeviceDefinitionBySlug(ctx context.Context, in *p_grpc.
 		Year: int(in.Year),
 	})
 
-	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
+	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
 	result := common.BuildFromQueryResultToGRPC(dd)
 	return result, nil
 }
@@ -59,7 +56,7 @@ func (s *GrpcService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.G
 		Year:  int(in.Year),
 	})
 
-	dd := qryResult.(*models.GetDeviceDefinitionQueryResult)
+	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
 	result := common.BuildFromQueryResultToGRPC(dd)
 
 	return result, nil
@@ -140,7 +137,7 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
 
-	integrations := qryResult.([]models.GetIntegrationQueryResult)
+	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
@@ -152,10 +149,10 @@ func (s *GrpcService) GetIntegrations(ctx context.Context, in *emptypb.Empty) (*
 			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
 			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
-				BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
-				HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
-				ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
-				PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
+				BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+				HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 			},
 		})
 	}
@@ -167,7 +164,7 @@ func (s *GrpcService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetInte
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
 
-	item := qryResult.(models.GetIntegrationQueryResult)
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
 	result := &p_grpc.Integration{
 		Id:                      item.ID,
 		Type:                    item.Type,
@@ -176,10 +173,10 @@ func (s *GrpcService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetInte
 		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
 		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
-			BEV:  int32(item.AutoPiPowertrainToTemplateID[models.BEV]),
-			HEV:  int32(item.AutoPiPowertrainToTemplateID[models.HEV]),
-			ICE:  int32(item.AutoPiPowertrainToTemplateID[models.ICE]),
-			PHEV: int32(item.AutoPiPowertrainToTemplateID[models.PHEV]),
+			BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+			HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+			ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+			PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 		},
 	}
 
@@ -223,7 +220,7 @@ func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.Cre
 
 	if len(in.DeviceAttributes) > 0 {
 		for _, attribute := range in.DeviceAttributes {
-			command.DeviceAttributes = append(command.DeviceAttributes, &models.UpdateDeviceTypeAttribute{
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
 				Name:  attribute.Name,
 				Value: attribute.Value,
 			})
@@ -246,7 +243,7 @@ func (s *GrpcService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.Cr
 
 	if len(in.Features) > 0 {
 		for _, feature := range in.Features {
-			command.Features = append(command.Features, &models.UpdateDeviceIntegrationFeatureAttribute{
+			command.Features = append(command.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
 				FeatureKey:   feature.FeatureKey,
 				SupportLevel: int16(feature.SupportLevel),
 			})
@@ -280,7 +277,7 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 		Name: in.Name,
 	})
 
-	deviceMake := qryResult.(models.DeviceMake)
+	deviceMake := qryResult.(coremodels.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
 		Id:               deviceMake.ID,
@@ -304,7 +301,7 @@ func (s *GrpcService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDev
 		Slug: in.Slug,
 	})
 
-	deviceMake := qryResult.(models.DeviceMake)
+	deviceMake := qryResult.(coremodels.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
 		Id:               deviceMake.ID,
@@ -379,25 +376,25 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	}
 
 	if len(in.DeviceAttributes) > 0 {
-		for _, attribute := range in.DeviceAttributes {
-			command.DeviceAttributes = append(command.DeviceAttributes, &models.UpdateDeviceTypeAttribute{
+		command.DeviceAttributes = make([]*coremodels.UpdateDeviceTypeAttribute, len(in.DeviceAttributes))
+		for i, attribute := range in.DeviceAttributes {
+			command.DeviceAttributes[i] = &coremodels.UpdateDeviceTypeAttribute{
 				Name:  attribute.Name,
 				Value: attribute.Value,
-			})
+			}
 		}
 	}
 
 	if len(in.DeviceStyles) > 0 {
-		for _, style := range in.DeviceStyles {
-			command.DeviceStyles = append(command.DeviceStyles, commands.UpdateDeviceStyles{
+		command.DeviceStyles = make([]*commands.UpdateDeviceStyles, len(in.DeviceStyles))
+		for i, style := range in.DeviceStyles {
+			command.DeviceStyles[i] = &commands.UpdateDeviceStyles{
 				ID:              style.Id,
 				ExternalStyleID: style.ExternalStyleId,
 				Name:            style.Name,
 				Source:          style.Source,
 				SubModel:        style.SubModel,
-				CreatedAt:       style.CreatedAt.AsTime(),
-				UpdatedAt:       style.UpdatedAt.AsTime(),
-			})
+			}
 		}
 	}
 
@@ -406,36 +403,18 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 			deviceIntegration := commands.UpdateDeviceIntegrations{
 				IntegrationID: integration.IntegrationId,
 				Region:        integration.Region,
-				CreatedAt:     integration.CreatedAt.AsTime(),
-				UpdatedAt:     integration.UpdatedAt.AsTime(),
 			}
 
 			if len(integration.Features) > 0 {
 				for _, feature := range integration.Features {
-					deviceIntegration.Features = append(deviceIntegration.Features, &models.UpdateDeviceIntegrationFeatureAttribute{
+					deviceIntegration.Features = append(deviceIntegration.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
 						FeatureKey:   feature.FeatureKey,
 						SupportLevel: int16(feature.SupportLevel),
 					})
 				}
 			}
 
-			command.DeviceIntegrations = append(command.DeviceIntegrations, deviceIntegration)
-		}
-	}
-
-	//nolint
-	if in.VehicleData != nil {
-		command.VehicleInfo = &commands.UpdateDeviceVehicleInfo{
-			FuelType:            in.VehicleData.FuelType,
-			DrivenWheels:        in.VehicleData.DrivenWheels,
-			NumberOfDoors:       strconv.Itoa(int(in.VehicleData.NumberOfDoors)),
-			BaseMSRP:            int(in.VehicleData.Base_MSRP),
-			EPAClass:            in.VehicleData.EPAClass,
-			VehicleType:         in.VehicleData.VehicleType,
-			MPGHighway:          fmt.Sprintf("%f", in.VehicleData.MPGHighway),
-			FuelTankCapacityGal: fmt.Sprintf("%f", in.VehicleData.FuelTankCapacityGal),
-			MPGCity:             fmt.Sprintf("%f", in.VehicleData.MPGCity),
-			MPG:                 fmt.Sprintf("%f", in.VehicleData.MPG),
+			command.DeviceIntegrations = append(command.DeviceIntegrations, &deviceIntegration)
 		}
 	}
 
@@ -505,7 +484,7 @@ func (s *GrpcService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDevi
 		DeviceStyleID: in.Id,
 	})
 
-	ds := qryResult.(models.GetDeviceStyleQueryResult)
+	ds := qryResult.(coremodels.GetDeviceStyleQueryResult)
 	result := &p_grpc.DeviceStyle{
 		Id:                 ds.ID,
 		Source:             ds.Source,
@@ -524,7 +503,7 @@ func (s *GrpcService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, i
 		DeviceDefinitionID: in.Id,
 	})
 
-	styles := qryResult.([]models.GetDeviceStyleQueryResult)
+	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
 
 	result := &p_grpc.GetDeviceStyleResponse{}
 
@@ -550,7 +529,7 @@ func (s *GrpcService) GetDeviceStylesByFilter(ctx context.Context, in *p_grpc.Ge
 		SubModel:           in.SubModel,
 	})
 
-	styles := qryResult.([]models.GetDeviceStyleQueryResult)
+	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
 
 	result := &p_grpc.GetDeviceStyleResponse{}
 
@@ -574,7 +553,7 @@ func (s *GrpcService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc
 		ExternalDeviceID: in.Id,
 	})
 
-	ds := qryResult.(models.GetDeviceStyleQueryResult)
+	ds := qryResult.(coremodels.GetDeviceStyleQueryResult)
 	result := &p_grpc.DeviceStyle{
 		Id:                 ds.ID,
 		Source:             ds.Source,
@@ -628,7 +607,7 @@ func (s *GrpcService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDevi
 		DeviceTypeID: in.Id,
 	})
 
-	dt := qryResult.(models.GetDeviceTypeQueryResult)
+	dt := qryResult.(coremodels.GetDeviceTypeQueryResult)
 	result := &p_grpc.GetDeviceTypeResponse{
 		Id:   dt.ID,
 		Name: dt.Name,
@@ -651,7 +630,7 @@ func (s *GrpcService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDevi
 func (s *GrpcService) GetDeviceTypes(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDeviceTypeListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceTypeQuery{})
 
-	dt := qryResult.([]models.GetDeviceTypeQueryResult)
+	dt := qryResult.([]coremodels.GetDeviceTypeQueryResult)
 
 	items := make([]*p_grpc.GetDeviceTypeResponse, len(dt))
 	for i, v := range dt {
@@ -700,7 +679,7 @@ func (s *GrpcService) UpdateDeviceType(ctx context.Context, in *p_grpc.UpdateDev
 
 	if len(in.Attributes) > 0 {
 		for _, attr := range in.Attributes {
-			command.DeviceAttributes = append(command.DeviceAttributes, &models.CreateDeviceTypeAttribute{
+			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.CreateDeviceTypeAttribute{
 				Name:         attr.Name,
 				Type:         attr.Type,
 				Label:        attr.Label,
