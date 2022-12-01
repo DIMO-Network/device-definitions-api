@@ -41,7 +41,7 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 	ti, ok := new(big.Int).SetString(qry.TokenID, 10)
 	if !ok {
 		return nil, &exceptions.ValidationError{
-			Err: fmt.Errorf("Couldn't parse token id"),
+			Err: fmt.Errorf("couldn't parse token id"),
 		}
 	}
 
@@ -51,12 +51,12 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("could not find device make name: %s", qry.TokenID),
+				Err: fmt.Errorf("could not find device make with tokenId param: %s, and bigint tid %v", qry.TokenID, tid),
 			}
 		}
 
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device makes"),
+			Err: fmt.Errorf("failed to get device make by token id"),
 		}
 	}
 
