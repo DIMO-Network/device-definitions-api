@@ -4,13 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"strings"
-
-	"github.com/ericlagergren/decimal"
-	"github.com/volatiletech/sqlboiler/v4/types"
-
 	"math/big"
+	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -19,7 +14,10 @@ import (
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type GetDeviceMakeByTokenIDQuery struct {

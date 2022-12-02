@@ -70,7 +70,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
 
 	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
-	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)
@@ -110,32 +110,32 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	i := setupNewIntegrationForUpdate(s.T(), s.pdb)
 
 	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
-	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)
 
-	deviceStyles := []UpdateDeviceStyles{}
-	deviceStyles = append(deviceStyles, UpdateDeviceStyles{
+	deviceStyles := make([]*UpdateDeviceStyles, 2)
+	deviceStyles[0] = &UpdateDeviceStyles{
 		ID:              ksuid.New().String(),
 		Name:            "NewStyle1",
 		Source:          "Source",
 		SubModel:        "SubModel",
 		ExternalStyleID: ksuid.New().String(),
-	})
-	deviceStyles = append(deviceStyles, UpdateDeviceStyles{
+	}
+	deviceStyles[1] = &UpdateDeviceStyles{
 		ID:              ksuid.New().String(),
 		Name:            "NewStyle2",
 		Source:          "Source",
 		SubModel:        "SubModel2",
 		ExternalStyleID: ksuid.New().String(),
-	})
+	}
 
 	styles, _ := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).
 		All(ctx, s.pdb.DBS().Reader)
 
 	for _, style := range styles {
-		deviceStyles = append(deviceStyles, UpdateDeviceStyles{
+		deviceStyles = append(deviceStyles, &UpdateDeviceStyles{
 			ID:              style.ID,
 			Name:            style.Name,
 			Source:          style.Source,
@@ -144,21 +144,21 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 		})
 	}
 
-	deviceIntegrations := []UpdateDeviceIntegrations{}
-	deviceIntegrations = append(deviceIntegrations, UpdateDeviceIntegrations{
-		IntegrationID: i.ID,
-		Region:        "China",
-	})
-
 	integrations, _ := models.DeviceIntegrations(models.DeviceIntegrationWhere.DeviceDefinitionID.EQ(dd.ID)).
 		All(ctx, s.pdb.DBS().Reader)
 
-	for _, integration := range integrations {
-		deviceIntegrations = append(deviceIntegrations, UpdateDeviceIntegrations{
+	deviceIntegrations := make([]*UpdateDeviceIntegrations, len(integrations)+1)
+	deviceIntegrations[0] = &UpdateDeviceIntegrations{
+		IntegrationID: i.ID,
+		Region:        "China",
+	}
+
+	for c, integration := range integrations {
+		deviceIntegrations[c+1] = &UpdateDeviceIntegrations{
 			IntegrationID: integration.IntegrationID,
 			Region:        integration.Region,
 			CreatedAt:     integration.CreatedAt,
-		})
+		}
 	}
 
 	command := &UpdateDeviceDefinitionCommand{
@@ -203,14 +203,14 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	dm := dbtesthelper.SetupCreateMake(s.T(), "BMW2", s.pdb)
 
 	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
-	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
+	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)
 
-	var deviceIntegrations []UpdateDeviceIntegrations
-	deviceIntegrations = append(deviceIntegrations, UpdateDeviceIntegrations{
+	var deviceIntegrations []*UpdateDeviceIntegrations
+	deviceIntegrations = append(deviceIntegrations, &UpdateDeviceIntegrations{
 		IntegrationID: i.ID,
 		Region:        "us-01",
 	})

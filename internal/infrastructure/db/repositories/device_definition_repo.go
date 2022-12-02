@@ -32,8 +32,8 @@ type DeviceDefinitionRepository interface {
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error)
-	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error)
+	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
 
@@ -169,7 +169,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -228,7 +228,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		DeviceTypeID: null.StringFrom(deviceTypeID),
 	}
 
-	if metaData != nil {
+	if metaData.Valid {
 		err = dd.Metadata.Marshal(metaData)
 		if err != nil {
 			return nil, &exceptions.InternalError{
@@ -270,19 +270,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 
 // CreateOrUpdate does an upsert to persist the device definition. Includes metadata as a parameter, device styles will be created on the fly
 // uses a transaction to rollback if any part does not get written
-func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
-
+func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
-
-	if metaData != nil {
-		err := dd.Metadata.Marshal(metaData)
-		if err != nil {
-			return nil, &exceptions.InternalError{
-				Err: err,
-			}
-		}
-	}
 
 	if err := dd.Upsert(ctx, tx, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

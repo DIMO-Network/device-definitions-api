@@ -110,6 +110,16 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 		}
 	}
+	// creates if does not exist
+	if dd == nil {
+		dd = &models.DeviceDefinition{
+			ID:           command.DeviceDefinitionID,
+			DeviceMakeID: command.DeviceMakeID,
+			Model:        command.Model,
+			Year:         command.Year,
+			ModelSlug:    common.SlugString(command.Model),
+		}
+	}
 
 	if len(command.Model) > 0 {
 		dd.Model = command.Model
@@ -143,22 +153,15 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
-	// creates if does not exist
-	if dd == nil {
-		dd = &models.DeviceDefinition{
-			ID:           command.DeviceDefinitionID,
-			DeviceMakeID: command.DeviceMakeID,
-			Model:        command.Model,
-			Year:         command.Year,
-			ModelSlug:    common.SlugString(command.Model),
-			DeviceTypeID: null.StringFrom(dt.ID),
-		}
-	}
+	dd.DeviceTypeID = null.StringFrom(dt.ID)
 
-	// attribute info - deviceTypeInfo will be nil if command.DeviceAttributes is nil
+	// attribute info - deviceTypeInfo will be json invalid if command.DeviceAttributes is nil
 	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
 	if err != nil {
 		return nil, err
+	}
+	if deviceTypeInfo.Valid {
+		dd.Metadata = deviceTypeInfo
 	}
 
 	if len(command.ExternalID) > 0 {
@@ -242,7 +245,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	// if deviceTypeInfo is nil, no metadata will be updated
-	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, deviceTypeInfo)
+	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations)
 
 	if err != nil {
 		return nil, err
