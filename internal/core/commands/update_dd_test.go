@@ -2,15 +2,13 @@ package commands
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/tidwall/gjson"
-	"testing"
-
 	_ "embed"
+	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
@@ -21,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/tidwall/gjson"
 )
 
 type UpdateDeviceDefinitionCommandHandlerSuite struct {
