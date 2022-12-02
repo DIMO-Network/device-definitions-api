@@ -87,7 +87,7 @@ func NewUpdateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 	return UpdateDeviceDefinitionCommandHandler{DDCache: cache, Repository: repository, DBS: dbs}
 }
 
-// Handle will update an existing device def, or if it doesn't exist create it on the fly
+// Handle will update an existing device def, or if it doesn't exist create it on the fly. We may want to change create to be explicit
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*UpdateDeviceDefinitionCommand)
@@ -95,7 +95,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	if len(command.DeviceTypeID) == 0 {
 		command.DeviceTypeID = common.DefaultDeviceType
 	}
-	if err := command.Validate(); err != nil {
+	if err := command.ValidateUpdate(); err != nil {
 		return nil, &exceptions.ValidationError{
 			Err: errors.Wrap(err, "failed model validation"),
 		}
@@ -259,16 +259,10 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
 
-// Validate validates the contents of a UpdateDeviceDefinitionCommand
-func (udc *UpdateDeviceDefinitionCommand) Validate() error {
+// ValidateUpdate validates the contents of a UpdateDeviceDefinitionCommand for purpose of updating record
+func (udc *UpdateDeviceDefinitionCommand) ValidateUpdate() error {
 	return validation.ValidateStruct(udc,
 		validation.Field(&udc.DeviceDefinitionID, validation.Required),
 		validation.Field(&udc.DeviceDefinitionID, validation.Length(27, 27)),
-		validation.Field(&udc.DeviceMakeID, validation.Required),
-		validation.Field(&udc.DeviceTypeID, validation.Required),
-		validation.Field(&udc.Model, validation.Required),
-		validation.Field(&udc.Model, validation.Length(1, 40)),
-		validation.Field(&udc.Year, validation.Required),
-		validation.Field(&udc.Year, validation.Min(1980)),
 	)
 }
