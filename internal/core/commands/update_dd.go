@@ -22,17 +22,16 @@ import (
 )
 
 type UpdateDeviceDefinitionCommand struct {
-	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	Source             string `json:"source"`
-	ExternalID         string `json:"external_id"`
-	ImageURL           string `json:"image_url"`
-	VehicleInfo        *UpdateDeviceVehicleInfo
-	Verified           bool                       `json:"verified"`
-	Model              string                     `json:"model"`
-	Year               int16                      `json:"year"`
-	DeviceMakeID       string                     `json:"device_make_id"`
-	DeviceStyles       []UpdateDeviceStyles       `json:"deviceStyles"`
-	DeviceIntegrations []UpdateDeviceIntegrations `json:"deviceIntegrations"`
+	DeviceDefinitionID string                      `json:"deviceDefinitionId"`
+	Source             string                      `json:"source"`
+	ExternalID         string                      `json:"external_id"`
+	ImageURL           string                      `json:"image_url"`
+	Verified           bool                        `json:"verified"`
+	Model              string                      `json:"model"`
+	Year               int16                       `json:"year"`
+	DeviceMakeID       string                      `json:"device_make_id"`
+	DeviceStyles       []*UpdateDeviceStyles       `json:"deviceStyles"`
+	DeviceIntegrations []*UpdateDeviceIntegrations `json:"deviceIntegrations"`
 	// DeviceTypeID comes from the device_types.id table, determines what kind of device this is, typically a vehicle
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
@@ -88,7 +87,7 @@ func NewUpdateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 	return UpdateDeviceDefinitionCommandHandler{DDCache: cache, Repository: repository, DBS: dbs}
 }
 
-// Handle will update an existing device def, or if it doesn't exist create it on the fly
+// Handle will update an existing device def, or if it doesn't exist create it on the fly. We may want to change create to be explicit
 func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*UpdateDeviceDefinitionCommand)
@@ -96,7 +95,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	if len(command.DeviceTypeID) == 0 {
 		command.DeviceTypeID = common.DefaultDeviceType
 	}
-	if err := command.Validate(); err != nil {
+	if err := command.ValidateUpdate(); err != nil {
 		return nil, &exceptions.ValidationError{
 			Err: errors.Wrap(err, "failed model validation"),
 		}
@@ -111,9 +110,31 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 		}
 	}
+	// creates if does not exist
+	if dd == nil {
+		dd = &models.DeviceDefinition{
+			ID:           command.DeviceDefinitionID,
+			DeviceMakeID: command.DeviceMakeID,
+			Model:        command.Model,
+			Year:         command.Year,
+			ModelSlug:    common.SlugString(command.Model),
+		}
+	}
 
-	// Resolve make
-	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(command.DeviceMakeID)).One(ctx, ch.DBS().Reader)
+	if len(command.Model) > 0 {
+		dd.Model = command.Model
+	}
+
+	if command.Year > 0 {
+		dd.Year = command.Year
+	}
+
+	if len(command.DeviceMakeID) > 0 {
+		dd.DeviceMakeID = command.DeviceMakeID
+	}
+
+	// Resolve make, used later to clear cache. here just as way to make sure id exists
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.ID.EQ(dd.DeviceMakeID)).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device makes with make id: %s", command.DeviceMakeID),
@@ -132,41 +153,15 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: fmt.Errorf("failed to get device types"),
 		}
 	}
-	// creates if does not exist
-	if dd == nil {
-		dd = &models.DeviceDefinition{
-			ID:           command.DeviceDefinitionID,
-			DeviceMakeID: command.DeviceMakeID,
-			Model:        command.Model,
-			Year:         command.Year,
-			ModelSlug:    common.SlugString(command.Model),
-			DeviceTypeID: null.StringFrom(dt.ID),
-		}
-	}
+	dd.DeviceTypeID = null.StringFrom(dt.ID)
 
-	// check if vehicleInfo is set and error if it is
-	if command.VehicleInfo != nil {
-		return nil, &exceptions.ValidationError{
-			Err: errors.New("vehicleInfo is no longer accepted, use deviceAttributes instead"),
-		}
-	}
-
-	// attribute info - deviceTypeInfo will be nil if command.DeviceAttributes is nil
+	// attribute info - deviceTypeInfo will be json invalid if command.DeviceAttributes is nil
 	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(command.Model) > 0 {
-		dd.Model = command.Model
-	}
-
-	if command.Year > 0 {
-		dd.Year = command.Year
-	}
-
-	if len(command.DeviceMakeID) > 0 {
-		dd.DeviceMakeID = command.DeviceMakeID
+	if deviceTypeInfo.Valid {
+		dd.Metadata = deviceTypeInfo
 	}
 
 	if len(command.ExternalID) > 0 {
@@ -250,7 +245,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	// if deviceTypeInfo is nil, no metadata will be updated
-	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, deviceTypeInfo)
+	dd, err = ch.Repository.CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations)
 
 	if err != nil {
 		return nil, err
@@ -259,21 +254,15 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	// Remove Cache
 	ch.DDCache.DeleteDeviceDefinitionCacheByID(ctx, dd.ID)
 	ch.DDCache.DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, dm.Name, dd.Model, int(dd.Year))
-	ch.DDCache.DeleteDeviceDefinitionCacheBySlug(ctx, dm.NameSlug, int(dd.Year))
+	ch.DDCache.DeleteDeviceDefinitionCacheBySlug(ctx, dd.ModelSlug, int(dd.Year))
 
 	return UpdateDeviceDefinitionCommandResult{ID: dd.ID}, nil
 }
 
-// Validate validates the contents of a UpdateDeviceDefinitionCommand
-func (udc *UpdateDeviceDefinitionCommand) Validate() error {
+// ValidateUpdate validates the contents of a UpdateDeviceDefinitionCommand for purpose of updating record
+func (udc *UpdateDeviceDefinitionCommand) ValidateUpdate() error {
 	return validation.ValidateStruct(udc,
 		validation.Field(&udc.DeviceDefinitionID, validation.Required),
 		validation.Field(&udc.DeviceDefinitionID, validation.Length(27, 27)),
-		validation.Field(&udc.DeviceMakeID, validation.Required),
-		validation.Field(&udc.DeviceTypeID, validation.Required),
-		validation.Field(&udc.Model, validation.Required),
-		validation.Field(&udc.Model, validation.Length(1, 40)),
-		validation.Field(&udc.Year, validation.Required),
-		validation.Field(&udc.Year, validation.Min(1980)),
 	)
 }

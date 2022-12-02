@@ -179,7 +179,7 @@ func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMa
 		metaData["fuel_type"] = defaultValue
 		metaData["driven_wheels"] = "4"
 		metaData["number_of_doors"] = "4"
-		metaData["MPG"] = defaultValue
+		metaData["mpg"] = defaultValue
 	}
 	deviceTypeInfo[dt.Metadatakey] = metaData
 	_ = dd.Metadata.Marshal(deviceTypeInfo)

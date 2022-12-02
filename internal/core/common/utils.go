@@ -378,10 +378,10 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	return rp
 }
 
-func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (map[string]interface{}, error) {
+func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (null.JSON, error) {
 	// attribute info
 	if attributes == nil {
-		return nil, nil
+		return null.JSON{Valid: false}, nil
 	}
 	deviceTypeInfo := make(map[string]interface{})
 	metaData := make(map[string]interface{})
@@ -400,13 +400,13 @@ func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, d
 			property := filterProperty(prop.Name, ai["properties"])
 
 			if property == nil {
-				return nil, &exceptions.ValidationError{
+				return null.JSON{Valid: false}, &exceptions.ValidationError{
 					Err: fmt.Errorf("invalid property %s", prop.Name),
 				}
 			}
 
 			if property.Required && len(prop.Value) == 0 {
-				return nil, &exceptions.ValidationError{
+				return null.JSON{Valid: false}, &exceptions.ValidationError{
 					Err: fmt.Errorf("property %s is required", prop.Name),
 				}
 			}
@@ -414,10 +414,13 @@ func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, d
 			metaData[property.Name] = prop.Value
 		}
 	}
-
 	deviceTypeInfo[dt.Metadatakey] = metaData
 
-	return deviceTypeInfo, nil
+	j, err := json.Marshal(deviceTypeInfo)
+	if err != nil {
+		return null.JSON{Valid: false}, nil
+	}
+	return null.JSONFrom(j), nil
 }
 
 func BuildDeviceDefinitionName(year int16, make string, model string) string {

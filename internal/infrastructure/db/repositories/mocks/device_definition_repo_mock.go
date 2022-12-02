@@ -10,6 +10,7 @@ import (
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	gomock "github.com/golang/mock/gomock"
+	null "github.com/volatiletech/null/v8"
 )
 
 // MockDeviceDefinitionRepository is a mock of DeviceDefinitionRepository interface.
@@ -36,18 +37,18 @@ func (m *MockDeviceDefinitionRepository) EXPECT() *MockDeviceDefinitionRepositor
 }
 
 // CreateOrUpdate mocks base method.
-func (m *MockDeviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrUpdate", ctx, dd, deviceStyles, deviceIntegrations, metaData)
+	ret := m.ctrl.Call(m, "CreateOrUpdate", ctx, dd, deviceStyles, deviceIntegrations)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateOrUpdate indicates an expected call of CreateOrUpdate.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations, metaData interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations, metaData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations)
 }
 
 // FetchDeviceCompatibility mocks base method.
@@ -126,7 +127,7 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int, deviceTypeID string, metaData map[string]interface{}) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, make, model, year, deviceTypeID, metaData)
 	ret0, _ := ret[0].(*models.DeviceDefinition)

@@ -183,7 +183,6 @@ message BaseResponse {
 
 message UpdateDeviceDefinitionRequest {
   string device_definition_id = 1;
-  VehicleInfo vehicle_data = 2 [deprecated = true];
   string source = 3 [deprecated = true];
   string image_url = 4;
   bool verified = 5;

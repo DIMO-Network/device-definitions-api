@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -64,7 +65,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 	year := 2022
 
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
-	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", nil)
+	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", null.JSON{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.Model, model)
@@ -83,7 +84,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
-	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", nil)
+	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", null.JSON{})
 	s.NoError(err)
 
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
@@ -106,7 +107,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	}
 	s.NoError(i.Insert(ctx, s.pdb.DBS().Writer, boil.Infer()))
 
-	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", nil)
+	dd, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", null.JSON{})
 	s.NoError(err)
 	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(common.AutoPiVendor)).One(ctx, s.pdb.DBS().Reader)
 	s.NoError(err)
@@ -129,7 +130,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Existing_Su
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", nil)
+	dd2, err := s.repository.GetOrCreate(ctx, source, mk, model, year, "vehicle", null.JSON{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
@@ -153,7 +154,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_New
 		Verified:     false,
 		ModelSlug:    common.SlugString(model),
 	}
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, nil)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
@@ -176,7 +177,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Exi
 	dd.Year = int16(newYear)
 	dd.Source = null.StringFrom(newSource)
 
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, nil)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
@@ -210,7 +211,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 		ExternalStyleID:    ksuid.New().String(),
 	})
 
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, newStyles, []*models.DeviceIntegration{}, nil)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, newStyles, []*models.DeviceIntegration{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
@@ -242,7 +243,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 		Region:             "east-us",
 	})
 
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, newDeviceIntegrations, nil)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, newDeviceIntegrations)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
@@ -263,15 +264,16 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 	var ai map[string][]interface{}
 	defaultValue := "defaultValue"
 	if err := dt.Properties.Unmarshal(&ai); err == nil {
-		metaData["MPG"] = defaultValue
+		metaData["mpg"] = defaultValue
 	}
 	deviceTypeInfo[dt.Metadatakey] = metaData
+	j, _ := json.Marshal(deviceTypeInfo)
+	dd.Metadata = null.JSONFrom(j)
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{}, deviceTypeInfo)
+	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{})
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)
-
 }
 
 func (s *DeviceDefinitionRepositorySuite) TestGetDeviceDefinition_By_Slug_Success() {
