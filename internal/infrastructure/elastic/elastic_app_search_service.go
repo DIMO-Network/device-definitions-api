@@ -36,7 +36,7 @@ type elasticAppSearchService struct {
 
 func NewElasticAppSearchService(settings *config.Settings, logger zerolog.Logger) (SearchService, error) {
 	headers := map[string]string{"Authorization": "Bearer " + settings.ElasticSearchAppSearchToken}
-	httpClient, err := shared.NewHTTPClientWrapper(settings.ElasticSearchAppSearchHost, "", 10*time.Second, headers, true)
+	httpClient, err := shared.NewHTTPClientWrapper(settings.ElasticSearchAppSearchHost, "", 30*time.Second, headers, true)
 	if err != nil {
 		return nil, err
 	}

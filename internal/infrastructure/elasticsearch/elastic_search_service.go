@@ -20,7 +20,7 @@ func NewElasticSearch(settings *config.Settings, logger zerolog.Logger) (*Elasti
 	headers := map[string]string{
 		"Authorization": "ApiKey " + settings.ElasticSearchDeviceStatusToken,
 	}
-	client, err := shared.NewHTTPClientWrapper("", "", 20*time.Second, headers, true)
+	client, err := shared.NewHTTPClientWrapper("", "", 30*time.Second, headers, true)
 	if err != nil {
 		return nil, err
 	}
