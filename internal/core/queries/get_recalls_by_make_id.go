@@ -35,7 +35,7 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 	qry := query.(*GetRecallsByMakeQuery)
 	// this is temporarily limiting to 100 records
 	dds, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(qry.MakeID),
-		models.DeviceDefinitionWhere.Year.GTE(cutoffYear), qm.Select(models.DeviceDefinitionColumns.ID), qm.Limit(100)).All(ctx, qh.DBS().Reader)
+		models.DeviceDefinitionWhere.Year.GTE(cutoffYear), qm.Select(models.DeviceDefinitionColumns.ID)).All(ctx, qh.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return p_grpc.GetRecallsResponse{}, nil
