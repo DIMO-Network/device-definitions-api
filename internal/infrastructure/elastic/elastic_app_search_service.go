@@ -5,13 +5,11 @@ package elastic
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -31,22 +29,21 @@ type SearchService interface {
 
 // This is different than regular elastic, https://www.elastic.co/guide/en/app-search/current/api-reference.html
 type elasticAppSearchService struct {
-	BaseURL        string
-	Token          string
 	MetaEngineName string
-	httpClient     *http.Client
+	httpClient     shared.HTTPClientWrapper
 	log            zerolog.Logger
 }
 
 func NewElasticAppSearchService(settings *config.Settings, logger zerolog.Logger) (SearchService, error) {
-	var netClient = &http.Client{
-		Timeout: time.Second * 10,
+	headers := map[string]string{"Authorization": "Bearer " + settings.ElasticSearchAppSearchToken}
+	httpClient, err := shared.NewHTTPClientWrapper(settings.ElasticSearchAppSearchHost, "", 30*time.Second, headers, true)
+	if err != nil {
+		return nil, err
 	}
+
 	return &elasticAppSearchService{
-		BaseURL:        settings.ElasticSearchAppSearchHost,
-		Token:          settings.ElasticSearchAppSearchToken,
 		MetaEngineName: "dd-" + settings.Environment,
-		httpClient:     netClient,
+		httpClient:     httpClient,
 		log:            logger,
 	}, nil
 }
@@ -62,9 +59,9 @@ func (d *elasticAppSearchService) LoadDeviceDefinitions() error {
 
 // GetEngines Calls elastic instance api to list engines
 func (d *elasticAppSearchService) GetEngines() (*GetEnginesResp, error) {
-	url := fmt.Sprintf("%s/api/as/v1/engines/", d.BaseURL)
+	path := "/api/as/v1/engines/"
 	engines := GetEnginesResp{}
-	_, err := d.buildAndExecRequest("GET", url, nil, &engines)
+	err := d.buildAndExecRequest("GET", path, nil, &engines)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting engines")
 	}
@@ -78,7 +75,7 @@ func (d *elasticAppSearchService) CreateEngine(name string, metaSource *string) 
 		return nil, errors.New("name must be all lowercase")
 	}
 
-	url := fmt.Sprintf("%s/api/as/v1/engines/", d.BaseURL)
+	path := "/api/as/v1/engines/"
 	lang := "Universal"
 	meta := "meta"
 	create := EngineDetail{
@@ -91,7 +88,7 @@ func (d *elasticAppSearchService) CreateEngine(name string, metaSource *string) 
 		create.SourceEngines = []string{*metaSource}
 	}
 	engine := EngineDetail{}
-	_, err := d.buildAndExecRequest("POST", url, create, &engine)
+	err := d.buildAndExecRequest("POST", path, create, &engine)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating engine: %v", create)
 	}
@@ -101,12 +98,12 @@ func (d *elasticAppSearchService) CreateEngine(name string, metaSource *string) 
 
 // AddSourceEngineToMetaEngine https://www.elastic.co/guide/en/app-search/current/meta-engines.html#meta-engines-add-source-engines
 func (d *elasticAppSearchService) AddSourceEngineToMetaEngine(sourceName, metaName string) (*EngineDetail, error) {
-	url := fmt.Sprintf("%s/api/as/v1/engines/%s/source_engines", d.BaseURL, metaName)
+	path := fmt.Sprintf("/api/as/v1/engines/%s/source_engines", metaName)
 	body := `["%s"]`
 	body = fmt.Sprintf(body, sourceName)
 
 	engine := EngineDetail{}
-	_, err := d.buildAndExecRequest("POST", url, body, &engine)
+	err := d.buildAndExecRequest("POST", path, body, &engine)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error adding source engine: %s to meta engine: %s", sourceName, metaName)
 	}
@@ -116,12 +113,12 @@ func (d *elasticAppSearchService) AddSourceEngineToMetaEngine(sourceName, metaNa
 
 // RemoveSourceEngine https://www.elastic.co/guide/en/app-search/current/meta-engines.html#meta-engines-remove-source-engines
 func (d *elasticAppSearchService) RemoveSourceEngine(sourceName, metaName string) (*EngineDetail, error) {
-	url := fmt.Sprintf("%s/api/as/v1/engines/%s/source_engines", d.BaseURL, metaName)
+	path := fmt.Sprintf("/api/as/v1/engines/%s/source_engines", metaName)
 	body := `["%s"]`
 	body = fmt.Sprintf(body, sourceName)
 
 	engine := EngineDetail{}
-	_, err := d.buildAndExecRequest("DELETE", url, body, &engine)
+	err := d.buildAndExecRequest("DELETE", path, body, &engine)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error removing source engine: %s from meta engine: %s", sourceName, metaName)
 	}
@@ -131,9 +128,9 @@ func (d *elasticAppSearchService) RemoveSourceEngine(sourceName, metaName string
 
 // DeleteEngine https://www.elastic.co/guide/en/app-search/current/engines.html#engines-delete
 func (d *elasticAppSearchService) DeleteEngine(name string) error {
-	url := fmt.Sprintf("%s/api/as/v1/engines/%s", d.BaseURL, name)
+	path := fmt.Sprintf("/api/as/v1/engines/%s", name)
 	// DELETE
-	_, err := d.buildAndExecRequest("DELETE", url, nil, nil)
+	err := d.buildAndExecRequest("DELETE", path, nil, nil)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting engine %s", name)
 	}
@@ -147,10 +144,10 @@ func (d *elasticAppSearchService) CreateDocuments(docs []DeviceDefinitionSearchD
 	if len(docs) > 100 {
 		return nil, fmt.Errorf("docs slice is too big with len: %d, max of 100 items allowed", len(docs))
 	}
-	url := fmt.Sprintf("%s/api/as/v1/engines/%s/documents", d.BaseURL, engineName)
+	path := fmt.Sprintf("/api/as/v1/engines/%s/documents", engineName)
 
 	var resp []CreateDocsResp
-	_, err := d.buildAndExecRequest("POST", url, docs, &resp)
+	err := d.buildAndExecRequest("POST", path, docs, &resp)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating documents in engine: %s", engineName)
 	}
@@ -181,7 +178,7 @@ func (d *elasticAppSearchService) CreateDocumentsBatched(docs []DeviceDefinition
 // UpdateSearchSettingsForDeviceDefs specific method to update the search_settings for device definitions
 // https://www.elastic.co/guide/en/app-search/current/search-settings.html#search-settings-update
 func (d *elasticAppSearchService) UpdateSearchSettingsForDeviceDefs(engineName string) error {
-	url := fmt.Sprintf("%s/api/as/v1/engines/%s/search_settings", d.BaseURL, engineName)
+	path := fmt.Sprintf("/api/as/v1/engines/%s/search_settings", engineName)
 	body := `
 {
   "search_fields": {
@@ -218,7 +215,7 @@ func (d *elasticAppSearchService) UpdateSearchSettingsForDeviceDefs(engineName s
   "boosts": {},
   "precision": 2
 }`
-	_, err := d.buildAndExecRequest("PUT", url, body, nil)
+	err := d.buildAndExecRequest("PUT", path, body, nil)
 	if err != nil {
 		return errors.Wrapf(err, "error when trying to update search_settings for: %s", engineName)
 	}
@@ -227,79 +224,35 @@ func (d *elasticAppSearchService) UpdateSearchSettingsForDeviceDefs(engineName s
 
 // buildAndExecRequest makes request with token and headers, marshalling passed in obj or if string just passing along in body,
 // and unmarshalling response body to objOut (must be passed in as ptr eg &varName)
-func (d *elasticAppSearchService) buildAndExecRequest(method, url string, obj interface{}, objOut interface{}) (*http.Response, error) {
-	backoffSchedule := []time.Duration{
-		1 * time.Second,
-		3 * time.Second,
-		10 * time.Second,
-	}
+func (d *elasticAppSearchService) buildAndExecRequest(method, url string, obj interface{}, objOut interface{}) error {
+	var reqBody []byte
 
-	var req *http.Request
-
-	if obj == nil {
-		req, _ = http.NewRequest(
-			method,
-			url,
-			nil,
-		)
-	} else {
-		b := ""
-		if reflect.TypeOf(obj).Name() == "string" {
-			b = obj.(string)
+	if obj != nil {
+		if s, ok := obj.(string); ok {
+			reqBody = []byte(s)
 		} else {
-			j, _ := json.Marshal(obj)
-			b = string(j)
-		}
-		req, _ = http.NewRequest(
-			method,
-			url,
-			strings.NewReader(b),
-		)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+d.Token)
-	var resp *http.Response
-	var err error
-
-	for _, backoff := range backoffSchedule {
-		resp, err = d.httpClient.Do(req) // any error resp should return err per docs
-		if resp != nil && resp.StatusCode == http.StatusOK && err == nil {
-			break
-		}
-		if resp != nil && resp.StatusCode == http.StatusBadRequest {
-			b, _ := io.ReadAll(resp.Body)
-			_ = resp.Body.Close()
-			return resp, fmt.Errorf("received bad request response with body: %s", string(b))
-		}
-		// control for err or resp being nil to log message.
-		respStatus := ""
-		errMsg := ""
-		if resp != nil {
-			respStatus = resp.Status
-		}
-		if err != nil {
-			if resp != nil {
-				b, err := io.ReadAll(resp.Body)
-				_ = resp.Body.Close()
-				if err == nil {
-					errMsg = string(b)
-				}
-			} else {
-				errMsg = err.Error()
+			var err error
+			reqBody, err = json.Marshal(obj)
+			if err != nil {
+				return fmt.Errorf("failed marshaling request body: %w", err)
 			}
 		}
-		d.log.Warn().Msgf("request Status: %s. error: %s. Retrying in %v", respStatus, errMsg, backoff)
-		time.Sleep(backoff)
 	}
+
+	resp, err := d.httpClient.ExecuteRequest(url, method, reqBody)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
 	if objOut != nil {
-		err = json.NewDecoder(resp.Body).Decode(&objOut)
+		err = json.NewDecoder(resp.Body).Decode(objOut)
 		if err != nil {
-			return nil, errors.Wrap(err, "error decoding response json")
+			return fmt.Errorf("failed to unmarshal response: %w", err)
 		}
 	}
 
-	return resp, nil
+	return nil
 }
 
 // DeviceDefinitionSearchDoc used for elastic search document indexing. entirely for searching, source of truth is DB.

@@ -75,13 +75,20 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 			}
 		}
 
+		if definition.R.DeviceType == nil {
+			ch.logger.Error().Str("command", "syncSearch").Str("deviceDefinitionId", definition.ID).Msg("Definition has no type.")
+			continue
+		}
+
+		metadataKey := definition.R.DeviceType.Metadatakey
+
 		docs[i] = elastic.DeviceDefinitionSearchDoc{
 			ID:            definition.ID,
 			SearchDisplay: sd,
 			Make:          definition.R.DeviceMake.Name,
 			Model:         definition.Model,
 			Year:          int(definition.Year),
-			Type:          definition.R.DeviceType.Metadatakey,
+			Type:          metadataKey,
 			SubModels:     sm,
 			ImageURL:      imageURL,
 			MakeSlug:      definition.R.DeviceMake.NameSlug,
@@ -92,8 +99,8 @@ func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediato
 		var attr map[string]any
 		if err := definition.Metadata.Unmarshal(&attr); err == nil {
 			if attr != nil {
-				if a, ok := attr[definition.R.DeviceType.Metadatakey]; ok && a != nil {
-					attributes := attr[definition.R.DeviceType.Metadatakey].(map[string]any)
+				if a, ok := attr[metadataKey]; ok && a != nil {
+					attributes := attr[metadataKey].(map[string]any)
 					for key, value := range attributes {
 						docs[i].Attributes = append(docs[i].Attributes, elastic.DeviceDefinitionAttributeSearchDoc{
 							Name:  key,
