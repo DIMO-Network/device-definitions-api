@@ -33,9 +33,9 @@ const cutoffYear = 2005
 
 func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetRecallsByMakeQuery)
-
+	// this is temporarily limiting to 100 records
 	dds, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(qry.MakeID),
-		models.DeviceDefinitionWhere.Year.GTE(cutoffYear), qm.Select(models.DeviceDefinitionColumns.ID)).All(ctx, qh.DBS().Reader)
+		models.DeviceDefinitionWhere.Year.GTE(cutoffYear), qm.Select(models.DeviceDefinitionColumns.ID), qm.Limit(100)).All(ctx, qh.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return p_grpc.GetRecallsResponse{}, nil
@@ -52,7 +52,8 @@ func (qh GetRecallsByMakeQueryHandler) Handle(ctx context.Context, query mediato
 
 	all, err := models.DeviceNhtsaRecalls(models.DeviceNhtsaRecallWhere.DeviceDefinitionID.IN(ddIDs),
 		qm.Load(models.DeviceNhtsaRecallRels.DeviceDefinition),
-		qm.Load(qm.Rels(models.DeviceNhtsaRecallRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake))).
+		qm.Load(qm.Rels(models.DeviceNhtsaRecallRels.DeviceDefinition, models.DeviceDefinitionRels.DeviceMake)),
+		qm.Limit(100)).
 		All(ctx, qh.DBS().Reader)
 
 	if err != nil {
