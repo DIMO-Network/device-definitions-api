@@ -10,3 +10,9 @@ user   = "dimo"
 pass   = "dimo"
 schema = "device_definitions_api"
 sslmode= "disable"
+
+[aliases.tables.wmis]
+up_plural     = "Wmis"
+up_singular   = "Wmi"
+down_plural   = "wmis"
+down_singular = "wmi"

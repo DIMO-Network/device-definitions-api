@@ -35,7 +35,6 @@ type DeviceMake struct {
 	OemPlatformName null.String       `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
 	NameSlug        string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
 	Metadata        null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	Wmis            types.StringArray `boil:"wmis" json:"wmis,omitempty" toml:"wmis" yaml:"wmis,omitempty"`
 
 	R *deviceMakeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceMakeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -52,7 +51,6 @@ var DeviceMakeColumns = struct {
 	OemPlatformName string
 	NameSlug        string
 	Metadata        string
-	Wmis            string
 }{
 	ID:              "id",
 	Name:            "name",
@@ -64,7 +62,6 @@ var DeviceMakeColumns = struct {
 	OemPlatformName: "oem_platform_name",
 	NameSlug:        "name_slug",
 	Metadata:        "metadata",
-	Wmis:            "wmis",
 }
 
 var DeviceMakeTableColumns = struct {
@@ -78,7 +75,6 @@ var DeviceMakeTableColumns = struct {
 	OemPlatformName string
 	NameSlug        string
 	Metadata        string
-	Wmis            string
 }{
 	ID:              "device_makes.id",
 	Name:            "device_makes.name",
@@ -90,7 +86,6 @@ var DeviceMakeTableColumns = struct {
 	OemPlatformName: "device_makes.oem_platform_name",
 	NameSlug:        "device_makes.name_slug",
 	Metadata:        "device_makes.metadata",
-	Wmis:            "device_makes.wmis",
 }
 
 // Generated where
@@ -121,32 +116,6 @@ func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
 	return qmhelper.WhereIsNotNull(w.field)
 }
 
-type whereHelpertypes_StringArray struct{ field string }
-
-func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpertypes_StringArray) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_StringArray) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
-
 var DeviceMakeWhere = struct {
 	ID              whereHelperstring
 	Name            whereHelperstring
@@ -158,7 +127,6 @@ var DeviceMakeWhere = struct {
 	OemPlatformName whereHelpernull_String
 	NameSlug        whereHelperstring
 	Metadata        whereHelpernull_JSON
-	Wmis            whereHelpertypes_StringArray
 }{
 	ID:              whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"id\""},
 	Name:            whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name\""},
@@ -170,19 +138,21 @@ var DeviceMakeWhere = struct {
 	OemPlatformName: whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"oem_platform_name\""},
 	NameSlug:        whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
 	Metadata:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_makes\".\"metadata\""},
-	Wmis:            whereHelpertypes_StringArray{field: "\"device_definitions_api\".\"device_makes\".\"wmis\""},
 }
 
 // DeviceMakeRels is where relationship names are stored.
 var DeviceMakeRels = struct {
 	DeviceDefinitions string
+	Wmis              string
 }{
 	DeviceDefinitions: "DeviceDefinitions",
+	Wmis:              "Wmis",
 }
 
 // deviceMakeR is where relationships are stored.
 type deviceMakeR struct {
 	DeviceDefinitions DeviceDefinitionSlice `boil:"DeviceDefinitions" json:"DeviceDefinitions" toml:"DeviceDefinitions" yaml:"DeviceDefinitions"`
+	Wmis              WmiSlice              `boil:"Wmis" json:"Wmis" toml:"Wmis" yaml:"Wmis"`
 }
 
 // NewStruct creates a new relationship struct
@@ -197,13 +167,20 @@ func (r *deviceMakeR) GetDeviceDefinitions() DeviceDefinitionSlice {
 	return r.DeviceDefinitions
 }
 
+func (r *deviceMakeR) GetWmis() WmiSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Wmis
+}
+
 // deviceMakeL is where Load methods for each relationship are stored.
 type deviceMakeL struct{}
 
 var (
-	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug", "metadata", "wmis"}
+	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug", "metadata"}
 	deviceMakeColumnsWithoutDefault = []string{"id", "name", "name_slug"}
-	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "metadata", "wmis"}
+	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "metadata"}
 	deviceMakePrimaryKeyColumns     = []string{"id"}
 	deviceMakeGeneratedColumns      = []string{}
 )
@@ -500,6 +477,20 @@ func (o *DeviceMake) DeviceDefinitions(mods ...qm.QueryMod) deviceDefinitionQuer
 	return DeviceDefinitions(queryMods...)
 }
 
+// Wmis retrieves all the wmis's Wmis with an executor.
+func (o *DeviceMake) Wmis(mods ...qm.QueryMod) wmiQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"device_definitions_api\".\"wmis\".\"device_make_id\"=?", o.ID),
+	)
+
+	return Wmis(queryMods...)
+}
+
 // LoadDeviceDefinitions allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (deviceMakeL) LoadDeviceDefinitions(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceMake interface{}, mods queries.Applicator) error {
@@ -614,6 +605,120 @@ func (deviceMakeL) LoadDeviceDefinitions(ctx context.Context, e boil.ContextExec
 	return nil
 }
 
+// LoadWmis allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (deviceMakeL) LoadWmis(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceMake interface{}, mods queries.Applicator) error {
+	var slice []*DeviceMake
+	var object *DeviceMake
+
+	if singular {
+		var ok bool
+		object, ok = maybeDeviceMake.(*DeviceMake)
+		if !ok {
+			object = new(DeviceMake)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceMake)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceMake))
+			}
+		}
+	} else {
+		s, ok := maybeDeviceMake.(*[]*DeviceMake)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceMake)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceMake))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &deviceMakeR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &deviceMakeR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.wmis`),
+		qm.WhereIn(`device_definitions_api.wmis.device_make_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load wmis")
+	}
+
+	var resultSlice []*Wmi
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice wmis")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on wmis")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for wmis")
+	}
+
+	if len(wmiAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Wmis = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &wmiR{}
+			}
+			foreign.R.DeviceMake = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.DeviceMakeID {
+				local.R.Wmis = append(local.R.Wmis, foreign)
+				if foreign.R == nil {
+					foreign.R = &wmiR{}
+				}
+				foreign.R.DeviceMake = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddDeviceDefinitions adds the given related objects to the existing relationships
 // of the device_make, optionally inserting them as new records.
 // Appends related to o.R.DeviceDefinitions.
@@ -658,6 +763,59 @@ func (o *DeviceMake) AddDeviceDefinitions(ctx context.Context, exec boil.Context
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &deviceDefinitionR{
+				DeviceMake: o,
+			}
+		} else {
+			rel.R.DeviceMake = o
+		}
+	}
+	return nil
+}
+
+// AddWmis adds the given related objects to the existing relationships
+// of the device_make, optionally inserting them as new records.
+// Appends related to o.R.Wmis.
+// Sets related.R.DeviceMake appropriately.
+func (o *DeviceMake) AddWmis(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Wmi) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.DeviceMakeID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"device_definitions_api\".\"wmis\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
+				strmangle.WhereClause("\"", "\"", 2, wmiPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.Wmi}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.DeviceMakeID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &deviceMakeR{
+			Wmis: related,
+		}
+	} else {
+		o.R.Wmis = append(o.R.Wmis, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &wmiR{
 				DeviceMake: o,
 			}
 		} else {
