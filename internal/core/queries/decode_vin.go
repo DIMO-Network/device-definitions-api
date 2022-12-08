@@ -3,9 +3,13 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -15,14 +19,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/null/v8"
+	"github.com/tidwall/gjson"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type DecodeVINQueryHandler struct {
-	DBS          func() *db.ReaderWriter
-	drivlyApiSvc gateways.DrivlyAPIService
+	dbs          func() *db.ReaderWriter
+	drivlyAPISvc gateways.DrivlyAPIService
 	logger       *zerolog.Logger
+	repository   repositories.DeviceDefinitionRepository
 }
 
 type DecodeVINQuery struct {
@@ -31,11 +36,12 @@ type DecodeVINQuery struct {
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
 
-func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, drivlyAPISvc gateways.DrivlyAPIService, logger *zerolog.Logger) DecodeVINQueryHandler {
+func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, drivlyAPISvc gateways.DrivlyAPIService, repository repositories.DeviceDefinitionRepository, logger *zerolog.Logger) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
-		DBS:          dbs,
-		drivlyApiSvc: drivlyAPISvc,
+		dbs:          dbs,
+		drivlyAPISvc: drivlyAPISvc,
 		logger:       logger,
+		repository:   repository,
 	}
 }
 
@@ -54,7 +60,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// todo: we could decode tesla on our own
 	// get the make
 	wmi := qry.VIN[0:3]
-	dbWMI, err := models.FindWmi(ctx, dc.DBS().Reader, wmi)
+	dbWMI, err := models.FindWmi(ctx, dc.dbs().Reader, wmi)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -65,10 +71,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	localLog := dc.logger.With().Str("vin", qry.VIN).Str("handler", qry.Key()).Str("year", string(resp.Year)).Logger()
 	// not yet - lookup the device definition by rest of info - look at our existing vins
 	// for now always call drivly to decode
-	vinInfo, err := dc.drivlyApiSvc.GetVINInfo(vin.String())
+	vinInfo, err := dc.drivlyAPISvc.GetVINInfo(vin.String())
+	if err != nil {
+		localLog.Err(err).Msg("failed to decode vin from drivly")
+		return resp, nil
+	}
 	// get the make from the vinInfo if no WMI found
 	if dbWMI == nil {
-		deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(common.SlugString(vinInfo.Make))).One(ctx, dc.DBS().Reader)
+		deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(common.SlugString(vinInfo.Make))).One(ctx, dc.dbs().Reader)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				localLog.Warn().Msgf("failed to find make from vin decode with name slug: %s", common.SlugString(vinInfo.Make))
@@ -83,31 +93,28 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				Wmi:          wmi,
 				DeviceMakeID: deviceMake.ID,
 			}
-			if err = dbWMI.Insert(ctx, dc.DBS().Writer, boil.Infer()); err != nil {
+			if err = dbWMI.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 				localLog.Err(err).Str("deviceMakeId", deviceMake.ID).Msgf("failed to insert wmi: %s", wmi)
 			}
 		}
+	}
+	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
+	metadata, err := common.BuildDeviceTypeAttributes(drivlyVINInfoToUpdateAttr(vinInfo), dt)
+	if err != nil {
+		localLog.Err(err).Msg("unable to build metadata attributes")
 	}
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(resp.DeviceMakeId),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
-		One(ctx, dc.DBS().Reader)
+		One(ctx, dc.dbs().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// refactor with repo? service / command?
-			dd = &models.DeviceDefinition{
-				ID:           ksuid.New().String(),
-				Model:        vinInfo.Model,
-				Year:         int16(resp.Year),
-				Metadata:     null.JSON{}, // todo build attributes
-				Verified:     true,
-				DeviceMakeID: resp.DeviceMakeId,
-				ModelSlug:    common.SlugString(vinInfo.Model),
-				DeviceTypeID: null.StringFrom("vehicle"),
-				ExternalIds:  null.JSON{},
-			}
-			err = dd.Insert(ctx, dc.DBS().Writer, boil.Infer())
+			dd, err = dc.repository.GetOrCreate(ctx, "drivly", common.SlugString(vinInfo.Model+vinInfo.Year), resp.DeviceMakeId,
+				vinInfo.Model, int(resp.Year), common.DefaultDeviceType, metadata, true)
 			if err != nil {
 				return nil, err
 			}
@@ -121,10 +128,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// match style
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
 			models.DeviceStyleWhere.SubModel.EQ(vinInfo.SubModel),
-			models.DeviceStyleWhere.Name.EQ(buildStyleName(vinInfo))).One(ctx, dc.DBS().Reader)
-		if err == nil {
-			resp.DeviceStyleId = style.ID
-		} else if errors.Is(err, sql.ErrNoRows) {
+			models.DeviceStyleWhere.Name.EQ(buildStyleName(vinInfo))).One(ctx, dc.dbs().Reader)
+		if errors.Is(err, sql.ErrNoRows) {
 			// insert
 			style = &models.DeviceStyle{
 				ID:                 ksuid.New().String(),
@@ -134,9 +139,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				Source:             "drivly",
 				SubModel:           vinInfo.SubModel,
 			}
-			_ = style.Insert(ctx, dc.DBS().Writer, boil.Infer())
+			_ = style.Insert(ctx, dc.dbs().Writer, boil.Infer())
 		}
-		// todo update the metadata if different? add powertrain - but this can be style specific
+		resp.DeviceStyleId = style.ID
+		// set the dd metadata if nothing there
+		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
+			// todo - merge properties as needed. Also set style specific metadata - multiple places
+			dd.Metadata = metadata
+			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+		}
+		// todo add powertrain - but this can be style specific
 	}
 
 	return resp, nil
@@ -144,4 +156,36 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 func buildStyleName(vinInfo *gateways.VINInfoResponse) string {
 	return vinInfo.Trim + " " + vinInfo.SubModel
+}
+
+func drivlyVINInfoToUpdateAttr(vinInfo *gateways.VINInfoResponse) []*coremodels.UpdateDeviceTypeAttribute {
+	seekAttributes := map[string]string{
+		// {device attribute, must match device_types.properties}: {vin info from drivly}
+		"mpg_city":               "mpgCity",
+		"mpg_highway":            "mpgHighway",
+		"mpg":                    "mpg",
+		"base_msrp":              "msrpBase",
+		"fuel_tank_capacity_gal": "fuelTankCapacityGal",
+		"fuel_type":              "fuel",
+		"wheelbase":              "wheelbase",
+		"generation":             "generation",
+		"number_of_doors":        "doors",
+		"manufacturer_code":      "manufacturerCode",
+		"driven_wheels":          "drive",
+	}
+	marshal, _ := json.Marshal(vinInfo)
+	var udta []*coremodels.UpdateDeviceTypeAttribute
+
+	for dtAttrKey, drivlyKey := range seekAttributes {
+		v := gjson.GetBytes(marshal, drivlyKey).String()
+		// if v valid, ok etc
+		if len(v) > 0 && v != "0" && v != "0.0000" {
+			udta = append(udta, &coremodels.UpdateDeviceTypeAttribute{
+				Name:  dtAttrKey,
+				Value: v,
+			})
+		}
+	}
+
+	return udta
 }

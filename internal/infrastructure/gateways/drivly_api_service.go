@@ -3,11 +3,12 @@ package gateways
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 	"github.com/pkg/errors"
-	"io"
-	"time"
 )
 
 //go:generate mockgen -source drivly_api_service.go -destination mocks/drivly_api_service_mock.go

@@ -127,18 +127,18 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, make, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, make, model, year, deviceTypeID, metaData)
+	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreate indicates an expected call of GetOrCreate.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, source, make, model, year, deviceTypeID, metaData interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, source, make, model, year, deviceTypeID, metaData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified)
 }
 
 // GetWithIntegrations mocks base method.

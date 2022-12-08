@@ -25,7 +25,7 @@ type CacheDeviceDefinitionSuite struct {
 	pdb        db.Store
 	container  testcontainers.Container
 	repository repositories.DeviceDefinitionRepository
-	mockRedis  *mocks.MockRedisCacheService
+	mockRedis  *mock_gateways.MockRedisCacheService
 	ctx        context.Context
 
 	cache DeviceDefinitionCacheService
@@ -47,7 +47,7 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.mockRedis = mocks.NewMockRedisCacheService(s.ctrl)
+	s.mockRedis = mock_gateways.NewMockRedisCacheService(s.ctrl)
 
 	s.repository = repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository)

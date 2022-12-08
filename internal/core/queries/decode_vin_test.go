@@ -2,8 +2,12 @@ package queries
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
@@ -15,7 +19,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/tidwall/gjson"
-	"testing"
 )
 
 type DecodeVINQueryHandlerSuite struct {
@@ -26,7 +29,7 @@ type DecodeVINQueryHandlerSuite struct {
 	pdb              db.Store
 	container        testcontainers.Container
 	ctx              context.Context
-	mockDrivlyApiSvc *mock_gateways.MockDrivlyAPIService
+	mockDrivlyAPISvc *mock_gateways.MockDrivlyAPIService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -40,9 +43,10 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.ctx = context.Background()
 
-	s.mockDrivlyApiSvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
+	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
+	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockDrivlyApiSvc, dbtesthelper.Logger())
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockDrivlyAPISvc, repo, dbtesthelper.Logger())
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -78,7 +82,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 		MpgHighway:          31,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyApiSvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp)
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
 	// db setup
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
@@ -89,6 +93,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	// validate WMI was inserted
+	wmi, err := models.Wmis().One(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	s.Assert().Equal("1FM", wmi.Wmi)
+	s.Assert().Equal(dm.ID, wmi.DeviceMakeID)
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -103,8 +112,35 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	s.Require().NoError(err)
 
 	assert.Equal(s.T(), vinInfoResp.Wheelbase, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.wheelbase").String())
-	assert.Equal(s.T(), vinInfoResp.Doors, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.number_of_doors").Int())
-	assert.Equal(s.T(), vinInfoResp.MsrpBase, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.base_msrp").Int())
-	assert.Equal(s.T(), vinInfoResp.Mpg, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.mpg").Int())
+	assert.Equal(s.T(), int64(vinInfoResp.Doors), gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.number_of_doors").Int())
+	assert.Equal(s.T(), int64(vinInfoResp.MsrpBase), gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.base_msrp").Int())
+	assert.Equal(s.T(), int64(vinInfoResp.Mpg), gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.mpg").Int())
 	assert.Equal(s.T(), vinInfoResp.FuelTankCapacityGal, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.fuel_tank_capacity_gal").Float())
+}
+
+// another test like above that validates creating dd on the fly, & another one using existing style, & using existing WMI
+
+func Test_drivlyVINInfoToUpdateAttr(t *testing.T) {
+
+	vinInfo := &gateways.VINInfoResponse{
+		Wheelbase:           "106 WB",
+		MsrpBase:            32123,
+		Mpg:                 24,
+		FuelTankCapacityGal: 23.25,
+	}
+	got := drivlyVINInfoToUpdateAttr(vinInfo)
+	// need a lookup for that
+	assert.Equal(t, "106 WB", lookupUpdateAttr(got, "wheelbase"))
+	assert.Equal(t, "32123", lookupUpdateAttr(got, "base_msrp"))
+	assert.Equal(t, "24", lookupUpdateAttr(got, "mpg"))
+	assert.Equal(t, "23.25", lookupUpdateAttr(got, "fuel_tank_capacity_gal"))
+}
+
+func lookupUpdateAttr(items []*coremodels.UpdateDeviceTypeAttribute, name string) string {
+	for _, item := range items {
+		if item.Name == name {
+			return item.Value
+		}
+	}
+	return ""
 }
