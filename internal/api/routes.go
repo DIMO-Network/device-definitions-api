@@ -21,3 +21,7 @@ func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {
 func RegisterDeviceTypeRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/device-types/:id", handlers.GetDeviceTypesByID(m))
 }
+
+func RegisterDeviceMakesRoutes(app fiber.Router, m mediator.Mediator) {
+	app.Get("/device-makes", handlers.GetDeviceMakes(m))
+}

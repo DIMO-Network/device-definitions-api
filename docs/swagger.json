@@ -4,6 +4,57 @@
         "contact": {}
     },
     "paths": {
+        "/device-definitions": {
+            "get": {
+                "description": "gets a specific device definition by make model and year.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a specific device definition by make model and year.",
+                "operationId": "GetDeviceDefinitionByMMY",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/device-definitions/all": {
+            "get": {
+                "description": "gets a device definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets all device definitions by Makes, models, and years",
+                "operationId": "GetDeviceDefinitionAll",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/device-definitions/{id}": {
             "get": {
                 "description": "gets a device definition",
@@ -17,57 +68,149 @@
                     "device-definitions"
                 ],
                 "summary": "gets a device definition",
-                "operationId": "GetById",
+                "operationId": "GetDeviceDefinitionByID",
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/queries.GetByIdQueryResult"
-                        }
+                        "description": "OK"
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.ProblemDetails"
-                        }
+                        "description": "Not Found"
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.ProblemDetails"
-                        }
+                        "description": "Internal Server Error"
                     }
                 }
             }
-        }
-    },
-    "definitions": {
-        "common.ProblemDetails": {
-            "type": "object",
-            "properties": {
-                "detail": {},
-                "status": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
+        },
+        "/device-definitions/{id}/integrations": {
+            "get": {
+                "description": "gets all the available integrations for a device definition. Includes the capabilities of the device with the integration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets all the available integrations for a device definition.",
+                "operationId": "GetDeviceIntegrationsByID",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
                 }
             }
         },
-        "queries.GetByIdQueryResult": {
-            "type": "object",
-            "properties": {
-                "deviceDefinitionId": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "year": {
-                    "type": "integer"
+        "/device-makes": {
+            "get": {
+                "description": "gets all device makes",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets all device makes",
+                "operationId": "GetDeviceMakes",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/device-types/{id}": {
+            "get": {
+                "description": "gets a devices type with attributes",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a device type.",
+                "operationId": "GetDeviceTypesByID",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/integrations": {
+            "get": {
+                "description": "gets list of integrations we have defined.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets list of integrations we have defined.",
+                "operationId": "GetIntegrations",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/integrations/{id}": {
+            "get": {
+                "description": "gets integration by id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets integration by id.",
+                "operationId": "GetIntegrationByID",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
                 }
             }
         }
