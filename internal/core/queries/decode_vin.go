@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -15,6 +14,8 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -30,10 +31,10 @@ type DecodeVINQuery struct {
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
 
-func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, settings *config.Settings, logger *zerolog.Logger) DecodeVINQueryHandler {
+func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, drivlyAPISvc gateways.DrivlyAPIService, logger *zerolog.Logger) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
 		DBS:          dbs,
-		drivlyApiSvc: gateways.NewDrivlyAPIService(settings),
+		drivlyApiSvc: drivlyAPISvc,
 		logger:       logger,
 	}
 }
@@ -94,25 +95,53 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		One(ctx, dc.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// todo insert new dd and return
-			localLog.Warn().Msgf("failed to find device_definition from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
+			// refactor with repo? service / command?
+			dd = &models.DeviceDefinition{
+				ID:           ksuid.New().String(),
+				Model:        vinInfo.Model,
+				Year:         int16(resp.Year),
+				Metadata:     null.JSON{}, // todo build attributes
+				Verified:     true,
+				DeviceMakeID: resp.DeviceMakeId,
+				ModelSlug:    common.SlugString(vinInfo.Model),
+				DeviceTypeID: null.StringFrom("vehicle"),
+				ExternalIds:  null.JSON{},
+			}
+			err = dd.Insert(ctx, dc.DBS().Writer, boil.Infer())
+			if err != nil {
+				return nil, err
+			}
+			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
 		} else {
 			return nil, err
 		}
 	}
 	if dd != nil {
-		// todo update the metadata if different? add powertrain - but this can be style specific
 		resp.DeviceDefinitionId = dd.ID
-		// todo look for the trim in the device_styles
-		all, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.DBS().Reader)
+		// match style
+		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
+			models.DeviceStyleWhere.SubModel.EQ(vinInfo.SubModel),
+			models.DeviceStyleWhere.Name.EQ(buildStyleName(vinInfo))).One(ctx, dc.DBS().Reader)
 		if err == nil {
-			for i, style := range all {
-				// if only one matches the trim, and then the submodel, pick that one otherwise insert
-				// should we consider moving metadata specific to the device_style in there?
-				// what about starting to handle the powertrain in this for the DD
+			resp.DeviceStyleId = style.ID
+		} else if errors.Is(err, sql.ErrNoRows) {
+			// insert
+			style = &models.DeviceStyle{
+				ID:                 ksuid.New().String(),
+				DeviceDefinitionID: dd.ID,
+				Name:               buildStyleName(vinInfo),
+				ExternalStyleID:    common.SlugString(buildStyleName(vinInfo)),
+				Source:             "drivly",
+				SubModel:           vinInfo.SubModel,
 			}
+			_ = style.Insert(ctx, dc.DBS().Writer, boil.Infer())
 		}
+		// todo update the metadata if different? add powertrain - but this can be style specific
 	}
 
 	return resp, nil
+}
+
+func buildStyleName(vinInfo *gateways.VINInfoResponse) string {
+	return vinInfo.Trim + " " + vinInfo.SubModel
 }
