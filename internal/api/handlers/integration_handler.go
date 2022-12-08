@@ -13,9 +13,9 @@ import (
 // @Tags device-definitions
 // @Accept json
 // @Produce json
-// @Success 200 {object} queries.GetByDeviceDefinitionIntegrationIdQueryResult
-// @Failure 404 {object} common.ProblemDetails{}
-// @Failure 500 {object} common.ProblemDetails{}
+// @Success 200
+// @Failure 404
+// @Failure 500
 // @Router /device-definitions/{id}/integrations [get]
 func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -30,14 +30,14 @@ func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 
 // GetIntegrations godoc
 // @Summary gets list of integrations we have defined.
-// @ID GetDeviceIntegrationsByID
+// @ID GetIntegrations
 // @Description gets list of integrations we have defined.
 // @Tags device-definitions
 // @Accept json
 // @Produce json
-// @Success 200 {object} queries.GetAllQueryResult
-// @Failure 404 {object} common.ProblemDetails{}
-// @Failure 500 {object} common.ProblemDetails{}
+// @Success 200
+// @Failure 404
+// @Failure 500
 // @Router /integrations [get]
 func GetIntegrations(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -57,9 +57,9 @@ func GetIntegrations(m mediator.Mediator) fiber.Handler {
 // @Tags device-definitions
 // @Accept json
 // @Produce json
-// @Success 200 {object} queries.GetIntegrationQueryResult
-// @Failure 404 {object} common.ProblemDetails{}
-// @Failure 500 {object} common.ProblemDetails{}
+// @Success 200
+// @Failure 404
+// @Failure 500
 // @Router /integrations/{id} [get]
 func GetIntegrationByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {

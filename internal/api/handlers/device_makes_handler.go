@@ -6,21 +6,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetDeviceTypesByID godoc
-// @Summary gets a device type.
-// @ID GetDeviceTypesByID
-// @Description gets a devices type with attributes
+// GetDeviceMakes godoc
+// @Summary gets all device makes
+// @ID GetDeviceMakes
+// @Description gets all device makes
 // @Tags device-definitions
 // @Accept json
 // @Produce json
 // @Success 200
-// @Failure 404
 // @Failure 500
-// @Router /device-types/{id} [get]
-func GetDeviceTypesByID(m mediator.Mediator) fiber.Handler {
+// @Router /device-makes [get]
+func GetDeviceMakes(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		id := c.Params("id")
-		query := &queries.GetDeviceTypeByIDQuery{DeviceTypeID: id}
+
+		query := &queries.GetAllDeviceMakeQuery{}
 
 		result, _ := m.Send(c.UserContext(), query)
 

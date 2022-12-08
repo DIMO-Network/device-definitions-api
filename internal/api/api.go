@@ -132,6 +132,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	RegisterDeviceDefinitionsRoutes(app, *m)
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
+	RegisterDeviceMakesRoutes(app, *m)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 

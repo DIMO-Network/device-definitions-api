@@ -1,48 +1,145 @@
-definitions:
-  common.ProblemDetails:
-    properties:
-      detail: {}
-      status:
-        type: integer
-      title:
-        type: string
-      type:
-        type: string
-    type: object
-  queries.GetByIdQueryResult:
-    properties:
-      deviceDefinitionId:
-        type: string
-      model:
-        type: string
-      year:
-        type: integer
-    type: object
 info:
   contact: {}
 paths:
-  /device-definitions/{id}:
+  /device-definitions:
     get:
       consumes:
       - application/json
-      description: gets a device definition
-      operationId: GetById
+      description: gets a specific device definition by make model and year.
+      operationId: GetDeviceDefinitionByMMY
       produces:
       - application/json
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/queries.GetByIdQueryResult'
         "404":
           description: Not Found
-          schema:
-            $ref: '#/definitions/common.ProblemDetails'
         "500":
           description: Internal Server Error
-          schema:
-            $ref: '#/definitions/common.ProblemDetails'
+      summary: gets a specific device definition by make model and year.
+      tags:
+      - device-definitions
+  /device-definitions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition
+      operationId: GetDeviceDefinitionByID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
       summary: gets a device definition
+      tags:
+      - device-definitions
+  /device-definitions/{id}/integrations:
+    get:
+      consumes:
+      - application/json
+      description: gets all the available integrations for a device definition. Includes
+        the capabilities of the device with the integration
+      operationId: GetDeviceIntegrationsByID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets all the available integrations for a device definition.
+      tags:
+      - device-definitions
+  /device-definitions/all:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition
+      operationId: GetDeviceDefinitionAll
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: gets all device definitions by Makes, models, and years
+      tags:
+      - device-definitions
+  /device-makes:
+    get:
+      consumes:
+      - application/json
+      description: gets all device makes
+      operationId: GetDeviceMakes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: gets all device makes
+      tags:
+      - device-definitions
+  /device-types/{id}:
+    get:
+      consumes:
+      - application/json
+      description: gets a devices type with attributes
+      operationId: GetDeviceTypesByID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a device type.
+      tags:
+      - device-definitions
+  /integrations:
+    get:
+      consumes:
+      - application/json
+      description: gets list of integrations we have defined.
+      operationId: GetIntegrations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets list of integrations we have defined.
+      tags:
+      - device-definitions
+  /integrations/{id}:
+    get:
+      consumes:
+      - application/json
+      description: gets integration by id.
+      operationId: GetIntegrationByID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets integration by id.
       tags:
       - device-definitions
 swagger: "2.0"
