@@ -38,12 +38,14 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, settings *config.Sett
 	}
 }
 
+// todo write a test for this once have DB structure
+// todo add grpc decode in the api folder to wire this up.
+
 func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*DecodeVINQuery)
 	if len(qry.VIN) != 17 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
-	// todo write a test for this once have DB structure
 	resp := &p_grpc.DecodeVINResponse{}
 	// get the year
 	vin := shared.VIN(qry.VIN)
@@ -92,13 +94,24 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		One(ctx, dc.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// todo insert new dd and return
 			localLog.Warn().Msgf("failed to find device_definition from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
 		} else {
 			return nil, err
 		}
 	}
 	if dd != nil {
+		// todo update the metadata if different? add powertrain - but this can be style specific
 		resp.DeviceDefinitionId = dd.ID
+		// todo look for the trim in the device_styles
+		all, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.DBS().Reader)
+		if err == nil {
+			for i, style := range all {
+				// if only one matches the trim, and then the submodel, pick that one otherwise insert
+				// should we consider moving metadata specific to the device_style in there?
+				// what about starting to handle the powertrain in this for the DD
+			}
+		}
 	}
 
 	return resp, nil
