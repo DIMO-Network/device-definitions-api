@@ -23,7 +23,7 @@ const (
 	SmartCarVendor = "SmartCar"
 )
 
-//go:generate mockgen -source smart_car_api_service.go -destination mocks/smart_car_api_service_mock.go
+//go:generate mockgen -source smart_car_api_service.go -destination mocks/smart_car_api_service_mock.go -package mocks
 type SmartCarService interface {
 	GetOrCreateSmartCarIntegration(ctx context.Context) (string, error)
 	GetSmartCarVehicleData() (*SmartCarCompatibilityData, error)

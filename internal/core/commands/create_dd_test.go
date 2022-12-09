@@ -111,7 +111,8 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	source := "source-01"
 	year := 2022
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, mk, "", model, year, gomock.Any(), gomock.Any(), false).Return(nil, errors.New("Error")).Times(1)
+	s.mockRepository.EXPECT().
+		GetOrCreate(gomock.Any(), source, "", mk, model, year, gomock.Any(), gomock.Any(), false).Return(nil, errors.New("Error")).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
 		Source:       source,

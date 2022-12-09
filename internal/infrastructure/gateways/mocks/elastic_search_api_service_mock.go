@@ -2,7 +2,7 @@
 // Source: elastic_search_api_service.go
 
 // Package mocks is a generated GoMock package.
-package mock_gateways
+package mocks
 
 import (
 	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"

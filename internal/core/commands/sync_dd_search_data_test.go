@@ -33,7 +33,7 @@ type SyncSearchDataCommandHandlerSuite struct {
 	ctrl              *gomock.Controller
 	pdb               db.Store
 	container         testcontainers.Container
-	mockElasticSearch *mock_gateways.MockElasticSearchService
+	mockElasticSearch *mocks.MockElasticSearchService
 	ctx               context.Context
 
 	queryHandler SyncSearchDataCommandHandler
@@ -47,7 +47,7 @@ func (s *SyncSearchDataCommandHandlerSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
-	s.mockElasticSearch = mock_gateways.NewMockElasticSearchService(s.ctrl)
+	s.mockElasticSearch = mocks.NewMockElasticSearchService(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 

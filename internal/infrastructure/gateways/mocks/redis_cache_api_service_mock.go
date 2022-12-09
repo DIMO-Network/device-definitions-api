@@ -2,7 +2,7 @@
 // Source: redis_cache_api_service.go
 
 // Package mocks is a generated GoMock package.
-package mock_gateways
+package mocks
 
 import (
 	context "context"
