@@ -81,6 +81,21 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAll(ctx interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetAll), ctx)
 }
 
+// GetAllDevicesMMY mocks base method.
+func (m *MockDeviceDefinitionRepository) GetAllDevicesMMY(ctx context.Context) ([]*models.DeviceDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllDevicesMMY", ctx)
+	ret0, _ := ret[0].([]*models.DeviceDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllDevicesMMY indicates an expected call of GetAllDevicesMMY.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetAllDevicesMMY(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDevicesMMY", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetAllDevicesMMY), ctx)
+}
+
 // GetByID mocks base method.
 func (m *MockDeviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
