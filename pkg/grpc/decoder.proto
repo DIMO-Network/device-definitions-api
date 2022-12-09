@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
+
+package grpc;
+
+message DecodeVINRequest {
+  string vin = 1;
+}
+
+message DecodeVINResponse {
+  string device_make_id = 1;
+  string device_definition_id = 2;
+  string device_style_id = 3;
+  int32 year = 4;
+}
+
+service VINDecoderService {
+  rpc DecodeVIN(DecodeVINRequest) returns (DecodeVINResponse);
+}

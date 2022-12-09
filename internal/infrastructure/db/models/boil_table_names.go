@@ -14,6 +14,7 @@ var TableNames = struct {
 	IntegrationFeatures string
 	Integrations        string
 	Reviews             string
+	Wmis                string
 }{
 	DeviceDefinitions:   "device_definitions",
 	DeviceIntegrations:  "device_integrations",
@@ -25,4 +26,5 @@ var TableNames = struct {
 	IntegrationFeatures: "integration_features",
 	Integrations:        "integrations",
 	Reviews:             "reviews",
+	Wmis:                "wmis",
 }
