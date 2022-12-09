@@ -5,9 +5,11 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -33,7 +35,7 @@ type DeviceDefinitionRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetAllDevicesMMY(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
@@ -188,18 +190,21 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
-		qm.Where("dm.name ilike ?", make),
 		qm.And("model ilike ?", model),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 	}
-
+	if len(makeOrID) == 27 { // i checked, no makes w/ length of 27 currently
+		qms = append(qms, models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeOrID))
+	} else {
+		qms = append(qms, qm.Where("dm.name ilike ?", makeOrID))
+	}
 	query := models.DeviceDefinitions(qms...)
 	dd, err := query.One(ctx, r.DBS().Reader)
 
@@ -214,19 +219,28 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	}
 
 	// Create device Make
-	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(make))).One(ctx, tx)
+	allowCreate := true
+	qmsMake := models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(makeOrID))
+	if len(makeOrID) == 27 {
+		allowCreate = false
+		qmsMake = models.DeviceMakeWhere.ID.EQ(strings.TrimSpace(makeOrID))
+	}
+	m, err := models.DeviceMakes(qmsMake).One(ctx, tx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			if !allowCreate {
+				return nil, &exceptions.NotFoundError{Err: fmt.Errorf("could not find makeId: %s", makeOrID)}
+			}
 			// create
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
-				Name:     make,
-				NameSlug: common.SlugString(make),
+				Name:     makeOrID,
+				NameSlug: common.SlugString(makeOrID),
 			}
 			err = m.Insert(ctx, tx, boil.Infer())
 			if err != nil {
 				return nil, &exceptions.InternalError{
-					Err: errors.Wrapf(err, "error inserting make: %s", make),
+					Err: errors.Wrapf(err, "error inserting make: %s", makeOrID),
 				}
 			}
 		}
@@ -242,10 +256,16 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Model:        model,
 		Year:         int16(year),
 		Source:       null.StringFrom(source),
-		Verified:     false,
+		Verified:     verified,
 		ModelSlug:    common.SlugString(model),
 		DeviceTypeID: null.StringFrom(deviceTypeID),
 	}
+	// set external id's
+	extIds := []*coremodels.ExternalID{{
+		Vendor: source,
+		ID:     extID,
+	}}
+	_ = dd.ExternalIds.Marshal(extIds)
 
 	if metaData.Valid {
 		err = dd.Metadata.Marshal(metaData)
