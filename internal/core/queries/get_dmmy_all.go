@@ -25,7 +25,7 @@ func NewGetAllDevicesMakeModelYearQueryHandler(repository repositories.DeviceDef
 
 func (ch GetAllDevicesMakeModelYearQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	all, err := ch.Repository.GetDeviceMMY(ctx)
+	all, err := ch.Repository.GetAllDevicesMMY(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (ch GetAllDevicesMakeModelYearQueryHandler) Handle(ctx context.Context, que
 
 	for _, v := range all {
 		resp := &grpc.DeviceType{
-			Make:  v.R.DeviceMake.Name,
+			Make:  v.R.DeviceMake.NameSlug,
 			Model: v.ModelSlug,
 			Year:  int32(v.Year),
 		}
