@@ -31,6 +31,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
+	GetDeviceMMY(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, make string, model string, year int, deviceTypeID string, metaData null.JSON) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
@@ -109,6 +110,24 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.Devi
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
+		models.DeviceDefinitionWhere.Verified.EQ(true),
+		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*models.DeviceDefinition{}, err
+		}
+
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	return dd, err
+}
+
+func (r *deviceDefinitionRepository) GetDeviceMMY(ctx context.Context) ([]*models.DeviceDefinition, error) {
+
+	dd, err := models.DeviceDefinitions(
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 

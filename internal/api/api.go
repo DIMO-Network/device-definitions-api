@@ -64,6 +64,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
 		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionGroupQueryHandler(deviceDefinitionRepository, makeRepository)),
+		mediator.WithHandler(&queries.GetAllDevicesMakeModelYearQuery{}, queries.NewGetAllDevicesMakeModelYearQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIdsQuery{}, queries.NewGetDeviceDefinitionByIdsQueryHandler(ddCacheService, &logger)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
