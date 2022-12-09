@@ -45,9 +45,6 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, drivlyAPISvc gateways
 	}
 }
 
-// todo write a test for this once have DB structure
-// todo add grpc decode in the api folder to wire this up.
-
 func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*DecodeVINQuery)
 	if len(qry.VIN) != 17 {
@@ -144,11 +141,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceStyleId = style.ID
 		// set the dd metadata if nothing there
 		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
-			// todo - merge properties as needed. Also set style specific metadata - multiple places
+			// todo - future: merge properties as needed. Also set style specific metadata - multiple places
 			dd.Metadata = metadata
 			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
 		}
-		// todo add powertrain - but this can be style specific
+		// todo- future: add powertrain - but this can be style specific
 	}
 
 	return resp, nil
