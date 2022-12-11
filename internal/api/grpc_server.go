@@ -39,7 +39,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 	pkggrpc.RegisterRecallsServiceServer(server, recallsService)
 	pkggrpc.RegisterReviewsServiceServer(server, reviewsService)
 	pkggrpc.RegisterIntegrationServiceServer(server, integrationService)
-	pkggrpc.RegisterVINDecoderServiceServer(server, decodeService)
+	pkggrpc.RegisterVinDecoderServiceServer(server, decodeService)
 
 	logger.Info().Str("port", s.GRPCPort).Msgf("started grpc server on port: %v", s.GRPCPort)
 

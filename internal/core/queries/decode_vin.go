@@ -50,7 +50,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if len(qry.VIN) != 17 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
-	resp := &p_grpc.DecodeVINResponse{}
+	resp := &p_grpc.DecodeVinResponse{}
 	// get the year
 	vin := shared.VIN(qry.VIN)
 	resp.Year = int32(vin.Year()) // needs to be updated for newer years

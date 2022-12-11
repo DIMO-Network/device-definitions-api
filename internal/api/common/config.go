@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc/codes"
@@ -63,6 +64,7 @@ func GrpcConfig(p any) (err error) {
 	if e, ok := p.(*exceptions.ConflictError); ok {
 		return status.Errorf(codes.Aborted, e.Error())
 	}
+	fmt.Printf("error executing request %+v \n", err)
 
 	return status.Errorf(codes.Internal, "An error occurred while processing your request: %v", p)
 }

@@ -10,21 +10,21 @@ import (
 )
 
 type GrpcVINDecoderService struct {
-	p_grpc.VINDecoderServiceServer
+	p_grpc.VinDecoderServiceServer
 	Mediator mediator.Mediator
 	logger   *zerolog.Logger
 }
 
-func NewGrpcVINDecoderService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.VINDecoderServiceServer {
+func NewGrpcVINDecoderService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.VinDecoderServiceServer {
 	return &GrpcVINDecoderService{Mediator: mediator, logger: logger}
 }
 
-func (s *GrpcReviewsService) DecodeVIN(ctx context.Context, in *p_grpc.DecodeVINRequest) (*p_grpc.DecodeVINResponse, error) {
+func (s *GrpcReviewsService) DecodeVIN(ctx context.Context, in *p_grpc.DecodeVinRequest) (*p_grpc.DecodeVinResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.DecodeVINQuery{
 		VIN: in.Vin,
 	})
 
-	result := qryResult.(*p_grpc.DecodeVINResponse)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	return result, nil
 }
