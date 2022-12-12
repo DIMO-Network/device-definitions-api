@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc/codes"
