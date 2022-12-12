@@ -129,7 +129,7 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.Devi
 func (r *deviceDefinitionRepository) GetAllDevicesMMY(ctx context.Context) ([]*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
-		qm.Select(models.DeviceDefinitionColumns.ModelSlug, models.DeviceDefinitionColumns.Year),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 	).All(ctx, r.DBS().Reader)
 
