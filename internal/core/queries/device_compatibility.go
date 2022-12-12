@@ -94,15 +94,16 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		}
 		level, score := calculateCompatibilityLevel(gfs, integFeats, totalWeights)
 		modelCompats[i] = &p_grpc.DeviceCompatibilities{
-			Year:              int32(di.R.DeviceDefinition.Year),
-			Features:          reduced,
-			Level:             level.String(),
-			Score:             float32(score),
-			IntegrationId:     di.IntegrationID,
-			IntegrationVendor: di.R.Integration.Vendor,
-			Region:            di.Region,
-			Model:             di.R.DeviceDefinition.Model,
-			ModelSlug:         di.R.DeviceDefinition.ModelSlug,
+			Year:               int32(di.R.DeviceDefinition.Year),
+			DeviceDefinitionId: di.DeviceDefinitionID,
+			Features:           reduced,
+			Level:              level.String(),
+			Score:              float32(score),
+			IntegrationId:      di.IntegrationID,
+			IntegrationVendor:  di.R.Integration.Vendor,
+			Region:             di.Region,
+			Model:              di.R.DeviceDefinition.Model,
+			ModelSlug:          di.R.DeviceDefinition.ModelSlug,
 		}
 	}
 

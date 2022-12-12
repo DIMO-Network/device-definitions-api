@@ -64,6 +64,7 @@ message DeviceCompatibilities {
   string model_slug = 8;
   
   float score = 9;
+  string device_definition_id = 10;
 }
 
 message Feature {
