@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -50,7 +51,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if len(qry.VIN) != 17 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
-	resp := &p_grpc.DecodeVINResponse{}
+	resp := &p_grpc.DecodeVinResponse{}
 	// get the year
 	vin := shared.VIN(qry.VIN)
 	resp.Year = int32(vin.Year()) // needs to be updated for newer years
@@ -65,9 +66,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceMakeId = dbWMI.DeviceMakeID
 	}
 
-	localLog := dc.logger.With().Str("vin", qry.VIN).Str("handler", qry.Key()).Str("year", string(resp.Year)).Logger()
+	localLog := dc.logger.With().Str("vin", qry.VIN).Str("handler", qry.Key()).Str("year", fmt.Sprintf("%d", resp.Year)).Logger()
 	// not yet - lookup the device definition by rest of info - look at our existing vins
 	// for now always call drivly to decode
+	// todo persist model specific data to DB
 	vinInfo, err := dc.drivlyAPISvc.GetVINInfo(vin.String())
 	if err != nil {
 		localLog.Err(err).Msg("failed to decode vin from drivly")
@@ -101,7 +103,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	metadata, err := common.BuildDeviceTypeAttributes(drivlyVINInfoToUpdateAttr(vinInfo), dt)
 	if err != nil {
-		localLog.Err(err).Msg("unable to build metadata attributes")
+		localLog.Warn().Err(err).Msg("unable to build metadata attributes")
 	}
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(resp.DeviceMakeId),
@@ -137,11 +139,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				SubModel:           vinInfo.SubModel,
 			}
 			_ = style.Insert(ctx, dc.dbs().Writer, boil.Infer())
+			localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(buildStyleName(vinInfo)))
 		}
 		resp.DeviceStyleId = style.ID
 		// set the dd metadata if nothing there
 		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
-			// todo - future: merge properties as needed. Also set style specific metadata - multiple places
+			// todo - future: merge metadata properties. Also set style specific metadata - multiple places
 			dd.Metadata = metadata
 			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
 		}
@@ -152,7 +155,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 }
 
 func buildStyleName(vinInfo *gateways.VINInfoResponse) string {
-	return vinInfo.Trim + " " + vinInfo.SubModel
+	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
 
 func drivlyVINInfoToUpdateAttr(vinInfo *gateways.VINInfoResponse) []*coremodels.UpdateDeviceTypeAttribute {

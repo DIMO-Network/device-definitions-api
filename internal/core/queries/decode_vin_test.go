@@ -2,6 +2,8 @@ package queries
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -18,7 +20,6 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/tidwall/gjson"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"testing"
 )
 
 type DecodeVINQueryHandlerSuite struct {
@@ -87,7 +88,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVINResponse)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
@@ -152,7 +153,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVINResponse)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
 	s.NotNil(result, "expected result not nil")
 
 	ddCreated, err := models.DeviceDefinitions().One(s.ctx, s.pdb.DBS().Reader)
@@ -204,7 +205,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVINResponse)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
@@ -249,7 +250,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVINResponse)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
