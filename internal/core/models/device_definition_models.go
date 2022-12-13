@@ -53,14 +53,13 @@ type VehicleInfo struct {
 // DeviceType whether it is a vehicle or other type and basic information
 type DeviceType struct {
 	// Type is eg. Vehicle, E-bike, roomba
-	Type               string   `json:"type"`
-	Make               string   `json:"make"`
-	Model              string   `json:"model"`
-	Year               int      `json:"year"`
-	SubModels          []string `json:"subModels"`
-	MakeSlug           string   `json:"makeSlug"`
-	ModelSlug          string   `json:"modelSlug"`
-	HardwareTemplateID string   `json:"hardware_template_id"`
+	Type      string   `json:"type"`
+	Make      string   `json:"make"`
+	Model     string   `json:"model"`
+	Year      int      `json:"year"`
+	SubModels []string `json:"subModels"`
+	MakeSlug  string   `json:"makeSlug"`
+	ModelSlug string   `json:"modelSlug"`
 }
 
 type DeviceIntegration struct {

@@ -20,7 +20,7 @@ import (
 
 type DeviceMakeRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceMake, error)
-	GetOrCreate(ctx context.Context, makeName string, logURL string, externalIds string, metadata string, templateID string) (*models.DeviceMake, error)
+	GetOrCreate(ctx context.Context, makeName string, logURL string, externalIds string, metadata string, hardwareTemplateID string) (*models.DeviceMake, error)
 }
 
 type deviceMakeRepository struct {
@@ -47,7 +47,7 @@ func (r *deviceMakeRepository) GetAll(ctx context.Context) ([]*models.DeviceMake
 	return makes, err
 }
 
-func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string, logURL string, externalIds string, metadata string, templateID string) (*models.DeviceMake, error) {
+func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string, logURL string, externalIds string, metadata string, hardwareTemplateID string) (*models.DeviceMake, error) {
 	m, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(strings.TrimSpace(makeName))).One(ctx, r.DBS().Writer)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -59,7 +59,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 				LogoURL:            null.StringFrom(logURL),
 				ExternalIds:        null.JSONFrom([]byte(externalIds)),
 				Metadata:           null.JSONFrom([]byte(metadata)),
-				HardwareTemplateID: null.StringFrom(templateID),
+				HardwareTemplateID: null.StringFrom(hardwareTemplateID),
 			}
 			// todo set TokenID. increase from latest tokenId
 			err = m.Insert(ctx, r.DBS().Writer.DB, boil.Infer())

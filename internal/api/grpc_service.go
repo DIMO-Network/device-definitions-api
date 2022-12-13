@@ -265,7 +265,7 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 		ExternalStyleID:    in.ExternalStyleId,
 		Source:             in.Source,
 		SubModel:           in.SubModel,
-		TemplateID:         in.TemplateId,
+		HardwareTemplateID: in.HardwareTemplateId,
 	})
 
 	result := commandResult.(commands.CreateDeviceStyleCommandResult)
@@ -294,6 +294,10 @@ func (s *GrpcService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDev
 		result.TokenId = deviceMake.TokenID.Uint64()
 	}
 
+	if deviceMake.HardwareTemplateID.Valid {
+		result.HardwareTemplateId = deviceMake.HardwareTemplateID.String
+	}
+
 	return result, nil
 }
 
@@ -312,6 +316,10 @@ func (s *GrpcService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDev
 		OemPlatformName:  deviceMake.OemPlatformName.String,
 		ExternalIds:      string(deviceMake.ExternalIds),
 		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
 	}
 
 	if deviceMake.TokenID != nil {
@@ -342,8 +350,8 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
-		Name:       in.Name,
-		TemplateID: in.TemplateId,
+		Name:               in.Name,
+		HardwareTemplateID: in.HardwareTemplateId,
 	})
 
 	result := commandResult.(commands.CreateDeviceMakeCommandResult)
@@ -494,6 +502,7 @@ func (s *GrpcService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDevi
 		Name:               ds.Name,
 		ExternalStyleId:    ds.ExternalStyleID,
 		DeviceDefinitionId: ds.DeviceDefinitionID,
+		HardwareTemplateId: ds.HardwareTemplateID,
 	}
 
 	return result, nil
@@ -517,6 +526,7 @@ func (s *GrpcService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, i
 			Name:               ds.Name,
 			ExternalStyleId:    ds.ExternalStyleID,
 			DeviceDefinitionId: ds.DeviceDefinitionID,
+			HardwareTemplateId: ds.HardwareTemplateID,
 		})
 	}
 
@@ -543,6 +553,7 @@ func (s *GrpcService) GetDeviceStylesByFilter(ctx context.Context, in *p_grpc.Ge
 			Name:               ds.Name,
 			ExternalStyleId:    ds.ExternalStyleID,
 			DeviceDefinitionId: ds.DeviceDefinitionID,
+			HardwareTemplateId: ds.HardwareTemplateID,
 		})
 	}
 
@@ -563,6 +574,7 @@ func (s *GrpcService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc
 		Name:               ds.Name,
 		ExternalStyleId:    ds.ExternalStyleID,
 		DeviceDefinitionId: ds.DeviceDefinitionID,
+		HardwareTemplateId: ds.HardwareTemplateID,
 	}
 
 	return result, nil
@@ -571,12 +583,13 @@ func (s *GrpcService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc
 func (s *GrpcService) UpdateDeviceMake(ctx context.Context, in *p_grpc.UpdateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	command := &commands.UpdateDeviceMakeCommand{
-		ID:              in.Id,
-		Name:            in.Name,
-		LogoURL:         null.StringFrom(in.LogoUrl),
-		OemPlatformName: null.StringFrom(in.OemPlatformName),
-		ExternalIds:     json.RawMessage(in.ExternalIds),
-		Metadata:        json.RawMessage(in.Metadata),
+		ID:                 in.Id,
+		Name:               in.Name,
+		LogoURL:            null.StringFrom(in.LogoUrl),
+		OemPlatformName:    null.StringFrom(in.OemPlatformName),
+		ExternalIds:        json.RawMessage(in.ExternalIds),
+		Metadata:           json.RawMessage(in.Metadata),
+		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
 	commandResult, _ := s.Mediator.Send(ctx, command)
@@ -595,6 +608,7 @@ func (s *GrpcService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDe
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		Source:             in.Source,
 		SubModel:           in.SubModel,
+		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
 	commandResult, _ := s.Mediator.Send(ctx, command)
@@ -720,5 +734,5 @@ func (s *GrpcService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Contex
 
 	result := qryResult.(coremodels.GetDeviceDefinitionHardwareTemplateQueryResult)
 
-	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{TemplateId: result.TemplateID}, nil
+	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{HardwareTemplateId: result.TemplateID}, nil
 }

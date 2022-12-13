@@ -14,7 +14,7 @@ type CreateDeviceStyleCommand struct {
 	ExternalStyleID    string `json:"external_style_id"`
 	Source             string `json:"source"`
 	SubModel           string `json:"sub_model"`
-	TemplateID         string `json:"template_id"`
+	HardwareTemplateID string `json:"hardware_template_id"`
 }
 
 type CreateDeviceStyleCommandResult struct {
@@ -36,7 +36,7 @@ func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query medi
 
 	command := query.(*CreateDeviceStyleCommand)
 
-	ds, err := ch.repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.TemplateID)
+	ds, err := ch.repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.HardwareTemplateID)
 
 	if err != nil {
 		return nil, err

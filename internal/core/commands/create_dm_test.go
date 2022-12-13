@@ -8,6 +8,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -46,18 +47,18 @@ func (s *CreateDeviceMakeCommandHandlerSuite) TestCreateDeviceMakeCommand_Succes
 	ctx := context.Background()
 
 	name := "Ford"
-	templateId := "01"
+	templateID := "01"
 
 	dm := &models.DeviceMake{
-		ID:   "1",
+		ID:   ksuid.New().String(),
 		Name: name,
 	}
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), name, gomock.Any(), gomock.Any(), gomock.Any(), templateId).Return(dm, nil).Times(1)
+	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), name, gomock.Any(), gomock.Any(), gomock.Any(), templateID).Return(dm, nil).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceMakeCommand{
-		Name:       name,
-		TemplateID: templateId,
+		Name:               name,
+		HardwareTemplateID: templateID,
 	})
 	result := commandResult.(CreateDeviceMakeCommandResult)
 
