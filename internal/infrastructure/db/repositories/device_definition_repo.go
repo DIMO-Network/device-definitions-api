@@ -33,7 +33,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
-	GetAllDevicesMMY(ctx context.Context) ([]*models.DeviceDefinition, error)
+	GetAllDevicesMMY(ctx context.Context) ([]deviceMMYJoinQueryOutput, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
@@ -126,22 +126,32 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.Devi
 	return dd, err
 }
 
-func (r *deviceDefinitionRepository) GetAllDevicesMMY(ctx context.Context) ([]*models.DeviceDefinition, error) {
+type deviceMMYJoinQueryOutput struct {
+	DeviceDefinitions models.DeviceDefinition `boil:"DeviceDefinitions,bind"`
+	DeviceMakes       models.DeviceMake       `boil:"DeviceMakes,bind"`
+}
 
-	dd, err := models.DeviceDefinitions(
-		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		models.DeviceDefinitionWhere.Verified.EQ(true),
-	).All(ctx, r.DBS().Reader)
+func (r *deviceDefinitionRepository) GetAllDevicesMMY(ctx context.Context) ([]deviceMMYJoinQueryOutput, error) {
 
+	result := make([]deviceMMYJoinQueryOutput, 0)
+
+	err := models.NewQuery(
+		qm.Select("name_slug", "model_slug", "year"),
+		qm.From(models.TableNames.DeviceDefinitions),
+		qm.InnerJoin("device_makes on device_makes.id = device_definitions.device_make_id"),
+	).Bind(ctx, r.DBS().Reader, &result)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return []*models.DeviceDefinition{}, err
-		}
-
 		return nil, &exceptions.InternalError{Err: err}
 	}
 
-	return dd, err
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []deviceMMYJoinQueryOutput{}, err
+		}
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	return result, err
 }
 
 func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error) {

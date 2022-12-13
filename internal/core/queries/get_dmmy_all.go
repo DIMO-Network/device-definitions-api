@@ -33,10 +33,12 @@ func (ch GetAllDevicesMakeModelYearQueryHandler) Handle(ctx context.Context, que
 	response := make([]interface{}, 0)
 
 	for _, v := range all {
+		deviceDef := v.DeviceDefinitions
+		deviceMake := v.DeviceMakes
 		resp := &grpc.DeviceType{
-			Make:  v.R.DeviceMake.NameSlug,
-			Model: v.ModelSlug,
-			Year:  int32(v.Year),
+			Make:  deviceMake.NameSlug,
+			Model: deviceDef.ModelSlug,
+			Year:  int32(deviceDef.Year),
 		}
 		response = append(response, resp)
 	}
