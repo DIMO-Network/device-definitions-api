@@ -4,6 +4,7 @@ package repositories
 
 import (
 	"context"
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -13,7 +14,7 @@ import (
 )
 
 type DeviceStyleRepository interface {
-	Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string) (*models.DeviceStyle, error)
+	Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string, templateID string) (*models.DeviceStyle, error)
 }
 
 type deviceStyleRepository struct {
@@ -24,7 +25,7 @@ func NewDeviceStyleRepository(dbs func() *db.ReaderWriter) DeviceStyleRepository
 	return &deviceStyleRepository{DBS: dbs}
 }
 
-func (r *deviceStyleRepository) Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string) (*models.DeviceStyle, error) {
+func (r *deviceStyleRepository) Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string, templateID string) (*models.DeviceStyle, error) {
 
 	ds := &models.DeviceStyle{
 		ID:                 ksuid.New().String(),
@@ -33,6 +34,7 @@ func (r *deviceStyleRepository) Create(ctx context.Context, deviceDefinitionID s
 		ExternalStyleID:    externalStyleID,
 		Source:             source,
 		SubModel:           subModel,
+		HardwareTemplateID: null.StringFrom(templateID),
 	}
 	err := ds.Insert(ctx, r.DBS().Writer, boil.Infer())
 	if err != nil {

@@ -68,6 +68,7 @@ message DeviceType {
   repeated string sub_models = 5;
   string make_slug = 6;
   string model_slug = 7;
+  string hardware_template_id = 8;
 }
 
 message DeviceStyle {
@@ -77,6 +78,7 @@ message DeviceStyle {
   string sub_model = 4;
   string device_definition_id = 5;
   string external_style_id = 6;
+  string hardware_template_id = 7;
 }
 
 message DeviceMake {
@@ -89,6 +91,7 @@ message DeviceMake {
   string external_ids = 7 [deprecated = true];
   repeated ExternalID external_ids_typed = 8;
   Metadata metadata = 9;
+  string hardware_template_id = 10;
 }
 
 message VehicleInfo {
@@ -278,6 +281,7 @@ message CreateDeviceStyleRequest {
   string external_style_id = 3;
   string source = 4;
   string sub_model = 5;
+  string template_id = 6;
 }
 
 message GetIntegrationRequest {
@@ -286,6 +290,7 @@ message GetIntegrationRequest {
 
 message CreateDeviceMakeRequest {
   string name = 1;
+  string template_id = 2;
 }
 
 message GetDeviceStyleByIDRequest {
@@ -388,6 +393,15 @@ message GetDeviceMakeByTokenIdRequest {
   string token_id = 1;
 }
 
+message GetDeviceDefinitionHardwareTemplateByIDRequest {
+  string id = 1;
+  string integration_id = 2;
+}
+
+message GetDeviceDefinitionHardwareTemplateByIDResponse {
+  string template_id = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -422,5 +436,5 @@ service DeviceDefinitionService {
   rpc CreateDeviceType(CreateDeviceTypeRequest) returns (BaseResponse);
   rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
-
+  rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
 }

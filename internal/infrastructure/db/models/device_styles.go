@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,14 +24,15 @@ import (
 
 // DeviceStyle is an object representing the database table.
 type DeviceStyle struct {
-	ID                 string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	DeviceDefinitionID string    `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
-	Name               string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	ExternalStyleID    string    `boil:"external_style_id" json:"external_style_id" toml:"external_style_id" yaml:"external_style_id"`
-	Source             string    `boil:"source" json:"source" toml:"source" yaml:"source"`
-	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	SubModel           string    `boil:"sub_model" json:"sub_model" toml:"sub_model" yaml:"sub_model"`
+	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
+	Name               string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	ExternalStyleID    string      `boil:"external_style_id" json:"external_style_id" toml:"external_style_id" yaml:"external_style_id"`
+	Source             string      `boil:"source" json:"source" toml:"source" yaml:"source"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	SubModel           string      `boil:"sub_model" json:"sub_model" toml:"sub_model" yaml:"sub_model"`
+	HardwareTemplateID null.String `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 
 	R *deviceStyleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceStyleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -45,6 +47,7 @@ var DeviceStyleColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	SubModel           string
+	HardwareTemplateID string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
@@ -54,6 +57,7 @@ var DeviceStyleColumns = struct {
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	SubModel:           "sub_model",
+	HardwareTemplateID: "hardware_template_id",
 }
 
 var DeviceStyleTableColumns = struct {
@@ -65,6 +69,7 @@ var DeviceStyleTableColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	SubModel           string
+	HardwareTemplateID string
 }{
 	ID:                 "device_styles.id",
 	DeviceDefinitionID: "device_styles.device_definition_id",
@@ -74,6 +79,7 @@ var DeviceStyleTableColumns = struct {
 	CreatedAt:          "device_styles.created_at",
 	UpdatedAt:          "device_styles.updated_at",
 	SubModel:           "device_styles.sub_model",
+	HardwareTemplateID: "device_styles.hardware_template_id",
 }
 
 // Generated where
@@ -87,6 +93,7 @@ var DeviceStyleWhere = struct {
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 	SubModel           whereHelperstring
+	HardwareTemplateID whereHelpernull_String
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"device_definition_id\""},
@@ -96,6 +103,7 @@ var DeviceStyleWhere = struct {
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_styles\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_styles\".\"updated_at\""},
 	SubModel:           whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"sub_model\""},
+	HardwareTemplateID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_styles\".\"hardware_template_id\""},
 }
 
 // DeviceStyleRels is where relationship names are stored.
@@ -126,9 +134,9 @@ func (r *deviceStyleR) GetDeviceDefinition() *DeviceDefinition {
 type deviceStyleL struct{}
 
 var (
-	deviceStyleAllColumns            = []string{"id", "device_definition_id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model"}
+	deviceStyleAllColumns            = []string{"id", "device_definition_id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model", "hardware_template_id"}
 	deviceStyleColumnsWithoutDefault = []string{"id", "device_definition_id", "name", "external_style_id", "source", "sub_model"}
-	deviceStyleColumnsWithDefault    = []string{"created_at", "updated_at"}
+	deviceStyleColumnsWithDefault    = []string{"created_at", "updated_at", "hardware_template_id"}
 	deviceStylePrimaryKeyColumns     = []string{"id"}
 	deviceStyleGeneratedColumns      = []string{}
 )

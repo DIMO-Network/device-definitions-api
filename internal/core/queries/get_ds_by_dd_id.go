@@ -45,14 +45,20 @@ func (ch GetDeviceStyleByDeviceDefinitionIDQueryHandler) Handle(ctx context.Cont
 	response := []coremodels.GetDeviceStyleQueryResult{}
 
 	for _, v := range styles {
-		response = append(response, coremodels.GetDeviceStyleQueryResult{
+		deviceStyle := coremodels.GetDeviceStyleQueryResult{
 			ID:                 v.ID,
 			DeviceDefinitionID: v.DeviceDefinitionID,
 			Name:               v.Name,
 			ExternalStyleID:    v.ExternalStyleID,
 			Source:             v.Source,
 			SubModel:           v.SubModel,
-		})
+		}
+
+		if v.HardwareTemplateID.Valid {
+			deviceStyle.HardwareTemplateID = v.HardwareTemplateID.String
+		}
+
+		response = append(response, deviceStyle)
 	}
 
 	return response, nil

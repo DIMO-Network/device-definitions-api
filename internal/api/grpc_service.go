@@ -265,6 +265,7 @@ func (s *GrpcService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDe
 		ExternalStyleID:    in.ExternalStyleId,
 		Source:             in.Source,
 		SubModel:           in.SubModel,
+		TemplateID:         in.TemplateId,
 	})
 
 	result := commandResult.(commands.CreateDeviceStyleCommandResult)
@@ -341,7 +342,8 @@ func (s *GrpcService) GetDeviceMakes(ctx context.Context, in *emptypb.Empty) (*p
 func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
-		Name: in.Name,
+		Name:       in.Name,
+		TemplateID: in.TemplateId,
 	})
 
 	result := commandResult.(commands.CreateDeviceMakeCommandResult)
@@ -708,4 +710,15 @@ func (s *GrpcService) DeleteDeviceType(ctx context.Context, in *p_grpc.DeleteDev
 	result := commandResult.(commands.DeleteDeviceTypeCommandResult)
 
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionHardwareTemplateByIDRequest) (*p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionHardwareTemplateByIDQuery{
+		DeviceDefinitionID: in.Id,
+		IntegrationID:      in.IntegrationId,
+	})
+
+	result := qryResult.(coremodels.GetDeviceDefinitionHardwareTemplateQueryResult)
+
+	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{TemplateId: result.TemplateID}, nil
 }

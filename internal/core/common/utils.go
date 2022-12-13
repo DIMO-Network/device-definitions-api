@@ -159,21 +159,23 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
 		DeviceMake: models.DeviceMake{
-			ID:               dd.R.DeviceMake.ID,
-			Name:             dd.R.DeviceMake.Name,
-			LogoURL:          dd.R.DeviceMake.LogoURL,
-			OemPlatformName:  dd.R.DeviceMake.OemPlatformName,
-			NameSlug:         dd.R.DeviceMake.NameSlug,
-			ExternalIds:      JSONOrDefault(dd.R.DeviceMake.ExternalIds),
-			ExternalIdsTyped: BuildExternalIds(dd.R.DeviceMake.ExternalIds),
+			ID:                 dd.R.DeviceMake.ID,
+			Name:               dd.R.DeviceMake.Name,
+			LogoURL:            dd.R.DeviceMake.LogoURL,
+			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
+			NameSlug:           dd.R.DeviceMake.NameSlug,
+			ExternalIds:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIdsTyped:   BuildExternalIds(dd.R.DeviceMake.ExternalIds),
+			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
 		},
 		Type: models.DeviceType{
-			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
-			Make:      dd.R.DeviceMake.Name,
-			Model:     dd.Model,
-			Year:      int(dd.Year),
-			MakeSlug:  dd.R.DeviceMake.NameSlug,
-			ModelSlug: dd.ModelSlug,
+			Type:               strings.TrimSpace(dd.R.DeviceType.ID),
+			Make:               dd.R.DeviceMake.Name,
+			Model:              dd.Model,
+			Year:               int(dd.Year),
+			MakeSlug:           dd.R.DeviceMake.NameSlug,
+			ModelSlug:          dd.ModelSlug,
+			HardwareTemplateID: dd.HardwareTemplateID.String,
 		},
 		Metadata:    string(dd.Metadata.JSON),
 		Verified:    dd.Verified,
@@ -240,14 +242,20 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
 
 		for _, ds := range dd.R.DeviceStyles {
-			rp.DeviceStyles = append(rp.DeviceStyles, models.DeviceStyle{
+			deviceStyle := models.DeviceStyle{
 				ID:                 ds.ID,
 				DeviceDefinitionID: ds.DeviceDefinitionID,
 				ExternalStyleID:    ds.ExternalStyleID,
 				Name:               ds.Name,
 				Source:             ds.Source,
 				SubModel:           ds.SubModel,
-			})
+			}
+
+			if ds.HardwareTemplateID.Valid {
+				deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
+			}
+
+			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
 		}
 	}
 	// trying pulling fuel images if no image_url, pick the biggest one
@@ -272,19 +280,21 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		ImageUrl:           dd.ImageURL,
 		Source:             dd.Source,
 		Make: &grpc.DeviceMake{
-			Id:              dd.DeviceMake.ID,
-			Name:            dd.DeviceMake.Name,
-			LogoUrl:         dd.DeviceMake.LogoURL.String,
-			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
-			NameSlug:        dd.DeviceMake.NameSlug,
+			Id:                 dd.DeviceMake.ID,
+			Name:               dd.DeviceMake.Name,
+			LogoUrl:            dd.DeviceMake.LogoURL.String,
+			OemPlatformName:    dd.DeviceMake.OemPlatformName.String,
+			NameSlug:           dd.DeviceMake.NameSlug,
+			HardwareTemplateId: dd.DeviceMake.HardwareTemplateID.String,
 		},
 		Type: &grpc.DeviceType{
-			Type:      dd.Type.Type,
-			Make:      dd.DeviceMake.Name,
-			Model:     dd.Type.Model,
-			Year:      int32(dd.Type.Year),
-			MakeSlug:  dd.Type.MakeSlug,
-			ModelSlug: dd.Type.ModelSlug,
+			Type:               dd.Type.Type,
+			Make:               dd.DeviceMake.Name,
+			Model:              dd.Type.Model,
+			Year:               int32(dd.Type.Year),
+			MakeSlug:           dd.Type.MakeSlug,
+			ModelSlug:          dd.Type.ModelSlug,
+			HardwareTemplateId: dd.Type.HardwareTemplateID,
 		},
 		Verified:    dd.Verified,
 		ExternalIds: ExternalIdsToGRPC(dd.ExternalIds),
@@ -359,6 +369,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			Name:               ds.Name,
 			Source:             ds.Source,
 			SubModel:           ds.SubModel,
+			HardwareTemplateId: ds.HardwareTemplateID,
 		})
 	}
 
