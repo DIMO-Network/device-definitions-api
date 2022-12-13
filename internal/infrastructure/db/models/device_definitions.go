@@ -24,87 +24,92 @@ import (
 
 // DeviceDefinition is an object representing the database table.
 type DeviceDefinition struct {
-	ID           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Model        string      `boil:"model" json:"model" toml:"model" yaml:"model"`
-	Year         int16       `boil:"year" json:"year" toml:"year" yaml:"year"`
-	ImageURL     null.String `boil:"image_url" json:"image_url,omitempty" toml:"image_url" yaml:"image_url,omitempty"`
-	Metadata     null.JSON   `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	Source       null.String `boil:"source" json:"source,omitempty" toml:"source" yaml:"source,omitempty"`
-	Verified     bool        `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
-	ExternalID   null.String `boil:"external_id" json:"external_id,omitempty" toml:"external_id" yaml:"external_id,omitempty"`
-	DeviceMakeID string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
-	ModelSlug    string      `boil:"model_slug" json:"model_slug" toml:"model_slug" yaml:"model_slug"`
-	DeviceTypeID null.String `boil:"device_type_id" json:"device_type_id,omitempty" toml:"device_type_id" yaml:"device_type_id,omitempty"`
-	ExternalIds  null.JSON   `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
+	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Model              string      `boil:"model" json:"model" toml:"model" yaml:"model"`
+	Year               int16       `boil:"year" json:"year" toml:"year" yaml:"year"`
+	ImageURL           null.String `boil:"image_url" json:"image_url,omitempty" toml:"image_url" yaml:"image_url,omitempty"`
+	Metadata           null.JSON   `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Source             null.String `boil:"source" json:"source,omitempty" toml:"source" yaml:"source,omitempty"`
+	Verified           bool        `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
+	ExternalID         null.String `boil:"external_id" json:"external_id,omitempty" toml:"external_id" yaml:"external_id,omitempty"`
+	DeviceMakeID       string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
+	ModelSlug          string      `boil:"model_slug" json:"model_slug" toml:"model_slug" yaml:"model_slug"`
+	DeviceTypeID       null.String `boil:"device_type_id" json:"device_type_id,omitempty" toml:"device_type_id" yaml:"device_type_id,omitempty"`
+	ExternalIds        null.JSON   `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
+	HardwareTemplateID null.String `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DeviceDefinitionColumns = struct {
-	ID           string
-	Model        string
-	Year         string
-	ImageURL     string
-	Metadata     string
-	CreatedAt    string
-	UpdatedAt    string
-	Source       string
-	Verified     string
-	ExternalID   string
-	DeviceMakeID string
-	ModelSlug    string
-	DeviceTypeID string
-	ExternalIds  string
+	ID                 string
+	Model              string
+	Year               string
+	ImageURL           string
+	Metadata           string
+	CreatedAt          string
+	UpdatedAt          string
+	Source             string
+	Verified           string
+	ExternalID         string
+	DeviceMakeID       string
+	ModelSlug          string
+	DeviceTypeID       string
+	ExternalIds        string
+	HardwareTemplateID string
 }{
-	ID:           "id",
-	Model:        "model",
-	Year:         "year",
-	ImageURL:     "image_url",
-	Metadata:     "metadata",
-	CreatedAt:    "created_at",
-	UpdatedAt:    "updated_at",
-	Source:       "source",
-	Verified:     "verified",
-	ExternalID:   "external_id",
-	DeviceMakeID: "device_make_id",
-	ModelSlug:    "model_slug",
-	DeviceTypeID: "device_type_id",
-	ExternalIds:  "external_ids",
+	ID:                 "id",
+	Model:              "model",
+	Year:               "year",
+	ImageURL:           "image_url",
+	Metadata:           "metadata",
+	CreatedAt:          "created_at",
+	UpdatedAt:          "updated_at",
+	Source:             "source",
+	Verified:           "verified",
+	ExternalID:         "external_id",
+	DeviceMakeID:       "device_make_id",
+	ModelSlug:          "model_slug",
+	DeviceTypeID:       "device_type_id",
+	ExternalIds:        "external_ids",
+	HardwareTemplateID: "hardware_template_id",
 }
 
 var DeviceDefinitionTableColumns = struct {
-	ID           string
-	Model        string
-	Year         string
-	ImageURL     string
-	Metadata     string
-	CreatedAt    string
-	UpdatedAt    string
-	Source       string
-	Verified     string
-	ExternalID   string
-	DeviceMakeID string
-	ModelSlug    string
-	DeviceTypeID string
-	ExternalIds  string
+	ID                 string
+	Model              string
+	Year               string
+	ImageURL           string
+	Metadata           string
+	CreatedAt          string
+	UpdatedAt          string
+	Source             string
+	Verified           string
+	ExternalID         string
+	DeviceMakeID       string
+	ModelSlug          string
+	DeviceTypeID       string
+	ExternalIds        string
+	HardwareTemplateID string
 }{
-	ID:           "device_definitions.id",
-	Model:        "device_definitions.model",
-	Year:         "device_definitions.year",
-	ImageURL:     "device_definitions.image_url",
-	Metadata:     "device_definitions.metadata",
-	CreatedAt:    "device_definitions.created_at",
-	UpdatedAt:    "device_definitions.updated_at",
-	Source:       "device_definitions.source",
-	Verified:     "device_definitions.verified",
-	ExternalID:   "device_definitions.external_id",
-	DeviceMakeID: "device_definitions.device_make_id",
-	ModelSlug:    "device_definitions.model_slug",
-	DeviceTypeID: "device_definitions.device_type_id",
-	ExternalIds:  "device_definitions.external_ids",
+	ID:                 "device_definitions.id",
+	Model:              "device_definitions.model",
+	Year:               "device_definitions.year",
+	ImageURL:           "device_definitions.image_url",
+	Metadata:           "device_definitions.metadata",
+	CreatedAt:          "device_definitions.created_at",
+	UpdatedAt:          "device_definitions.updated_at",
+	Source:             "device_definitions.source",
+	Verified:           "device_definitions.verified",
+	ExternalID:         "device_definitions.external_id",
+	DeviceMakeID:       "device_definitions.device_make_id",
+	ModelSlug:          "device_definitions.model_slug",
+	DeviceTypeID:       "device_definitions.device_type_id",
+	ExternalIds:        "device_definitions.external_ids",
+	HardwareTemplateID: "device_definitions.hardware_template_id",
 }
 
 // Generated where
@@ -248,35 +253,37 @@ func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var DeviceDefinitionWhere = struct {
-	ID           whereHelperstring
-	Model        whereHelperstring
-	Year         whereHelperint16
-	ImageURL     whereHelpernull_String
-	Metadata     whereHelpernull_JSON
-	CreatedAt    whereHelpertime_Time
-	UpdatedAt    whereHelpertime_Time
-	Source       whereHelpernull_String
-	Verified     whereHelperbool
-	ExternalID   whereHelpernull_String
-	DeviceMakeID whereHelperstring
-	ModelSlug    whereHelperstring
-	DeviceTypeID whereHelpernull_String
-	ExternalIds  whereHelpernull_JSON
+	ID                 whereHelperstring
+	Model              whereHelperstring
+	Year               whereHelperint16
+	ImageURL           whereHelpernull_String
+	Metadata           whereHelpernull_JSON
+	CreatedAt          whereHelpertime_Time
+	UpdatedAt          whereHelpertime_Time
+	Source             whereHelpernull_String
+	Verified           whereHelperbool
+	ExternalID         whereHelpernull_String
+	DeviceMakeID       whereHelperstring
+	ModelSlug          whereHelperstring
+	DeviceTypeID       whereHelpernull_String
+	ExternalIds        whereHelpernull_JSON
+	HardwareTemplateID whereHelpernull_String
 }{
-	ID:           whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
-	Model:        whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
-	Year:         whereHelperint16{field: "\"device_definitions_api\".\"device_definitions\".\"year\""},
-	ImageURL:     whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"image_url\""},
-	Metadata:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"metadata\""},
-	CreatedAt:    whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"created_at\""},
-	UpdatedAt:    whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"updated_at\""},
-	Source:       whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"source\""},
-	Verified:     whereHelperbool{field: "\"device_definitions_api\".\"device_definitions\".\"verified\""},
-	ExternalID:   whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"external_id\""},
-	DeviceMakeID: whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"device_make_id\""},
-	ModelSlug:    whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
-	DeviceTypeID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"device_type_id\""},
-	ExternalIds:  whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"external_ids\""},
+	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
+	Model:              whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
+	Year:               whereHelperint16{field: "\"device_definitions_api\".\"device_definitions\".\"year\""},
+	ImageURL:           whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"image_url\""},
+	Metadata:           whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"metadata\""},
+	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"created_at\""},
+	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"updated_at\""},
+	Source:             whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"source\""},
+	Verified:           whereHelperbool{field: "\"device_definitions_api\".\"device_definitions\".\"verified\""},
+	ExternalID:         whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"external_id\""},
+	DeviceMakeID:       whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"device_make_id\""},
+	ModelSlug:          whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model_slug\""},
+	DeviceTypeID:       whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"device_type_id\""},
+	ExternalIds:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"external_ids\""},
+	HardwareTemplateID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"hardware_template_id\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
@@ -367,9 +374,9 @@ func (r *deviceDefinitionR) GetReviews() ReviewSlice {
 type deviceDefinitionL struct{}
 
 var (
-	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids"}
+	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id"}
 	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids"}
+	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )

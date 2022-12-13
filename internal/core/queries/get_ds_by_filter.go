@@ -55,14 +55,21 @@ func (ch GetDeviceStyleByFilterQueryHandler) Handle(ctx context.Context, query m
 		return response, nil
 	}
 
-	response = append(response, coremodels.GetDeviceStyleQueryResult{
+	deviceStyle := coremodels.GetDeviceStyleQueryResult{
 		ID:                 style.ID,
 		DeviceDefinitionID: style.DeviceDefinitionID,
 		Name:               style.Name,
 		ExternalStyleID:    style.ExternalStyleID,
 		Source:             style.Source,
 		SubModel:           style.SubModel,
-	})
+		HardwareTemplateID: style.HardwareTemplateID.String,
+	}
+
+	if style.HardwareTemplateID.Valid {
+		deviceStyle.HardwareTemplateID = style.HardwareTemplateID.String
+	}
+
+	response = append(response, deviceStyle)
 
 	return response, nil
 }

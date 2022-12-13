@@ -17,13 +17,14 @@ import (
 )
 
 type UpdateDeviceMakeCommand struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	LogoURL         null.String     `json:"logo_url"`
-	OemPlatformName null.String     `json:"oem_platform_name"`
-	TokenID         *big.Int        `json:"tokenId,omitempty"`
-	ExternalIds     json.RawMessage `json:"external_ids"`
-	Metadata        json.RawMessage `json:"metadata"`
+	ID                 string          `json:"id"`
+	Name               string          `json:"name"`
+	LogoURL            null.String     `json:"logo_url"`
+	OemPlatformName    null.String     `json:"oem_platform_name"`
+	TokenID            *big.Int        `json:"tokenId,omitempty"`
+	ExternalIds        json.RawMessage `json:"external_ids"`
+	Metadata           json.RawMessage `json:"metadata"`
+	HardwareTemplateID string          `json:"hardware_template_id,omitempty"`
 }
 
 type UpdateDeviceMakeCommandResult struct {
@@ -74,8 +75,8 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 	}
 
 	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIds))
-
 	dm.Metadata = null.JSONFrom([]byte(command.Metadata))
+	dm.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 
 	if err := dm.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceMakeColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{

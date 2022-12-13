@@ -8,10 +8,11 @@ import (
 )
 
 type CreateDeviceMakeCommand struct {
-	Name        string `json:"name"`
-	LogoURL     string `json:"logo_url"`
-	ExternalIds string `json:"external_ids,omitempty"`
-	Metadata    string `json:"metadata,omitempty"`
+	Name               string `json:"name"`
+	LogoURL            string `json:"logo_url"`
+	ExternalIds        string `json:"external_ids,omitempty"`
+	Metadata           string `json:"metadata,omitempty"`
+	HardwareTemplateID string `json:"hardware_template_id,omitempty"`
 }
 
 type CreateDeviceMakeCommandResult struct {
@@ -32,7 +33,7 @@ func (ch CreateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	command := query.(*CreateDeviceMakeCommand)
 
-	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, command.LogoURL, command.ExternalIds, command.Metadata)
+	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, command.LogoURL, command.ExternalIds, command.Metadata, command.HardwareTemplateID)
 
 	if err != nil {
 		return nil, err

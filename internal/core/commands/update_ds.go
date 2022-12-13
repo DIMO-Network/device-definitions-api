@@ -9,6 +9,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -19,6 +20,7 @@ type UpdateDeviceStyleCommand struct {
 	ExternalStyleID    string `json:"external_style_id"`
 	Source             string `json:"source"`
 	SubModel           string `json:"sub_model"`
+	HardwareTemplateID string `json:"hardware_template_id,omitempty"`
 }
 
 type UpdateDeviceStyleCommandResult struct {
@@ -71,6 +73,8 @@ func (ch UpdateDeviceStyleCommandHandler) Handle(ctx context.Context, query medi
 	if len(command.SubModel) > 0 {
 		ds.SubModel = command.SubModel
 	}
+
+	ds.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 
 	if err := ds.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceStyleColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
