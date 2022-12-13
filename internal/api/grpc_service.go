@@ -352,6 +352,8 @@ func (s *GrpcService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDev
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
 		Name:               in.Name,
 		HardwareTemplateID: in.HardwareTemplateId,
+		ExternalIds:        "{}",
+		Metadata:           "{}",
 	})
 
 	result := commandResult.(commands.CreateDeviceMakeCommandResult)
