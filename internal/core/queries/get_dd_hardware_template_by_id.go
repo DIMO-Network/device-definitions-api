@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/TheFellow/go-mediator/mediator"
