@@ -312,8 +312,14 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 		// Update Device Styles
 		for _, ds := range deviceStyles {
+			deviceStyleID := ds.ID
+			
+			if len(deviceStyleID) == 0 {
+				deviceStyleID = ksuid.New().String()
+			}
+
 			subModels := &models.DeviceStyle{
-				ID:                 ds.ID,
+				ID:                 deviceStyleID,
 				DeviceDefinitionID: dd.ID,
 				Name:               ds.Name,
 				ExternalStyleID:    ds.ExternalStyleID,
@@ -321,6 +327,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 				CreatedAt:          ds.CreatedAt,
 				UpdatedAt:          ds.UpdatedAt,
 				SubModel:           ds.SubModel,
+				HardwareTemplateID: ds.HardwareTemplateID,
 			}
 			err = subModels.Insert(ctx, tx, boil.Infer())
 			if err != nil {
