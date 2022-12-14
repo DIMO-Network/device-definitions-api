@@ -406,7 +406,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 				Name:               style.Name,
 				Source:             style.Source,
 				SubModel:           style.SubModel,
-				HardwareTemplateId: style.HardwareTemplateId,
+				HardwareTemplateID: style.HardwareTemplateId,
 			}
 		}
 	}
