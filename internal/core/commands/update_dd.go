@@ -49,13 +49,14 @@ type UpdateDeviceIntegrations struct {
 }
 
 type UpdateDeviceStyles struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	ExternalStyleID string    `json:"external_style_id"`
-	Source          string    `json:"source"`
-	CreatedAt       time.Time `json:"created_at,omitempty"`
-	UpdatedAt       time.Time `json:"updated_at,omitempty"`
-	SubModel        string    `json:"sub_model"`
+	ID                 string    `json:"id"`
+	Name               string    `json:"name"`
+	ExternalStyleID    string    `json:"external_style_id"`
+	Source             string    `json:"source"`
+	CreatedAt          time.Time `json:"created_at,omitempty"`
+	UpdatedAt          time.Time `json:"updated_at,omitempty"`
+	SubModel           string    `json:"sub_model"`
+	HardwareTemplateId string    `json:"hardware_template_id"`
 }
 
 type UpdateDeviceVehicleInfo struct {
@@ -207,6 +208,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 				CreatedAt:          ds.CreatedAt,
 				UpdatedAt:          ds.UpdatedAt,
 				SubModel:           ds.SubModel,
+				HardwareTemplateID: null.StringFrom(ds.HardwareTemplateId),
 			})
 		}
 	}

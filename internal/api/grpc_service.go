@@ -401,11 +401,12 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		command.DeviceStyles = make([]*commands.UpdateDeviceStyles, len(in.DeviceStyles))
 		for i, style := range in.DeviceStyles {
 			command.DeviceStyles[i] = &commands.UpdateDeviceStyles{
-				ID:              style.Id,
-				ExternalStyleID: style.ExternalStyleId,
-				Name:            style.Name,
-				Source:          style.Source,
-				SubModel:        style.SubModel,
+				ID:                 style.Id,
+				ExternalStyleID:    style.ExternalStyleId,
+				Name:               style.Name,
+				Source:             style.Source,
+				SubModel:           style.SubModel,
+				HardwareTemplateId: style.HardwareTemplateId,
 			}
 		}
 	}

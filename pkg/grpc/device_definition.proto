@@ -207,6 +207,7 @@ message UpdateDeviceDefinitionRequest {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
     string sub_model = 7;
+    string hardware_template_id = 8;
   }
 
   message DeviceIntegrations {
