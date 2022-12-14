@@ -29,6 +29,7 @@ type UpdateDeviceDefinitionCommand struct {
 	Verified           bool                        `json:"verified"`
 	Model              string                      `json:"model"`
 	Year               int16                       `json:"year"`
+	HardwareTemplateID string                      `json:"hardware_template_id,omitempty"`
 	DeviceMakeID       string                      `json:"device_make_id"`
 	DeviceStyles       []*UpdateDeviceStyles       `json:"deviceStyles"`
 	DeviceIntegrations []*UpdateDeviceIntegrations `json:"deviceIntegrations"`
@@ -114,12 +115,17 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	// creates if does not exist
 	if dd == nil {
 		dd = &models.DeviceDefinition{
-			ID:           command.DeviceDefinitionID,
-			DeviceMakeID: command.DeviceMakeID,
-			Model:        command.Model,
-			Year:         command.Year,
-			ModelSlug:    common.SlugString(command.Model),
+			ID:                 command.DeviceDefinitionID,
+			DeviceMakeID:       command.DeviceMakeID,
+			Model:              command.Model,
+			Year:               command.Year,
+			ModelSlug:          common.SlugString(command.Model),
+			HardwareTemplateID: null.StringFrom(command.HardwareTemplateID),
 		}
+	}
+
+	if len(command.HardwareTemplateID) > 0 {
+		dd.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 	}
 
 	if len(command.Model) > 0 {

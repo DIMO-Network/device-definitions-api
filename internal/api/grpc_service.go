@@ -211,11 +211,12 @@ func (s *GrpcService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_
 func (s *GrpcService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
 
 	command := &commands.CreateDeviceDefinitionCommand{
-		Source:       in.Source,
-		Make:         in.Make,
-		Model:        in.Model,
-		Year:         int(in.Year),
-		DeviceTypeID: in.DeviceTypeId,
+		Source:             in.Source,
+		Make:               in.Make,
+		Model:              in.Model,
+		Year:               int(in.Year),
+		DeviceTypeID:       in.DeviceTypeId,
+		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
 	if len(in.DeviceAttributes) > 0 {
@@ -385,6 +386,7 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 		DeviceMakeID:       in.DeviceMakeId,
 		DeviceTypeID:       in.DeviceTypeId,
 		ExternalIds:        common.ExternalIdsFromGRPC(in.ExternalIds),
+		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
 	if len(in.DeviceAttributes) > 0 {

@@ -113,7 +113,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			dd, err = dc.repository.GetOrCreate(ctx, "drivly", common.SlugString(vinInfo.Model+vinInfo.Year), resp.DeviceMakeId,
-				vinInfo.Model, int(resp.Year), common.DefaultDeviceType, metadata, true)
+				vinInfo.Model, int(resp.Year), common.DefaultDeviceType, metadata, true, "")
 			if err != nil {
 				return nil, err
 			}

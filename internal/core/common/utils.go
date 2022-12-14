@@ -158,6 +158,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
+		HardwareTemplateID: dd.HardwareTemplateID.String,
 		DeviceMake: models.DeviceMake{
 			ID:                 dd.R.DeviceMake.ID,
 			Name:               dd.R.DeviceMake.Name,
@@ -278,6 +279,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
 		Source:             dd.Source,
+		HardwareTemplateId: dd.HardwareTemplateID,
 		Make: &grpc.DeviceMake{
 			Id:                 dd.DeviceMake.ID,
 			Name:               dd.DeviceMake.Name,
