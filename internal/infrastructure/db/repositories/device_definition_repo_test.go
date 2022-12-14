@@ -63,9 +63,10 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 	mk := "Nissan"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
-	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false)
+	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.Model, model)
@@ -80,11 +81,12 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	mk := "Toyota"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
-	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false)
+	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 	s.NoError(err)
 
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
@@ -96,11 +98,12 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	model := "Corolla"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	dm := setupDeviceMake(s.T(), s.pdb, "Toyota")
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
-	dd, err := s.repository.GetOrCreate(ctx, source, "", dm.ID, model, year, "vehicle", null.JSON{}, false)
+	dd, err := s.repository.GetOrCreate(ctx, source, "", dm.ID, model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 	s.NoError(err)
 
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
@@ -112,11 +115,12 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Invali
 	model := "Corolla"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	_ = setupDeviceMake(s.T(), s.pdb, "Toyota")
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
-	dd, err := s.repository.GetOrCreate(ctx, source, "", ksuid.New().String(), model, year, "vehicle", null.JSON{}, false)
+	dd, err := s.repository.GetOrCreate(ctx, source, "", ksuid.New().String(), model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 	s.Error(err, "expected an error")
 	s.Assert().Nil(dd)
 }
@@ -128,6 +132,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	mk := "Toyota"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
 	i := &models.Integration{
@@ -138,7 +143,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	}
 	s.NoError(i.Insert(ctx, s.pdb.DBS().Writer, boil.Infer()))
 
-	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false)
+	dd, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 	s.NoError(err)
 	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(common.AutoPiVendor)).One(ctx, s.pdb.DBS().Reader)
 	s.NoError(err)
@@ -158,10 +163,11 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Existing_Su
 	mk := "Toyota"
 	source := "source-01"
 	year := 2022
+	hardwareTemplateID := ksuid.New().String()
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false)
+	dd2, err := s.repository.GetOrCreate(ctx, source, "", mk, model, year, "vehicle", null.JSON{}, false, hardwareTemplateID)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd.ID, dd2.ID)

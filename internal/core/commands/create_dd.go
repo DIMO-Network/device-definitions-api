@@ -17,10 +17,11 @@ import (
 )
 
 type CreateDeviceDefinitionCommand struct {
-	Source string `json:"source"`
-	Make   string `json:"make"`
-	Model  string `json:"model"`
-	Year   int    `json:"year"`
+	Source             string `json:"source"`
+	Make               string `json:"make"`
+	Model              string `json:"model"`
+	Year               int    `json:"year"`
+	HardwareTemplateID string `json:"hardware_template_id,omitempty"`
 	// DeviceTypeID comes from the device_types.id table, determines what kind of device this is, typically a vehicle
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
@@ -68,7 +69,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
-	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, false)
+	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, false, command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ type GetDeviceDefinitionQueryResult struct {
 	Name               string        `json:"name"`
 	ImageURL           string        `json:"imageUrl"`
 	Source             string        `json:"source"`
+	HardwareTemplateID string        `json:"hardware_template_id"`
 	DeviceMake         DeviceMake    `json:"make"`
 	Type               DeviceType    `json:"type"`
 	VehicleInfo        VehicleInfo   `json:"vehicleData,omitempty"`

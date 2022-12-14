@@ -33,6 +33,7 @@ message GetDeviceDefinitionItemResponse {
   string external_id = 11 [deprecated = true];
   repeated DeviceTypeAttribute device_attributes = 12;
   repeated ExternalID external_ids = 13;
+  string hardware_template_id = 14;
 }
 
 message ExternalID {
@@ -68,7 +69,6 @@ message DeviceType {
   repeated string sub_models = 5;
   string make_slug = 6;
   string model_slug = 7;
-  string hardware_template_id = 8;
 }
 
 message DeviceStyle {
@@ -166,6 +166,7 @@ message CreateDeviceDefinitionRequest {
   string source = 4;
   string device_type_id = 5;
   repeated DeviceTypeAttributeRequest device_attributes = 6;
+  string hardware_template_id = 7;
 }
 
 message CreateDeviceIntegrationRequest {
@@ -198,6 +199,7 @@ message UpdateDeviceDefinitionRequest {
   string device_type_id = 12;
   repeated DeviceTypeAttributeRequest device_attributes = 13;
   repeated ExternalID external_ids = 14;
+  string hardware_template_id = 15;
 
   message DeviceStyles {
     string id = 1;
