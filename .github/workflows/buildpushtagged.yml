@@ -21,7 +21,7 @@ jobs:
 
       - name: get last image tag
         id: tag
-        uses: CumulusDS/get-yaml-paths-action@v0.1.1
+        uses: CumulusDS/get-yaml-paths-action@v1.0.1
         with:
           file: charts/device-definitions-api/values.yaml
           buildtag: image.tag
