@@ -132,6 +132,7 @@ type DeviceMMYJoinQueryOutput struct {
 }
 
 func (r *deviceDefinitionRepository) GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error) {
+	// loads only certain properties of devices: make_slug, model_slug and year
 	result := make([]*DeviceMMYJoinQueryOutput, 0)
 
 	err := models.NewQuery(

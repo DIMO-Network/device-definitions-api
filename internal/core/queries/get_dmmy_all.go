@@ -18,8 +18,8 @@ type GetDevicesMMYQueryHandler struct {
 }
 
 type GetDevicesMMYQueryResult struct {
-	Make  string `json:"make"`
-	Model string `json:"model"`
+	Make  string `json:"make_slug"`
+	Model string `json:"model_slug"`
 	Year  int32  `json:"year"`
 }
 
