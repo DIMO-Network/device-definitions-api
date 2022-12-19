@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	repositories "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	gomock "github.com/golang/mock/gomock"
 	null "github.com/volatiletech/null/v8"
 )
@@ -124,6 +125,21 @@ func (m *MockDeviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, s
 func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug, year, loadIntegrations interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugAndYear", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugAndYear), ctx, slug, year, loadIntegrations)
+}
+
+// GetDevicesMMY mocks base method.
+func (m *MockDeviceDefinitionRepository) GetDevicesMMY(ctx context.Context) ([]*repositories.DeviceMMYJoinQueryOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDevicesMMY", ctx)
+	ret0, _ := ret[0].([]*repositories.DeviceMMYJoinQueryOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDevicesMMY indicates an expected call of GetDevicesMMY.
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDevicesMMY(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDevicesMMY", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetDevicesMMY), ctx)
 }
 
 // GetOrCreate mocks base method.

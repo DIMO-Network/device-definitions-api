@@ -36,16 +36,16 @@ func (m *MockDeviceStyleRepository) EXPECT() *MockDeviceStyleRepositoryMockRecor
 }
 
 // Create mocks base method.
-func (m *MockDeviceStyleRepository) Create(ctx context.Context, deviceDefinitionID, name, externalStyleID, source, subModel string) (*models.DeviceStyle, error) {
+func (m *MockDeviceStyleRepository) Create(ctx context.Context, deviceDefinitionID, name, externalStyleID, source, subModel, templateID string) (*models.DeviceStyle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, name, externalStyleID, source, subModel)
+	ret := m.ctrl.Call(m, "Create", ctx, deviceDefinitionID, name, externalStyleID, source, subModel, templateID)
 	ret0, _ := ret[0].(*models.DeviceStyle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDeviceStyleRepositoryMockRecorder) Create(ctx, deviceDefinitionID, name, externalStyleID, source, subModel interface{}) *gomock.Call {
+func (mr *MockDeviceStyleRepositoryMockRecorder) Create(ctx, deviceDefinitionID, name, externalStyleID, source, subModel, templateID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceStyleRepository)(nil).Create), ctx, deviceDefinitionID, name, externalStyleID, source, subModel)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceStyleRepository)(nil).Create), ctx, deviceDefinitionID, name, externalStyleID, source, subModel, templateID)
 }
