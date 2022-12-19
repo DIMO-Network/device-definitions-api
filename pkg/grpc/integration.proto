@@ -74,6 +74,19 @@ message Feature {
   string display_name = 4;
 }
 
+message GetCompatibilityByDeviceArrayRequest {
+  repeated string device_definition_ids = 1;
+}
+
+message GetCompatibilityByDeviceArrayResponseItem {
+  string device_definition_id = 1;
+  repeated DeviceCompatibilities compatibilities = 2;
+}
+
+message GetCompatibilityByDeviceArrayResponse {
+  repeated GetCompatibilityByDeviceArrayResponseItem response = 1;
+}
+
 message GetCompatibilityByDeviceDefinitionRequest {
   string device_definition_id = 1;
 }
@@ -100,6 +113,8 @@ service IntegrationService {
   rpc GetCompatibilitiesByMake(GetCompatibilitiesByMakeRequest) returns (GetCompatibilitiesByMakeResponse);
   // GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
   rpc GetCompatibilityByDeviceDefinition(GetCompatibilityByDeviceDefinitionRequest) returns (GetDeviceCompatibilitiesResponse);
+  // GetCompatibilityByDeviceArray for models endpoint, returns all model compatability levels
+  rpc GetCompatibilityByDeviceArray(GetCompatibilityByDeviceArrayRequest) returns (GetCompatibilityByDeviceArrayResponse);
   rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
   rpc GetIntegrationFeatures(google.protobuf.Empty) returns (GetIntegrationFeatureListResponse);
   // GetIntegrationOptions for dropdowns in explorer makes page, get by makeId

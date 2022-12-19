@@ -79,6 +79,11 @@ func (s *GrpcIntegrationService) GetCompatibilityByDeviceDefinition(ctx context.
 	return qryResult.(*p_grpc.GetDeviceCompatibilitiesResponse), nil
 }
 
+func (s *GrpcIntegrationService) GetCompatibilityByDeviceArray(ctx context.Context, in *p_grpc.GetCompatibilityByDeviceArrayRequest) (*p_grpc.GetCompatibilityByDeviceArrayResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetCompatibilityByDeviceDefinitionArrayQuery{DeviceDefinitionID: in.DeviceDefinitionIds})
+	return qryResult.(*p_grpc.GetCompatibilityByDeviceArrayResponse), nil
+}
+
 func (s *GrpcIntegrationService) GetIntegrationOptions(ctx context.Context, in *p_grpc.GetIntegrationOptionsRequest) (*p_grpc.GetIntegrationOptionsResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationOptionsQuery{MakeID: in.MakeId})
 
