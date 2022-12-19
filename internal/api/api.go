@@ -113,6 +113,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 		mediator.WithHandler(&queries.GetAllIntegrationFeatureQuery{}, queries.NewGetAllIntegrationFeatureQuery(pdb.DBS)),
 		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionQuery{}, queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetCompatibilityByDeviceDefinitionArrayQuery{}, queries.NewGetCompatibilityByDeviceDefinitionArrayQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationFeatureByIDQuery{}, queries.NewGetIntegrationFeatureByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
 
