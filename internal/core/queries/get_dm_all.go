@@ -58,6 +58,10 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediato
 		if !v.TokenID.IsZero() {
 			result.DeviceMakes[i].TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
 		}
+
+		if v.HardwareTemplateID.Valid {
+			result.DeviceMakes[i].HardwareTemplateId = v.HardwareTemplateID.String
+		}
 	}
 
 	return result, nil

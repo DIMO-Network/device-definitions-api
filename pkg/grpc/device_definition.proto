@@ -33,6 +33,7 @@ message GetDeviceDefinitionItemResponse {
   string external_id = 11 [deprecated = true];
   repeated DeviceTypeAttribute device_attributes = 12;
   repeated ExternalID external_ids = 13;
+  string hardware_template_id = 14;
 }
 
 message ExternalID {
@@ -77,6 +78,7 @@ message DeviceStyle {
   string sub_model = 4;
   string device_definition_id = 5;
   string external_style_id = 6;
+  string hardware_template_id = 7;
 }
 
 message DeviceMake {
@@ -89,6 +91,7 @@ message DeviceMake {
   string external_ids = 7 [deprecated = true];
   repeated ExternalID external_ids_typed = 8;
   Metadata metadata = 9;
+  string hardware_template_id = 10;
 }
 
 message VehicleInfo {
@@ -163,6 +166,7 @@ message CreateDeviceDefinitionRequest {
   string source = 4;
   string device_type_id = 5;
   repeated DeviceTypeAttributeRequest device_attributes = 6;
+  string hardware_template_id = 7;
 }
 
 message CreateDeviceIntegrationRequest {
@@ -195,6 +199,7 @@ message UpdateDeviceDefinitionRequest {
   string device_type_id = 12;
   repeated DeviceTypeAttributeRequest device_attributes = 13;
   repeated ExternalID external_ids = 14;
+  string hardware_template_id = 15;
 
   message DeviceStyles {
     string id = 1;
@@ -204,6 +209,7 @@ message UpdateDeviceDefinitionRequest {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
     string sub_model = 7;
+    string hardware_template_id = 8;
   }
 
   message DeviceIntegrations {
@@ -278,6 +284,7 @@ message CreateDeviceStyleRequest {
   string external_style_id = 3;
   string source = 4;
   string sub_model = 5;
+  string hardware_template_id = 6;
 }
 
 message GetIntegrationRequest {
@@ -286,6 +293,7 @@ message GetIntegrationRequest {
 
 message CreateDeviceMakeRequest {
   string name = 1;
+  string hardware_template_id = 2;
 }
 
 message GetDeviceStyleByIDRequest {
@@ -326,6 +334,7 @@ message UpdateDeviceMakeRequest {
   string name_slug = 6;
   string external_ids = 7;
   string metadata = 8;
+  string hardware_template_id = 9;
 }
 
 message UpdateDeviceStyleRequest {
@@ -335,6 +344,7 @@ message UpdateDeviceStyleRequest {
   string external_style_id = 4;
   string source = 5;
   string sub_model = 6;
+  string hardware_template_id = 7;
 }
 
 message GetDeviceStyleFilterRequest {
@@ -388,6 +398,15 @@ message GetDeviceMakeByTokenIdRequest {
   string token_id = 1;
 }
 
+message GetDeviceDefinitionHardwareTemplateByIDRequest {
+  string id = 1;
+  string integration_id = 2;
+}
+
+message GetDeviceDefinitionHardwareTemplateByIDResponse {
+  string hardware_template_id = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -422,5 +441,5 @@ service DeviceDefinitionService {
   rpc CreateDeviceType(CreateDeviceTypeRequest) returns (BaseResponse);
   rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
-
+  rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
 }

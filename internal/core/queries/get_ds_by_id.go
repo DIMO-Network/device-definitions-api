@@ -53,5 +53,9 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		SubModel:           v.SubModel,
 	}
 
+	if v.HardwareTemplateID.Valid {
+		result.HardwareTemplateID = v.HardwareTemplateID.String
+	}
+
 	return result, nil
 }

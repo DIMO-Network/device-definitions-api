@@ -53,5 +53,9 @@ func (ch GetDeviceStyleByExternalIDQueryHandler) Handle(ctx context.Context, que
 		SubModel:           v.SubModel,
 	}
 
+	if v.HardwareTemplateID.Valid {
+		result.HardwareTemplateID = v.HardwareTemplateID.String
+	}
+
 	return result, nil
 }

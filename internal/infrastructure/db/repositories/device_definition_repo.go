@@ -35,7 +35,7 @@ type DeviceDefinitionRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetAllDevicesMMY(ctx context.Context) ([]deviceMMYJoinQueryOutput, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID string) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
@@ -200,7 +200,7 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID string) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -261,14 +261,15 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 	}
 
 	dd = &models.DeviceDefinition{
-		ID:           ksuid.New().String(),
-		DeviceMakeID: m.ID,
-		Model:        model,
-		Year:         int16(year),
-		Source:       null.StringFrom(source),
-		Verified:     verified,
-		ModelSlug:    common.SlugString(model),
-		DeviceTypeID: null.StringFrom(deviceTypeID),
+		ID:                 ksuid.New().String(),
+		DeviceMakeID:       m.ID,
+		Model:              model,
+		Year:               int16(year),
+		Source:             null.StringFrom(source),
+		Verified:           verified,
+		ModelSlug:          common.SlugString(model),
+		DeviceTypeID:       null.StringFrom(deviceTypeID),
+		HardwareTemplateID: null.StringFrom(hardwareTemplateID),
 	}
 	// set external id's
 	extIds := []*coremodels.ExternalID{{
@@ -341,8 +342,14 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 		// Update Device Styles
 		for _, ds := range deviceStyles {
+			deviceStyleID := ds.ID
+
+			if len(deviceStyleID) == 0 {
+				deviceStyleID = ksuid.New().String()
+			}
+
 			subModels := &models.DeviceStyle{
-				ID:                 ds.ID,
+				ID:                 deviceStyleID,
 				DeviceDefinitionID: dd.ID,
 				Name:               ds.Name,
 				ExternalStyleID:    ds.ExternalStyleID,
@@ -350,6 +357,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 				CreatedAt:          ds.CreatedAt,
 				UpdatedAt:          ds.UpdatedAt,
 				SubModel:           ds.SubModel,
+				HardwareTemplateID: ds.HardwareTemplateID,
 			}
 			err = subModels.Insert(ctx, tx, boil.Infer())
 			if err != nil {

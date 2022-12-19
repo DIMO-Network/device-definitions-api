@@ -29,6 +29,7 @@ type UpdateDeviceDefinitionCommand struct {
 	Verified           bool                        `json:"verified"`
 	Model              string                      `json:"model"`
 	Year               int16                       `json:"year"`
+	HardwareTemplateID string                      `json:"hardware_template_id,omitempty"`
 	DeviceMakeID       string                      `json:"device_make_id"`
 	DeviceStyles       []*UpdateDeviceStyles       `json:"deviceStyles"`
 	DeviceIntegrations []*UpdateDeviceIntegrations `json:"deviceIntegrations"`
@@ -49,13 +50,14 @@ type UpdateDeviceIntegrations struct {
 }
 
 type UpdateDeviceStyles struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	ExternalStyleID string    `json:"external_style_id"`
-	Source          string    `json:"source"`
-	CreatedAt       time.Time `json:"created_at,omitempty"`
-	UpdatedAt       time.Time `json:"updated_at,omitempty"`
-	SubModel        string    `json:"sub_model"`
+	ID                 string    `json:"id"`
+	Name               string    `json:"name"`
+	ExternalStyleID    string    `json:"external_style_id"`
+	Source             string    `json:"source"`
+	CreatedAt          time.Time `json:"created_at,omitempty"`
+	UpdatedAt          time.Time `json:"updated_at,omitempty"`
+	SubModel           string    `json:"sub_model"`
+	HardwareTemplateID string    `json:"hardware_template_id"`
 }
 
 type UpdateDeviceVehicleInfo struct {
@@ -113,12 +115,17 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	// creates if does not exist
 	if dd == nil {
 		dd = &models.DeviceDefinition{
-			ID:           command.DeviceDefinitionID,
-			DeviceMakeID: command.DeviceMakeID,
-			Model:        command.Model,
-			Year:         command.Year,
-			ModelSlug:    common.SlugString(command.Model),
+			ID:                 command.DeviceDefinitionID,
+			DeviceMakeID:       command.DeviceMakeID,
+			Model:              command.Model,
+			Year:               command.Year,
+			ModelSlug:          common.SlugString(command.Model),
+			HardwareTemplateID: null.StringFrom(command.HardwareTemplateID),
 		}
+	}
+
+	if len(command.HardwareTemplateID) > 0 {
+		dd.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 	}
 
 	if len(command.Model) > 0 {
@@ -207,6 +214,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 				CreatedAt:          ds.CreatedAt,
 				UpdatedAt:          ds.UpdatedAt,
 				SubModel:           ds.SubModel,
+				HardwareTemplateID: null.StringFrom(ds.HardwareTemplateID),
 			})
 		}
 	}

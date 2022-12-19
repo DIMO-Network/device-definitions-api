@@ -13,6 +13,7 @@ type GetDeviceDefinitionQueryResult struct {
 	Name               string        `json:"name"`
 	ImageURL           string        `json:"imageUrl"`
 	Source             string        `json:"source"`
+	HardwareTemplateID string        `json:"hardware_template_id"`
 	DeviceMake         DeviceMake    `json:"make"`
 	Type               DeviceType    `json:"type"`
 	VehicleInfo        VehicleInfo   `json:"vehicleData,omitempty"`
@@ -83,19 +84,21 @@ type DeviceStyle struct {
 	ExternalStyleID    string `json:"externalStyleId"`
 	Source             string `json:"source"`
 	SubModel           string `json:"subModel"`
+	HardwareTemplateID string `json:"hardware_template_id"`
 }
 
 type DeviceMake struct {
-	ID               string              `json:"id"`
-	Name             string              `json:"name"`
-	LogoURL          null.String         `json:"logo_url"`
-	OemPlatformName  null.String         `json:"oem_platform_name"`
-	TokenID          *big.Int            `json:"tokenId,omitempty"`
-	NameSlug         string              `json:"nameSlug"`
-	ExternalIds      json.RawMessage     `json:"external_ids"`
-	ExternalIdsTyped []*ExternalID       `json:"externalIdsTyped"`
-	Metadata         json.RawMessage     `json:"metadata"`
-	MetadataTyped    *DeviceMakeMetadata `json:"metadataTyped"`
+	ID                 string              `json:"id"`
+	Name               string              `json:"name"`
+	LogoURL            null.String         `json:"logo_url"`
+	OemPlatformName    null.String         `json:"oem_platform_name"`
+	TokenID            *big.Int            `json:"tokenId,omitempty"`
+	NameSlug           string              `json:"nameSlug"`
+	ExternalIds        json.RawMessage     `json:"external_ids"`
+	ExternalIdsTyped   []*ExternalID       `json:"externalIdsTyped"`
+	Metadata           json.RawMessage     `json:"metadata"`
+	MetadataTyped      *DeviceMakeMetadata `json:"metadataTyped"`
+	HardwareTemplateID null.String         `json:"hardware_template_id"`
 }
 
 type ExternalID struct {
@@ -105,4 +108,8 @@ type ExternalID struct {
 
 type DeviceMakeMetadata struct {
 	RideGuideLink string `json:"ride_guide_link"`
+}
+
+type GetDeviceDefinitionHardwareTemplateQueryResult struct {
+	TemplateID string `json:"template_id"`
 }

@@ -80,5 +80,9 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		result.TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
 	}
 
+	if v.HardwareTemplateID.Valid {
+		result.HardwareTemplateId = v.HardwareTemplateID.String
+	}
+
 	return result, nil
 }
