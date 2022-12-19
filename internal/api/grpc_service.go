@@ -493,6 +493,12 @@ func (s *GrpcService) GetDeviceDefinitions(ctx context.Context, in *emptypb.Empt
 	return result, nil
 }
 
+func (s *GrpcService) GetDevicesMMY(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDevicesMMYQuery{})
+	result := qryResult.(*p_grpc.GetDevicesMMYResponse)
+	return result, nil
+}
+
 func (s *GrpcService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDeviceStyleByIDRequest) (*p_grpc.DeviceStyle, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByIDQuery{

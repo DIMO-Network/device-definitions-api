@@ -36,6 +36,16 @@ message GetDeviceDefinitionItemResponse {
   string hardware_template_id = 14;
 }
 
+message GetDevicesMMYResponse {
+  repeated GetDevicesMMYItemResponse device = 1;
+}
+
+message GetDevicesMMYItemResponse {
+  string make = 1;
+  string model = 2;
+  int32 year = 3;
+}
+
 message ExternalID {
   string vendor = 1;
   string id = 2;
@@ -411,6 +421,7 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
+  rpc GetDevicesMMY(google.protobuf.Empty) returns (GetDevicesMMYResponse);
   rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (stream GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
