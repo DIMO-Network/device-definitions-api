@@ -86,7 +86,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 							Region:             region,
 						}
 					} else {
-						logger.Err(err).Msg("Eror occurred fetching device integration.")
+						logger.Err(err).Msg("Error occurred fetching device integration.")
 						continue
 					}
 				}
