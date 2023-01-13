@@ -70,6 +70,8 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			if integration.Vendor == common.SmartCarVendor && deviceDef.R.DeviceMake.NameSlug == "tesla" {
 				continue
 			}
+			// map of regions and features for this dd, then fill in
+			regionToFeatures := map[string][]elasticModels.DeviceIntegrationFeatures{}
 
 			for _, r := range d.Regions.Buckets {
 				region := r.Key
@@ -92,6 +94,8 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				}
 
 				feature := prepareFeatureData(r.Features.Buckets, deviceDef)
+				// populate the map for future iteration to copy populated region to empty region (autopi only)
+				regionToFeatures[region] = feature
 
 				err = deviceInt.Features.Marshal(&feature)
 				if err != nil {
@@ -106,6 +110,45 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				} else {
 					if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
 						logger.Err(err).Msg("could not update device integration with feature information.")
+					}
+				}
+			}
+
+			if integration.Vendor == common.AutoPiVendor {
+				emptyRegion := ""
+				populatedRegion := ""
+				biggest := 0
+				// see if we have both a region with 0 features and a region with many features
+				for r, features := range regionToFeatures {
+					if len(features) == 0 {
+						emptyRegion = r
+					}
+					if len(features) > biggest {
+						populatedRegion = r
+						biggest = len(features)
+					}
+				}
+				// if both exist, let's copy over from the populated one to empty one
+				if emptyRegion != "" && populatedRegion != "" {
+					deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, emptyRegion)
+					if err != nil {
+						logger.Err(err).Msg("error occurred fetching device integration for empty region.")
+						continue
+					}
+					// set support to 1 on the copy
+					features := regionToFeatures[populatedRegion]
+					for idxF, f := range features {
+						if f.SupportLevel > 0 {
+							features[idxF].SupportLevel = 1
+						}
+					}
+					err = deviceInt.Features.Marshal(&features)
+					if err != nil {
+						logger.Err(err).Msg("error occurred marshalling feature into device integration")
+						continue
+					}
+					if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+						logger.Err(err).Msgf("could not update device integration with feature information region %s", emptyRegion)
 					}
 				}
 			}
