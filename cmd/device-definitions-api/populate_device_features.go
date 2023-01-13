@@ -88,7 +88,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 							Region:             region,
 						}
 					} else {
-						logger.Err(err).Msg("Error occurred fetching device integration.")
+						logger.Err(err).Msgf("error occurred fetching device integration dd_id %s", ddID)
 						continue
 					}
 				}
@@ -130,16 +130,17 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 				}
 				// if both exist, let's copy over from the populated one to empty one
 				if emptyRegion != "" && populatedRegion != "" {
+					logger.Info().Msgf("found a device integration region that has no features. will try copying dd_id %s, %s to %s", ddID, populatedRegion, emptyRegion)
 					deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, emptyRegion)
 					if err != nil {
-						logger.Err(err).Msg("error occurred fetching device integration for empty region.")
+						logger.Err(err).Msgf("error occurred fetching device integration for empty region %s.", emptyRegion)
 						continue
 					}
 					// set support to 1 on the copy
 					features := regionToFeatures[populatedRegion]
 					for idxF, f := range features {
-						if f.SupportLevel > 0 {
-							features[idxF].SupportLevel = 1
+						if f.SupportLevel > NotSupported.Int() {
+							features[idxF].SupportLevel = MaybeSupported.Int()
 						}
 					}
 					err = deviceInt.Features.Marshal(&features)
