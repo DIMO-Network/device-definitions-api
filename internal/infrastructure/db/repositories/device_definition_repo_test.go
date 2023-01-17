@@ -367,7 +367,7 @@ func setupDeviceDefinitionWithIntegrations(t *testing.T, pdb db.Store, makeName 
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
 
 	i := dbtesthelper.SetupCreateHardwareIntegration(t, pdb)
-	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
+	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, "Americas", pdb)
 
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceIntegrations = append(dd.R.DeviceIntegrations, di)

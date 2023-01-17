@@ -270,11 +270,11 @@ func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integrat
 	return integration
 }
 
-func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, pdb db.Store) *models.DeviceIntegration {
+func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, region string, pdb db.Store) *models.DeviceIntegration {
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
 		IntegrationID:      integrationID,
-		Region:             "Americas",
+		Region:             region,
 	}
 	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)

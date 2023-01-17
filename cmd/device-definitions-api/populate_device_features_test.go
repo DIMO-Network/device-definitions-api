@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"os"
+	"testing"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/rs/zerolog"
-	"os"
-	"testing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -14,7 +18,7 @@ const (
 	migrationsDirRelPath = "../../internal/infrastructure/db/migrations"
 )
 
-func TestcopyFeaturesToRegion(t *testing.T) {
+func Test_copyFeaturesToRegion(t *testing.T) {
 	ctx := context.Background()
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	regionToFeats := map[string][]elasticModels.DeviceIntegrationFeatures{}
@@ -24,12 +28,44 @@ func TestcopyFeaturesToRegion(t *testing.T) {
 	_ = dbtesthelper.SetupCreateDeviceType(t, pdb)
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "Mach-E", 2022, pdb)
-	di1 := dbtesthelper.SetupCreateDeviceIntegration(t, dd, autopiInt.ID, pdb)
-	// todo need another like above but for Europe
+	_ = dbtesthelper.SetupCreateDeviceIntegration(t, dd, autopiInt.ID, "Americas", pdb)
+	_ = dbtesthelper.SetupCreateDeviceIntegration(t, dd, autopiInt.ID, "Europe", pdb)
+	_ = dbtesthelper.SetupCreateDeviceIntegration(t, dd, autopiInt.ID, "Asia", pdb)
 
-	// todo add stuff to regionToFeatures
+	regionToFeats["Americas"] = []elasticModels.DeviceIntegrationFeatures{{
+		FeatureKey:   "odometer",
+		SupportLevel: Supported.Int(),
+	}, {
+		FeatureKey:   "tires",
+		SupportLevel: Supported.Int(),
+	}, {
+		FeatureKey:   "oil",
+		SupportLevel: NotSupported.Int(),
+	}}
 	//act
-	copyFeaturesToRegion(ctx, logger, regionToFeats, pdb, dd.ID, autopiInt.ID)
-
+	copyFeaturesToMissingRegion(ctx, logger, regionToFeats, pdb, dd.ID, autopiInt.ID)
 	// assert via DB query
+	updatedEurope, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, dd.ID, autopiInt.ID, "Europe")
+	require.NoError(t, err)
+	var newFeats []elasticModels.DeviceIntegrationFeatures
+
+	err = updatedEurope.Features.Unmarshal(&newFeats)
+	require.NoError(t, err)
+	require.Len(t, newFeats, 3)
+	assert.Equal(t, "odometer", newFeats[0].FeatureKey)
+	assert.Equal(t, "tires", newFeats[1].FeatureKey)
+	assert.Equal(t, MaybeSupported.Int(), newFeats[0].SupportLevel)
+	assert.Equal(t, MaybeSupported.Int(), newFeats[1].SupportLevel)
+
+	assert.Equal(t, "oil", newFeats[2].FeatureKey)
+	assert.Equal(t, NotSupported.Int(), newFeats[2].SupportLevel)
+
+	// -- validate for third Region, just check length since already validated rest above
+	updatedAsia, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, dd.ID, autopiInt.ID, "Asia")
+	require.NoError(t, err)
+	err = updatedAsia.Features.Unmarshal(&newFeats)
+	require.NoError(t, err)
+	require.Len(t, newFeats, 3)
+	assert.Equal(t, "odometer", newFeats[0].FeatureKey)
+	assert.Equal(t, MaybeSupported.Int(), newFeats[0].SupportLevel)
 }
