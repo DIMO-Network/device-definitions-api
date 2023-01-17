@@ -99,6 +99,6 @@ func setupIntegrationForSmartCarForwardCompatibility(t *testing.T, pdb db.Store)
 }
 
 func setupDeviceDefinitionIntegrationForSmartCarForwardCompatibility(t *testing.T, pdb db.Store, dd *models.DeviceDefinition, i *models.Integration) *models.DeviceIntegration {
-	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, pdb)
+	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, "Americas", pdb)
 	return di
 }
