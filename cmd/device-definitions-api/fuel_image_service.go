@@ -220,7 +220,8 @@ func (fs *FuelServiceAPI) deviceData(ctx context.Context) ([]deviceData, error) 
 
 	devices := make([]deviceData, len(oems))
 	for n, mk := range oems {
-		mdls, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(mk.ID)).All(ctx, fs.db.Reader)
+		mdls, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(mk.ID),
+			models.DeviceDefinitionWhere.Year.GTE(2005)).All(ctx, fs.db.Reader)
 		if err != nil {
 			return []deviceData{}, err
 		}
