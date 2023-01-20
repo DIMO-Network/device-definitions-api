@@ -33,6 +33,8 @@ type Image struct {
 	DimoS3URL          null.String `boil:"dimo_s3_url" json:"dimo_s3_url,omitempty" toml:"dimo_s3_url" yaml:"dimo_s3_url,omitempty"`
 	Color              string      `boil:"color" json:"color" toml:"color" yaml:"color"`
 	NotExactImage      bool        `boil:"not_exact_image" json:"not_exact_image" toml:"not_exact_image" yaml:"not_exact_image"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *imageR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L imageL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +50,8 @@ var ImageColumns = struct {
 	DimoS3URL          string
 	Color              string
 	NotExactImage      string
+	CreatedAt          string
+	UpdatedAt          string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
@@ -58,6 +62,8 @@ var ImageColumns = struct {
 	DimoS3URL:          "dimo_s3_url",
 	Color:              "color",
 	NotExactImage:      "not_exact_image",
+	CreatedAt:          "created_at",
+	UpdatedAt:          "updated_at",
 }
 
 var ImageTableColumns = struct {
@@ -70,6 +76,8 @@ var ImageTableColumns = struct {
 	DimoS3URL          string
 	Color              string
 	NotExactImage      string
+	CreatedAt          string
+	UpdatedAt          string
 }{
 	ID:                 "images.id",
 	DeviceDefinitionID: "images.device_definition_id",
@@ -80,6 +88,8 @@ var ImageTableColumns = struct {
 	DimoS3URL:          "images.dimo_s3_url",
 	Color:              "images.color",
 	NotExactImage:      "images.not_exact_image",
+	CreatedAt:          "images.created_at",
+	UpdatedAt:          "images.updated_at",
 }
 
 // Generated where
@@ -94,6 +104,8 @@ var ImageWhere = struct {
 	DimoS3URL          whereHelpernull_String
 	Color              whereHelperstring
 	NotExactImage      whereHelperbool
+	CreatedAt          whereHelpertime_Time
+	UpdatedAt          whereHelpertime_Time
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"images\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"images\".\"device_definition_id\""},
@@ -104,6 +116,8 @@ var ImageWhere = struct {
 	DimoS3URL:          whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"dimo_s3_url\""},
 	Color:              whereHelperstring{field: "\"device_definitions_api\".\"images\".\"color\""},
 	NotExactImage:      whereHelperbool{field: "\"device_definitions_api\".\"images\".\"not_exact_image\""},
+	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"created_at\""},
+	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"updated_at\""},
 }
 
 // ImageRels is where relationship names are stored.
@@ -134,9 +148,9 @@ func (r *imageR) GetDeviceDefinition() *DeviceDefinition {
 type imageL struct{}
 
 var (
-	imageAllColumns            = []string{"id", "device_definition_id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color", "not_exact_image"}
+	imageAllColumns            = []string{"id", "device_definition_id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color", "not_exact_image", "created_at", "updated_at"}
 	imageColumnsWithoutDefault = []string{"id", "device_definition_id", "source_url", "color"}
-	imageColumnsWithDefault    = []string{"fuel_api_id", "width", "height", "dimo_s3_url", "not_exact_image"}
+	imageColumnsWithDefault    = []string{"fuel_api_id", "width", "height", "dimo_s3_url", "not_exact_image", "created_at", "updated_at"}
 	imagePrimaryKeyColumns     = []string{"id"}
 	imageGeneratedColumns      = []string{}
 )
@@ -646,6 +660,16 @@ func (o *Image) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 	}
 
 	var err error
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
+		}
+	}
 
 	if err := o.doBeforeInsertHooks(ctx, exec); err != nil {
 		return err
@@ -721,6 +745,12 @@ func (o *Image) Insert(ctx context.Context, exec boil.ContextExecutor, columns b
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Image) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -850,6 +880,14 @@ func (o ImageSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, co
 func (o *Image) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
 		return errors.New("models: no images provided for upsert")
+	}
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		if o.CreatedAt.IsZero() {
+			o.CreatedAt = currTime
+		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
