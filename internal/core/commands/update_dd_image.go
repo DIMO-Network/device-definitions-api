@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/segmentio/ksuid"

@@ -61,6 +61,8 @@ func fetchFuelAPIImages(ctx context.Context, logger zerolog.Logger, settings *co
 	if err != nil {
 		return err
 	}
+	logger.Info().Msgf("pulling fuel images for %d device definitions", len(devices))
+
 	err = fs.writeToTable(ctx, devices, 2, 2)
 	if err != nil {
 		logger.Err(err).Msg("failed to writeToTable when fetching Fuel API images")
@@ -93,7 +95,7 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 		for n := range d.Models {
 			img, err := fs.fetchDeviceImages(d.Make, d.Models[n].Model, d.Models[n].Year, prodID, prodFormat)
 			if err != nil {
-				fs.log.Info().Msgf("unable to fetch device image for: %d %s %s", d.Models[n].Year, d.Make, d.Models[n].Model)
+				fs.log.Warn().Msgf("unable to fetch device image for: %d %s %s", d.Models[n].Year, d.Make, d.Models[n].Model)
 				continue
 			}
 			var p models.Image
