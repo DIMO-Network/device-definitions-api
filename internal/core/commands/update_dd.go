@@ -192,9 +192,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 	dd.ExternalIds = null.JSONFrom(extIdsJSON)
 
-	if len(command.ImageURL) > 0 {
-		dd.ImageURL = null.StringFrom(command.ImageURL)
-	}
+	// todo if the command has an image, let's determine how that should be handled, or remove it from the command
 
 	// if a definition was previously marked as verified, we do not want to go back and un-verify it, at least not in this flow. This will only mark DD's as verified
 	if command.Verified {

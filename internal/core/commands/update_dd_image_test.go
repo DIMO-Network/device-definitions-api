@@ -72,9 +72,11 @@ func (s *UpdateDeviceDefinitionImageCommandHandlerSuite) TestUpdateDeviceDefinit
 		DeviceDefinitionID: dd.ID,
 		ImageURL:           "https://image.gif",
 	})
+	s.Require().NoError(err)
+	s.Require().NotNil(commandResult)
+
 	result := commandResult.(UpdateDeviceDefinitionCommandResult)
 
-	s.NoError(err)
 	assert.Equal(s.T(), result.ID, dd.ID)
 }
 

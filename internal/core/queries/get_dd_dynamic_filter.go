@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -36,7 +38,7 @@ type DeviceDefinitionQueryResponse struct {
 	ID           string      `json:"id"`
 	Model        string      `json:"model"`
 	Year         int         `json:"year"`
-	ImageURL     null.String `json:"image_url"`
+	ImageURL     null.String `json:"image_url,omitempty"`
 	CreatedAt    time.Time   `json:"created_at,omitempty"`
 	UpdatedAt    time.Time   `json:"updated_at,omitempty"`
 	Metadata     null.JSON   `json:"metadata"`
@@ -138,7 +140,7 @@ func buildDeviceDefinitionQueryResponse(dd *models.DeviceDefinition) DeviceDefin
 		ID:           dd.ID,
 		Model:        dd.Model,
 		Year:         int(dd.Year),
-		ImageURL:     dd.ImageURL,
+		ImageURL:     null.StringFrom(common.GetDefaultImageURL(dd)),
 		CreatedAt:    dd.CreatedAt,
 		UpdatedAt:    dd.UpdatedAt,
 		Source:       dd.Source,

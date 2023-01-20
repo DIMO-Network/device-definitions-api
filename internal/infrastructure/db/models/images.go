@@ -32,6 +32,7 @@ type Image struct {
 	SourceURL          string      `boil:"source_url" json:"source_url" toml:"source_url" yaml:"source_url"`
 	DimoS3URL          null.String `boil:"dimo_s3_url" json:"dimo_s3_url,omitempty" toml:"dimo_s3_url" yaml:"dimo_s3_url,omitempty"`
 	Color              string      `boil:"color" json:"color" toml:"color" yaml:"color"`
+	NotExactImage      bool        `boil:"not_exact_image" json:"not_exact_image" toml:"not_exact_image" yaml:"not_exact_image"`
 
 	R *imageR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L imageL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -46,6 +47,7 @@ var ImageColumns = struct {
 	SourceURL          string
 	DimoS3URL          string
 	Color              string
+	NotExactImage      string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
@@ -55,6 +57,7 @@ var ImageColumns = struct {
 	SourceURL:          "source_url",
 	DimoS3URL:          "dimo_s3_url",
 	Color:              "color",
+	NotExactImage:      "not_exact_image",
 }
 
 var ImageTableColumns = struct {
@@ -66,6 +69,7 @@ var ImageTableColumns = struct {
 	SourceURL          string
 	DimoS3URL          string
 	Color              string
+	NotExactImage      string
 }{
 	ID:                 "images.id",
 	DeviceDefinitionID: "images.device_definition_id",
@@ -75,6 +79,7 @@ var ImageTableColumns = struct {
 	SourceURL:          "images.source_url",
 	DimoS3URL:          "images.dimo_s3_url",
 	Color:              "images.color",
+	NotExactImage:      "images.not_exact_image",
 }
 
 // Generated where
@@ -88,6 +93,7 @@ var ImageWhere = struct {
 	SourceURL          whereHelperstring
 	DimoS3URL          whereHelpernull_String
 	Color              whereHelperstring
+	NotExactImage      whereHelperbool
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"images\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"images\".\"device_definition_id\""},
@@ -97,6 +103,7 @@ var ImageWhere = struct {
 	SourceURL:          whereHelperstring{field: "\"device_definitions_api\".\"images\".\"source_url\""},
 	DimoS3URL:          whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"dimo_s3_url\""},
 	Color:              whereHelperstring{field: "\"device_definitions_api\".\"images\".\"color\""},
+	NotExactImage:      whereHelperbool{field: "\"device_definitions_api\".\"images\".\"not_exact_image\""},
 }
 
 // ImageRels is where relationship names are stored.
@@ -127,9 +134,9 @@ func (r *imageR) GetDeviceDefinition() *DeviceDefinition {
 type imageL struct{}
 
 var (
-	imageAllColumns            = []string{"id", "device_definition_id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color"}
+	imageAllColumns            = []string{"id", "device_definition_id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color", "not_exact_image"}
 	imageColumnsWithoutDefault = []string{"id", "device_definition_id", "source_url", "color"}
-	imageColumnsWithDefault    = []string{"fuel_api_id", "width", "height", "dimo_s3_url"}
+	imageColumnsWithDefault    = []string{"fuel_api_id", "width", "height", "dimo_s3_url", "not_exact_image"}
 	imagePrimaryKeyColumns     = []string{"id"}
 	imageGeneratedColumns      = []string{}
 )

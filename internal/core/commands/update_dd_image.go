@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
+	"github.com/segmentio/ksuid"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -13,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type UpdateDeviceDefinitionImageCommand struct {
@@ -37,7 +39,7 @@ func NewUpdateDeviceDefinitionImageCommandHandler(dbs func() *db.ReaderWriter, c
 }
 
 func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-
+	// todo need to rethink this method, as this should now update a specific image or insert new images in the images table
 	command := query.(*UpdateDeviceDefinitionImageCommand)
 
 	dd, err := models.DeviceDefinitions(
@@ -58,10 +60,20 @@ func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, 
 			Err: fmt.Errorf("could not find device definition id: %s", command.DeviceDefinitionID),
 		}
 	}
+	img := models.Image{
+		ID:                 ksuid.New().String(),
+		DeviceDefinitionID: command.DeviceDefinitionID,
+		FuelAPIID:          null.String{},
+		Width:              null.Int{},
+		Height:             null.Int{},
+		SourceURL:          command.ImageURL,
+		DimoS3URL:          null.String{},
+		Color:              "default",
+		NotExactImage:      false,
+	}
 
-	dd.ImageURL = null.StringFrom(command.ImageURL)
-
-	_, err = dd.Update(ctx, ch.DBS().Writer.DB, boil.Infer())
+	err = img.Upsert(ctx, ch.DBS().Writer.DB, false, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL},
+		boil.Infer(), boil.Infer())
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,

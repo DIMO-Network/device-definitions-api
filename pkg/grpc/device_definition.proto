@@ -198,7 +198,7 @@ message BaseResponse {
 message UpdateDeviceDefinitionRequest {
   string device_definition_id = 1;
   string source = 3 [deprecated = true];
-  string image_url = 4;
+  string image_url = 4 [deprecated = true];
   bool verified = 5;
   string model = 6;
   int32 year = 7;

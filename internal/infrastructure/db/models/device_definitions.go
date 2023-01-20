@@ -27,7 +27,6 @@ type DeviceDefinition struct {
 	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Model              string      `boil:"model" json:"model" toml:"model" yaml:"model"`
 	Year               int16       `boil:"year" json:"year" toml:"year" yaml:"year"`
-	ImageURL           null.String `boil:"image_url" json:"image_url,omitempty" toml:"image_url" yaml:"image_url,omitempty"`
 	Metadata           null.JSON   `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
 	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
@@ -48,7 +47,6 @@ var DeviceDefinitionColumns = struct {
 	ID                 string
 	Model              string
 	Year               string
-	ImageURL           string
 	Metadata           string
 	CreatedAt          string
 	UpdatedAt          string
@@ -64,7 +62,6 @@ var DeviceDefinitionColumns = struct {
 	ID:                 "id",
 	Model:              "model",
 	Year:               "year",
-	ImageURL:           "image_url",
 	Metadata:           "metadata",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
@@ -82,7 +79,6 @@ var DeviceDefinitionTableColumns = struct {
 	ID                 string
 	Model              string
 	Year               string
-	ImageURL           string
 	Metadata           string
 	CreatedAt          string
 	UpdatedAt          string
@@ -98,7 +94,6 @@ var DeviceDefinitionTableColumns = struct {
 	ID:                 "device_definitions.id",
 	Model:              "device_definitions.model",
 	Year:               "device_definitions.year",
-	ImageURL:           "device_definitions.image_url",
 	Metadata:           "device_definitions.metadata",
 	CreatedAt:          "device_definitions.created_at",
 	UpdatedAt:          "device_definitions.updated_at",
@@ -160,44 +155,6 @@ func (w whereHelperint16) NIN(slice []int16) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelpernull_String struct{ field string }
-
-func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 type whereHelpernull_JSON struct{ field string }
 
 func (w whereHelpernull_JSON) EQ(x null.JSON) qm.QueryMod {
@@ -243,6 +200,44 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 type whereHelperbool struct{ field string }
 
 func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
@@ -256,7 +251,6 @@ var DeviceDefinitionWhere = struct {
 	ID                 whereHelperstring
 	Model              whereHelperstring
 	Year               whereHelperint16
-	ImageURL           whereHelpernull_String
 	Metadata           whereHelpernull_JSON
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
@@ -272,7 +266,6 @@ var DeviceDefinitionWhere = struct {
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:              whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
 	Year:               whereHelperint16{field: "\"device_definitions_api\".\"device_definitions\".\"year\""},
-	ImageURL:           whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"image_url\""},
 	Metadata:           whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"metadata\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_definitions\".\"updated_at\""},
@@ -374,9 +367,9 @@ func (r *deviceDefinitionR) GetReviews() ReviewSlice {
 type deviceDefinitionL struct{}
 
 var (
-	deviceDefinitionAllColumns            = []string{"id", "model", "year", "image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id"}
+	deviceDefinitionAllColumns            = []string{"id", "model", "year", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id"}
 	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"image_url", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id"}
+	deviceDefinitionColumnsWithDefault    = []string{"metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )

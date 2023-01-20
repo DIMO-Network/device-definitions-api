@@ -45,6 +45,8 @@ type deviceImages struct {
 	Angle     string  `boil:"angle"`
 	Images    []image `boil:"images"`
 	validURL  bool
+	// use to track if we used a different year image and could not find this one
+	NotExactImage bool
 }
 
 type image struct {
@@ -61,11 +63,11 @@ func fetchFuelAPIImages(ctx context.Context, logger zerolog.Logger, settings *co
 	}
 	err = fs.writeToTable(ctx, devices, 2, 2)
 	if err != nil {
-		fmt.Println(err)
+		logger.Err(err).Msg("failed to writeToTable when fetching Fuel API images")
 	}
 	err = fs.writeToTable(ctx, devices, 2, 6)
 	if err != nil {
-		fmt.Println(err)
+		logger.Err(err).Msg("failed to writeToTable when fetching Fuel API images")
 	}
 
 	return nil
@@ -89,14 +91,14 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 
 	for _, d := range data {
 		for n := range d.Models {
-			img, err := fs.fetchDeviceImage(d.Make, d.Models[n].Model, d.Models[n].Year, prodID, prodFormat)
+			img, err := fs.fetchDeviceImages(d.Make, d.Models[n].Model, d.Models[n].Year, prodID, prodFormat)
 			if err != nil {
 				fs.log.Info().Msgf("unable to fetch device image for: %d %s %s", d.Models[n].Year, d.Make, d.Models[n].Model)
 				continue
 			}
 			var p models.Image
 
-			// loop through all images (color variations)
+			// loop through all img (color variations)
 			for _, device := range img.Images {
 				p.ID = ksuid.New().String()
 				p.DeviceDefinitionID = d.Models[n].DeviceDefinitionID
@@ -104,10 +106,11 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 				p.Width = null.IntFrom(img.Width)
 				p.Height = null.IntFrom(img.Height)
 				p.SourceURL = device.SourceURL
-				p.DimoS3URL = null.StringFrom("")
+				//p.DimoS3URL = null.StringFrom("") // dont set it so it is null
 				p.Color = device.Color
+				p.NotExactImage = img.NotExactImage
 
-				err = p.Upsert(ctx, fs.db.Writer, false, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
+				err = p.Upsert(ctx, fs.db.Writer, true, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 				if err != nil {
 					return err
 				}
@@ -118,8 +121,8 @@ func (fs *FuelServiceAPI) writeToTable(ctx context.Context, data []deviceData, p
 	return nil
 }
 
-func (fs *FuelServiceAPI) fetchDeviceImage(mk, mdl string, yr int, prodID int, prodFormat int) (deviceImages, error) {
-
+func (fs *FuelServiceAPI) fetchDeviceImages(mk, mdl string, yr int, prodID int, prodFormat int) (deviceImages, error) {
+	notExactImage := false // if we pull image where year doesn't match
 	// search for exact MMY image
 	img, err := fs.imageRequest(mk, mdl, yr, prodID, prodFormat)
 	if err != nil {
@@ -132,6 +135,7 @@ func (fs *FuelServiceAPI) fetchDeviceImage(mk, mdl string, yr int, prodID int, p
 		if err != nil {
 			return deviceImages{}, err
 		}
+		notExactImage = true
 
 		// search for model and first work of make
 		// ex: Wrangler Sport -> Wrangler
@@ -148,6 +152,7 @@ func (fs *FuelServiceAPI) fetchDeviceImage(mk, mdl string, yr int, prodID int, p
 		fs.log.Log().Msgf("request for device image unsuccessful: %s %s %d", mk, mdl, yr)
 		return deviceImages{}, errors.New("request for device image unsuccessful")
 	}
+	img.NotExactImage = notExactImage
 
 	return img, nil
 
@@ -203,6 +208,7 @@ func (fs *FuelServiceAPI) imageRequest(mk, mdl string, yr int, prodID int, prodF
 
 }
 
+// deviceData looks for makes and models in our database and returns a projection of them specific to Fuel
 func (fs *FuelServiceAPI) deviceData(ctx context.Context) ([]deviceData, error) {
 
 	oems, err := models.DeviceMakes().All(ctx, fs.db.Reader)
