@@ -379,7 +379,6 @@ func (s *GrpcService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.Upd
 	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
-		ImageURL:           in.ImageUrl,
 		Year:               int16(in.Year),
 		Model:              in.Model,
 		Verified:           in.Verified,

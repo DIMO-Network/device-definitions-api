@@ -156,7 +156,6 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		DeviceDefinitionID: dd.ID,
 		ExternalID:         dd.ExternalID.String,
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		ImageURL:           dd.ImageURL.String,
 		Source:             dd.Source.String,
 		HardwareTemplateID: dd.HardwareTemplateID.String,
 		DeviceMake: models.DeviceMake{
@@ -258,18 +257,29 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
 		}
 	}
-	// trying pulling fuel images if no image_url, pick the biggest one
-	if (dd.ImageURL.IsZero() || dd.ImageURL.String == "") && dd.R.Images != nil {
+	// trying pulling most recent images, pick the biggest one and where not exact image = false
+	rp.ImageURL = GetDefaultImageURL(dd)
+
+	return rp, nil
+}
+
+// GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
+func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
+	img := ""
+	if dd.R.Images != nil {
 		w := 0
 		for _, image := range dd.R.Images {
-			if image.Width.Int > w {
-				w = image.Width.Int
-				rp.ImageURL = image.SourceURL
+			extra := 0
+			if !image.NotExactImage {
+				extra = 1
+			}
+			if image.Width.Int+extra > w {
+				w = image.Width.Int + extra
+				img = image.SourceURL
 			}
 		}
 	}
-
-	return rp, nil
+	return img
 }
 
 func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {
