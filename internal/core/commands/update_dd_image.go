@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/segmentio/ksuid"
 
@@ -43,6 +44,7 @@ func (ch UpdateDeviceDefinitionImageCommandHandler) Handle(ctx context.Context, 
 
 	dd, err := models.DeviceDefinitions(
 		models.DeviceDefinitionWhere.ID.EQ(command.DeviceDefinitionID),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 	).One(ctx, ch.DBS().Writer)
 
 	if err != nil {
