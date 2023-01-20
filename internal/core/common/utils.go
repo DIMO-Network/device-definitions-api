@@ -271,7 +271,7 @@ func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 		for _, image := range dd.R.Images {
 			extra := 0
 			if !image.NotExactImage {
-				extra = 1
+				extra = 2000 // we want to give preference to exact images
 			}
 			if image.Width.Int+extra > w {
 				w = image.Width.Int + extra
