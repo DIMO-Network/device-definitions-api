@@ -417,6 +417,17 @@ message GetDeviceDefinitionHardwareTemplateByIDResponse {
   string hardware_template_id = 1;
 }
 
+message DeviceImage {
+  string image_url = 1;
+  int32 width = 2;
+  int32 height = 3;
+  string color = 4;
+}
+
+message GetDeviceImagesResponse {
+  repeated DeviceImage images = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -433,6 +444,7 @@ service DeviceDefinitionService {
   rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
   rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
   rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
+  rpc GetDeviceImagesByIDs(GetDeviceDefinitionRequest) returns (GetDeviceImagesResponse);
   rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (BaseResponse);
   rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (BaseResponse);
   rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
