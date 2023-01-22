@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RecallsServiceClient interface {
+	// Deprecated: Do not use.
 	GetRecallsByMake(ctx context.Context, in *GetRecallsByMakeRequest, opts ...grpc.CallOption) (*GetRecallsResponse, error)
 	GetStreamRecallsByMake(ctx context.Context, in *GetRecallsByMakeRequest, opts ...grpc.CallOption) (RecallsService_GetStreamRecallsByMakeClient, error)
 	GetRecallsByModel(ctx context.Context, in *GetRecallsByModelRequest, opts ...grpc.CallOption) (*GetRecallsResponse, error)
@@ -35,6 +36,7 @@ func NewRecallsServiceClient(cc grpc.ClientConnInterface) RecallsServiceClient {
 	return &recallsServiceClient{cc}
 }
 
+// Deprecated: Do not use.
 func (c *recallsServiceClient) GetRecallsByMake(ctx context.Context, in *GetRecallsByMakeRequest, opts ...grpc.CallOption) (*GetRecallsResponse, error) {
 	out := new(GetRecallsResponse)
 	err := c.cc.Invoke(ctx, "/grpc.RecallsService/GetRecallsByMake", in, out, opts...)
@@ -89,6 +91,7 @@ func (c *recallsServiceClient) GetRecallsByModel(ctx context.Context, in *GetRec
 // All implementations must embed UnimplementedRecallsServiceServer
 // for forward compatibility
 type RecallsServiceServer interface {
+	// Deprecated: Do not use.
 	GetRecallsByMake(context.Context, *GetRecallsByMakeRequest) (*GetRecallsResponse, error)
 	GetStreamRecallsByMake(*GetRecallsByMakeRequest, RecallsService_GetStreamRecallsByMakeServer) error
 	GetRecallsByModel(context.Context, *GetRecallsByModelRequest) (*GetRecallsResponse, error)

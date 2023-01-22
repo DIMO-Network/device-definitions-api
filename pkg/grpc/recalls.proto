@@ -29,7 +29,9 @@ message GetRecallsResponse {
 }
 
 service RecallsService {
-  rpc GetRecallsByMake(GetRecallsByMakeRequest) returns (GetRecallsResponse);
+  rpc GetRecallsByMake(GetRecallsByMakeRequest) returns (GetRecallsResponse){
+    option deprecated = true;
+  }
   rpc GetStreamRecallsByMake(GetRecallsByMakeRequest) returns (stream RecallItem);
   rpc GetRecallsByModel(GetRecallsByModelRequest) returns (GetRecallsResponse);
 }
