@@ -418,10 +418,11 @@ message GetDeviceDefinitionHardwareTemplateByIDResponse {
 }
 
 message DeviceImage {
-  string image_url = 1;
-  int32 width = 2;
-  int32 height = 3;
-  string color = 4;
+  string device_definition_id = 1;
+  string image_url = 2;
+  int32 width = 3;
+  int32 height = 4;
+  string color = 5;
 }
 
 message GetDeviceImagesResponse {
