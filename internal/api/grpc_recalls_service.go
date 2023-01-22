@@ -30,6 +30,23 @@ func (s *GrpcRecallsService) GetRecallsByMake(ctx context.Context, in *p_grpc.Ge
 	return result, nil
 }
 
+func (s *GrpcRecallsService) GetStreamRecallsByMake(in *p_grpc.GetRecallsByMakeRequest, stream p_grpc.RecallsService_GetStreamRecallsByMakeServer) error {
+
+	qryResult, _ := s.Mediator.Send(context.Background(), &queries.GetRecallsByMakeQuery{
+		MakeID: in.MakeId,
+	})
+
+	result := qryResult.(*p_grpc.GetRecallsResponse)
+
+	for _, item := range result.Recalls {
+		if err := stream.Send(item); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *GrpcRecallsService) GetRecallsByModel(ctx context.Context, in *p_grpc.GetRecallsByModelRequest) (*p_grpc.GetRecallsResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetRecallsByModelQuery{

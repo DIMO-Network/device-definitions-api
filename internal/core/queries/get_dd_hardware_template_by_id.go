@@ -47,5 +47,11 @@ func (ch GetDeviceDefinitionHardwareTemplateByIDQueryHandler) Handle(ctx context
 
 	result := models.GetDeviceDefinitionHardwareTemplateQueryResult{}
 
+	if dd.DeviceMake.HardwareTemplateID.Valid && len(dd.DeviceMake.HardwareTemplateID.String) > 0 {
+		result.TemplateID = dd.DeviceMake.HardwareTemplateID.String
+
+		return result, nil
+	}
+
 	return result, nil
 }
