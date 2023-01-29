@@ -17,8 +17,6 @@ spec:
           {{- with .Values.podAnnotations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
-          labels:
-            {{- include "device-definitions-api.selectorLabels" . | nindent 12 }}
         spec:
           containers:
           - name: edmunds-vehicles-sync
