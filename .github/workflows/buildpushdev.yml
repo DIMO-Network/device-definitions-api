@@ -24,7 +24,7 @@ jobs:
         run: echo "::set-output name=sha7::$(echo ${GITHUB_SHA} | cut -c1-7)"
         
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: ./resources/docker/Dockerfile
