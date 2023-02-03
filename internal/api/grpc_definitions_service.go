@@ -754,3 +754,9 @@ func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p
 
 	return qryResult.(*p_grpc.GetDeviceImagesResponse), nil
 }
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDefinitionsWithHWTemplateQuery{})
+
+	return qryResult.(*p_grpc.GetDevicesMMYResponse), nil
+}

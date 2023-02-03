@@ -44,6 +44,8 @@ message GetDevicesMMYItemResponse {
   string make = 1;
   string model = 2;
   int32 year = 3;
+  string id = 4;
+  string hardware_template_id = 5;
 }
 
 message ExternalID {
@@ -434,6 +436,7 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitions(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
   rpc GetDevicesMMY(google.protobuf.Empty) returns (GetDevicesMMYResponse);
+  rpc GetDeviceDefinitionsWithHardwareTemplate(google.protobuf.Empty) returns (GetDevicesMMYResponse);
   rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (stream GetDeviceDefinitionItemResponse);
   rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
