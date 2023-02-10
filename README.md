@@ -2,6 +2,8 @@
 
 Api for managing device definitions on the DIMO platform.
 
+For an overview of the project, see the [DIMO technical documentation site.](https://docs.dimo.zone/docs/overview/intro)
+
 ## Developing locally
 
 **TL;DR**
@@ -82,7 +84,7 @@ Have goose installed, then:
 
 `goose -dir internal/infrastructure/db/migrations create slugs-not-null sql`
 
-## Local development
+## Loading Data
 
 Importing data: Device definition exports are [here]([url](https://drive.google.com/drive/u/1/folders/1WymEqZo-bCH2Zw-m5L9u_ynMSwPeEARL))
 You can use sqlboiler to import or this command:
