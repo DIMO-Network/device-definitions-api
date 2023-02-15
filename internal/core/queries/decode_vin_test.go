@@ -123,9 +123,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
 
 	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.ID, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
 	vinInfoResp := &gateways.VINInfoResponse{

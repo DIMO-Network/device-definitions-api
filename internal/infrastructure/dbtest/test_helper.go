@@ -244,6 +244,16 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 	return integration
 }
 
+func SetupCreateWMI(t *testing.T, id string, device_make_id string, pdb db.Store) *models.Wmi {
+	wmi := &models.Wmi{
+		Wmi:          id,
+		DeviceMakeID: device_make_id,
+	}
+	err := wmi.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+	return wmi
+}
+
 func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
 	integration := &models.Integration{
 		ID:               ksuid.New().String(),

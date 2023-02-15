@@ -70,6 +70,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// not yet - lookup the device definition by rest of info - look at our existing vins
 	// for now always call drivly to decode
 	// todo persist model specific data to DB
+	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			localLog.Err(err).Msg("failed to decode vin numbers from db")
+		}
+	}
+
 	vinInfo, err := dc.drivlyAPISvc.GetVINInfo(vin.String())
 	if err != nil {
 		localLog.Err(err).Msg("failed to decode vin from drivly")
@@ -149,6 +156,26 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
 		}
 		// todo- future: add powertrain - but this can be style specific
+	}
+
+	if vinDecodeNumber == nil {
+		vinDecodeNumber = &models.VinNumber{
+			Vin:                vin.String(),
+			DeviceDefinitionID: dd.ID,
+			DeviceMakeID:       dd.DeviceMakeID,
+			Wmi:                wmi,
+			VDS:                "",
+			Vis:                "",
+			CheckDigit:         "",
+			SerialNumber:       "",
+		}
+		if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
+			localLog.Err(err).
+				Str("vin", vin.String()).
+				Str("device_definition_id", dd.ID).
+				Str("device_make_id", dd.DeviceMakeID).
+				Msgf("failed to insert vin_numbers: %s", vin.String())
+		}
 	}
 
 	return resp, nil
