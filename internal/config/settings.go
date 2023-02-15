@@ -28,4 +28,7 @@ type Settings struct {
 	FuelAPIImagesEndpoint          string         `yaml:"FUEL_API_SEARCH_IMAGES_ENDPOINT"`
 	FuelAPIKey                     string         `yaml:"FUEL_API_KEY"`
 	NHTSARecallsFileURL            string         `yaml:"NHTSA_RECALLS_FILE_URL"`
+	VincarioAPIURL                 string         `yaml:"VINCARIO_API_URL"`
+	VincarioAPIKey                 string         `yaml:"VINCARIO_API_KEY"`
+	VincarioAPISecret              string         `yaml:"VINCARIO_API_SECRET"`
 }
