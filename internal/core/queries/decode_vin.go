@@ -164,10 +164,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			DeviceDefinitionID: dd.ID,
 			DeviceMakeID:       dd.DeviceMakeID,
 			Wmi:                wmi,
-			VDS:                "",
-			Vis:                "",
-			CheckDigit:         "",
-			SerialNumber:       "",
+			VDS:                vin.VDS(),
+			Vis:                vin.VIS(),
+			CheckDigit:         vin.CheckDigit(),
+			SerialNumber:       vin.SerialNumber(),
 		}
 		if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 			localLog.Err(err).
