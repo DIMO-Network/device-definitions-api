@@ -46,6 +46,8 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	// todo: create a method that pulls out the useful data into a nicer object than what we get from them.
+	// pending integrate with vin decode grpc endpoint, use optional country param to determine if use this call or not, otherwise first call drivly then this
 
 	// decode JSON from response body
 	var data map[string]interface{}
