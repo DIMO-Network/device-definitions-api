@@ -73,7 +73,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			localLog.Err(err).Msg("failed to decode vin numbers from db")
+			localLog.Debug().Msg("failed to decode vin numbers from db")
 		}
 	}
 
