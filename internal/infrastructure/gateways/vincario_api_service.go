@@ -94,10 +94,17 @@ func setStructPropertiesByMetadataKey(structPtr interface{}, key string, value i
 			fieldValue := reflect.ValueOf(value)
 
 			if !fieldValue.Type().AssignableTo(field.Type()) {
-				return fmt.Errorf("value %v is not assignable to field %s of type %s", value, fieldType.Name, field.Type())
-			}
+				if fieldValue.Kind() == reflect.Float64 || fieldValue.Kind() == reflect.Float32 {
+					f := fieldValue.Float()
+					if field.Kind() == reflect.Int {
+						field.Set(reflect.ValueOf(int(f)))
+					}
+				}
 
-			field.Set(fieldValue)
+				return fmt.Errorf("value %v is not assignable to field %s of type %s", value, fieldType.Name, field.Type())
+			} else {
+				field.Set(fieldValue)
+			}
 			return nil
 		}
 	}
@@ -140,7 +147,6 @@ type VincarioInfoResponse struct {
 	NumberOfWheels           int      `key:"Number Wheels"`
 	NumberOfAxles            int      `key:"Number of Axles"`
 	NumberOfDoors            int      `key:"Number of Doors"`
-	PowerSteering            string   `key:"Power Steering"`
 	FrontBrakes              string   `key:"Front Brakes"`
 	RearBrakes               string   `key:"Rear Brakes"`
 	BrakeSystem              string   `key:"Brake System"`
@@ -152,7 +158,6 @@ type VincarioInfoResponse struct {
 	Height                   int      `key:"Height (mm)"`
 	Length                   int      `key:"Length (mm)"`
 	Width                    int      `key:"Width (mm)"`
-	WidthIncludingMirrors    int      `key:"Width including mirrors (mm)"`
 	RearOverhang             int      `key:"Rear Overhang (mm)"`
 	FrontOverhang            int      `key:"Front Overhang (mm)"`
 	TrackFront               int      `key:"Track Front (mm)"`
@@ -162,7 +167,12 @@ type VincarioInfoResponse struct {
 	MaxWeight                int      `key:"Max Weight (kg)"`
 	MaxRoofLoad              int      `key:"Max roof load (kg)"`
 	TrailerLoadWithoutBrakes int      `key:"Permitted trailer load without brakes (kg)"`
-	ABS                      int      `key:"ABS"`
 	CheckDigit               string   `key:"Check Digit"`
 	SequentialNumber         string   `key:"Sequential Number"`
+}
+
+// GetStyle returns a standard style string built from the data we have and the vehicle ID we can use as an external style id for this vehicle.
+func (v *VincarioInfoResponse) GetStyle() (string, int) {
+	s := fmt.Sprintf("%s %s %s %d-speed", v.FuelType, v.EngineType, v.Transmission, v.NumberOfGears)
+	return s, v.VehicleID // todo confirm with Roman VehicleId is style
 }

@@ -30,6 +30,21 @@ func Test_vincarioAPIService_DecodeVIN(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, testVIN, resp.VIN)
-	// todo fill in
-
+	assert.Equal(t, "Q7", resp.Model)
+	assert.Equal(t, "Audi", resp.Make)
+	assert.Equal(t, "Wagon", resp.Body)
+	assert.Equal(t, "Diesel", resp.FuelType)
+	assert.Equal(t, 2019, resp.ModelYear)
+	assert.Equal(t, "II (2015-)", resp.Series)
+	assert.Equal(t, `4-Stroke / 6 / V-T-DI`, resp.EngineType)
+	assert.Equal(t, 2967, resp.EngineDisplacement)
+	assert.Equal(t, "DHX", resp.EngineCode)
+	assert.Equal(t, "4x4 - Four-wheel drive", resp.Drive)
+	assert.Equal(t, 191, resp.VehicleID)
+	assert.Equal(t, "Automatic", resp.Transmission)
+	assert.Equal(t, 8, resp.NumberOfGears)
+	// style: {FuelType} {enginetype} {transmission} {numberofgears} speed
+	s, vi := resp.GetStyle()
+	assert.Equal(t, "Diesel 4-Stroke / 6 / V-T-DI Automatic 8-speed", s)
+	assert.Equal(t, 191, vi)
 }
