@@ -39,15 +39,9 @@ func NewVincarioAPIService(settings *config.Settings, log *zerolog.Logger) Vinca
 func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, error) {
 	id := "decode"
 
-	s := vin + "|" + id + "|" + va.settings.VincarioAPIKey + "|" + va.settings.VincarioAPISecret
-
-	h := sha1.New()
-	h.Write([]byte(s))
-	bs := h.Sum(nil)
-
-	controlSum := hex.EncodeToString(bs[0:5])
+	urlPath := vincarioPathBuilder(vin, id, va.settings.VincarioAPIKey, va.settings.VincarioAPISecret)
 	// url with api access
-	resp, err := va.httpClientVIN.ExecuteRequest("/"+va.settings.VincarioAPIKey+"/"+controlSum+"/"+id+"/"+vin+".json", "GET", nil)
+	resp, err := va.httpClientVIN.ExecuteRequest(urlPath, "GET", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +64,18 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, erro
 	}
 
 	return &infoResp, nil
+}
+
+func vincarioPathBuilder(vin, id, key, secret string) string {
+	s := vin + "|" + id + "|" + key + "|" + secret
+
+	h := sha1.New()
+	h.Write([]byte(s))
+	bs := h.Sum(nil)
+
+	controlSum := hex.EncodeToString(bs[0:5])
+
+	return "/" + key + "/" + controlSum + "/" + id + "/" + vin + ".json"
 }
 
 func setStructPropertiesByMetadataKey(structPtr interface{}, key string, value interface{}) error {
