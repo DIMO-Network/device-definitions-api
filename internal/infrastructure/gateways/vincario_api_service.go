@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
-	"reflect"
-	"time"
 )
 
 //go:generate mockgen -source vincario_api_service.go -destination mocks/vincario_api_service_mock.go -package mocks
@@ -99,9 +100,9 @@ func setStructPropertiesByMetadataKey(structPtr interface{}, key string, value i
 					if field.Kind() == reflect.Int {
 						field.Set(reflect.ValueOf(int(f)))
 					}
+				} else {
+					return fmt.Errorf("value %v is not assignable to field %s of type %s", value, fieldType.Name, field.Type())
 				}
-
-				return fmt.Errorf("value %v is not assignable to field %s of type %s", value, fieldType.Name, field.Type())
 			} else {
 				field.Set(fieldValue)
 			}
@@ -119,7 +120,7 @@ type tempResponse struct {
 	Decode []struct {
 		Label string `json:"label"`
 		Value any    `json:"value"`
-		Id    int    `json:"id,omitempty"`
+		ID    int    `json:"id,omitempty"`
 	} `json:"decode"`
 }
 
@@ -143,7 +144,7 @@ type VincarioInfoResponse struct {
 	ProductionStopped        int      `key:"Production Stopped"`
 	EngineManufacturer       string   `key:"Engine Manufacturer"`
 	EngineType               string   `key:"Engine Type"`
-	AverageCO2Emission       float64  `key:"Average CO2 Emission (g\/km)"`
+	AverageCO2Emission       float64  `key:"Average CO2 Emission (g/km)"`
 	NumberOfWheels           int      `key:"Number Wheels"`
 	NumberOfAxles            int      `key:"Number of Axles"`
 	NumberOfDoors            int      `key:"Number of Doors"`
@@ -162,7 +163,7 @@ type VincarioInfoResponse struct {
 	FrontOverhang            int      `key:"Front Overhang (mm)"`
 	TrackFront               int      `key:"Track Front (mm)"`
 	TrackRear                int      `key:"Track Rear (mm)"`
-	MaxSpeed                 int      `key:"Max Speed (km\/h)"`
+	MaxSpeed                 int      `key:"Max Speed (km/h)"`
 	WeightEmpty              int      `key:"Weight Empty (kg)"`
 	MaxWeight                int      `key:"Max Weight (kg)"`
 	MaxRoofLoad              int      `key:"Max roof load (kg)"`
