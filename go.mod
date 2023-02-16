@@ -16,6 +16,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-ipfs-files v0.1.1
+	github.com/jarcoal/httpmock v1.1.0
 	github.com/lib/pq v1.10.7
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.5.3
