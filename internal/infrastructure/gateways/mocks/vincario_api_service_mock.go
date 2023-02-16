@@ -7,6 +7,7 @@ package mocks
 import (
 	reflect "reflect"
 
+	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -34,10 +35,10 @@ func (m *MockVincarioAPIService) EXPECT() *MockVincarioAPIServiceMockRecorder {
 }
 
 // DecodeVIN mocks base method.
-func (m *MockVincarioAPIService) DecodeVIN(vin string) (any, error) {
+func (m *MockVincarioAPIService) DecodeVIN(vin string) (*gateways.VincarioInfoResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DecodeVIN", vin)
-	ret0, _ := ret[0].(any)
+	ret0, _ := ret[0].(*gateways.VincarioInfoResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
