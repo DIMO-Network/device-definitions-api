@@ -48,8 +48,9 @@ func (s *SyncVinNumbersSuite) SetupTest() {
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 
 	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	vinRepo := repositories.NewVINRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.commandHandler = NewSyncVinNumbersCommand(s.pdb.DBS, s.mockVINService, repo, dbtesthelper.Logger())
+	s.commandHandler = NewSyncVinNumbersCommand(s.pdb.DBS, s.mockVINService, repo, vinRepo, dbtesthelper.Logger())
 }
 
 func (s *SyncVinNumbersSuite) TearDownTest() {

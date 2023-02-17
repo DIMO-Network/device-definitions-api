@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
@@ -139,7 +142,7 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 
 }
 
-func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger, args []string) {
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
@@ -154,14 +157,32 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//commands
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncVinNumbersCommand{}, commands.NewSyncVinNumbersCommand(pdb.DBS, vinDecodingService, deviceDefinitionRepository, &logger)),
+		mediator.WithHandler(&commands.SyncVinNumbersCommand{}, commands.NewSyncVinNumbersCommand(pdb.DBS, vinDecodingService, deviceDefinitionRepository, vinRepository, &logger)),
 	)
 
-	_, _ = m.Send(ctx, &commands.SyncVinNumbersCommand{})
+	filePath := args[1]
+	readFile, err := os.Open(filePath)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Split(bufio.ScanLines)
+	var fileLines []string
+
+	for fileScanner.Scan() {
+		fileLines = append(fileLines, fileScanner.Text())
+	}
+
+	readFile.Close()
+
+	_, _ = m.Send(ctx, &commands.SyncVinNumbersCommand{VINNumbers: fileLines})
 
 }

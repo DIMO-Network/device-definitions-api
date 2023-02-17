@@ -59,7 +59,7 @@ func main() {
 	case "nhtsa-sync-recalls":
 		nhtsaSyncRecalls(ctx, &settings, logger)
 	case "vin-numbers-sync":
-		vinNumbersSync(ctx, &settings, logger)
+		vinNumbersSync(ctx, &settings, logger, os.Args)
 	default:
 		api.Run(ctx, logger, &settings)
 	}

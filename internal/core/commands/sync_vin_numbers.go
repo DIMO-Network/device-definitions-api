@@ -33,17 +33,20 @@ type SyncVinNumbersCommandHandler struct {
 	vinDecodingService services.VINDecodingService
 	logger             *zerolog.Logger
 	repository         repositories.DeviceDefinitionRepository
+	vinRepository      repositories.VINRepository
 }
 
 func NewSyncVinNumbersCommand(dbs func() *db.ReaderWriter,
 	vinDecodingService services.VINDecodingService,
 	repository repositories.DeviceDefinitionRepository,
+	vinRepository repositories.VINRepository,
 	logger *zerolog.Logger) SyncVinNumbersCommandHandler {
 	return SyncVinNumbersCommandHandler{
 		dbs:                dbs,
 		vinDecodingService: vinDecodingService,
 		logger:             logger,
 		repository:         repository,
+		vinRepository:      vinRepository,
 	}
 }
 
@@ -56,7 +59,6 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 			continue
 		}
 
-		var deviceMakeID = ""
 		vin := shared.VIN(vinNumber)
 		year := int32(vin.Year()) // needs to be updated for newer years
 		wmi := vin.Wmi()
@@ -67,14 +69,6 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 			Str("year", fmt.Sprintf("%d", year)).
 			Logger()
 
-		dbWMI, err := models.FindWmi(ctx, dc.dbs().Reader, wmi)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			dc.logger.Error().Str("vin", vin.String()).Msgf("invalid vin %s", vin.String())
-			continue
-		}
-		if dbWMI != nil {
-			deviceMakeID = dbWMI.DeviceMakeID
-		}
 		vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -96,36 +90,14 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 				continue
 			}
 
-			// get the make from the vinInfo if no WMI found
-			if dbWMI == nil {
-				deviceMake, err := models.
-					DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(common.SlugString(vinInfo.Make))).
-					One(ctx, dc.dbs().Reader)
-
-				if err != nil {
-					if errors.Is(err, sql.ErrNoRows) {
-						localLog.Warn().Msgf("failed to find make from vin decode with name slug: %s", common.SlugString(vinInfo.Make))
-					} else {
-						localLog.Err(err)
-						continue
-					}
-				}
-
-				if deviceMake != nil {
-					deviceMakeID = deviceMake.ID
-					// insert the WMI
-					dbWMI = &models.Wmi{
-						Wmi:          wmi,
-						DeviceMakeID: deviceMake.ID,
-					}
-					if err = dbWMI.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
-						localLog.Err(err).Str("deviceMakeId", deviceMake.ID).Msgf("failed to insert wmi: %s", wmi)
-					}
-				}
+			dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
+			if err != nil {
+				dc.logger.Error().Str("vin", vin.String()).Msgf("invalid vin %s", vin.String())
+				continue
 			}
 
 			// now match the model for the dd id
-			dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(deviceMakeID),
+			dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 				models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 				models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
 				One(ctx, dc.dbs().Reader)
@@ -134,7 +106,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 					dd, err = dc.repository.GetOrCreate(ctx,
 						vinInfo.Source,
 						common.SlugString(vinInfo.Model+vinInfo.Year),
-						deviceMakeID,
+						dbWMI.DeviceMakeID,
 						vinInfo.Model,
 						int(year),
 						common.DefaultDeviceType,
@@ -171,6 +143,23 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 				}
 			}
 
+			vinDecodeNumber = &models.VinNumber{
+				Vin:                vin.String(),
+				DeviceDefinitionID: dd.ID,
+				DeviceMakeID:       dd.DeviceMakeID,
+				Wmi:                wmi,
+				VDS:                vin.VDS(),
+				Vis:                vin.VIS(),
+				CheckDigit:         vin.CheckDigit(),
+				SerialNumber:       vin.SerialNumber(),
+			}
+			if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
+				localLog.Err(err).
+					Str("vin", vin.String()).
+					Str("device_definition_id", dd.ID).
+					Str("device_make_id", dd.DeviceMakeID).
+					Msgf("failed to insert vin_numbers: %s", vin.String())
+			}
 		}
 
 	}
