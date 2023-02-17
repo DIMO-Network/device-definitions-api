@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -134,5 +136,32 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncNHTSARecallsCommand{})
+
+}
+
+func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
+
+	//db
+	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
+	pdb.WaitForDB(logger)
+
+	//infra
+	drivlyAPIService := gateways.NewDrivlyAPIService(s)
+	vincarioAPIService := gateways.NewVincarioAPIService(s, &logger)
+
+	//service
+	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
+
+	//repos
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+
+	//commands
+	m, _ := mediator.New(
+		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		mediator.WithHandler(&commands.SyncVinNumbersCommand{}, commands.NewSyncVinNumbersCommand(pdb.DBS, vinDecodingService, deviceDefinitionRepository, &logger)),
+	)
+
+	_, _ = m.Send(ctx, &commands.SyncVinNumbersCommand{})
 
 }
