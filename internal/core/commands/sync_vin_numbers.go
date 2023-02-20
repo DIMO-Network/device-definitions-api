@@ -134,7 +134,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 						DeviceDefinitionID: dd.ID,
 						Name:               vinInfo.StyleName,
 						ExternalStyleID:    common.SlugString(vinInfo.StyleName),
-						Source:             "drivly",
+						Source:             vinInfo.Source,
 						SubModel:           vinInfo.SubModel,
 					}
 					_ = style.Insert(ctx, dc.dbs().Writer, boil.Infer())
