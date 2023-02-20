@@ -72,5 +72,10 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 		}
 	}
 
-	return nil, nil
+	response := BulkValidateVinCommandResult{
+		DecodedVINs:    decodedVINs,
+		NotDecodedVins: notDecodedVins,
+	}
+
+	return response, nil
 }
