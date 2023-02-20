@@ -124,6 +124,12 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, drivlyAPIService, deviceDefinitionRepository, &logger)),
 
 		mediator.WithHandler(&queries.GetDefinitionsWithHWTemplateQuery{}, queries.NewGetDefinitionsWithHWTemplateQueryHandler(pdb.DBS, &logger)),
+
+		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
+			pdb.DBS,
+			queries.NewDecodeVINQueryHandler(pdb.DBS, drivlyAPIService, deviceDefinitionRepository, &logger),
+			queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
+		),
 	)
 
 	//fiber
@@ -141,6 +147,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
 	RegisterDeviceMakesRoutes(app, *m)
+	RegisterVINRoutes(app, *m)
 
 	app.Get("/docs/*", swagger.HandlerDefault)
 
