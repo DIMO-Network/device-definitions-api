@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 0f58e3b
+  tag: a969cee
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -48,6 +48,7 @@ env:
   FUEL_API_SEARCH_VEHICLES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicles
   FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
+  VINCARIO_API_URL: https://api.vindecoder.eu/3.2
 service:
   type: ClusterIP
   ports:

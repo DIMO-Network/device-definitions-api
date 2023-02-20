@@ -1,0 +1,220 @@
+{
+  "price": 0,
+  "price_currency": "USD",
+  "balance": {
+    "API Decode": 9767
+  },
+  "decode": [
+    {
+      "label": "VIN",
+      "value": "WAUZZZ4M0KD018683"
+    },
+    {
+      "label": "Vehicle ID",
+      "value": 191
+    },
+    {
+      "label": "Make",
+      "value": "Audi",
+      "id": 10
+    },
+    {
+      "label": "Model",
+      "value": "Q7",
+      "id": 18268
+    },
+    {
+      "label": "Model Year",
+      "value": 2019
+    },
+    {
+      "label": "Product Type",
+      "value": "Car",
+      "id": 4
+    },
+    {
+      "label": "Body",
+      "value": "Wagon",
+      "id": 37
+    },
+    {
+      "label": "Series",
+      "value": "II (2015-)"
+    },
+    {
+      "label": "Drive",
+      "value": "4x4 - Four-wheel drive",
+      "id": 2
+    },
+    {
+      "label": "Engine Displacement (ccm)",
+      "value": 2967
+    },
+    {
+      "label": "Fuel Type - Primary",
+      "value": "Diesel",
+      "id": 3
+    },
+    {
+      "label": "Engine Code",
+      "value": "DHX"
+    },
+    {
+      "label": "Transmission",
+      "value": "Automatic",
+      "id": 2
+    },
+    {
+      "label": "Number of Gears",
+      "value": 8
+    },
+    {
+      "label": "Emission Standard",
+      "value": "Euro 6"
+    },
+    {
+      "label": "Manufacturer",
+      "value": "AUDI AG, D-85057 INGOLSTADT"
+    },
+    {
+      "label": "Manufacturer Address",
+      "value": "Felix Wankel Strasse, 74148 Neckarsulm, Germany"
+    },
+    {
+      "label": "Plant Country",
+      "value": "Germany"
+    },
+    {
+      "label": "Production Stopped",
+      "value": 2019
+    },
+    {
+      "label": "Engine Manufacturer",
+      "value": "AUDI"
+    },
+    {
+      "label": "Engine Type",
+      "value": "4-Stroke \/ 6 \/ V-T-DI"
+    },
+    {
+      "label": "Average CO2 Emission (g\/km)",
+      "value": 175.2
+    },
+    {
+      "label": "Number Wheels",
+      "value": 4
+    },
+    {
+      "label": "Number of Axles",
+      "value": 2
+    },
+    {
+      "label": "Number of Doors",
+      "value": 4
+    },
+    {
+      "label": "Power Steering",
+      "value": "Electric Steering"
+    },
+    {
+      "label": "Front Brakes",
+      "value": "Disc"
+    },
+    {
+      "label": "Rear Brakes",
+      "value": "Ventilated discs"
+    },
+    {
+      "label": "Brake System",
+      "value": "Hydraulic"
+    },
+    {
+      "label": "Steering Type",
+      "value": "Electric steering"
+    },
+    {
+      "label": "Wheel Size",
+      "value": "285\/40 R21 109Y"
+    },
+    {
+      "label": "Wheel Size Array",
+      "value": [
+        "285\/40 R21 109Y"
+      ]
+    },
+    {
+      "label": "Wheelbase (mm)",
+      "value": 2996
+    },
+    {
+      "label": "Wheelbase Array (mm)",
+      "value": [
+        2996
+      ]
+    },
+    {
+      "label": "Height (mm)",
+      "value": 1668
+    },
+    {
+      "label": "Length (mm)",
+      "value": 5052
+    },
+    {
+      "label": "Width (mm)",
+      "value": 1968
+    },
+    {
+      "label": "Width including mirrors (mm)",
+      "value": 2212
+    },
+    {
+      "label": "Rear Overhang (mm)",
+      "value": 1080
+    },
+    {
+      "label": "Front Overhang (mm)",
+      "value": 978
+    },
+    {
+      "label": "Track Front (mm)",
+      "value": 1690
+    },
+    {
+      "label": "Track Rear (mm)",
+      "value": 1709
+    },
+    {
+      "label": "Max Speed (km\/h)",
+      "value": 241
+    },
+    {
+      "label": "Weight Empty (kg)",
+      "value": 2145
+    },
+    {
+      "label": "Max Weight (kg)",
+      "value": 2815
+    },
+    {
+      "label": "Max roof load (kg)",
+      "value": 100
+    },
+    {
+      "label": "Permitted trailer load without brakes (kg)",
+      "value": 750
+    },
+    {
+      "label": "ABS",
+      "value": 1
+    },
+    {
+      "label": "Check Digit",
+      "value": "0"
+    },
+    {
+      "label": "Sequential Number",
+      "value": "018683"
+    }
+  ]
+}
