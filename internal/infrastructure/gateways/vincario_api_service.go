@@ -180,6 +180,5 @@ func (v *VincarioInfoResponse) GetStyle() (string, int) {
 
 // GetSubModel returns the Body type from Vincario, which we can use as the sub model.
 func (v *VincarioInfoResponse) GetSubModel() string {
-	s := fmt.Sprintf("%s", v.Body)
-	return s
+	return v.Body
 }
