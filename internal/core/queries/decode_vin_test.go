@@ -2,8 +2,12 @@ package queries
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/volatiletech/null/v8"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
@@ -28,13 +32,13 @@ type DecodeVINQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                  *gomock.Controller
-	pdb                   db.Store
-	container             testcontainers.Container
-	ctx                   context.Context
-	mockDrivlyAPISvc      *mock_gateways.MockDrivlyAPIService
-	mockVincarioAPISvc    *mock_gateways.MockVincarioAPIService
-	mockVINDecodingAPISvc *mock_services.MockVINDecodingService
+	ctrl               *gomock.Controller
+	pdb                db.Store
+	container          testcontainers.Container
+	ctx                context.Context
+	mockDrivlyAPISvc   *mock_gateways.MockDrivlyAPIService
+	mockVincarioAPISvc *mock_gateways.MockVincarioAPIService
+	mockVINService     *mock_services.MockVINDecodingService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -50,10 +54,11 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 
 	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
+	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINDecodingAPISvc, vinRepository, repo, dbtesthelper.Logger())
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, repo, dbtesthelper.Logger())
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -89,7 +94,35 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 		MpgHighway:          31,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	deviceTypeInfo := make(map[string]interface{})
+	deviceTypeInfo["mpg_city"] = vinInfoResp.MpgCity
+	deviceTypeInfo["mpg_highway"] = vinInfoResp.MpgHighway
+	deviceTypeInfo["mpg"] = vinInfoResp.Mpg
+	deviceTypeInfo["base_msrp"] = vinInfoResp.MsrpBase
+	deviceTypeInfo["fuel_tank_capacity_gal"] = vinInfoResp.FuelTankCapacityGal
+	deviceTypeInfo["fuel_type"] = vinInfoResp.Fuel
+	deviceTypeInfo["wheelbase"] = vinInfoResp.Wheelbase
+	deviceTypeInfo["generation"] = vinInfoResp.Generation
+	deviceTypeInfo["number_of_doors"] = vinInfoResp.Doors
+	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
+	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: buildStyleName(vinInfoResp),
+		SubModel:  vinInfoResp.SubModel,
+		Source:    "drivly",
+		Year:      vinInfoResp.Year,
+		Make:      vinInfoResp.Make,
+		Model:     vinInfoResp.Model,
+	}
+
+	metaDataInfo := make(map[string]interface{})
+	metaDataInfo["vehicle_info"] = deviceTypeInfo
+	metaData, _ := json.Marshal(metaDataInfo)
+	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
 	// db setup
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
@@ -157,7 +190,34 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 		MpgHighway:          31,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+	//s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	deviceTypeInfo := make(map[string]interface{})
+	deviceTypeInfo["mpg_city"] = vinInfoResp.MpgCity
+	deviceTypeInfo["mpg_highway"] = vinInfoResp.MpgHighway
+	deviceTypeInfo["mpg"] = vinInfoResp.Mpg
+	deviceTypeInfo["base_msrp"] = vinInfoResp.MsrpBase
+	deviceTypeInfo["fuel_tank_capacity_gal"] = vinInfoResp.FuelTankCapacityGal
+	deviceTypeInfo["fuel_type"] = vinInfoResp.Fuel
+	deviceTypeInfo["wheelbase"] = vinInfoResp.Wheelbase
+	deviceTypeInfo["generation"] = vinInfoResp.Generation
+	deviceTypeInfo["number_of_doors"] = vinInfoResp.Doors
+	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
+	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: buildStyleName(vinInfoResp),
+		SubModel:  vinInfoResp.SubModel,
+		Source:    "drivly",
+		Year:      vinInfoResp.Year,
+	}
+
+	metaDataInfo := make(map[string]interface{})
+	metaDataInfo["vehicle_info"] = deviceTypeInfo
+	metaData, _ := json.Marshal(metaDataInfo)
+	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
@@ -207,7 +267,36 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 		Mpg:                 25,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	deviceTypeInfo := make(map[string]interface{})
+	deviceTypeInfo["mpg_city"] = vinInfoResp.MpgCity
+	deviceTypeInfo["mpg_highway"] = vinInfoResp.MpgHighway
+	deviceTypeInfo["mpg"] = vinInfoResp.Mpg
+	deviceTypeInfo["base_msrp"] = vinInfoResp.MsrpBase
+	deviceTypeInfo["fuel_tank_capacity_gal"] = vinInfoResp.FuelTankCapacityGal
+	deviceTypeInfo["fuel_type"] = vinInfoResp.Fuel
+	deviceTypeInfo["wheelbase"] = vinInfoResp.Wheelbase
+	deviceTypeInfo["generation"] = vinInfoResp.Generation
+	deviceTypeInfo["number_of_doors"] = vinInfoResp.Doors
+	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
+	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: buildStyleName(vinInfoResp),
+		SubModel:  vinInfoResp.SubModel,
+		Source:    "drivly",
+		Year:      vinInfoResp.Year,
+		Make:      dm.Name,
+		Model:     dd.Model,
+	}
+
+	metaDataInfo := make(map[string]interface{})
+	metaDataInfo["vehicle_info"] = deviceTypeInfo
+	metaData, _ := json.Marshal(metaDataInfo)
+	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
+
 	// db setup
 	ds := dbtesthelper.SetupCreateStyle(s.T(), dd.ID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
 
@@ -230,6 +319,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
 	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 	wmi := models.Wmi{
@@ -254,7 +344,34 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 		Mpg:                 25,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	deviceTypeInfo := make(map[string]interface{})
+	deviceTypeInfo["mpg_city"] = vinInfoResp.MpgCity
+	deviceTypeInfo["mpg_highway"] = vinInfoResp.MpgHighway
+	deviceTypeInfo["mpg"] = vinInfoResp.Mpg
+	deviceTypeInfo["base_msrp"] = vinInfoResp.MsrpBase
+	deviceTypeInfo["fuel_tank_capacity_gal"] = vinInfoResp.FuelTankCapacityGal
+	deviceTypeInfo["fuel_type"] = vinInfoResp.Fuel
+	deviceTypeInfo["wheelbase"] = vinInfoResp.Wheelbase
+	deviceTypeInfo["generation"] = vinInfoResp.Generation
+	deviceTypeInfo["number_of_doors"] = vinInfoResp.Doors
+	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
+	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: buildStyleName(vinInfoResp),
+		SubModel:  vinInfoResp.SubModel,
+		Source:    "drivly",
+		Year:      vinInfoResp.Year,
+		Model:     vinInfoResp.Model,
+	}
+
+	metaDataInfo := make(map[string]interface{})
+	metaDataInfo["vehicle_info"] = deviceTypeInfo
+	metaData, _ := json.Marshal(metaDataInfo)
+	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)

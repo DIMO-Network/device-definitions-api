@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -99,6 +101,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
+	resp.Year = int32(vin.Year())
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 
 	// now match the model for the dd id
@@ -130,7 +133,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceDefinitionId = dd.ID
 		// match style
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
-			models.DeviceStyleWhere.SubModel.EQ(vinInfo.SubModel),
 			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
 			// insert
@@ -139,13 +141,20 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				DeviceDefinitionID: dd.ID,
 				Name:               vinInfo.StyleName,
 				ExternalStyleID:    common.SlugString(vinInfo.StyleName),
-				Source:             vinInfo.StyleName,
+				Source:             vinInfo.Source,
 				SubModel:           vinInfo.SubModel,
 			}
 			_ = style.Insert(ctx, dc.dbs().Writer, boil.Infer())
 			localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
 		}
 		resp.DeviceStyleId = style.ID
+		// set the dd metadata if nothing there
+		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
+			// todo - future: merge metadata properties. Also set style specific metadata - multiple places
+			dd.Metadata = vinInfo.MetaData
+			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+		}
+		// todo- future: add powertrain - but this can be style specific
 	}
 
 	vinDecodeNumber = &models.VinNumber{

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
@@ -163,7 +165,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncVinNumbersCommand{}, commands.NewSyncVinNumbersCommand(pdb.DBS, vinDecodingService, deviceDefinitionRepository, vinRepository, &logger)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vinDecodingService, vinRepository, deviceDefinitionRepository, &logger)),
 	)
 
 	filePath := args[1]
@@ -175,14 +177,12 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
-	var fileLines []string
 
 	for fileScanner.Scan() {
-		fileLines = append(fileLines, fileScanner.Text())
+		vin := fileScanner.Text()
+		_, _ = m.Send(ctx, &queries.DecodeVINQuery{VIN: vin})
 	}
 
 	readFile.Close()
-
-	_, _ = m.Send(ctx, &commands.SyncVinNumbersCommand{VINNumbers: fileLines})
 
 }
