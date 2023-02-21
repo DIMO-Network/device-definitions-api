@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/volatiletech/null/v8"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -77,6 +79,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 		}
 
 		if vinDecodeNumber == nil {
+
 			dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).
 				One(ctx, dc.dbs().Reader)
 			if err != nil {
@@ -122,6 +125,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 					return nil, err
 				}
 			}
+			styleID := ""
 			if dd != nil {
 				// match style
 				var style, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
@@ -141,12 +145,15 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 					localLog.Info().
 						Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
 				}
+
+				styleID = style.ID
 			}
 
 			vinDecodeNumber = &models.VinNumber{
 				Vin:                vin.String(),
 				DeviceDefinitionID: dd.ID,
 				DeviceMakeID:       dd.DeviceMakeID,
+				StyleID:            null.StringFrom(styleID),
 				Wmi:                wmi,
 				VDS:                vin.VDS(),
 				Vis:                vin.VIS(),

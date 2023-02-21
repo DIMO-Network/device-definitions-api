@@ -2,10 +2,12 @@ package queries
 
 import (
 	"context"
+	"strings"
 	"testing"
 
+	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
@@ -26,11 +28,13 @@ type DecodeVINQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl             *gomock.Controller
-	pdb              db.Store
-	container        testcontainers.Container
-	ctx              context.Context
-	mockDrivlyAPISvc *mock_gateways.MockDrivlyAPIService
+	ctrl                  *gomock.Controller
+	pdb                   db.Store
+	container             testcontainers.Container
+	ctx                   context.Context
+	mockDrivlyAPISvc      *mock_gateways.MockDrivlyAPIService
+	mockVincarioAPISvc    *mock_gateways.MockVincarioAPIService
+	mockVINDecodingAPISvc *mock_services.MockVINDecodingService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -45,9 +49,11 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.ctx = context.Background()
 
 	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
+	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
 	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockDrivlyAPISvc, repo, dbtesthelper.Logger())
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINDecodingAPISvc, vinRepository, repo, dbtesthelper.Logger())
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -264,27 +270,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.Assert().Len(wmis, 1)
 }
 
-func Test_drivlyVINInfoToUpdateAttr(t *testing.T) {
-
-	vinInfo := &gateways.VINInfoResponse{
-		Wheelbase:           "106 WB",
-		MsrpBase:            32123,
-		Mpg:                 24,
-		FuelTankCapacityGal: 23.25,
-	}
-	got := drivlyVINInfoToUpdateAttr(vinInfo)
-	// need a lookup for that
-	assert.Equal(t, "106 WB", lookupUpdateAttr(got, "wheelbase"))
-	assert.Equal(t, "32123", lookupUpdateAttr(got, "base_msrp"))
-	assert.Equal(t, "24", lookupUpdateAttr(got, "mpg"))
-	assert.Equal(t, "23.25", lookupUpdateAttr(got, "fuel_tank_capacity_gal"))
-}
-
-func lookupUpdateAttr(items []*coremodels.UpdateDeviceTypeAttribute, name string) string {
-	for _, item := range items {
-		if item.Name == name {
-			return item.Value
-		}
-	}
-	return ""
+func buildStyleName(vinInfo *gateways.VINInfoResponse) string {
+	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
