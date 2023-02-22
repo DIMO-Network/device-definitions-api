@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -59,7 +60,12 @@ func main() {
 	case "nhtsa-sync-recalls":
 		nhtsaSyncRecalls(ctx, &settings, logger)
 	case "vin-numbers-sync":
-		vinNumbersSync(ctx, &settings, logger, os.Args)
+		filename := "vins.csv"
+		if len(os.Args) > 2 {
+			filename = os.Args[2]
+		}
+		fmt.Printf("using filename %s to get vins", filename)
+		vinNumbersSync(ctx, &settings, logger, filename)
 	default:
 		api.Run(ctx, logger, &settings)
 	}

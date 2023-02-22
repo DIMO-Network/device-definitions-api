@@ -144,7 +144,7 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 
 }
 
-func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger, args []string) {
+func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger, filename string) {
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
@@ -168,8 +168,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vinDecodingService, vinRepository, deviceDefinitionRepository, &logger)),
 	)
 
-	filePath := args[1]
-	readFile, err := os.Open(filePath)
+	readFile, err := os.Open(filename)
 
 	if err != nil {
 		fmt.Println(err)
