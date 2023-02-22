@@ -22,7 +22,11 @@ func BulkDecodeVIN(m mediator.Mediator) fiber.Handler {
 
 		payload := make([]string, 0)
 
-		c.BodyParser(&payload)
+		err := c.BodyParser(&payload)
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
 
 		command := &commands.BulkValidateVinCommand{VINs: payload}
 
