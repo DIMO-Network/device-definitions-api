@@ -130,9 +130,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
-			queries.NewDecodeVINQueryHandler(pdb.DBS, drivlyAPIService, deviceDefinitionRepository, &logger),
-			queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS)),
-		),
+			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger),
+			queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS),
+			queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService),
+		)),
 	)
 
 	//fiber
