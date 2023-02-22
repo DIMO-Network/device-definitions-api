@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,16 +24,17 @@ import (
 
 // VinNumber is an object representing the database table.
 type VinNumber struct {
-	Vin                string    `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
-	Wmi                string    `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
-	VDS                string    `boil:"vds" json:"vds" toml:"vds" yaml:"vds"`
-	CheckDigit         string    `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
-	SerialNumber       string    `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
-	Vis                string    `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
-	DeviceMakeID       string    `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
-	DeviceDefinitionID string    `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
-	CreatedAt          time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Vin                string      `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
+	Wmi                string      `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
+	VDS                string      `boil:"vds" json:"vds" toml:"vds" yaml:"vds"`
+	CheckDigit         string      `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
+	SerialNumber       string      `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
+	Vis                string      `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
+	DeviceMakeID       string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
+	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	StyleID            null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -49,6 +51,7 @@ var VinNumberColumns = struct {
 	DeviceDefinitionID string
 	CreatedAt          string
 	UpdatedAt          string
+	StyleID            string
 }{
 	Vin:                "vin",
 	Wmi:                "wmi",
@@ -60,6 +63,7 @@ var VinNumberColumns = struct {
 	DeviceDefinitionID: "device_definition_id",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
+	StyleID:            "style_id",
 }
 
 var VinNumberTableColumns = struct {
@@ -73,6 +77,7 @@ var VinNumberTableColumns = struct {
 	DeviceDefinitionID string
 	CreatedAt          string
 	UpdatedAt          string
+	StyleID            string
 }{
 	Vin:                "vin_numbers.vin",
 	Wmi:                "vin_numbers.wmi",
@@ -84,6 +89,7 @@ var VinNumberTableColumns = struct {
 	DeviceDefinitionID: "vin_numbers.device_definition_id",
 	CreatedAt:          "vin_numbers.created_at",
 	UpdatedAt:          "vin_numbers.updated_at",
+	StyleID:            "vin_numbers.style_id",
 }
 
 // Generated where
@@ -99,6 +105,7 @@ var VinNumberWhere = struct {
 	DeviceDefinitionID whereHelperstring
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
+	StyleID            whereHelpernull_String
 }{
 	Vin:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
 	Wmi:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
@@ -110,19 +117,23 @@ var VinNumberWhere = struct {
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"device_definition_id\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
+	StyleID:            whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
 }
 
 // VinNumberRels is where relationship names are stored.
 var VinNumberRels = struct {
+	Style            string
 	DeviceDefinition string
 	DeviceMake       string
 }{
+	Style:            "Style",
 	DeviceDefinition: "DeviceDefinition",
 	DeviceMake:       "DeviceMake",
 }
 
 // vinNumberR is where relationships are stored.
 type vinNumberR struct {
+	Style            *DeviceStyle      `boil:"Style" json:"Style" toml:"Style" yaml:"Style"`
 	DeviceDefinition *DeviceDefinition `boil:"DeviceDefinition" json:"DeviceDefinition" toml:"DeviceDefinition" yaml:"DeviceDefinition"`
 	DeviceMake       *DeviceMake       `boil:"DeviceMake" json:"DeviceMake" toml:"DeviceMake" yaml:"DeviceMake"`
 }
@@ -130,6 +141,13 @@ type vinNumberR struct {
 // NewStruct creates a new relationship struct
 func (*vinNumberR) NewStruct() *vinNumberR {
 	return &vinNumberR{}
+}
+
+func (r *vinNumberR) GetStyle() *DeviceStyle {
+	if r == nil {
+		return nil
+	}
+	return r.Style
 }
 
 func (r *vinNumberR) GetDeviceDefinition() *DeviceDefinition {
@@ -150,9 +168,9 @@ func (r *vinNumberR) GetDeviceMake() *DeviceMake {
 type vinNumberL struct{}
 
 var (
-	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "created_at", "updated_at"}
+	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "created_at", "updated_at", "style_id"}
 	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at"}
+	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )
@@ -435,6 +453,17 @@ func (q vinNumberQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (
 	return count > 0, nil
 }
 
+// Style pointed to by the foreign key.
+func (o *VinNumber) Style(mods ...qm.QueryMod) deviceStyleQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.StyleID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return DeviceStyles(queryMods...)
+}
+
 // DeviceDefinition pointed to by the foreign key.
 func (o *VinNumber) DeviceDefinition(mods ...qm.QueryMod) deviceDefinitionQuery {
 	queryMods := []qm.QueryMod{
@@ -455,6 +484,130 @@ func (o *VinNumber) DeviceMake(mods ...qm.QueryMod) deviceMakeQuery {
 	queryMods = append(queryMods, mods...)
 
 	return DeviceMakes(queryMods...)
+}
+
+// LoadStyle allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (vinNumberL) LoadStyle(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVinNumber interface{}, mods queries.Applicator) error {
+	var slice []*VinNumber
+	var object *VinNumber
+
+	if singular {
+		var ok bool
+		object, ok = maybeVinNumber.(*VinNumber)
+		if !ok {
+			object = new(VinNumber)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVinNumber)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVinNumber))
+			}
+		}
+	} else {
+		s, ok := maybeVinNumber.(*[]*VinNumber)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVinNumber)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVinNumber))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &vinNumberR{}
+		}
+		if !queries.IsNil(object.StyleID) {
+			args = append(args, object.StyleID)
+		}
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &vinNumberR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.StyleID) {
+					continue Outer
+				}
+			}
+
+			if !queries.IsNil(obj.StyleID) {
+				args = append(args, obj.StyleID)
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.device_styles`),
+		qm.WhereIn(`device_definitions_api.device_styles.id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load DeviceStyle")
+	}
+
+	var resultSlice []*DeviceStyle
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice DeviceStyle")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for device_styles")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_styles")
+	}
+
+	if len(vinNumberAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Style = foreign
+		if foreign.R == nil {
+			foreign.R = &deviceStyleR{}
+		}
+		foreign.R.StyleVinNumbers = append(foreign.R.StyleVinNumbers, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.StyleID, foreign.ID) {
+				local.R.Style = foreign
+				if foreign.R == nil {
+					foreign.R = &deviceStyleR{}
+				}
+				foreign.R.StyleVinNumbers = append(foreign.R.StyleVinNumbers, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadDeviceDefinition allows an eager lookup of values, cached into the
@@ -694,6 +847,86 @@ func (vinNumberL) LoadDeviceMake(ctx context.Context, e boil.ContextExecutor, si
 		}
 	}
 
+	return nil
+}
+
+// SetStyle of the vinNumber to the related item.
+// Sets o.R.Style to related.
+// Adds o to related.R.StyleVinNumbers.
+func (o *VinNumber) SetStyle(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceStyle) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"device_definitions_api\".\"vin_numbers\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"style_id"}),
+		strmangle.WhereClause("\"", "\"", 2, vinNumberPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.Vin}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.StyleID, related.ID)
+	if o.R == nil {
+		o.R = &vinNumberR{
+			Style: related,
+		}
+	} else {
+		o.R.Style = related
+	}
+
+	if related.R == nil {
+		related.R = &deviceStyleR{
+			StyleVinNumbers: VinNumberSlice{o},
+		}
+	} else {
+		related.R.StyleVinNumbers = append(related.R.StyleVinNumbers, o)
+	}
+
+	return nil
+}
+
+// RemoveStyle relationship.
+// Sets o.R.Style to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *VinNumber) RemoveStyle(ctx context.Context, exec boil.ContextExecutor, related *DeviceStyle) error {
+	var err error
+
+	queries.SetScanner(&o.StyleID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("style_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Style = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.StyleVinNumbers {
+		if queries.Equal(o.StyleID, ri.StyleID) {
+			continue
+		}
+
+		ln := len(related.R.StyleVinNumbers)
+		if ln > 1 && i < ln-1 {
+			related.R.StyleVinNumbers[i] = related.R.StyleVinNumbers[ln-1]
+		}
+		related.R.StyleVinNumbers = related.R.StyleVinNumbers[:ln-1]
+		break
+	}
 	return nil
 }
 

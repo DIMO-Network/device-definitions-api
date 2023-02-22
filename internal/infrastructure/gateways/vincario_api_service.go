@@ -175,5 +175,10 @@ type VincarioInfoResponse struct {
 // GetStyle returns a standard style string built from the data we have and the vehicle ID we can use as an external style id for this vehicle.
 func (v *VincarioInfoResponse) GetStyle() (string, int) {
 	s := fmt.Sprintf("%s %s %s %d-speed", v.FuelType, v.EngineType, v.Transmission, v.NumberOfGears)
-	return s, v.VehicleID // todo confirm with Roman VehicleId is style
+	return s, v.VehicleID // VehicleID is Make Model Year specific - not style specific.
+}
+
+// GetSubModel returns the Body type from Vincario, which we can use as the sub model.
+func (v *VincarioInfoResponse) GetSubModel() string {
+	return v.Body
 }

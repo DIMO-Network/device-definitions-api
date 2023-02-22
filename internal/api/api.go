@@ -37,6 +37,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//infra
 	drivlyAPIService := gateways.NewDrivlyAPIService(settings)
+	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -44,9 +45,11 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
 	deviceMakeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
+	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
 
 	//services
 	prv, err := trace.NewProvider(trace.ProviderConfig{
@@ -121,7 +124,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.CreateIntegrationFeatureCommand{}, commands.NewCreateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateIntegrationFeatureCommand{}, commands.NewUpdateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteIntegrationFeatureCommand{}, commands.NewDeleteIntegrationFeatureCommandHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, drivlyAPIService, deviceDefinitionRepository, &logger)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger)),
 
 		mediator.WithHandler(&queries.GetDefinitionsWithHWTemplateQuery{}, queries.NewGetDefinitionsWithHWTemplateQueryHandler(pdb.DBS, &logger)),
 
