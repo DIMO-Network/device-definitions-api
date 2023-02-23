@@ -156,6 +156,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	assert.Equal(s.T(), int64(vinInfoResp.MsrpBase), gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.base_msrp").Int())
 	assert.Equal(s.T(), int64(vinInfoResp.Mpg), gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.mpg").Int())
 	assert.Equal(s.T(), vinInfoResp.FuelTankCapacityGal, gjson.GetBytes(ddUpdated.Metadata.JSON, "vehicle_info.fuel_tank_capacity_gal").Float())
+
+	// validate vin number created
+	vinNumber, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	assert.Equal(s.T(), vinNumber.Vin, vin)
+
 }
 
 // using existing WMI
