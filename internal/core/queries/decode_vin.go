@@ -90,7 +90,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt)
 	if err != nil {
-		localLog.Err(err).Msg("failed to decode vin from drivly or vincario")
+		localLog.Err(err).Msgf("failed to decode vin from %s", vinInfo.Source)
+		return resp, nil
+	}
+
+	if len(vinInfo.StyleName) == 0 {
+		localLog.Err(err).Msgf("vin %s stylename is empty", vinInfo.VIN)
 		return resp, nil
 	}
 
@@ -166,6 +171,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Vis:                vin.VIS(),
 		CheckDigit:         vin.CheckDigit(),
 		SerialNumber:       vin.SerialNumber(),
+		DecodeProvider:     vinInfo.Source,
 	}
 	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 		localLog.Err(err).
