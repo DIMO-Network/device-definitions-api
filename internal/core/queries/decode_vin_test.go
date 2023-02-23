@@ -216,6 +216,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
 		Year:      vinInfoResp.Year,
+		Model:     vinInfoResp.Model,
 	}
 
 	metaDataInfo := make(map[string]interface{})

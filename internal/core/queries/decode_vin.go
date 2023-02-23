@@ -94,9 +94,18 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	if len(vinInfo.StyleName) == 0 {
-		localLog.Err(err).Msgf("vin %s stylename is empty", vinInfo.VIN)
-		return resp, nil
+	if len(vinInfo.StyleName) < 2 {
+		localLog.Warn().
+			Str("vin", vin.String()).
+			Msgf("style name %s must have a minimum of 2 characters.", vinInfo.StyleName)
+		return nil, errors.New("style name is incorrect")
+	}
+
+	if len(vinInfo.Model) == 0 {
+		localLog.Warn().
+			Str("vin", vin.String()).
+			Msg("model name must have a minimum of 1 characters.")
+		return nil, errors.New("model name is incorrect")
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
