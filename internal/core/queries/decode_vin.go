@@ -70,12 +70,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			localLog.Debug().Msg("No rows to decode vin numbers from db")
+			localLog.Debug().Str("vin", vin.String()).Msg("no existing vin match found")
 		}
 	}
 
 	if vinDecodeNumber != nil {
-
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = year
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
@@ -91,13 +90,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt)
 	if err != nil {
-		localLog.Err(err).Msg("failed to decode vin from drivly")
+		localLog.Err(err).Msg("failed to decode vin from drivly or vincario")
 		return resp, nil
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
 	if err != nil {
-		dc.logger.Error().Str("vin", vin.String()).Msgf("invalid vin %s", vin.String())
+		dc.logger.Error().Err(err).Str("vin", vin.String()).Msgf("failed to get or create wmi for vin %s", vin.String())
 		return resp, nil
 	}
 

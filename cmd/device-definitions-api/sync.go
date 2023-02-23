@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"os"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -179,7 +180,13 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	for fileScanner.Scan() {
 		vin := fileScanner.Text()
-		_, _ = m.Send(ctx, &queries.DecodeVINQuery{VIN: vin})
+		result, err := m.Send(ctx, &queries.DecodeVINQuery{VIN: vin})
+		if err == nil && result != nil {
+			r, ok := result.(*p_grpc.DecodeVinResponse)
+			if ok {
+				fmt.Printf("decoded vin %s, ddID: %s, year: %d\n", vin, r.DeviceDefinitionId, r.Year)
+			}
+		}
 	}
 
 	readFile.Close()
