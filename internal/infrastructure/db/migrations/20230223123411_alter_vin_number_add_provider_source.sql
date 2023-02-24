@@ -3,8 +3,7 @@
 SELECT 'up SQL query';
 SET search_path = device_definitions_api, public;
 
-ALTER TABLE device_definitions_api.vin_numbers
-    ADD decode_provider text COLLATE pg_catalog."default" NOT NULL
+ALTER TABLE vin_numbers ADD decode_provider text COLLATE pg_catalog."default";
 
 -- +goose StatementEnd
 
@@ -14,7 +13,6 @@ SELECT 'down SQL query';
 
 SET search_path = device_definitions_api, public;
 
-ALTER TABLE device_definitions_api.vin_numbers
-DROP COLUMN decode_provider;
+ALTER TABLE vin_numbers DROP COLUMN decode_provider;
 
 -- +goose StatementEnd
