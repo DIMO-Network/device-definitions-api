@@ -28,7 +28,7 @@ type DecodeVINQueryHandler struct {
 	dbs                func() *db.ReaderWriter
 	vinDecodingService services.VINDecodingService
 	logger             *zerolog.Logger
-	repository         repositories.DeviceDefinitionRepository
+	ddRepository       repositories.DeviceDefinitionRepository
 	vinRepository      repositories.VINRepository
 }
 
@@ -45,7 +45,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 		dbs:                dbs,
 		vinDecodingService: vinDecodingService,
 		logger:             logger,
-		repository:         repository,
+		ddRepository:       repository,
 		vinRepository:      vinRepository,
 	}
 }
@@ -97,15 +97,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().
 			Str("vin", vin.String()).
-			Msgf("style name %s must have a minimum of 2 characters.", vinInfo.StyleName)
-		return nil, errors.New("style name is incorrect")
+			Str("decode_source", vinInfo.Source).
+			Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	}
 
 	if len(vinInfo.Model) == 0 {
 		localLog.Warn().
 			Str("vin", vin.String()).
-			Msg("model name must have a minimum of 1 characters.")
-		return nil, errors.New("model name is incorrect")
+			Str("decode_source", vinInfo.Source).
+			Msg("decoded model name must have a minimum of 1 characters.")
+		return nil, errors.New("decoded model name is blank")
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
@@ -123,8 +124,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
 		One(ctx, dc.dbs().Reader)
 	if err != nil {
+		// create DD if does not exist
 		if errors.Is(err, sql.ErrNoRows) {
-			dd, err = dc.repository.GetOrCreate(ctx,
+			dd, err = dc.ddRepository.GetOrCreate(ctx,
 				vinInfo.Source,
 				common.SlugString(vinInfo.Model+vinInfo.Year),
 				dbWMI.DeviceMakeID,
@@ -133,7 +135,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				common.DefaultDeviceType,
 				vinInfo.MetaData,
 				true,
-				"")
+				nil)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +189,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			Str("vin", vin.String()).
 			Str("device_definition_id", dd.ID).
 			Str("device_make_id", dd.DeviceMakeID).
-			Msgf("failed to insert vin_numbers: %s", vin.String())
+			Str("decode_provider", vinInfo.Source).
+			Msg("failed to insert to vin_numbers")
 	}
 
 	return resp, nil

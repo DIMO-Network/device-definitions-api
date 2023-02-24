@@ -5,6 +5,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -27,6 +28,10 @@ func NewVINRepository(dbs func() *db.ReaderWriter) VINRepository {
 }
 
 func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make string) (*models.Wmi, error) {
+	if len(wmi) != 3 {
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid wmi for GetOrCreate: %s", wmi)}
+	}
+
 	dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, &exceptions.InternalError{

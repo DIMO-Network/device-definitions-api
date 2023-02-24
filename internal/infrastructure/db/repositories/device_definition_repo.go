@@ -35,7 +35,7 @@ type DeviceDefinitionRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID string) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
@@ -200,7 +200,12 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
+	model = strings.TrimSpace(model)
+	if len(model) == 0 {
+		return nil, errors.New("invalid model, must not be blank")
+	}
+
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
 
@@ -269,7 +274,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		Verified:           verified,
 		ModelSlug:          common.SlugString(model),
 		DeviceTypeID:       null.StringFrom(deviceTypeID),
-		HardwareTemplateID: null.StringFrom(hardwareTemplateID),
+		HardwareTemplateID: null.StringFromPtr(hardwareTemplateID),
 	}
 	// set external id's
 	extIds := []*coremodels.ExternalID{{

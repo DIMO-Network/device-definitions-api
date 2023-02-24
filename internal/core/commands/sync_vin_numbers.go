@@ -140,7 +140,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 						common.DefaultDeviceType,
 						vinInfo.MetaData,
 						true,
-						"")
+						nil)
 					if err != nil {
 						localLog.Err(err)
 						continue

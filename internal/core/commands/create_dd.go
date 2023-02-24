@@ -69,7 +69,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
-	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, false, command.HardwareTemplateID)
+	dd, err := ch.Repository.GetOrCreate(ctx, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, false, &command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
 	}
