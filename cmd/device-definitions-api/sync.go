@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"os"
+
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 

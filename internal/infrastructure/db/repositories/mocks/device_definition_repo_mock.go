@@ -143,7 +143,7 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDevicesMMY(ctx interfac
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID string) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrCreate", ctx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
