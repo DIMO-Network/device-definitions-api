@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -172,13 +173,13 @@ type VincarioInfoResponse struct {
 	SequentialNumber         string   `key:"Sequential Number"`
 }
 
-// GetStyle returns a standard style string built from the data we have and the vehicle ID we can use as an external style id for this vehicle.
-func (v *VincarioInfoResponse) GetStyle() (string, int) {
-	s := fmt.Sprintf("%s %s %s %d-speed", v.FuelType, v.EngineType, v.Transmission, v.NumberOfGears)
-	return s, v.VehicleID // VehicleID is Make Model Year specific - not style specific.
+// GetStyle returns a standard style string built from the data we have
+func (v *VincarioInfoResponse) GetStyle() string {
+	s := strings.TrimSpace(fmt.Sprintf("%s %s %s %d-speed", v.FuelType, v.EngineType, v.Transmission, v.NumberOfGears))
+	return s // VehicleID is Make Model Year specific - not style specific.
 }
 
 // GetSubModel returns the Body type from Vincario, which we can use as the sub model.
 func (v *VincarioInfoResponse) GetSubModel() string {
-	return v.Body
+	return strings.TrimSpace(v.Body)
 }

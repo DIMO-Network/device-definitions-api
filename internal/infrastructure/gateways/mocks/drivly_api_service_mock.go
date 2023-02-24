@@ -35,10 +35,10 @@ func (m *MockDrivlyAPIService) EXPECT() *MockDrivlyAPIServiceMockRecorder {
 }
 
 // GetVINInfo mocks base method.
-func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*gateways.VINInfoResponse, error) {
+func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*gateways.DrivlyVINResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVINInfo", vin)
-	ret0, _ := ret[0].(*gateways.VINInfoResponse)
+	ret0, _ := ret[0].(*gateways.DrivlyVINResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

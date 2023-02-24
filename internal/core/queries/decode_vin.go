@@ -93,7 +93,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog.Err(err).Msgf("failed to decode vin from %s", vinInfo.Source)
 		return resp, nil
 	}
-
+	// todo only set the stylename if length longer than 1, logging is fine.
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().
 			Str("vin", vin.String()).
@@ -114,10 +114,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		dc.logger.Error().Err(err).Str("vin", vin.String()).Msgf("failed to get or create wmi for vin %s", vin.String())
 		return resp, nil
 	}
-
+	// todo if year is zero skip
 	resp.Year = int32(vin.Year())
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 
+	// todo strings trimspace on model and style
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),

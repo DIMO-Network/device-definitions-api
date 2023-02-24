@@ -3,6 +3,7 @@ package gateways
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"io"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 
 //go:generate mockgen -source drivly_api_service.go -destination mocks/drivly_api_service_mock.go -package mocks
 type DrivlyAPIService interface {
-	GetVINInfo(vin string) (*VINInfoResponse, error)
+	GetVINInfo(vin string) (*DrivlyVINResponse, error)
 }
 
 type drivlyAPIService struct {
@@ -35,12 +36,12 @@ func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
 }
 
 // GetVINInfo is the basic enriched VIN call, that is pretty standard now. Looks in multiple sources in their backend.
-func (ds *drivlyAPIService) GetVINInfo(vin string) (*VINInfoResponse, error) {
+func (ds *drivlyAPIService) GetVINInfo(vin string) (*DrivlyVINResponse, error) {
 	res, err := executeAPI(ds.httpClientVIN, fmt.Sprintf("/api/%s/", vin))
 	if err != nil {
 		return nil, err
 	}
-	v := &VINInfoResponse{}
+	v := &DrivlyVINResponse{}
 	err = json.Unmarshal(res, v)
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func executeAPI(httpClient shared.HTTPClientWrapper, path string) ([]byte, error
 	return body, nil
 }
 
-type VINInfoResponse struct {
+type DrivlyVINResponse struct {
 	Vin                      string   `json:"vin"`
 	WindowSticker            string   `json:"windowSticker"`
 	Year                     string   `json:"year"`
@@ -129,4 +130,9 @@ type VINInfoResponse struct {
 	VehicleHistory           []string `json:"vehicleHistory"`
 	InstalledEquipment       []string `json:"installedEquipment"`
 	Dimensions               []string `json:"dimensions"`
+}
+
+// GetExternalID builds something we can use as an external ID that is drivly specific, at the MMY level (not for style)
+func (vir *DrivlyVINResponse) GetExternalID() string {
+	return common.SlugString(fmt.Sprintf("%s-%s-%s", vir.Make, vir.Model, vir.Year))
 }

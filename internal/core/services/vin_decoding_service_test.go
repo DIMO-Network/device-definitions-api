@@ -62,7 +62,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 	const make = "Ford"
 
-	vinInfoResp := &gateways.VINInfoResponse{
+	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                make,
