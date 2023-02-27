@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/segmentio/ksuid"
 
 	"github.com/tidwall/gjson"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -58,7 +58,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp := &p_grpc.DecodeVinResponse{}
 	// get the year
 	vin := shared.VIN(qry.VIN)
-	year := int32(vin.Year()) // needs to be updated for newer years
+	year := int32(vin.Year())
 	wmi := vin.Wmi()
 
 	localLog := dc.logger.With().
@@ -66,6 +66,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str("handler", query.Key()).
 		Str("year", fmt.Sprintf("%d", year)).
 		Logger()
+
+	if year == 0 {
+		localLog.Warn().Msgf("could not decode vin. invalid vin encountered")
+		return nil, fmt.Errorf("invalid vin encountered: %s", vin.String())
+	}
+	resp.Year = int32(vin.Year())
 
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
 	if err != nil {
@@ -88,34 +94,25 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, err
 	}
 
+	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
+
 	vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt)
 	if err != nil {
 		localLog.Err(err).Msgf("failed to decode vin from %s", vinInfo.Source)
-		return resp, nil
+		return resp, err
 	}
-
-	if len(vinInfo.StyleName) < 2 {
-		localLog.Warn().
-			Str("vin", vin.String()).
-			Str("decode_source", vinInfo.Source).
-			Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
-	}
+	localLog = localLog.With().Str("decode_source", vinInfo.Source).Logger()
 
 	if len(vinInfo.Model) == 0 {
-		localLog.Warn().
-			Str("vin", vin.String()).
-			Str("decode_source", vinInfo.Source).
-			Msg("decoded model name must have a minimum of 1 characters.")
+		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
 		return nil, errors.New("decoded model name is blank")
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
 	if err != nil {
-		dc.logger.Error().Err(err).Str("vin", vin.String()).Msgf("failed to get or create wmi for vin %s", vin.String())
+		dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
 		return resp, nil
 	}
-
-	resp.Year = int32(vin.Year())
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 
 	// now match the model for the dd id
@@ -144,13 +141,18 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, err
 		}
 	}
-	if dd != nil {
-		resp.DeviceDefinitionId = dd.ID
-		// match style
+	if dd == nil {
+		return nil, errors.New("could not get or create device_definition")
+	}
+	resp.DeviceDefinitionId = dd.ID
+	// match style - only process style if name is longer than 1
+	if len(vinInfo.StyleName) < 2 {
+		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
+	} else {
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
 			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
-			// insert
+			// insert, if fails doesn't matter - continue just don't return the style_id
 			style = &models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				DeviceDefinitionID: dd.ID,
@@ -159,19 +161,24 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				Source:             vinInfo.Source,
 				SubModel:           vinInfo.SubModel,
 			}
-			_ = style.Insert(ctx, dc.dbs().Writer, boil.Infer())
-			localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
+			err := style.Insert(ctx, dc.dbs().Writer, boil.Infer())
+			if err == nil {
+				localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
+				resp.DeviceStyleId = style.ID
+			}
+		} else if err == nil {
+			resp.DeviceStyleId = style.ID
 		}
-		resp.DeviceStyleId = style.ID
-		// set the dd metadata if nothing there
-		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
-			// todo - future: merge metadata properties. Also set style specific metadata - multiple places
-			dd.Metadata = vinInfo.MetaData
-			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
-		}
-		// todo- future: add powertrain - but this can be style specific
 	}
 
+	// set the dd metadata if nothing there, if fails just continue
+	if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
+		// todo - future: merge metadata properties. Also set style specific metadata - multiple places
+		dd.Metadata = vinInfo.MetaData
+		_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+		// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
+	}
+	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
 		Vin:                vin.String(),
 		DeviceDefinitionID: dd.ID,
@@ -186,10 +193,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 		localLog.Err(err).
-			Str("vin", vin.String()).
 			Str("device_definition_id", dd.ID).
 			Str("device_make_id", dd.DeviceMakeID).
-			Str("decode_provider", vinInfo.Source).
 			Msg("failed to insert to vin_numbers")
 	}
 

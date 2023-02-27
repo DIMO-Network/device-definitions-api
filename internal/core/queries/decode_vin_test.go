@@ -3,11 +3,12 @@ package queries
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/shared"
+	"github.com/volatiletech/null/v8"
 	"strings"
 	"testing"
-
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/volatiletech/null/v8"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
@@ -73,7 +74,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.VINInfoResponse{
+	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -175,7 +176,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.ID, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.VINInfoResponse{
+	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -260,7 +261,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.VINInfoResponse{
+	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -337,7 +338,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.Require().NoError(err)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.VINInfoResponse{
+	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -394,6 +395,104 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.Assert().Len(wmis, 1)
 }
 
-func buildStyleName(vinInfo *gateways.VINInfoResponse) string {
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() {
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
+	wmi := models.Wmi{
+		Wmi:          "1FM",
+		DeviceMakeID: dm.ID,
+	}
+	err := wmi.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	// insert into vin numbers
+	v := shared.VIN(vin)
+	vinNumb := models.VinNumber{
+		Vin:                vin,
+		Wmi:                v.Wmi(),
+		VDS:                v.VDS(),
+		CheckDigit:         v.CheckDigit(),
+		SerialNumber:       v.SerialNumber(),
+		Vis:                v.VIS(),
+		DeviceMakeID:       dm.ID,
+		DeviceDefinitionID: dd.ID,
+		DecodeProvider:     "drivly",
+	}
+	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(0)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
+	s.NoError(err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+
+	s.NotNil(result, "expected result not nil")
+	s.Assert().Equal(int32(2021), result.Year)
+	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	// validate same number of wmi's
+	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	s.Assert().Len(wmis, 1)
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_InvalidVINYear() {
+	const vin = "1FMCU0G61QUA52727" // invalid year digit 10 - Q
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
+	assert.Nil(s.T(), qryResult)
+	assert.Errorf(s.T(), err, "invalid vin encountered: %s", vin)
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_ErrDecodeProvider_PartialDecode() {
+	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	wmi := models.Wmi{
+		Wmi:          "1FM",
+		DeviceMakeID: dm.ID,
+	}
+	err := wmi.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source: "drivly",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, errors.New("could not decode"))
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
+	assert.NotNil(s.T(), qryResult)
+	assert.Error(s.T(), err, "failed to decode vin")
+	// partial decode
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+	s.Assert().Equal(int32(2021), result.Year)
+	//s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	// future - another test for decode model when we have the info
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeProviderBlankModel() {
+	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source: "vincario",
+		Model:  "",
+		Make:   "Ford",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
+	assert.Nil(s.T(), qryResult)
+	assert.Error(s.T(), err, "decoded model name is blank")
+}
+
+func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }

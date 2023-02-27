@@ -53,9 +53,12 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType) (*model
 		if vinVincarioInfo != nil {
 			result.VIN = vinVincarioInfo.VIN
 			result.Year = strconv.Itoa(vinVincarioInfo.ModelYear)
-			result.Make = vinVincarioInfo.Make
-			result.Model = vinVincarioInfo.Model
+			result.Make = strings.TrimSpace(vinVincarioInfo.Make)
+			result.Model = strings.TrimSpace(vinVincarioInfo.Model)
 			result.Source = "vincario"
+			result.ExternalID = strconv.Itoa(vinVincarioInfo.VehicleID)
+			result.StyleName = vinVincarioInfo.GetStyle()
+			result.SubModel = vinVincarioInfo.GetSubModel()
 
 			return result, nil
 		}
@@ -68,6 +71,7 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType) (*model
 	result.Make = vinDrivlyInfo.Make
 	result.Model = vinDrivlyInfo.Model
 	result.StyleName = buildDrivlyStyleName(vinDrivlyInfo)
+	result.ExternalID = vinDrivlyInfo.GetExternalID()
 	result.Source = "drivly"
 
 	metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
@@ -80,7 +84,7 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType) (*model
 	return result, nil
 }
 
-func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.VINInfoResponse) []*models.UpdateDeviceTypeAttribute {
+func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*models.UpdateDeviceTypeAttribute {
 	seekAttributes := map[string]string{
 		// {device attribute, must match device_types.properties}: {vin info from drivly}
 		"mpg_city":               "mpgCity",
@@ -112,6 +116,6 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.VINInfoResponse) []*models
 	return udta
 }
 
-func buildDrivlyStyleName(vinInfo *gateways.VINInfoResponse) string {
+func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
