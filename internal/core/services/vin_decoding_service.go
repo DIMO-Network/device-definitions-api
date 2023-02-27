@@ -53,8 +53,8 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType) (*model
 		if vinVincarioInfo != nil {
 			result.VIN = vinVincarioInfo.VIN
 			result.Year = strconv.Itoa(vinVincarioInfo.ModelYear)
-			result.Make = vinVincarioInfo.Make
-			result.Model = vinVincarioInfo.Model
+			result.Make = strings.TrimSpace(vinVincarioInfo.Make)
+			result.Model = strings.TrimSpace(vinVincarioInfo.Model)
 			result.Source = "vincario"
 			result.ExternalID = strconv.Itoa(vinVincarioInfo.VehicleID)
 			result.StyleName = vinVincarioInfo.GetStyle()

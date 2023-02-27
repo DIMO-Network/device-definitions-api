@@ -45,7 +45,7 @@ func Test_vincarioAPIService_DecodeVIN(t *testing.T) {
 	assert.Equal(t, "Automatic", resp.Transmission)
 	assert.Equal(t, 8, resp.NumberOfGears)
 	// style: {FuelType} {enginetype} {transmission} {numberofgears} speed
-	s, vi := resp.GetStyle()
+	s := resp.GetStyle()
 	assert.Equal(t, "Diesel 4-Stroke / 6 / V-T-DI Automatic 8-speed", s)
-	assert.Equal(t, 191, vi)
+	//assert.Equal(t, 191, vi)
 }
