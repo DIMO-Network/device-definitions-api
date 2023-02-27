@@ -250,7 +250,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		if err == nil && result != nil {
 			r, ok := result.(*p_grpc.DecodeVinResponse)
 			if ok {
-				fmt.Printf("decoded vin %s, ddID: %s, year: %d\n", vin, r.DeviceDefinitionId, r.Year)
+				fmt.Printf("decoded vin %s, ddID: %s, year: %d, source: %s\n", vin, r.DeviceDefinitionId, r.Year, r.Source)
 			}
 		}
 	}

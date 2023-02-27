@@ -86,6 +86,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.Year = year
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
+		resp.Source = vinDecodeNumber.DecodeProvider
 
 		return resp, nil
 	}
@@ -115,6 +116,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
+	resp.Source = vinInfo.Source
 
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
