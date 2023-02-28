@@ -3,9 +3,10 @@ package gateways
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"io"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"

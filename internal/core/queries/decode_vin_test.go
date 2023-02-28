@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
+	"testing"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/volatiletech/null/v8"
-	"strings"
-	"testing"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 

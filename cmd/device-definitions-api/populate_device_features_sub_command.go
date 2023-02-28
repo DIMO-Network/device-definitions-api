@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"strings"
+
+	"github.com/google/subcommands"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -30,6 +33,31 @@ const (
 
 func (r SupportLevelEnum) Int() int8 {
 	return int8(r)
+}
+
+type syncDeviceFeatureCmd struct {
+	logger   zerolog.Logger
+	settings config.Settings
+}
+
+func (*syncDeviceFeatureCmd) Name() string     { return "populate-device-features" }
+func (*syncDeviceFeatureCmd) Synopsis() string { return "populate-device-features args to stdout." }
+func (*syncDeviceFeatureCmd) Usage() string {
+	return `populate-device-features [] <some text>:
+	sync args.
+  `
+}
+
+func (p *syncDeviceFeatureCmd) SetFlags(f *flag.FlagSet) {
+
+}
+
+func (p *syncDeviceFeatureCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	err := populateDeviceFeaturesFromEs(ctx, p.logger, &p.settings)
+	if err != nil {
+		p.logger.Error().Err(err)
+	}
+	return subcommands.ExitSuccess
 }
 
 func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s *config.Settings) error {

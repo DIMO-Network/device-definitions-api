@@ -14,6 +14,7 @@ require (
 	github.com/gofiber/adaptor/v2 v2.1.27
 	github.com/gofiber/fiber/v2 v2.41.0
 	github.com/golang/mock v1.6.0
+	github.com/google/subcommands v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/ipfs/go-ipfs-files v0.1.1
 	github.com/jarcoal/httpmock v1.1.0
