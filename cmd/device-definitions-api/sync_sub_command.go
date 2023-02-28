@@ -78,11 +78,11 @@ func (p *syncOpsCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interfac
 	}
 
 	if p.vinNumbers {
-		filename := "vins.csv"
+		filename := "tmp/vins.csv"
 		if len(f.Args()) > 2 {
 			filename = f.Args()[2]
 		}
-		fmt.Printf("using filename %s to get vins", filename)
+		fmt.Printf("using filename %s to get vins\n", filename)
 		vinNumbersSync(ctx, &p.settings, p.logger, filename)
 	}
 
