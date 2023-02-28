@@ -36,7 +36,7 @@ func (m *MockVINDecodingService) EXPECT() *MockVINDecodingServiceMockRecorder {
 }
 
 // GetVIN mocks base method.
-func (m *MockVINDecodingService) GetVIN(vin string, dt *models0.DeviceType, provider *models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
+func (m *MockVINDecodingService) GetVIN(vin string, dt *models0.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVIN", vin, dt, provider)
 	ret0, _ := ret[0].(*models.VINDecodingInfoData)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -90,7 +91,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 				continue
 			}
 
-			vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt)
+			vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders)
 			if err != nil {
 				localLog.Err(err).Msg("failed to decode vin from drivly")
 				continue
@@ -132,7 +133,7 @@ func (dc SyncVinNumbersCommandHandler) Handle(ctx context.Context, query mediato
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					dd, err = dc.repository.GetOrCreate(ctx,
-						vinInfo.Source,
+						string(vinInfo.Source),
 						common.SlugString(vinInfo.Model+vinInfo.Year),
 						deviceMakeID,
 						vinInfo.Model,

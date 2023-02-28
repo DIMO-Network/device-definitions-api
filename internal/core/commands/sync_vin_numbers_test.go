@@ -67,7 +67,7 @@ func (s *SyncVinNumbersSuite) TestHandle_Success_Sync_Drivly_WithExisting() {
 		StyleName: "XLE Hybrid",
 	}
 
-	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.commandHandler.Handle(s.ctx, &SyncVinNumbersCommand{VINNumbers: []string{vin}})
 	s.NoError(err)
@@ -87,7 +87,7 @@ func (s *SyncVinNumbersSuite) TestHandle_Success_Sync_Drivly_CreatesDD() {
 		StyleName: "XLE Hybrid",
 	}
 
-	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.commandHandler.Handle(s.ctx, &SyncVinNumbersCommand{VINNumbers: []string{vin}})
 	s.NoError(err)
@@ -112,7 +112,7 @@ func (s *SyncVinNumbersSuite) TestHandle_Success_Sync_Drivly_WithExistingWMI() {
 		StyleName: "XLE Hybrid",
 	}
 
-	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any()).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.commandHandler.Handle(s.ctx, &SyncVinNumbersCommand{VINNumbers: []string{vin}})
 	s.NoError(err)

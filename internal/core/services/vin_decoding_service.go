@@ -6,10 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/pkg/errors"
-	"strings"
-
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
 
@@ -38,13 +36,13 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 	case models.DrivlyProvider:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly")
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 		}
 		result.LoadFromDrivly(vinDrivlyInfo)
 	case models.VincarioProvider:
 		vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario")
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
 		}
 		result.LoadFromVincario(vinVincarioInfo)
 	case models.AllProviders:
@@ -111,8 +109,4 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 	}
 
 	return udta
-}
-
-func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
-	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
