@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type databaseCmd struct {
+type migrateDBCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
 
@@ -21,20 +21,20 @@ type databaseCmd struct {
 	down bool
 }
 
-func (*databaseCmd) Name() string     { return "migrate" }
-func (*databaseCmd) Synopsis() string { return "migrate args to stdout." }
-func (*databaseCmd) Usage() string {
+func (*migrateDBCmd) Name() string     { return "migrate" }
+func (*migrateDBCmd) Synopsis() string { return "migrate args to stdout." }
+func (*migrateDBCmd) Usage() string {
 	return `migrate [-up-to|-down-to] <some text>:
 	migrate args.
   `
 }
 
-func (p *databaseCmd) SetFlags(f *flag.FlagSet) {
+func (p *migrateDBCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.up, "up", false, "up database")
 	f.BoolVar(&p.down, "down", false, "down database")
 }
 
-func (p *databaseCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *migrateDBCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	command := "up"
 	if len(f.Args()) > 2 {
 		command = f.Args()[2]

@@ -37,7 +37,7 @@ func main() {
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
-	subcommands.Register(&databaseCmd{logger: logger, settings: settings}, "")
+	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncOpsCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncFuelImageCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncDeviceFeatureCmd{logger: logger, settings: settings}, "")
