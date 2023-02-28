@@ -36,7 +36,7 @@ type VinNumber struct {
 	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	StyleID            null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
 	DecodeProvider     null.String `boil:"decode_provider" json:"decode_provider,omitempty" toml:"decode_provider" yaml:"decode_provider,omitempty"`
-	Year               null.Int    `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
+	Year               int         `boil:"year" json:"year" toml:"year" yaml:"year"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -117,7 +117,7 @@ var VinNumberWhere = struct {
 	UpdatedAt          whereHelpertime_Time
 	StyleID            whereHelpernull_String
 	DecodeProvider     whereHelpernull_String
-	Year               whereHelpernull_Int
+	Year               whereHelperint
 }{
 	Vin:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
 	Wmi:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
@@ -131,7 +131,7 @@ var VinNumberWhere = struct {
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
 	StyleID:            whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
 	DecodeProvider:     whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"decode_provider\""},
-	Year:               whereHelpernull_Int{field: "\"device_definitions_api\".\"vin_numbers\".\"year\""},
+	Year:               whereHelperint{field: "\"device_definitions_api\".\"vin_numbers\".\"year\""},
 }
 
 // VinNumberRels is where relationship names are stored.
@@ -183,8 +183,8 @@ type vinNumberL struct{}
 
 var (
 	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "created_at", "updated_at", "style_id", "decode_provider", "year"}
-	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year"}
+	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "year"}
+	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )
