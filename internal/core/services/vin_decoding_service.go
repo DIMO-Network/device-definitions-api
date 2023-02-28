@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
+	"strconv"
+	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -38,13 +40,13 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 		}
-		result.LoadFromDrivly(vinDrivlyInfo)
+		result = buildFromDrivly(vinDrivlyInfo)
 	case models.VincarioProvider:
 		vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
 		}
-		result.LoadFromVincario(vinVincarioInfo)
+		result = buildFromVincario(vinVincarioInfo)
 	case models.AllProviders:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
@@ -52,7 +54,7 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 		}
 		if err == nil && vinDrivlyInfo != nil {
 			if len(vinDrivlyInfo.Year) > 0 && len(vinDrivlyInfo.Make) > 0 && len(vinDrivlyInfo.Model) > 0 {
-				result.LoadFromDrivly(vinDrivlyInfo)
+				result = buildFromDrivly(vinDrivlyInfo)
 				metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
 				if err != nil {
 					c.logger.Warn().Err(err).Msg("unable to build metadata attributes")
@@ -67,7 +69,7 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 				c.logger.Warn().Err(err).Msg("could not decode vin with vincario")
 			}
 			if err == nil && vinVincarioInfo != nil {
-				result.LoadFromVincario(vinVincarioInfo)
+				result = buildFromVincario(vinVincarioInfo)
 			}
 		}
 	}
@@ -109,4 +111,35 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 	}
 
 	return udta
+}
+
+func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingInfoData {
+	v := &models.VINDecodingInfoData{
+		VIN:        info.VIN,
+		Year:       strconv.Itoa(info.ModelYear),
+		Make:       strings.TrimSpace(info.Make),
+		Model:      strings.TrimSpace(info.Model),
+		Source:     models.VincarioProvider,
+		ExternalID: strconv.Itoa(info.VehicleID),
+		StyleName:  info.GetStyle(),
+		SubModel:   info.GetSubModel(),
+	}
+	return v
+}
+
+func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoData {
+	v := &models.VINDecodingInfoData{
+		VIN:        info.Vin,
+		Year:       info.Year,
+		Make:       info.Make,
+		Model:      info.Model,
+		StyleName:  buildDrivlyStyleName(info),
+		ExternalID: info.GetExternalID(),
+		Source:     models.DrivlyProvider,
+	}
+	return v
+}
+
+func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
+	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
