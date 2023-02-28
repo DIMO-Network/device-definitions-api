@@ -420,12 +420,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 		Vis:                v.VIS(),
 		DeviceMakeID:       dm.ID,
 		DeviceDefinitionID: dd.ID,
+		Year:               2021,
 		DecodeProvider:     null.StringFrom("drivly"),
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
-
-	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(0)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
@@ -441,12 +440,24 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	s.Assert().Len(wmis, 1)
 }
 
-func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_InvalidVINYear() {
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_Vincario() {
 	const vin = "1FMCU0G61QUA52727" // invalid year digit 10 - Q
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source: "vincario",
+		Year:   "2017",
+		Make:   dm.Name,
+		Model:  "Escape",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.VincarioProvider).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
-	assert.Nil(s.T(), qryResult)
-	assert.Errorf(s.T(), err, "invalid vin encountered: %s", vin)
+	assert.NotNil(s.T(), qryResult)
+	assert.NoError(s.T(), err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+	assert.Equal(s.T(), int32(2017), result.Year)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_ErrDecodeProvider_PartialDecode() {
