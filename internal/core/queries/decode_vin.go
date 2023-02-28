@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/segmentio/ksuid"
+	"strconv"
 
 	"github.com/tidwall/gjson"
 
@@ -65,9 +66,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	localLog := dc.logger.With().
 		Str("vin", vin.String()).
 		Str("handler", query.Key()).
-		Str("year", fmt.Sprintf("%d", year)).
+		Str("vin_year", fmt.Sprintf("%d", year)).
 		Logger()
 
+	// todo if year is 0, prefer vincario for decode, still send it through.
 	if year == 0 {
 		localLog.Warn().Msgf("could not decode vin. invalid vin encountered")
 		return nil, fmt.Errorf("invalid vin encountered: %s", vin.String())
@@ -83,10 +85,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	if vinDecodeNumber != nil {
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
-		resp.Year = year
+		//resp.Year = vinDecodeNumber.Year
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
-		resp.Source = vinDecodeNumber.DecodeProvider
+		//resp.Source = vinDecodeNumber.DecodeProvider
 
 		return resp, nil
 	}
@@ -117,6 +119,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 	resp.Source = vinInfo.Source
+	if atoi, err := strconv.Atoi(vinInfo.Year); err == nil {
+		year = int32(atoi)
+		resp.Year = int32(atoi)
+	}
 
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
@@ -192,7 +198,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Vis:                vin.VIS(),
 		CheckDigit:         vin.CheckDigit(),
 		SerialNumber:       vin.SerialNumber(),
-		DecodeProvider:     vinInfo.Source,
+		//DecodeProvider:     vinInfo.Source,
 	}
 	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 		localLog.Err(err).
