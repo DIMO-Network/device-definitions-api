@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"os"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/google/subcommands"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 
@@ -23,6 +25,69 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
+
+type syncOpsCmd struct {
+	logger   zerolog.Logger
+	settings config.Settings
+
+	searchSync            bool
+	ipfs                  bool
+	smartCarCompatibility bool
+	smartCarSync          bool
+	createTesla           bool
+	nhtsa                 bool
+	vinNumbers            bool
+}
+
+func (*syncOpsCmd) Name() string     { return "sync" }
+func (*syncOpsCmd) Synopsis() string { return "sync args to stdout." }
+func (*syncOpsCmd) Usage() string {
+	return `sync [-search-sync-dds|-ipfs-sync-data|-smartcar-compatibility|-create-tesla-integrations|-nhtsa-sync-recalls] <some text>:
+	sync args.
+  `
+}
+
+func (p *syncOpsCmd) SetFlags(f *flag.FlagSet) {
+	f.BoolVar(&p.searchSync, "search-sync-dds", false, "search sync dds")
+	f.BoolVar(&p.ipfs, "ipfs-sync-data", false, "ipfs sync data")
+	f.BoolVar(&p.smartCarCompatibility, "smartcar-compatibility", false, "smartcar compatibility")
+	f.BoolVar(&p.smartCarSync, "smartcar-sync", false, "smartcar sync")
+	f.BoolVar(&p.createTesla, "create-tesla-integrations", false, "create tesla integrations")
+	f.BoolVar(&p.nhtsa, "nhtsa-sync-recalls", false, "nhtsa sync recalls")
+	f.BoolVar(&p.vinNumbers, "vin-numbers-sync", false, "vin numbers sync data")
+}
+
+func (p *syncOpsCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	if p.searchSync {
+		searchSyncDD(ctx, &p.settings, p.logger)
+	}
+	if p.ipfs {
+		ipfsSyncData(ctx, &p.settings, p.logger)
+	}
+	if p.smartCarCompatibility {
+		smartCarCompatibility(ctx, &p.settings, p.logger)
+	}
+	if p.smartCarSync {
+		smartCarSync(ctx, &p.settings, p.logger)
+	}
+	if p.createTesla {
+		teslaIntegrationSync(ctx, &p.settings, p.logger)
+	}
+	if p.nhtsa {
+		nhtsaSyncRecalls(ctx, &p.settings, p.logger)
+	}
+
+	if p.vinNumbers {
+		filename := "vins.csv"
+		if len(f.Args()) > 2 {
+			filename = f.Args()[2]
+		}
+		fmt.Printf("using filename %s to get vins", filename)
+		vinNumbersSync(ctx, &p.settings, p.logger, filename)
+	}
+
+	return subcommands.ExitSuccess
+}
 
 func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
