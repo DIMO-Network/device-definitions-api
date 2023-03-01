@@ -13,6 +13,7 @@ message DecodeVinResponse {
   string device_definition_id = 2;
   string device_style_id = 3;
   int32 year = 4;
+  string source = 5;
 }
 
 service VinDecoderService {

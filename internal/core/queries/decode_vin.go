@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/segmentio/ksuid"
+	"strconv"
 
 	"github.com/tidwall/gjson"
 
@@ -57,35 +58,23 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}
-	// get the year
 	vin := shared.VIN(qry.VIN)
-	year := int32(vin.Year())
+	resp.Year = int32(vin.Year())
 	wmi := vin.Wmi()
 
 	localLog := dc.logger.With().
 		Str("vin", vin.String()).
 		Str("handler", query.Key()).
-		Str("year", fmt.Sprintf("%d", year)).
+		Str("vin_year", fmt.Sprintf("%d", resp.Year)).
 		Logger()
 
-	if year == 0 {
-		localLog.Warn().Msgf("could not decode vin. invalid vin encountered")
-		return nil, fmt.Errorf("invalid vin encountered: %s", vin.String())
-	}
-	resp.Year = int32(vin.Year())
-
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			localLog.Debug().Str("vin", vin.String()).Msg("no existing vin match found")
-		}
-	}
-
 	if vinDecodeNumber != nil {
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
-		resp.Year = year
+		resp.Year = int32(vinDecodeNumber.Year)
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
+		resp.Source = vinDecodeNumber.DecodeProvider.String
 
 		return resp, nil
 	}
@@ -94,15 +83,22 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		return nil, err
 	}
-
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
-	vinInfo, err := dc.vinDecodingService.GetVIN(vin.String(), dt)
+	vinInfo := &coremodels.VINDecodingInfoData{}
+	// if year is 0, prefer vincario for decode, still send it through.
+	if resp.Year == 0 {
+		localLog.Info().Msgf("encountered vin with non-standard year digit")
+		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.VincarioProvider)
+	} else {
+		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders)
+	}
+
 	if err != nil {
-		localLog.Err(err).Msgf("failed to decode vin from %s", vinInfo.Source)
+		localLog.Err(err).Msgf("failed to decode vin from provider %s", vinInfo.Source)
 		return resp, err
 	}
-	localLog = localLog.With().Str("decode_source", vinInfo.Source).Logger()
+	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
 	if len(vinInfo.Model) == 0 {
 		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
@@ -115,21 +111,25 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
+	resp.Source = string(vinInfo.Source)
+	if atoi, err := strconv.Atoi(vinInfo.Year); err == nil {
+		resp.Year = int32(atoi)
+	}
 
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
-		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
+		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
 		One(ctx, dc.dbs().Reader)
 	if err != nil {
 		// create DD if does not exist
 		if errors.Is(err, sql.ErrNoRows) {
 			dd, err = dc.ddRepository.GetOrCreate(ctx,
-				vinInfo.Source,
+				string(vinInfo.Source),
 				common.SlugString(vinInfo.Model+vinInfo.Year),
 				dbWMI.DeviceMakeID,
 				vinInfo.Model,
-				int(year),
+				int(resp.Year),
 				common.DefaultDeviceType,
 				vinInfo.MetaData,
 				true,
@@ -159,7 +159,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				DeviceDefinitionID: dd.ID,
 				Name:               vinInfo.StyleName,
 				ExternalStyleID:    common.SlugString(vinInfo.StyleName),
-				Source:             vinInfo.Source,
+				Source:             string(vinInfo.Source),
 				SubModel:           vinInfo.SubModel,
 			}
 			err := style.Insert(ctx, dc.dbs().Writer, boil.Infer())
@@ -190,7 +190,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Vis:                vin.VIS(),
 		CheckDigit:         vin.CheckDigit(),
 		SerialNumber:       vin.SerialNumber(),
-		DecodeProvider:     vinInfo.Source,
+		DecodeProvider:     null.StringFrom(string(vinInfo.Source)),
+		Year:               int(resp.Year),
 	}
 	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 		localLog.Err(err).

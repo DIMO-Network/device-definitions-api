@@ -78,11 +78,11 @@ func (p *syncOpsCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interfac
 	}
 
 	if p.vinNumbers {
-		filename := "vins.csv"
+		filename := "tmp/vins.csv"
 		if len(f.Args()) > 2 {
 			filename = f.Args()[2]
 		}
-		fmt.Printf("using filename %s to get vins", filename)
+		fmt.Printf("using filename %s to get vins\n", filename)
 		vinNumbersSync(ctx, &p.settings, p.logger, filename)
 	}
 
@@ -250,7 +250,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		if err == nil && result != nil {
 			r, ok := result.(*p_grpc.DecodeVinResponse)
 			if ok {
-				fmt.Printf("decoded vin %s, ddID: %s, year: %d\n", vin, r.DeviceDefinitionId, r.Year)
+				fmt.Printf("decoded vin %s, ddID: %s, year: %d, source: %s\n", vin, r.DeviceDefinitionId, r.Year, r.Source)
 			}
 		}
 	}

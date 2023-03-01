@@ -175,8 +175,21 @@ type VincarioInfoResponse struct {
 
 // GetStyle returns a standard style string built from the data we have
 func (v *VincarioInfoResponse) GetStyle() string {
-	s := strings.TrimSpace(fmt.Sprintf("%s %s %s %d-speed", v.FuelType, v.EngineType, v.Transmission, v.NumberOfGears))
-	return s // VehicleID is Make Model Year specific - not style specific.
+	s := ""
+	if len(v.FuelType) > 0 {
+		s += v.FuelType + " "
+	}
+	if len(v.EngineType) > 0 {
+		s += v.EngineType + " "
+	}
+	if len(v.Transmission) > 0 {
+		s += v.Transmission + " "
+	}
+	if v.NumberOfGears > 0 {
+		s += fmt.Sprintf("%d-speed", v.NumberOfGears)
+	}
+
+	return strings.TrimSpace(s)
 }
 
 // GetSubModel returns the Body type from Vincario, which we can use as the sub model.

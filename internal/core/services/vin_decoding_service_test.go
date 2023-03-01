@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"testing"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/testcontainers/testcontainers-go"
@@ -87,11 +88,11 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(vin, dt)
+	result, err := s.vinDecodingService.GetVIN(vin, dt, coremodels.AllProviders)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
-	assert.Equal(s.T(), result.Source, "drivly")
+	assert.Equal(s.T(), result.Source, coremodels.DrivlyProvider)
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
@@ -117,9 +118,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(vin, dt)
+	result, err := s.vinDecodingService.GetVIN(vin, dt, coremodels.AllProviders)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
-	assert.Equal(s.T(), result.Source, "vincario")
+	assert.Equal(s.T(), result.Source, coremodels.VincarioProvider)
 }

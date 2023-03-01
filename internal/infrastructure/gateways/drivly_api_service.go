@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
@@ -135,5 +134,6 @@ type DrivlyVINResponse struct {
 
 // GetExternalID builds something we can use as an external ID that is drivly specific, at the MMY level (not for style)
 func (vir *DrivlyVINResponse) GetExternalID() string {
-	return common.SlugString(fmt.Sprintf("%s-%s-%s", vir.Make, vir.Model, vir.Year))
+	// cant use common.SlugString due to import cycle
+	return strings.ReplaceAll(strings.ToLower(fmt.Sprintf("%s-%s-%s", vir.Make, vir.Model, vir.Year)), " ", "")
 }
