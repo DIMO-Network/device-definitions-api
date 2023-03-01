@@ -95,11 +95,11 @@ type DrivlyVINResponse struct {
 	Interior                 string   `json:"interior"`
 	Options                  []string `json:"options"`
 	OptionCodes              string   `json:"optionCodes"`
-	MsrpBase                 int      `json:"msrpBase"`
-	MsrpDiscount             int      `json:"msrpDiscount"`
-	MsrpOptions              int      `json:"msrpOptions"`
-	MsrpDelivery             int      `json:"msrpDelivery"`
-	Msrp                     int      `json:"msrp"`
+	MsrpBase                 float64  `json:"msrpBase"`
+	MsrpDiscount             float64  `json:"msrpDiscount"`
+	MsrpOptions              float64  `json:"msrpOptions"`
+	MsrpDelivery             float64  `json:"msrpDelivery"`
+	Msrp                     float64  `json:"msrp"`
 	WarrantyBasicMonths      int      `json:"warrantyBasicMonths"`
 	WarrantyCorrosionMonths  int      `json:"warrantyCorrosionMonths"`
 	WarrantyEmissionsMonths  int      `json:"warrantyEmissionsMonths"`
