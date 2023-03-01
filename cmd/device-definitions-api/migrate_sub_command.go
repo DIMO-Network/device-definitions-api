@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
-
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pressly/goose/v3"
 
@@ -36,19 +34,12 @@ func (p *migrateDBCmd) SetFlags(f *flag.FlagSet) {
 
 func (p *migrateDBCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	command := "up"
-	if len(f.Args()) > 2 {
-		command = f.Args()[2]
-		if p.down || p.up {
-			command = command + " " + os.Args[3] // migration name
-		}
+	if p.down {
+		command = "down"
 	}
 
 	sqlDb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	sqlDb.WaitForDB(p.logger)
-
-	if command == "" {
-		command = "up"
-	}
 
 	_, err := sqlDb.DBS().Writer.Exec("CREATE SCHEMA IF NOT EXISTS device_definitions_api;")
 	if err != nil {

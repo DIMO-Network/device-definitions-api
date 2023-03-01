@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 SET search_path = device_definitions_api, public;
-ALTER TABLE vin_numbers ADD year int not null;
+ALTER TABLE vin_numbers ADD year int not null default 0;
 -- +goose StatementEnd
 
 -- +goose Down
