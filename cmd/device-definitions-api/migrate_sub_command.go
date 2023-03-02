@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pressly/goose/v3"
 

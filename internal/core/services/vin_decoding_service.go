@@ -5,13 +5,14 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
-	"strconv"
-	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"

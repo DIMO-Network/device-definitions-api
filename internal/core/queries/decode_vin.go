@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/segmentio/ksuid"
-	"strconv"
 
 	"github.com/tidwall/gjson"
 
@@ -69,6 +70,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Logger()
 
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
+	if err != nil {
+		return nil, err
+	}
 	if vinDecodeNumber != nil {
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
@@ -85,8 +89,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
-	vinInfo := &coremodels.VINDecodingInfoData{}
-	// if year is 0, prefer vincario for decode, still send it through.
+	var vinInfo = &coremodels.VINDecodingInfoData{} // if year is 0, prefer vincario for decode, still send it through.
 	if resp.Year == 0 {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
 		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.VincarioProvider)
