@@ -70,7 +70,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Logger()
 
 	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
 	if vinDecodeNumber != nil {
