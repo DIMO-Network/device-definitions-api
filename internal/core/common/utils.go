@@ -185,7 +185,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
 	}
 
-	// vehicle info
+	// vehicle info deprecated
 	var vi map[string]models.VehicleInfo
 	if err := dd.Metadata.Unmarshal(&vi); err == nil {
 		//nolint
@@ -199,20 +199,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
 	// pull out the device type device attributes, eg. vehicle information
-	var ai map[string]any
-	if err := dd.Metadata.Unmarshal(&ai); err == nil {
-		if ai != nil {
-			if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
-				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
-				for key, value := range attributes {
-					rp.DeviceAttributes = append(rp.DeviceAttributes, models.DeviceTypeAttribute{
-						Name:  key,
-						Value: fmt.Sprint(value),
-					})
-				}
-			}
-		}
-	}
+	rp.DeviceAttributes = GetDeviceAttributesTyped(dd)
 
 	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
@@ -280,6 +267,25 @@ func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 		}
 	}
 	return img
+}
+
+func GetDeviceAttributesTyped(dd *repoModel.DeviceDefinition) []models.DeviceTypeAttribute {
+	var respAttrs []models.DeviceTypeAttribute
+	var ai map[string]any
+	if err := dd.Metadata.Unmarshal(&ai); err == nil {
+		if ai != nil {
+			if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
+				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
+				for key, value := range attributes {
+					respAttrs = append(respAttrs, models.DeviceTypeAttribute{
+						Name:  key,
+						Value: fmt.Sprint(value),
+					})
+				}
+			}
+		}
+	}
+	return respAttrs
 }
 
 func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {

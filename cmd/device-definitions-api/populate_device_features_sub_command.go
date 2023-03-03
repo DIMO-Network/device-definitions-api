@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"flag"
+	"strconv"
 	"strings"
 
 	"github.com/google/subcommands"
@@ -89,7 +90,8 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			ddID := d.Key
 
 			deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
-				qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
+				qm.Load(models.DeviceDefinitionRels.DeviceMake),
+				qm.Load(models.DeviceDefinitionRels.DeviceType)).One(ctx, pdb.DBS().Reader)
 			if err != nil {
 				logger.Err(err).Msg("Error occurred fetching device definition.")
 				continue
@@ -154,6 +156,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 	return nil
 }
 
+// prepareFeatureData builds out what the supported features should be based on data from elastic and the device definition
 func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.DeviceDefinition) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
@@ -169,6 +172,34 @@ func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.De
 				supportLevel = Supported.Int()
 			} else if def.Year >= 2006 && def.R.DeviceMake.NameSlug == "mercedes-benz" { // include mercedes hard code
 				supportLevel = Supported.Int()
+			}
+		}
+		// manual override for range support when we can calculate it
+		if k == "range" && supportLevel == NotSupported.Int() && def.Metadata.Valid {
+			// pull out mpg and fuel_tank_capacity_gal to check if can support range
+			attrs := common.GetDeviceAttributesTyped(def)
+			var fuelTankCapGal, mpg float64 //mpgHwy
+			for _, attr := range attrs {
+				switch attr.Name {
+				case "fuel_tank_capacity_gal":
+					if v, err := strconv.ParseFloat(attr.Value, 32); err == nil {
+						fuelTankCapGal = v
+					}
+				case "mpg":
+					if v, err := strconv.ParseFloat(attr.Value, 32); err == nil {
+						mpg = v
+					}
+				}
+			}
+			if fuelTankCapGal > 0 && mpg > 0 {
+				// loop over i to check if fuelPercentRemaining exists, if so can support "range"
+				for k2, v2 := range i {
+					if k2 == "fuelPercentRemaining" {
+						if v2.DocCount > 0 {
+							supportLevel = Supported.Int()
+						}
+					}
+				}
 			}
 		}
 
