@@ -194,7 +194,7 @@ func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.De
 			if fuelTankCapGal > 0 && mpg > 0 {
 				// loop over i to check if fuelPercentRemaining exists, if so can support "range"
 				for k2, v2 := range i {
-					if k2 == "fuelPercentRemaining" {
+					if k2 == "fuelPercentRemaining" || k2 == "fuel_tank" {
 						if v2.DocCount > 0 {
 							supportLevel = Supported.Int()
 						}
