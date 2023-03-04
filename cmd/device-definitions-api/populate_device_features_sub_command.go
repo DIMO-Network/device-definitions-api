@@ -123,7 +123,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 					}
 				}
 
-				feature := prepareFeatureData(r.Features.Buckets, deviceDef)
+				feature := prepareFeatureData(&logger, r.Features.Buckets, deviceDef)
 				// populate the map for future iteration to copy populated region to empty region (autopi only)
 				regionToFeatures[region] = feature
 
@@ -157,7 +157,7 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 }
 
 // prepareFeatureData builds out what the supported features should be based on data from elastic and the device definition
-func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.DeviceDefinition) []elasticModels.DeviceIntegrationFeatures {
+func prepareFeatureData(logger *zerolog.Logger, i map[string]elastic.ElasticFilterResult, def *models.DeviceDefinition) []elasticModels.DeviceIntegrationFeatures {
 	ft := []elasticModels.DeviceIntegrationFeatures{}
 
 	for k, v := range i {
@@ -192,11 +192,13 @@ func prepareFeatureData(i map[string]elastic.ElasticFilterResult, def *models.De
 				}
 			}
 			if fuelTankCapGal > 0 && mpg > 0 {
+				logger.Info().Msg("found fuel_tank_capacity_gal and mpg for range calculation")
 				// loop over i to check if fuelPercentRemaining exists, if so can support "range"
 				for k2, v2 := range i {
 					if k2 == "fuelPercentRemaining" || k2 == "fuel_tank" {
 						if v2.DocCount > 0 {
 							supportLevel = Supported.Int()
+							logger.Info().Msgf("range support enable, found signal %s", k2)
 						}
 					}
 				}
