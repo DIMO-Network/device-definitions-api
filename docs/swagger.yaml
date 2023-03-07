@@ -1,6 +1,24 @@
 info:
   contact: {}
 paths:
+  /bulk-decode/:
+    post:
+      consumes:
+      - application/json
+      description: decodes a list of VINs
+      operationId: BulkDecodeVIN
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a list of decoded vins.
+      tags:
+      - device-definitions
   /device-definitions:
     get:
       consumes:

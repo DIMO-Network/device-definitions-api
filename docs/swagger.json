@@ -4,6 +4,33 @@
         "contact": {}
     },
     "paths": {
+        "/bulk-decode/": {
+            "post": {
+                "description": "decodes a list of VINs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a list of decoded vins.",
+                "operationId": "BulkDecodeVIN",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/device-definitions": {
             "get": {
                 "description": "gets a specific device definition by make model and year.",
