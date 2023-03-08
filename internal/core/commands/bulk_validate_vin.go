@@ -70,7 +70,7 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 		deviceDefinitionCompatibilities, err := dc.DeviceDefinitionCompatibilityHandler.Handle(ctx, &queries.GetCompatibilityByDeviceDefinitionQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId})
 
 		if err == nil {
-			compatibilities = deviceDefinitionCompatibilities.([]*p_grpc.DeviceCompatibilities)
+			compatibilities = deviceDefinitionCompatibilities.(*p_grpc.GetDeviceCompatibilitiesResponse).Compatibilities
 		}
 
 		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId})
