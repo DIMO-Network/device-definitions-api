@@ -4,7 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/bulk-decode/": {
+        "/bulk-decode": {
             "post": {
                 "description": "decodes a list of VINs",
                 "consumes": [
@@ -18,6 +18,20 @@
                 ],
                 "summary": "gets a list of decoded vins.",
                 "operationId": "BulkDecodeVIN",
+                "parameters": [
+                    {
+                        "description": "vin array.",
+                        "name": "vins",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"

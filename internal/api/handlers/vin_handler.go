@@ -12,11 +12,12 @@ import (
 // @Description decodes a list of VINs
 // @Tags device-definitions
 // @Accept json
+// @Param  vins body []string true "vin array."
 // @Produce json
 // @Success 200
 // @Failure 404
 // @Failure 500
-// @Router /bulk-decode/ [post]
+// @Router /bulk-decode [post]
 func BulkDecodeVIN(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 

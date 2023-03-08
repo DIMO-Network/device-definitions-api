@@ -1,12 +1,21 @@
 info:
   contact: {}
 paths:
-  /bulk-decode/:
+  /bulk-decode:
     post:
       consumes:
       - application/json
       description: decodes a list of VINs
       operationId: BulkDecodeVIN
+      parameters:
+      - description: vin array.
+        in: body
+        name: vins
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
       produces:
       - application/json
       responses:
