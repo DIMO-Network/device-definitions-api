@@ -196,6 +196,15 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		DecodeProvider:     null.StringFrom(string(vinInfo.Source)),
 		Year:               int(resp.Year),
 	}
+
+	localLog.Info().Str("device_definition_id", dd.ID).
+		Str("device_make_id", dd.DeviceMakeID).
+		Str("style_id", resp.DeviceStyleId).
+		Str("wmi", wmi).
+		Str("vds", vin.VDS()).
+		Str("vis", vin.VIS()).
+		Str("check_digit", vin.CheckDigit())
+
 	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
 		localLog.Err(err).
 			Str("device_definition_id", dd.ID).
