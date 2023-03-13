@@ -28,4 +28,5 @@ func RegisterDeviceMakesRoutes(app fiber.Router, m mediator.Mediator) {
 
 func RegisterVINRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Post("/bulk-decode", handlers.BulkDecodeVIN(m))
+	app.Post("/bulk-decode/csv", handlers.BulkDecodeVINCsv(m))
 }
