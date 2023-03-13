@@ -28,6 +28,33 @@ paths:
       summary: gets a list of decoded vins.
       tags:
       - device-definitions
+  /bulk-decode/csv:
+    post:
+      consumes:
+      - application/json
+      description: decodes a list of VINs
+      operationId: BulkDecodeVINCSV
+      parameters:
+      - description: vin array.
+        in: body
+        name: vins
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a list of decoded vins in csv format.
+      tags:
+      - device-definitions
   /device-definitions:
     get:
       consumes:

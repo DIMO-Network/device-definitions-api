@@ -45,6 +45,47 @@
                 }
             }
         },
+        "/bulk-decode/csv": {
+            "post": {
+                "description": "decodes a list of VINs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a list of decoded vins in csv format.",
+                "operationId": "BulkDecodeVINCSV",
+                "parameters": [
+                    {
+                        "description": "vin array.",
+                        "name": "vins",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/device-definitions": {
             "get": {
                 "description": "gets a specific device definition by make model and year.",
