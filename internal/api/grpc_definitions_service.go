@@ -760,3 +760,13 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx co
 
 	return qryResult.(*p_grpc.GetDevicesMMYResponse), nil
 }
+
+func (s *GrpcDefinitionsService) SyncDeviceDefinitionsWithElasticSearch(ctx context.Context, in *emptypb.Empty) (*p_grpc.SyncStatusResult, error) {
+	command := &commands.SyncSearchDataCommand{}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.SyncSearchDataCommandResult)
+
+	return &p_grpc.SyncStatusResult{Status: result.Status}, nil
+}
