@@ -11,7 +11,7 @@ import (
 // @ID GetDeviceIntegrationsByID
 // @Description gets all the available integrations for a device definition. Includes the capabilities of the device with the integration
 // @Tags device-definitions
-// @Accept json
+// @Param  id path string true "device definition id"
 // @Produce json
 // @Success 200
 // @Failure 404
@@ -33,7 +33,6 @@ func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
 // @ID GetIntegrations
 // @Description gets list of integrations we have defined.
 // @Tags device-definitions
-// @Accept json
 // @Produce json
 // @Success 200
 // @Failure 404

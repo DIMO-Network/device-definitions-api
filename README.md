@@ -15,6 +15,22 @@ go run ./cmd/device-definitions-api migrate
 go run ./cmd/device-definitions-api
 ```
 
+### When working with multiple projects
+
+Two key dependencies are postgres and redis. Problem with using docker compose is if later you need to run a different service you'll have conflicts, and 
+most of our services as a base tend to have postgres and redis as a requirement. 
+
+So solution is just to use standalone services with brew services.
+https://wiki.postgresql.org/wiki/Homebrew
+
+`$ brew install postgresql`
+`$ brew services run postgresql`
+
+`psql postgres`
+`create user dimo with password 'dimo';`
+`create database device_definitions_api with owner dimo;`
+`go run ./cmd/device-definitions-api migrate`
+
 ## Generating client and server code
 
 1. Install the protocol compiler plugins for Go using the following commands
@@ -92,4 +108,16 @@ You can use sqlboiler to import or this command:
 psql "host=localhost port=5432 dbname=device_definitions_api user=dimo password=dimo" -c "\COPY device_definitions_api.integrations (id, type, style, vendor, created_at, updated_at, refresh_limit_secs, metadata) FROM '/Users/aenglish/Downloads/drive-download-20221020T172636Z-001/integrations.csv' DELIMITER ',' CSV HEADER"
 ```
 
+## Swagger docs
 
+Swagger docs at: http://localhost:3000/docs/
+
+To generate docs
+
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+swag init -g cmd/device-definitions-api/main.go --parseDependency --parseInternal --generatedTime true 
+# optionally add `--parseDepth 2` if have issues
+```
+
+To check what cli version you have installed: `swag --version`.
