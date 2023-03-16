@@ -431,6 +431,10 @@ message GetDeviceImagesResponse {
   repeated DeviceImage images = 1;
 }
 
+message SyncStatusResult {
+  bool status = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -469,4 +473,5 @@ service DeviceDefinitionService {
   rpc UpdateDeviceType(UpdateDeviceTypeRequest) returns (BaseResponse);
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
   rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
+  rpc SyncDeviceDefinitionsWithElasticSearch(google.protobuf.Empty) returns (SyncStatusResult);
 }
