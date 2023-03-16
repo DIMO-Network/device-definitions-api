@@ -3,6 +3,7 @@ package handlers
 import (
 	"strconv"
 
+	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
@@ -13,9 +14,9 @@ import (
 // @ID GetDeviceDefinitionByID
 // @Description gets a device definition
 // @Tags device-definitions
-// @Accept json
+// @Param  id path string true "device definition id"
 // @Produce json
-// @Success 200
+// @Success 200 {object} models.GetDeviceDefinitionQueryResult
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions/{id} [get]
@@ -55,20 +56,22 @@ func GetDeviceDefinitionAll(m mediator.Mediator) fiber.Handler {
 // @ID GetDeviceDefinitionByMMY
 // @Description gets a specific device definition by make model and year.
 // @Tags device-definitions
-// @Accept json
+// @Param  make query string true "make"
+// @Param  model query string true "model"
+// @Param  year query number true "year"
 // @Produce json
-// @Success 200
+// @Success 200 {object} models.GetDeviceDefinitionQueryResult
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions [get]
 func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		make := c.Query("make")
+		mk := c.Query("make")
 		model := c.Query("model")
 		year := c.Query("year")
 		yrInt, _ := strconv.Atoi(year)
 
-		query := &queries.GetDeviceDefinitionByMakeModelYearQuery{Make: make, Model: model, Year: yrInt}
+		query := &queries.GetDeviceDefinitionByMakeModelYearQuery{Make: mk, Model: model, Year: yrInt}
 
 		result, _ := m.Send(c.UserContext(), query)
 

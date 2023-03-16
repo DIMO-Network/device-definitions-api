@@ -11,7 +11,7 @@ import (
 // @ID GetDeviceTypesByID
 // @Description gets a devices type with attributes
 // @Tags device-definitions
-// @Accept json
+// @Param  id path string true "device type id"
 // @Produce json
 // @Success 200
 // @Failure 404

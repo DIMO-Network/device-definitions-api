@@ -4,6 +4,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
+
+	_ "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 )
 
 // GetDeviceMakes godoc
@@ -11,9 +13,8 @@ import (
 // @ID GetDeviceMakes
 // @Description gets all device makes
 // @Tags device-definitions
-// @Accept json
 // @Produce json
-// @Success 200
+// @Success 200 {object} grpc.GetDeviceMakeResponse
 // @Failure 500
 // @Router /device-makes [get]
 func GetDeviceMakes(m mediator.Mediator) fiber.Handler {
