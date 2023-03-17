@@ -89,9 +89,6 @@
         "/device-definitions": {
             "get": {
                 "description": "gets a specific device definition by make model and year.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -100,9 +97,35 @@
                 ],
                 "summary": "gets a specific device definition by make model and year.",
                 "operationId": "GetDeviceDefinitionByMMY",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "make",
+                        "name": "make",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "model",
+                        "name": "model",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "year",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult"
+                        }
                     },
                     "404": {
                         "description": "Not Found"
@@ -140,9 +163,6 @@
         "/device-definitions/{id}": {
             "get": {
                 "description": "gets a device definition",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -151,9 +171,21 @@
                 ],
                 "summary": "gets a device definition",
                 "operationId": "GetDeviceDefinitionByID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "device definition id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult"
+                        }
                     },
                     "404": {
                         "description": "Not Found"
@@ -167,9 +199,6 @@
         "/device-definitions/{id}/integrations": {
             "get": {
                 "description": "gets all the available integrations for a device definition. Includes the capabilities of the device with the integration",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -178,6 +207,15 @@
                 ],
                 "summary": "gets all the available integrations for a device definition.",
                 "operationId": "GetDeviceIntegrationsByID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "device definition id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -194,9 +232,6 @@
         "/device-makes": {
             "get": {
                 "description": "gets all device makes",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -207,7 +242,10 @@
                 "operationId": "GetDeviceMakes",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.GetDeviceMakeResponse"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -218,9 +256,6 @@
         "/device-types/{id}": {
             "get": {
                 "description": "gets a devices type with attributes",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -229,6 +264,15 @@
                 ],
                 "summary": "gets a device type.",
                 "operationId": "GetDeviceTypesByID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "device type id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -245,9 +289,6 @@
         "/integrations": {
             "get": {
                 "description": "gets list of integrations we have defined.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -293,6 +334,382 @@
                     "500": {
                         "description": "Internal Server Error"
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "big.Int": {
+            "type": "object"
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration": {
+            "type": "object",
+            "properties": {
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "style": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "vendor": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature": {
+            "type": "object",
+            "properties": {
+                "featureKey": {
+                    "type": "string"
+                },
+                "supportLevel": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake": {
+            "type": "object",
+            "properties": {
+                "externalIdsTyped": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID"
+                    }
+                },
+                "external_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hardware_template_id": {
+                    "$ref": "#/definitions/null.String"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "$ref": "#/definitions/null.String"
+                },
+                "metadata": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "metadataTyped": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMakeMetadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nameSlug": {
+                    "type": "string"
+                },
+                "oem_platform_name": {
+                    "$ref": "#/definitions/null.String"
+                },
+                "tokenId": {
+                    "$ref": "#/definitions/big.Int"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMakeMetadata": {
+            "type": "object",
+            "properties": {
+                "ride_guide_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle": {
+            "type": "object",
+            "properties": {
+                "deviceDefinitionId": {
+                    "type": "string"
+                },
+                "externalStyleId": {
+                    "type": "string"
+                },
+                "hardware_template_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "subModel": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType": {
+            "type": "object",
+            "properties": {
+                "make": {
+                    "type": "string"
+                },
+                "makeSlug": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "modelSlug": {
+                    "type": "string"
+                },
+                "subModels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "description": "Type is eg. Vehicle, E-bike, roomba",
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "vendor": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult": {
+            "type": "object",
+            "properties": {
+                "compatibleIntegrations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration"
+                    }
+                },
+                "deviceAttributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute"
+                    }
+                },
+                "deviceDefinitionId": {
+                    "type": "string"
+                },
+                "deviceIntegrations": {
+                    "description": "DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration"
+                    }
+                },
+                "deviceStyles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle"
+                    }
+                },
+                "externalIds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID"
+                    }
+                },
+                "external_id": {
+                    "type": "string"
+                },
+                "hardware_template_id": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "make": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake"
+                },
+                "metadata": {},
+                "name": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType"
+                },
+                "vehicleData": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo": {
+            "type": "object",
+            "properties": {
+                "base_msrp": {
+                    "type": "integer"
+                },
+                "driven_wheels": {
+                    "type": "string"
+                },
+                "epa_class": {
+                    "type": "string"
+                },
+                "fuel_tank_capacity_gal": {
+                    "type": "string"
+                },
+                "fuel_type": {
+                    "type": "string"
+                },
+                "mpg": {
+                    "type": "string"
+                },
+                "mpg_city": {
+                    "type": "string"
+                },
+                "mpg_highway": {
+                    "type": "string"
+                },
+                "number_of_doors": {
+                    "type": "string"
+                },
+                "vehicle_type": {
+                    "description": "VehicleType PASSENGER CAR, from NHTSA",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake": {
+            "type": "object",
+            "properties": {
+                "external_ids": {
+                    "description": "Deprecated: Do not use.",
+                    "type": "string"
+                },
+                "external_ids_typed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.ExternalID"
+                    }
+                },
+                "hardware_template_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.Metadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "name_slug": {
+                    "type": "string"
+                },
+                "oem_platform_name": {
+                    "type": "string"
+                },
+                "token_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_pkg_grpc.ExternalID": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "vendor": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_pkg_grpc.GetDeviceMakeResponse": {
+            "type": "object",
+            "properties": {
+                "device_makes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake"
+                    }
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_pkg_grpc.Metadata": {
+            "type": "object",
+            "properties": {
+                "RideGuideLink": {
+                    "type": "string"
+                }
+            }
+        },
+        "null.String": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
                 }
             }
         }
