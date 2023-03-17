@@ -144,7 +144,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
 
 	app.Use(recover.New())
-	app.Use(zflogger.New(logger, nil))
+	
+	// TODO: This line is catching the errors and is not taking the general configuration.
+	//app.Use(zflogger.New(logger, nil))
 
 	//routes
 	app.Get("/", func(c *fiber.Ctx) error {
