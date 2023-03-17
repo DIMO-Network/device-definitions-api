@@ -764,9 +764,9 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx co
 func (s *GrpcDefinitionsService) SyncDeviceDefinitionsWithElasticSearch(ctx context.Context, in *emptypb.Empty) (*p_grpc.SyncStatusResult, error) {
 	command := &commands.SyncSearchDataCommand{}
 
-	commandResult, _ := s.Mediator.Send(ctx, command)
+	go func() {
+		_, _ = s.Mediator.Send(context.Background(), command)
+	}()
 
-	result := commandResult.(commands.SyncSearchDataCommandResult)
-
-	return &p_grpc.SyncStatusResult{Status: result.Status}, nil
+	return &p_grpc.SyncStatusResult{Status: true}, nil
 }
