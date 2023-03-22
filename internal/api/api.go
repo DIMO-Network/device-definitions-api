@@ -17,7 +17,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
-	"github.com/DIMO-Network/zflogger"
 	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/adaptor/v2"
@@ -144,7 +143,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
 
 	app.Use(recover.New())
-	
+
 	// TODO: This line is catching the errors and is not taking the general configuration.
 	//app.Use(zflogger.New(logger, nil))
 
