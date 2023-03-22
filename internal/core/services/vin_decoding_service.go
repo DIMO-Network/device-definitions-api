@@ -115,6 +115,7 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 }
 
 func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingInfoData {
+	raw, _ := json.Marshal(info)
 	v := &models.VINDecodingInfoData{
 		VIN:        info.VIN,
 		Year:       strconv.Itoa(info.ModelYear),
@@ -124,11 +125,13 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingI
 		ExternalID: strconv.Itoa(info.VehicleID),
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
+		Raw:        raw,
 	}
 	return v
 }
 
 func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoData {
+	raw, _ := json.Marshal(info)
 	v := &models.VINDecodingInfoData{
 		VIN:        info.Vin,
 		Year:       info.Year,
@@ -137,6 +140,7 @@ func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoDa
 		StyleName:  buildDrivlyStyleName(info),
 		ExternalID: info.GetExternalID(),
 		Source:     models.DrivlyProvider,
+		Raw:        raw,
 	}
 	return v
 }

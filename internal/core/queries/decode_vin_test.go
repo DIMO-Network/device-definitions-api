@@ -213,12 +213,14 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	raw, _ := json.Marshal(vinInfoResp)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
 		Year:      vinInfoResp.Year,
 		Model:     vinInfoResp.Model,
+		Raw:       raw,
 	}
 
 	metaDataInfo := make(map[string]interface{})
@@ -246,6 +248,16 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
 	s.Assert().Equal(ds.ExternalStyleID, common.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	// validate vin number was create
+	vn, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)
+	require.NoError(s.T(), err)
+	s.Assert().True(vn.DrivlyData.Valid)
+	s.Assert().Equal(2021, vn.Year)
+	s.Assert().Equal(ddCreated.ID, vn.DeviceDefinitionID)
+	s.Assert().Equal(wmi, vn.Wmi)
+	s.Assert().Equal("drivly", vn.DecodeProvider.String)
+	s.Assert().Equal(vin, vn.Vin)
+	s.Assert().Equal(vinInfoResp.Model, gjson.GetBytes(vn.DrivlyData.JSON, "model").String())
 
 	// validate metadata was set
 	assert.Equal(s.T(), vinInfoResp.Wheelbase, gjson.GetBytes(ddCreated.Metadata.JSON, "vehicle_info.wheelbase").String())
