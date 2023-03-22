@@ -460,6 +460,32 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_Vincario(
 	assert.Equal(s.T(), int32(2017), result.Year)
 }
 
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_Vincario() {
+	const vin = "1FMCU0G61QUA52727" // invalid year digit 10 - Q
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source:    "vincario",
+		Year:      "2017",
+		Make:      dm.Name,
+		Model:     "Escape",
+		StyleName: "1",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.VincarioProvider).Times(1).Return(vinDecodingInfoData, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
+	assert.NotNil(s.T(), qryResult)
+	assert.NoError(s.T(), err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+	assert.Equal(s.T(), int32(2017), result.Year)
+	assert.Equal(s.T(), "", result.DeviceStyleId)
+
+	count, err := models.VinNumbers().Count(s.ctx, s.pdb.DBS().Reader)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), int64(1), count, "expected a new vin number to be inserted")
+}
+
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_ErrDecodeProvider_PartialDecode() {
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 

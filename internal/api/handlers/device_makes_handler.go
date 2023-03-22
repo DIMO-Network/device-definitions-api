@@ -5,7 +5,7 @@ import (
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 
-	_ "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	_ "github.com/DIMO-Network/device-definitions-api/pkg/grpc" // required for swagger to generate models
 )
 
 // GetDeviceMakes godoc

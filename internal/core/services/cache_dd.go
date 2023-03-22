@@ -33,7 +33,7 @@ func NewDeviceDefinitionCacheService(cache redis.CacheService, repository reposi
 }
 
 const (
-	cacheLenghtHours             = 48
+	cacheLengthHours             = 48
 	cacheDeviceDefinitionKey     = "device-definition-by-id-"
 	cacheDeviceDefinitionMMYKey  = "device-definition-by-mmy-"
 	cacheDeviceDefinitionSlugKey = "device-definition-by-slug-"
@@ -72,7 +72,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 	}
 
 	rpJSON, _ := json.Marshal(rp)
-	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLengthHours*time.Hour)
 
 	return rp, nil
 }
@@ -118,7 +118,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 	}
 
 	rpJSON, _ := json.Marshal(rp)
-	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLengthHours*time.Hour)
 
 	return rp, nil
 }
@@ -154,7 +154,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 	}
 
 	rpJSON, _ := json.Marshal(rp)
-	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLenghtHours*time.Hour)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLengthHours*time.Hour)
 
 	return rp, nil
 }
