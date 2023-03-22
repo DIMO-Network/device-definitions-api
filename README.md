@@ -98,7 +98,10 @@ export GOOSE_DRIVER=postgres
 
 Have goose installed, then:
 
-`goose -dir internal/infrastructure/db/migrations create slugs-not-null sql`
+`goose -dir internal/infrastructure/db/migrations create slugs_not_null sql`
+
+Run migration:
+`go run ./cmd/device-definitions-api migrate`
 
 ## Loading Data
 

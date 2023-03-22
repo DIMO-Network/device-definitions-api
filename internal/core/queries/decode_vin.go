@@ -89,7 +89,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
-	var vinInfo = &coremodels.VINDecodingInfoData{} // if year is 0, prefer vincario for decode, still send it through.
+	var vinInfo = &coremodels.VINDecodingInfoData{}
+	// if year is 0, prefer vincario for decode, since most likely non USA.
 	if resp.Year == 0 {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
 		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.VincarioProvider)
@@ -197,6 +198,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
+	}
+	if vinInfo.Source == coremodels.DrivlyProvider && len(vinInfo.Raw) > 0 {
+		vinDecodeNumber.DrivlyData = null.JSONFrom(vinInfo.Raw)
+	}
+	if vinInfo.Source == coremodels.VincarioProvider && len(vinInfo.Raw) > 0 {
+		vinDecodeNumber.VincarioData = null.JSONFrom(vinInfo.Raw)
 	}
 
 	localLog.Info().Str("device_definition_id", dd.ID).

@@ -22,4 +22,5 @@ type VINDecodingInfoData struct {
 	Source     DecodeProviderEnum
 	ExternalID string
 	MetaData   null.JSON
+	Raw        []byte
 }
