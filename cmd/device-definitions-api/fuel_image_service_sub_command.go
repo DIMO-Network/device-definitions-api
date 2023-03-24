@@ -21,6 +21,31 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
+type syncFuelImageCmd struct {
+	logger   zerolog.Logger
+	settings config.Settings
+}
+
+func (*syncFuelImageCmd) Name() string     { return "images" }
+func (*syncFuelImageCmd) Synopsis() string { return "images args to stdout." }
+func (*syncFuelImageCmd) Usage() string {
+	return `images [] <some text>:
+	images args.
+  `
+}
+
+func (p *syncFuelImageCmd) SetFlags(f *flag.FlagSet) {
+
+}
+
+func (p *syncFuelImageCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	err := fetchFuelAPIImages(ctx, p.logger, &p.settings)
+	if err != nil {
+		p.logger.Error().Err(err)
+	}
+	return subcommands.ExitSuccess
+}
+
 // FuelServiceAPI client
 type FuelServiceAPI struct {
 	VehicleURL string
@@ -236,29 +261,4 @@ func (fs *FuelServiceAPI) deviceData(ctx context.Context) ([]deviceData, error) 
 
 	return devices, nil
 
-}
-
-type syncFuelImageCmd struct {
-	logger   zerolog.Logger
-	settings config.Settings
-}
-
-func (*syncFuelImageCmd) Name() string     { return "images" }
-func (*syncFuelImageCmd) Synopsis() string { return "images args to stdout." }
-func (*syncFuelImageCmd) Usage() string {
-	return `images [] <some text>:
-	images args.
-  `
-}
-
-func (p *syncFuelImageCmd) SetFlags(f *flag.FlagSet) {
-
-}
-
-func (p *syncFuelImageCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	err := fetchFuelAPIImages(ctx, p.logger, &p.settings)
-	if err != nil {
-		p.logger.Error().Err(err)
-	}
-	return subcommands.ExitSuccess
 }
