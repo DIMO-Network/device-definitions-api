@@ -410,6 +410,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 }
 
 func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error) {
+	const cutoffYear = 2006
 	boil.DebugMode = true
 	var yearQuery int16
 	var modelQuery string
@@ -431,7 +432,7 @@ func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Contex
 			models.TableNames.DeviceIntegrations + " ON " + models.DeviceDefinitionTableColumns.ID + " = " + models.DeviceIntegrationTableColumns.DeviceDefinitionID,
 		),
 		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
-		models.DeviceDefinitionWhere.Year.GTE(2008),
+		models.DeviceDefinitionWhere.Year.GTE(cutoffYear),
 		models.DeviceIntegrationWhere.Features.IsNotNull(),
 		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
 		models.DeviceIntegrationWhere.Region.EQ(region),

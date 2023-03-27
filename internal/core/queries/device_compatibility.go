@@ -44,7 +44,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qry.Take = 50
 	}
 	const columns = 6 // number of columns to get, highest weighted first
-	const cutoffYear = 2008
+	const cutoffYear = 2006
 
 	integFeats, totalWeights, err := getIntegrationFeatures(ctx, qry.MakeID, dc.DBS().Reader)
 	if err != nil {
@@ -56,7 +56,7 @@ func (dc GetDeviceCompatibilityQueryHandler) Handle(ctx context.Context, query m
 		qm.Where("dd.device_make_id = ?", qry.MakeID),
 		models.DeviceIntegrationWhere.IntegrationID.EQ(qry.IntegrationID),
 		models.DeviceIntegrationWhere.Region.EQ(qry.Region),
-		qm.And("dd.year > ?", cutoffYear),
+		qm.And("dd.year >= ?", cutoffYear),
 		qm.Load(models.DeviceIntegrationRels.DeviceDefinition),
 		qm.Load(models.DeviceIntegrationRels.Integration),
 		qm.OrderBy("(features IS NOT NULL) desc, dd.year DESC, dd.model_slug ASC"), // optimal & fast sorting, but breaks ability to use dd.id as cursor
