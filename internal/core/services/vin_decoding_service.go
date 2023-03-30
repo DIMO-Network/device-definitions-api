@@ -5,6 +5,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -34,6 +35,10 @@ func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISv
 
 func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
 	result := &models.VINDecodingInfoData{}
+	vin = strings.ToUpper(strings.TrimSpace(vin))
+	if !validateVIN(vin) {
+		return nil, fmt.Errorf("invalid vin: %s", vin)
+	}
 
 	switch provider {
 	case models.DrivlyProvider:
@@ -80,6 +85,20 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 	}
 
 	return result, nil
+}
+
+func validateVIN(vin string) bool {
+	if len(vin) != 17 {
+		return false
+	}
+	// match alpha numeric
+	pattern := "[0-9A-Fa-f]+"
+	regex := regexp.MustCompile(pattern)
+	if !regex.MatchString(vin) {
+		return false
+	}
+
+	return true
 }
 
 func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*models.UpdateDeviceTypeAttribute {
