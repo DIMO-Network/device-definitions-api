@@ -111,7 +111,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
 	if err != nil {
-		dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
+		dc.logger.Error().Err(err).Msgf("failed to get or create WMI for vin %s", vin.String())
 		return resp, nil
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
@@ -165,6 +165,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				ExternalStyleID:    common.SlugString(vinInfo.StyleName),
 				Source:             string(vinInfo.Source),
 				SubModel:           vinInfo.SubModel,
+				Metadata:           vinInfo.MetaData,
 			}
 			err := style.Insert(ctx, dc.dbs().Writer, boil.Infer())
 			if err == nil {
