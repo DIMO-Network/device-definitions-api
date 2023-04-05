@@ -179,14 +179,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.DeviceDefinitionId = dd.ID
 
 	// resolve images
-	err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
+	_, err = models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
 	if err != nil {
-		localLog.Err(err)
-	}
+		if errors.Is(err, sql.ErrNoRows) {
+			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
+			if err != nil {
+				localLog.Err(err)
+			}
 
-	err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
-	if err != nil {
-		localLog.Err(err)
+			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
+			if err != nil {
+				localLog.Err(err)
+			}
+		} else {
+			localLog.Err(err)
+		}
 	}
 
 	// match style - only process style if name is longer than 1
