@@ -24,7 +24,7 @@ func NewGetAllDeviceDefinitionQueryHandler(repository repositories.DeviceDefinit
 	}
 }
 
-func (ch GetAllDeviceDefinitionQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllDeviceDefinitionQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := ch.Repository.GetAll(ctx)
 	if err != nil {

@@ -33,7 +33,7 @@ func NewGetDeviceDefinitionWithoutImageQueryHandler(dbs func() *db.ReaderWriter,
 	}
 }
 
-func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := repoModel.DeviceDefinitions(
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),

@@ -31,7 +31,7 @@ func NewGetDefinitionsWithHWTemplateQueryHandler(dbs func() *db.ReaderWriter, lo
 	}
 }
 
-func (ch GetDefinitionsWithHWTemplateQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDefinitionsWithHWTemplateQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	response := &grpc.GetDevicesMMYResponse{}
 

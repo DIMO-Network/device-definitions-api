@@ -49,11 +49,11 @@ func (*syncDeviceFeatureCmd) Usage() string {
   `
 }
 
-func (p *syncDeviceFeatureCmd) SetFlags(f *flag.FlagSet) {
+func (p *syncDeviceFeatureCmd) SetFlags(_ *flag.FlagSet) {
 
 }
 
-func (p *syncDeviceFeatureCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *syncDeviceFeatureCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	err := populateDeviceFeaturesFromEs(ctx, p.logger, &p.settings)
 	if err != nil {
 		p.logger.Error().Err(err)

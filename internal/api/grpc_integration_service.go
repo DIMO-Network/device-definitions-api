@@ -52,7 +52,7 @@ func (s *GrpcIntegrationService) GetCompatibilitiesByMake(ctx context.Context, i
 	return result, nil
 }
 
-func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, in *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
+func (s *GrpcIntegrationService) GetIntegrationFeatures(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetIntegrationFeatureListResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationFeatureQuery{})
 
 	dt := qryResult.([]models.GetIntegrationFeatureQueryResult)
