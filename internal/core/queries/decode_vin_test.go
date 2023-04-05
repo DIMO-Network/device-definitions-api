@@ -41,6 +41,7 @@ type DecodeVINQueryHandlerSuite struct {
 	mockDrivlyAPISvc   *mock_gateways.MockDrivlyAPIService
 	mockVincarioAPISvc *mock_gateways.MockVincarioAPIService
 	mockVINService     *mock_services.MockVINDecodingService
+	mockFuelAPIService *mock_gateways.MockFuelAPIService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -60,7 +61,7 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, repo, dbtesthelper.Logger())
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, repo, dbtesthelper.Logger(), s.mockFuelAPIService)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
