@@ -34,7 +34,7 @@ func NewSyncTestlaIntegrationCommandHandler(dbs func() *db.ReaderWriter, log *ze
 	return SyncTestlaIntegrationCommandHandler{DBS: dbs, log: log}
 }
 
-func (ch SyncTestlaIntegrationCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch SyncTestlaIntegrationCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	var teslaRegions = []string{common.AmericasRegion.String(), common.EuropeRegion.String()}
 

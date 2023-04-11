@@ -36,7 +36,7 @@ func NewSyncSmartCartCompatibilityCommandHandler(dbs func() *db.ReaderWriter, sc
 }
 
 // Handle adds device_integrations for any makes and years that are found on the smartcar website
-func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 	AmericasRegion := "Americas"
 	EuropeRegion := "Europe"
 

@@ -24,7 +24,7 @@ func NewGetAllIntegrationFeatureQuery(dbs func() *db.ReaderWriter) GetAllIntegra
 	return GetAllIntegrationFeatureQueryHandler{DBS: dbs}
 }
 
-func (ch GetAllIntegrationFeatureQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllIntegrationFeatureQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := models.IntegrationFeatures().All(ctx, ch.DBS().Reader)
 	if err != nil {

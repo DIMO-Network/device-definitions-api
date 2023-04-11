@@ -33,7 +33,7 @@ func NewSyncIPFSDataCommandHandler(dbs func() *db.ReaderWriter, IPFSEndpoint str
 	return SyncIPFSDataCommandHandler{DBS: dbs, IPFSEndpoint: IPFSEndpoint}
 }
 
-func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch SyncIPFSDataCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	sh := shell.NewShell(ch.IPFSEndpoint)
 

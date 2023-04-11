@@ -29,7 +29,7 @@ func NewGetDevicesMMYQueryHandler(repository repositories.DeviceDefinitionReposi
 	}
 }
 
-func (ch GetDevicesMMYQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDevicesMMYQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 	all, err := ch.Repository.GetDevicesMMY(ctx)
 	if err != nil {
 		return nil, err

@@ -33,7 +33,7 @@ func (p *migrateDBCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.down, "down", false, "down database")
 }
 
-func (p *migrateDBCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *migrateDBCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	command := "up"
 	if p.down {
 		command = "down"
