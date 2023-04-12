@@ -9,5 +9,5 @@ ALTER TABLE device_styles ADD metadata jsonb null;
 -- +goose StatementBegin
 SELECT 'down SQL query';
 SET search_path = device_definitions_api, public;
-ALTER TABLE device_styles drop column year;
+ALTER TABLE device_styles drop column metadata;
 -- +goose StatementEnd
