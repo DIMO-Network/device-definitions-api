@@ -6,32 +6,24 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/segmentio/ksuid"
-
-	"github.com/tidwall/gjson"
-
-	"github.com/volatiletech/null/v8"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+	"github.com/segmentio/ksuid"
+	"github.com/tidwall/gjson"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
