@@ -37,7 +37,7 @@ func NewSyncSmartCartForwardCompatibilityCommandHandler(dbs func() *db.ReaderWri
 	return SyncSmartCartForwardCompatibilityCommandHandler{DBS: dbs, scSvc: scSvc, Repository: repository}
 }
 
-func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch SyncSmartCartForwardCompatibilityCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 	integrationID, err := ch.scSvc.GetOrCreateSmartCarIntegration(ctx)
 
 	if err != nil {

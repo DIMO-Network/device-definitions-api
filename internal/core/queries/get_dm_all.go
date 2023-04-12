@@ -27,7 +27,7 @@ func NewGetAllDeviceMakeQueryHandler(dbs func() *db.ReaderWriter) GetAllDeviceMa
 	return GetAllDeviceMakeQueryHandler{DBS: dbs}
 }
 
-func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := models.DeviceMakes().All(ctx, ch.DBS().Reader)
 	if err != nil {

@@ -35,7 +35,7 @@ func NewSyncSearchDataCommandHandler(dbs func() *db.ReaderWriter, esSvc elastic.
 	return SyncSearchDataCommandHandler{DBS: dbs, esSvc: esSvc, logger: logger}
 }
 
-func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch SyncSearchDataCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	existingEngines, err := ch.esSvc.GetEngines()
 	if err != nil {

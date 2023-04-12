@@ -61,12 +61,12 @@ func (s *VINDecodingServiceSuite) TearDownTest() {
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
-	const make = "Ford"
+	const makeID = "Ford"
 
 	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
-		Make:                make,
+		Make:                makeID,
 		Model:               "Escape",
 		SubModel:            "Hybrid",
 		Trim:                "XLE",
@@ -97,12 +97,12 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	const vin = "WAUZZZ4M0KD018683"
-	const make = "Test"
+	const makeID = "Test"
 
 	vinInfoResp := &gateways.VincarioInfoResponse{
 		VIN:                vin,
 		ModelYear:          2021,
-		Make:               make,
+		Make:               makeID,
 		Model:              "Escape",
 		EngineManufacturer: "1234",
 		Drive:              "AWD",

@@ -94,11 +94,8 @@ func validateVIN(vin string) bool {
 	// match alpha numeric
 	pattern := "[0-9A-Fa-f]+"
 	regex := regexp.MustCompile(pattern)
-	if !regex.MatchString(vin) {
-		return false
-	}
 
-	return true
+	return regex.MatchString(vin)
 }
 
 func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*models.UpdateDeviceTypeAttribute {

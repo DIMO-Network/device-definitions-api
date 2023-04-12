@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	_ "embed"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"

@@ -117,7 +117,7 @@ func (r *deviceNHTSARecallsRepository) GetLastDataRecordID(ctx context.Context) 
 	return &ret, nil
 }
 
-func (r *deviceNHTSARecallsRepository) MatchDeviceDefinition(ctx context.Context, matchingVersion string) (int64, error) {
+func (r *deviceNHTSARecallsRepository) MatchDeviceDefinition(_ context.Context, matchingVersion string) (int64, error) {
 	updateMatching := `UPDATE device_nhtsa_recalls
 		SET
 			device_definition_id = matches.dd_id,

@@ -25,7 +25,7 @@ func NewGetAllIntegrationQueryHandler(dbs func() *db.ReaderWriter) GetAllIntegra
 	return GetAllIntegrationQueryHandler{DBS: dbs}
 }
 
-func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := models.Integrations(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	if err != nil {
