@@ -91,6 +91,7 @@ message DeviceStyle {
   string device_definition_id = 5;
   string external_style_id = 6;
   string hardware_template_id = 7;
+  repeated DeviceTypeAttribute device_attributes = 8;
 }
 
 message DeviceMake {
