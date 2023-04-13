@@ -198,8 +198,8 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp.CompatibleIntegrations = []models.DeviceIntegration{}
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
-	// pull out the device type device attributes, eg. vehicle information
-	rp.DeviceAttributes = GetDeviceAttributesTyped(dd)
+	// pull out the device type device attributes, egGetDev. vehicle information
+	rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
 
 	if dd.R.DeviceIntegrations != nil {
 		for _, di := range dd.R.DeviceIntegrations {
@@ -235,6 +235,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 				Name:               ds.Name,
 				Source:             ds.Source,
 				SubModel:           ds.SubModel,
+				Metadata:           GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
 			}
 
 			if ds.HardwareTemplateID.Valid {
@@ -269,13 +270,13 @@ func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 	return img
 }
 
-func GetDeviceAttributesTyped(dd *repoModel.DeviceDefinition) []models.DeviceTypeAttribute {
+func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTypeAttribute {
 	var respAttrs []models.DeviceTypeAttribute
 	var ai map[string]any
-	if err := dd.Metadata.Unmarshal(&ai); err == nil {
+	if err := metadata.Unmarshal(&ai); err == nil {
 		if ai != nil {
-			if a, ok := ai[dd.R.DeviceType.Metadatakey]; ok && a != nil {
-				attributes := ai[dd.R.DeviceType.Metadatakey].(map[string]any)
+			if a, ok := ai[key]; ok && a != nil {
+				attributes := ai[key].(map[string]any)
 				for key, value := range attributes {
 					respAttrs = append(respAttrs, models.DeviceTypeAttribute{
 						Name:  key,

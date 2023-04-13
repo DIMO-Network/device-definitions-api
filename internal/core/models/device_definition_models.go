@@ -78,13 +78,14 @@ type DeviceIntegrationFeature struct {
 }
 
 type DeviceStyle struct {
-	ID                 string `json:"id"`
-	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	Name               string `json:"name"`
-	ExternalStyleID    string `json:"externalStyleId"`
-	Source             string `json:"source"`
-	SubModel           string `json:"subModel"`
-	HardwareTemplateID string `json:"hardware_template_id"`
+	ID                 string                `json:"id"`
+	DeviceDefinitionID string                `json:"deviceDefinitionId"`
+	Name               string                `json:"name"`
+	ExternalStyleID    string                `json:"externalStyleId"`
+	Source             string                `json:"source"`
+	SubModel           string                `json:"subModel"`
+	HardwareTemplateID string                `json:"hardware_template_id"`
+	Metadata           []DeviceTypeAttribute `json:"metadata"`
 }
 
 type DeviceMake struct {

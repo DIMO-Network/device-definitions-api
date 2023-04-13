@@ -177,7 +177,7 @@ func prepareFeatureData(logger *zerolog.Logger, i map[string]elastic.ElasticFilt
 		// manual override for range support when we can calculate it
 		if k == "range" && supportLevel == NotSupported.Int() && def.Metadata.Valid {
 			// pull out mpg and fuel_tank_capacity_gal to check if can support range
-			attrs := common.GetDeviceAttributesTyped(def)
+			attrs := common.GetDeviceAttributesTyped(def.Metadata, def.R.DeviceType.Metadatakey)
 			var fuelTankCapGal, mpg float64 //mpgHwy
 			for _, attr := range attrs {
 				switch attr.Name {
