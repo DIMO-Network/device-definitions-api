@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
 )
 
 //go:generate mockgen -source vincario_api_service.go -destination mocks/vincario_api_service_mock.go -package mocks
@@ -195,4 +197,29 @@ func (v *VincarioInfoResponse) GetStyle() string {
 // GetSubModel returns the Body type from Vincario, which we can use as the sub model.
 func (v *VincarioInfoResponse) GetSubModel() string {
 	return strings.TrimSpace(v.Body)
+}
+
+// GetMetadata returns a map of metadata for the vehicle, in standard format.
+func (v *VincarioInfoResponse) GetMetadata() null.JSON {
+
+	metadata := map[string]interface{}{
+		"fuel_type":              v.FuelType,
+		"driven_wheels":          v.Drive,
+		"number_of_doors":        v.NumberOfDoors,
+		"base_msrp":              nil,
+		"epa_class":              v.EmissionStandard,
+		"vehicle_type":           v.Body,
+		"mpg_highway":            nil,
+		"mpg_city":               nil,
+		"fuel_tank_capacity_gal": nil,
+		"mpg":                    v.EngineDisplacement,
+	}
+
+	bytes, err := json.Marshal(metadata)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return null.JSONFrom(bytes)
 }

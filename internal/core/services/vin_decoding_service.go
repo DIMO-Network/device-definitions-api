@@ -141,6 +141,7 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingI
 		ExternalID: strconv.Itoa(info.VehicleID),
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
+		MetaData:   info.GetMetadata(),
 		Raw:        raw,
 	}
 	return v
