@@ -212,7 +212,7 @@ func (v *VincarioInfoResponse) GetMetadata() null.JSON {
 		"mpg_highway":            nil,
 		"mpg_city":               nil,
 		"fuel_tank_capacity_gal": nil,
-		"mpg":                    v.EngineDisplacement,
+		"mpg":                    nil,
 	}
 
 	bytes, err := json.Marshal(metadata)
