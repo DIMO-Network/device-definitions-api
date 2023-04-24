@@ -75,6 +75,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	const (
 		VinRequests = "VIN_All_Request"
 		VinSuccess  = "VIN_Success_Request"
+		VinExists   = "VIN_Exists_Request"
 		VinErrors   = "VIN_Error_Request"
 	)
 
@@ -92,7 +93,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
 
-		metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
+		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 
 		return resp, nil
 	}
