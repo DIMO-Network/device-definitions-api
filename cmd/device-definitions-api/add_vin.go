@@ -100,7 +100,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		models.DeviceDefinitionWhere.DeviceMakeID.EQ(vinNumber.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(vinNumber.Year))).One(ctx, pdb.DBS().Reader)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error() + " " + model)
 		return subcommands.ExitFailure
 	}
 	vinNumber.DeviceDefinitionID = deviceDefinition.ID
@@ -118,7 +118,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 
 func cmdLineInput(prompt string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print(prompt)
+	fmt.Println(prompt)
 	text, err := reader.ReadString('\n')
 	if err != nil {
 		return "", err
