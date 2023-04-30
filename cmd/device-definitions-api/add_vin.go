@@ -100,7 +100,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		models.DeviceDefinitionWhere.DeviceMakeID.EQ(vinNumber.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(vinNumber.Year))).One(ctx, pdb.DBS().Reader)
 	if err != nil {
-		fmt.Println(err.Error() + " " + model)
+		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))
 		return subcommands.ExitFailure
 	}
 	vinNumber.DeviceDefinitionID = deviceDefinition.ID
@@ -112,7 +112,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	}
 
 	// improvement, from existing data, try to guess Model
-
+	fmt.Printf("added success, ddId: %s\n", vinNumber.DeviceDefinitionID)
 	return subcommands.ExitSuccess
 }
 
