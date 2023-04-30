@@ -52,7 +52,10 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
 		}
-		result = buildFromVincario(vinVincarioInfo)
+		result, err = buildFromVincario(vinVincarioInfo)
+		if err != nil {
+			return nil, err
+		}
 	case models.AllProviders:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
@@ -75,7 +78,10 @@ func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provide
 				c.logger.Warn().Err(err).Msg("could not decode vin with vincario")
 			}
 			if err == nil && vinVincarioInfo != nil {
-				result = buildFromVincario(vinVincarioInfo)
+				result, err = buildFromVincario(vinVincarioInfo)
+				if err != nil {
+					c.logger.Warn().Err(err).Msg("could not build struct from vincario data")
+				}
 			}
 		}
 	}
@@ -130,7 +136,7 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 	return udta
 }
 
-func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingInfoData {
+func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecodingInfoData, error) {
 	raw, _ := json.Marshal(info)
 	v := &models.VINDecodingInfoData{
 		VIN:        info.VIN,
@@ -141,10 +147,15 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) *models.VINDecodingI
 		ExternalID: strconv.Itoa(info.VehicleID),
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
-		MetaData:   info.GetMetadata(),
 		Raw:        raw,
 	}
-	return v
+	m, err := info.GetMetadata()
+	if err != nil {
+		return nil, err
+	}
+	v.MetaData = m
+
+	return v, nil
 }
 
 func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoData {

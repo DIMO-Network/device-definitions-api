@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -63,7 +62,7 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, erro
 		// find the property in the struct with the label name in the key metadata
 		err := setStructPropertiesByMetadataKey(&infoResp, s2.Label, s2.Value)
 		if err != nil {
-			va.log.Warn().Err(err)
+			va.log.Warn().Err(err).Msg("could not set struct properties")
 		}
 	}
 
@@ -200,7 +199,7 @@ func (v *VincarioInfoResponse) GetSubModel() string {
 }
 
 // GetMetadata returns a map of metadata for the vehicle, in standard format.
-func (v *VincarioInfoResponse) GetMetadata() null.JSON {
+func (v *VincarioInfoResponse) GetMetadata() (null.JSON, error) {
 
 	metadata := map[string]interface{}{
 		"fuel_type":              v.FuelType,
@@ -218,8 +217,8 @@ func (v *VincarioInfoResponse) GetMetadata() null.JSON {
 	bytes, err := json.Marshal(metadata)
 
 	if err != nil {
-		log.Fatal(err)
+		return null.JSON{}, err
 	}
 
-	return null.JSONFrom(bytes)
+	return null.JSONFrom(bytes), nil
 }
