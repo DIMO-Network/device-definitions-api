@@ -41,6 +41,7 @@ func main() {
 	subcommands.Register(&syncOpsCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncFuelImageCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncDeviceFeatureCmd{logger: logger, settings: settings}, "")
+	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
 
 	// Run API
 	if len(os.Args) == 1 {
