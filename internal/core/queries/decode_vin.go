@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/DIMO-Network/device-definitions-api/pkg"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -111,20 +113,20 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
 		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.VincarioProvider)
 	} else {
-		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders)
+		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Err(err).Msgf("failed to decode vin from provider %s", vinInfo.Source)
-		return resp, err
+		return resp, pkg.ErrFailedVINDecode
 	}
 	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
 	if len(vinInfo.Model) == 0 {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
-		return nil, errors.New("decoded model name is blank")
+		return nil, pkg.ErrFailedVINDecode
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
