@@ -6,6 +6,9 @@ package grpc;
 
 message DecodeVinRequest {
   string vin = 1;
+  string country = 2;
+  string knownModel = 3;
+  int32 knownYear = 4;
 }
 
 message DecodeVinResponse {
