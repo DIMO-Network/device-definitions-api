@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -111,11 +112,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Make:      vinInfoResp.Make,
 		Model:     vinInfoResp.Model,
 	}
@@ -215,11 +217,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
 	raw, _ := json.Marshal(vinInfoResp)
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
 		Raw:       raw,
 	}
@@ -303,11 +306,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Make:      dm.Name,
 		Model:     dd.Model,
 	}
@@ -380,11 +384,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
 	}
 
@@ -460,7 +465,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_Vincario(
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source: "vincario",
-		Year:   "2017",
+		Year:   2017,
 		Make:   dm.Name,
 		Model:  "Escape",
 	}
@@ -480,7 +485,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_Vincari
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source:    "vincario",
-		Year:      "2017",
+		Year:      2017,
 		Make:      dm.Name,
 		Model:     "Escape",
 		StyleName: "1",
@@ -542,6 +547,30 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeProviderBlankModel() 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	assert.Nil(s.T(), qryResult)
 	assert.Error(s.T(), err, "decoded model name is blank")
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
+	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.ID, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source: "vincario",
+		Model:  "",
+		Make:   "Ford",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin,
+		KnownYear:  2022,
+		KnownModel: "Bronco"})
+	assert.Nil(s.T(), err)
+	assert.NotNil(s.T(), qryResult)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+	assert.Equal(s.T(), int32(2022), result.Year)
+	assert.Equal(s.T(), dm.ID, result.DeviceMakeId)
 }
 
 func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {

@@ -17,7 +17,7 @@ type VINDecodingInfoData struct {
 	Make       string
 	Model      string
 	SubModel   string
-	Year       string
+	Year       int32
 	StyleName  string
 	Source     DecodeProviderEnum
 	ExternalID string
