@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -203,12 +202,7 @@ func startMonitoringServer(logger zerolog.Logger) {
 
 func httpMetricsMiddleware(c *fiber.Ctx) error {
 
-	path := c.Route().Path
-	if strings.Contains(path, ":") {
-		path = strings.Split(path, ":")[0]
-	}
-
-	metrics.HTTPRequestCount.WithLabelValues(c.Method(), path, strconv.Itoa(c.Response().StatusCode())).Inc()
+	metrics.HTTPRequestCount.WithLabelValues(c.Method(), c.Path(), strconv.Itoa(c.Response().StatusCode())).Inc()
 
 	start := time.Now()
 	defer func() {
