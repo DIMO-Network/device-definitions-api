@@ -549,6 +549,30 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeProviderBlankModel() 
 	assert.Error(s.T(), err, "decoded model name is blank")
 }
 
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
+	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.ID, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Source: "vincario",
+		Model:  "",
+		Make:   "Ford",
+	}
+	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin,
+		KnownYear:  2022,
+		KnownModel: "Bronco"})
+	assert.Nil(s.T(), err)
+	assert.NotNil(s.T(), qryResult)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+	assert.Equal(s.T(), int32(2022), result.Year)
+	assert.Equal(s.T(), dm.ID, result.DeviceMakeId)
+}
+
 func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
