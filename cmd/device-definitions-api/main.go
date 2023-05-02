@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api"
-
-	"github.com/google/subcommands"
 
 	_ "github.com/DIMO-Network/device-definitions-api/docs"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -34,21 +31,22 @@ func main() {
 		Str("git-sha1", gitSha1).
 		Logger()
 
-	subcommands.Register(subcommands.HelpCommand(), "")
-	subcommands.Register(subcommands.FlagsCommand(), "")
-	subcommands.Register(subcommands.CommandsCommand(), "")
-	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&syncOpsCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&syncFuelImageCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&syncDeviceFeatureCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
-
-	// Run API
-	if len(os.Args) == 1 {
-		api.Run(ctx, logger, &settings)
-	} else {
-		flag.Parse()
-		os.Exit(int(subcommands.Execute(ctx)))
-	}
+	//subcommands.Register(subcommands.HelpCommand(), "")
+	//subcommands.Register(subcommands.FlagsCommand(), "")
+	//subcommands.Register(subcommands.CommandsCommand(), "")
+	//subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
+	//subcommands.Register(&syncOpsCmd{logger: logger, settings: settings}, "")
+	//subcommands.Register(&syncFuelImageCmd{logger: logger, settings: settings}, "")
+	//subcommands.Register(&syncDeviceFeatureCmd{logger: logger, settings: settings}, "")
+	//subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
+	//
+	//// Run API
+	//if len(os.Args) == 1 {
+	//	api.Run(ctx, logger, &settings)
+	//} else {
+	//	flag.Parse()
+	//	os.Exit(int(subcommands.Execute(ctx)))
+	//}
+	api.Run(ctx, logger, &settings)
 
 }

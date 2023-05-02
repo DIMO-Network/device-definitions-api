@@ -2,10 +2,6 @@ package api
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -14,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
@@ -22,8 +19,15 @@ import (
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
@@ -147,7 +151,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	// TODO: This line is catching the errors and is not taking the general configuration.
 	//app.Use(zflogger.New(logger, nil))
-
+	app.Use(httpMetricsMiddleware)
 	//routes
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Send([]byte("Welcome dimo api!"))
@@ -194,4 +198,25 @@ func startMonitoringServer(logger zerolog.Logger) {
 	}()
 
 	logger.Info().Str("port", "8888").Msg("Started monitoring web server.")
+}
+
+func httpMetricsMiddleware(c *fiber.Ctx) error {
+
+	path := c.Route().Path
+	if strings.Contains(path, ":") {
+		path = strings.Split(path, ":")[0]
+	}
+
+	metrics.HttpRequestCount.WithLabelValues(c.Method(), path, strconv.Itoa(c.Response().StatusCode())).Inc()
+
+	start := time.Now()
+	defer func() {
+		metrics.HttpResponseTime.With(prometheus.Labels{
+			"method": c.Method(),
+			"path":   c.Path(),
+			"status": strconv.Itoa(c.Response().StatusCode()),
+		}).Observe(time.Since(start).Seconds())
+	}()
+
+	return c.Next()
 }
