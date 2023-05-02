@@ -140,7 +140,7 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecoding
 	raw, _ := json.Marshal(info)
 	v := &models.VINDecodingInfoData{
 		VIN:        info.VIN,
-		Year:       strconv.Itoa(info.ModelYear),
+		Year:       int32(info.ModelYear),
 		Make:       strings.TrimSpace(info.Make),
 		Model:      strings.TrimSpace(info.Model),
 		Source:     models.VincarioProvider,
@@ -160,9 +160,11 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecoding
 
 func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoData {
 	raw, _ := json.Marshal(info)
+	yrInt, _ := strconv.Atoi(info.Year)
+
 	v := &models.VINDecodingInfoData{
 		VIN:        info.Vin,
-		Year:       info.Year,
+		Year:       int32(yrInt),
 		Make:       info.Make,
 		Model:      info.Model,
 		StyleName:  buildDrivlyStyleName(info),

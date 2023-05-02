@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/pkg"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -39,7 +40,10 @@ type DecodeVINQueryHandler struct {
 }
 
 type DecodeVINQuery struct {
-	VIN string `json:"vin"`
+	VIN        string `json:"vin"`
+	KnownModel string `json:"knownModel"`
+	KnownYear  int32  `json:"knownYear"`
+	Country    string `json:"country"`
 }
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
@@ -71,7 +75,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	localLog := dc.logger.With().
 		Str("vin", vin.String()).
 		Str("handler", query.Key()).
-		Str("vin_year", fmt.Sprintf("%d", resp.Year)).
+		Str("vinYear", fmt.Sprintf("%d", resp.Year)).
+		Str("knownModel", qry.KnownModel).
+		Str("knownYear", strconv.Itoa(int(qry.KnownYear))).
+		Str("country", qry.Country).
 		Logger()
 
 	const (
@@ -115,6 +122,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	} else {
 		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
+	if err != nil || len(vinInfo.Model) == 0 || vinInfo.Year == 0 {
+		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
+			// if no luck decoding VIN, try buildingVinInfo from known data passed in
+			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
+		}
+	}
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
@@ -137,9 +150,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 	resp.Source = string(vinInfo.Source)
-	if atoi, err := strconv.Atoi(vinInfo.Year); err == nil {
-		resp.Year = int32(atoi)
-	}
+	resp.Year = vinInfo.Year
 
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
@@ -151,7 +162,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if errors.Is(err, sql.ErrNoRows) {
 			dd, err = dc.ddRepository.GetOrCreate(ctx,
 				string(vinInfo.Source),
-				common.SlugString(vinInfo.Model+vinInfo.Year),
+				common.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
 				dbWMI.DeviceMakeID,
 				vinInfo.Model,
 				int(resp.Year),
@@ -269,6 +280,23 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
 
 	return resp, nil
+}
+
+// vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set
+func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
+	vinInfo := &coremodels.VINDecodingInfoData{}
+	vinInfo.VIN = vin.String()
+	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi()),
+		qm.Load(models.WmiRels.DeviceMake)).One(context.Background(), dc.dbs().Reader)
+	if err != nil {
+		return nil, errors.Wrap(err, "vinInfoFromKnown: could not get WMI from vin wmi "+vin.Wmi())
+	}
+	vinInfo.Make = wmi.R.DeviceMake.Name
+	vinInfo.Year = knownYear
+	vinInfo.Model = knownModel
+	vinInfo.Source = "probably smartcar"
+
+	return vinInfo, nil
 }
 
 func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, make, model string, year int, prodID int, prodFormat int) error {

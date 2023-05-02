@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -111,11 +112,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Make:      vinInfoResp.Make,
 		Model:     vinInfoResp.Model,
 	}
@@ -215,11 +217,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
 	raw, _ := json.Marshal(vinInfoResp)
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
 		Raw:       raw,
 	}
@@ -303,11 +306,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Make:      dm.Name,
 		Model:     dd.Model,
 	}
@@ -380,11 +384,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	deviceTypeInfo["manufacturer_code"] = vinInfoResp.ManufacturerCode
 	deviceTypeInfo["driven_wheels"] = vinInfoResp.Drive
 
+	yr, _ := strconv.Atoi(vinInfoResp.Year)
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
 		Source:    "drivly",
-		Year:      vinInfoResp.Year,
+		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
 	}
 
@@ -460,7 +465,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_Vincario(
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source: "vincario",
-		Year:   "2017",
+		Year:   2017,
 		Make:   dm.Name,
 		Model:  "Escape",
 	}
@@ -480,7 +485,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_Vincari
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source:    "vincario",
-		Year:      "2017",
+		Year:      2017,
 		Make:      dm.Name,
 		Model:     "Escape",
 		StyleName: "1",
