@@ -50,7 +50,7 @@ var (
 		[]string{"method", "status"},
 	)
 
-	HttpRequestCount = promauto.NewCounterVec(
+	HTTPRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: serviceName + "http_request_count",
 			Help: "The total number of requests served by the Http Server",
@@ -58,7 +58,7 @@ var (
 		[]string{"method", "path", "status"},
 	)
 
-	HttpResponseTime = promauto.NewHistogramVec(
+	HTTPResponseTime = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    serviceName + "http_response_time",
 			Help:    "The response time distribution of the Http Server",

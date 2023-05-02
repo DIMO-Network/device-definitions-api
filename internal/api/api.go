@@ -2,6 +2,13 @@ package api
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -22,12 +29,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
-	"os"
-	"os/signal"
-	"strconv"
-	"strings"
-	"syscall"
-	"time"
 )
 
 func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
@@ -207,11 +208,11 @@ func httpMetricsMiddleware(c *fiber.Ctx) error {
 		path = strings.Split(path, ":")[0]
 	}
 
-	metrics.HttpRequestCount.WithLabelValues(c.Method(), path, strconv.Itoa(c.Response().StatusCode())).Inc()
+	metrics.HTTPRequestCount.WithLabelValues(c.Method(), path, strconv.Itoa(c.Response().StatusCode())).Inc()
 
 	start := time.Now()
 	defer func() {
-		metrics.HttpResponseTime.With(prometheus.Labels{
+		metrics.HTTPResponseTime.With(prometheus.Labels{
 			"method": c.Method(),
 			"path":   c.Path(),
 			"status": strconv.Itoa(c.Response().StatusCode()),

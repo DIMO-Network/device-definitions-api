@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	
+
 	"github.com/DIMO-Network/device-definitions-api/pkg"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
