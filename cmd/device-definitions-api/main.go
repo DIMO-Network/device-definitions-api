@@ -50,5 +50,4 @@ func main() {
 		flag.Parse()
 		os.Exit(int(subcommands.Execute(ctx)))
 	}
-
 }
