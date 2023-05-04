@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
+
 	"os"
 	"os/signal"
 	"syscall"
@@ -143,6 +146,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	//fiber
 	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
 
+	app.Use(metrics.HTTPMetricsPrometheusMiddleware)
 	app.Use(recover.New())
 
 	// TODO: This line is catching the errors and is not taking the general configuration.

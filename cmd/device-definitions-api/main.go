@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/api"
-
 	"github.com/google/subcommands"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/api"
 
 	_ "github.com/DIMO-Network/device-definitions-api/docs"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"

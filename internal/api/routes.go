@@ -7,26 +7,26 @@ import (
 )
 
 func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Get("/device-definitions/all", handlers.GetDeviceDefinitionAll(m))
-	app.Get("/device-definitions/:id", handlers.GetDeviceDefinitionByID(m))
-	app.Get("/device-definitions/:id/integrations", handlers.GetDeviceIntegrationsByID(m))
-	app.Get("/device-definitions", handlers.GetDeviceDefinitionByMMY(m))
+	app.Get("/device-definitions/all", handlers.GetDeviceDefinitionAll(m)).Name("device-definitions-all")
+	app.Get("/device-definitions/:id", handlers.GetDeviceDefinitionByID(m)).Name("device-definitions-by-id")
+	app.Get("/device-definitions/:id/integrations", handlers.GetDeviceIntegrationsByID(m)).Name("device-definitions-with-integrations")
+	app.Get("/device-definitions", handlers.GetDeviceDefinitionByMMY(m)).Name("device-definitions")
 }
 
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Get("/integrations", handlers.GetIntegrations(m))
-	app.Get("/integrations/:id", handlers.GetIntegrationByID(m))
+	app.Get("/integrations", handlers.GetIntegrations(m)).Name("integrations")
+	app.Get("/integrations/:id", handlers.GetIntegrationByID(m)).Name("integrations-by-id")
 }
 
 func RegisterDeviceTypeRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Get("/device-types/:id", handlers.GetDeviceTypesByID(m))
+	app.Get("/device-types/:id", handlers.GetDeviceTypesByID(m)).Name("device-types")
 }
 
 func RegisterDeviceMakesRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Get("/device-makes", handlers.GetDeviceMakes(m))
+	app.Get("/device-makes", handlers.GetDeviceMakes(m)).Name("device-makes")
 }
 
 func RegisterVINRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Post("/bulk-decode", handlers.BulkDecodeVIN(m))
-	app.Post("/bulk-decode/csv", handlers.BulkDecodeVINCsv(m))
+	app.Post("/bulk-decode", handlers.BulkDecodeVIN(m)).Name("bulk-decode")
+	app.Post("/bulk-decode/csv", handlers.BulkDecodeVINCsv(m)).Name("bulk-decode-csv")
 }
