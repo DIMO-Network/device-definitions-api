@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 SET search_path = device_definitions_api, public;
-ALTER TABLE integrations ADD token_id numeric(78,0) null;
+ALTER TABLE integrations ADD COLUMN token_id int;
 -- +goose StatementEnd
 
 -- +goose Down

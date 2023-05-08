@@ -148,6 +148,7 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 			Vendor:                  item.Vendor,
 			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+			TokenId:                 uint64(item.TokenID),
 			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
 				BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
 				HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
@@ -172,6 +173,7 @@ func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, _ *p_gr
 		Vendor:                  item.Vendor,
 		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+		TokenId:                 uint64(item.TokenID),
 		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
 			BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
 			HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
