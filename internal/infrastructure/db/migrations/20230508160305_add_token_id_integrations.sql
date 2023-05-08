@@ -1,6 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
 SET search_path = device_definitions_api, public;
 ALTER TABLE integrations ADD token_id numeric(78,0) null;
 -- +goose StatementEnd
