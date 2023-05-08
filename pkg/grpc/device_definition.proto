@@ -143,6 +143,7 @@ message Integration {
   int32 auto_pi_default_template_id = 5;
   AutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
   int32 refresh_limit_secs = 7;
+  uint64 token_id = 8;
   message AutoPiPowertrainTemplate {
     int32 BEV = 1;
     int32 HEV = 2;
