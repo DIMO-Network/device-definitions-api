@@ -6,7 +6,6 @@ ALTER TABLE integrations ADD COLUMN token_id int;
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
 SET search_path = device_definitions_api, public;
 ALTER TABLE integrations drop column token_id;
 -- +goose StatementEnd
