@@ -44,7 +44,13 @@ func (ch CreateIntegrationCommandHandler) Handle(ctx context.Context, query medi
 	i.Vendor = command.Vendor
 	i.Type = command.Type
 	i.Style = command.Style
-	i.TokenID = null.IntFrom(command.TokenID)
+
+	if command.TokenID == 0 {
+		i.TokenID = null.Int{}
+	} else {
+		i.TokenID = null.IntFrom(command.TokenID)
+	}
+
 	err := i.Insert(ctx, ch.DBS().Writer, boil.Infer())
 
 	if err != nil {

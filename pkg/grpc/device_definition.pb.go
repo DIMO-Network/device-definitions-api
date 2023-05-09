@@ -1329,7 +1329,8 @@ type Integration struct {
 	AutoPiDefaultTemplateId  int32                                 `protobuf:"varint,5,opt,name=auto_pi_default_template_id,json=autoPiDefaultTemplateId,proto3" json:"auto_pi_default_template_id,omitempty"`
 	AutoPiPowertrainTemplate *Integration_AutoPiPowertrainTemplate `protobuf:"bytes,6,opt,name=auto_pi_powertrain_template,json=autoPiPowertrainTemplate,proto3" json:"auto_pi_powertrain_template,omitempty"`
 	RefreshLimitSecs         int32                                 `protobuf:"varint,7,opt,name=refresh_limit_secs,json=refreshLimitSecs,proto3" json:"refresh_limit_secs,omitempty"`
-	TokenId                  uint64                                `protobuf:"varint,8,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"` // token_id can have a 0 value, which means it has not yet been minted and no token id has been assigned. This case should be checked for and handled.
+	// token_id can have a 0 value, which means it has not yet been minted and no token id has been assigned. This case should be checked for and handled.
+	TokenId uint64 `protobuf:"varint,8,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
 }
 
 func (x *Integration) Reset() {
