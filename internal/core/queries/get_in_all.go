@@ -53,6 +53,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.M
 			Vendor:                  v.Vendor,
 			AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
 			RefreshLimitSecs:        v.RefreshLimitSecs,
+			TokenID:                 v.TokenID.Int,
 		}
 		if im.AutoPiPowertrainToTemplateID != nil {
 			result[i].AutoPiPowertrainToTemplateID = im.AutoPiPowertrainToTemplateID

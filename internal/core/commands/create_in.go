@@ -8,15 +8,17 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type CreateIntegrationCommand struct {
-	Vendor string `json:"vendor"`
-	Type   string `json:"type"`
-	Style  string `json:"style"`
+	Vendor  string `json:"vendor"`
+	Type    string `json:"type"`
+	Style   string `json:"style"`
+	TokenID int    `json:"token_id"`
 }
 
 type CreateIntegrationCommandResult struct {
@@ -42,6 +44,7 @@ func (ch CreateIntegrationCommandHandler) Handle(ctx context.Context, query medi
 	i.Vendor = command.Vendor
 	i.Type = command.Type
 	i.Style = command.Style
+	i.TokenID = null.IntFrom(command.TokenID)
 	err := i.Insert(ctx, ch.DBS().Writer, boil.Infer())
 
 	if err != nil {
