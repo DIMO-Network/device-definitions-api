@@ -143,7 +143,7 @@ message Integration {
   int32 auto_pi_default_template_id = 5;
   AutoPiPowertrainTemplate auto_pi_powertrain_template = 6;
   int32 refresh_limit_secs = 7;
-  uint64 token_id = 8;
+  uint64 token_id = 8;  // token_id can have a 0 value, which means it has not yet been minted and no token id has been assigned. This case should be checked for and handled. 
   message AutoPiPowertrainTemplate {
     int32 BEV = 1;
     int32 HEV = 2;
@@ -326,6 +326,7 @@ message CreateIntegrationRequest {
   string vendor = 1;
   string type = 2;
   string style = 3;
+  uint64 token_id = 4;
 }
 
 message GetDeviceMakeByNameRequest {

@@ -367,9 +367,10 @@ func (s *GrpcDefinitionsService) CreateDeviceMake(ctx context.Context, in *p_grp
 func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
-		Vendor: in.Vendor,
-		Style:  in.Style,
-		Type:   in.Type,
+		Vendor:  in.Vendor,
+		Style:   in.Style,
+		Type:    in.Type,
+		TokenID: int(in.TokenId),
 	})
 
 	result := commandResult.(commands.CreateIntegrationCommandResult)
