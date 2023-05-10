@@ -185,6 +185,31 @@ func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, _ *p_gr
 	return result, nil
 }
 
+func (s *GrpcDefinitionsService) GetIntegrationByTokenID(ctx context.Context, in *p_grpc.GetIntegrationByTokenIDRequest) (*p_grpc.Integration, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByTokenIDQuery{
+		TokenID: int(in.TokenId),
+	})
+
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	result := &p_grpc.Integration{
+		Id:                      item.ID,
+		Type:                    item.Type,
+		Style:                   item.Style,
+		Vendor:                  item.Vendor,
+		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+		TokenId:                 uint64(item.TokenID),
+		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
+			BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+			HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+			ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+			PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
+		},
+	}
+
+	return result, nil
+}
+
 func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_grpc.GetDeviceDefinitionIntegrationRequest) (*p_grpc.GetDeviceDefinitionIntegrationResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithRelsQuery{

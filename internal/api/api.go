@@ -141,6 +141,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		)),
 
 		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService, logger)),
+		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
 	)
 
 	//fiber
