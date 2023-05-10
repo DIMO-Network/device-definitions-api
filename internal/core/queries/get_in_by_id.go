@@ -63,6 +63,7 @@ func (ch GetIntegrationByIDQueryHandler) Handle(ctx context.Context, query media
 		Vendor:                  v.Vendor,
 		AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
 		RefreshLimitSecs:        v.RefreshLimitSecs,
+		TokenID:                 v.TokenID.Int,
 	}
 
 	if im.AutoPiPowertrainToTemplateID != nil {

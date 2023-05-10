@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/DIMO-Network/shared v0.8.3
 	github.com/TheFellow/go-mediator v0.0.0-20211104172412-746952fa0611
-	github.com/ansrivas/fiberprometheus/v2 v2.6.0
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/docker/go-connections v0.4.0
 	github.com/friendsofgo/errors v0.9.2

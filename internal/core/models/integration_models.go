@@ -49,4 +49,5 @@ type GetIntegrationQueryResult struct {
 	AutoPiDefaultTemplateID      int                    `json:"auto_pi_default_template_id"`
 	RefreshLimitSecs             int                    `json:"refresh_limit_secs"`
 	AutoPiPowertrainToTemplateID map[PowertrainType]int `json:"auto_pi_power_train_to_template_id,omitempty"`
+	TokenID                      int                    `json:"token_id"`
 }

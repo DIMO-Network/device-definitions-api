@@ -148,6 +148,7 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 			Vendor:                  item.Vendor,
 			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+			TokenId:                 uint64(item.TokenID),
 			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
 				BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
 				HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
@@ -172,6 +173,7 @@ func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, _ *p_gr
 		Vendor:                  item.Vendor,
 		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
 		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+		TokenId:                 uint64(item.TokenID),
 		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
 			BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
 			HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
@@ -365,9 +367,10 @@ func (s *GrpcDefinitionsService) CreateDeviceMake(ctx context.Context, in *p_grp
 func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
-		Vendor: in.Vendor,
-		Style:  in.Style,
-		Type:   in.Type,
+		Vendor:  in.Vendor,
+		Style:   in.Style,
+		Type:    in.Type,
+		TokenID: int(in.TokenId),
 	})
 
 	result := commandResult.(commands.CreateIntegrationCommandResult)

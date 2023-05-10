@@ -59,6 +59,7 @@ func (s *GetIntegrationByIDQueryHandlerSuite) TestGetIntegrationByIDQuery_Succes
 	assert.Equal(s.T(), integration.ID, result.ID)
 	assert.Equal(s.T(), integration.Type, result.Type)
 	assert.Equal(s.T(), integration.Vendor, result.Vendor)
+	assert.Equal(s.T(), integration.TokenID.Int, result.TokenID)
 }
 
 func (s *GetIntegrationByIDQueryHandlerSuite) TestGetIntegrationByIDQuery_Exception() {

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -64,6 +65,7 @@ func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_Wit
 	s.NoError(err)
 	s.Len(result, 1)
 	assert.Equal(s.T(), integration.Vendor, result[0].Vendor)
+	assert.Equal(s.T(), integration.TokenID.Int, result[0].TokenID)
 }
 
 func setupCreateSmartCarIntegration(t *testing.T, pdb db.Store) models.Integration {
@@ -73,6 +75,7 @@ func setupCreateSmartCarIntegration(t *testing.T, pdb db.Store) models.Integrati
 		Style:            models.IntegrationStyleWebhook,
 		Vendor:           "SmartCar",
 		RefreshLimitSecs: 1800,
+		TokenID:          null.IntFrom(1),
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	assert.NoError(t, err, "database error")
