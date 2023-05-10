@@ -12,29 +12,6 @@ type ElasticFilterResult struct {
 
 type DeviceFeaturesResp struct {
 	Aggregations struct {
-		Integrations struct {
-			Buckets []struct {
-				Key               string `json:"key"`
-				DeviceDefinitions struct {
-					Buckets []struct {
-						Key     string `json:"key"`
-						Regions struct {
-							Buckets []struct {
-								Key      string `json:"key"`
-								Features struct {
-									Buckets map[string]ElasticFilterResult
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-type deviceFeaturesResp2 struct {
-	Aggregations struct {
 		MyBuckets struct {
 			Meta struct {
 			} `json:"meta"`
@@ -81,44 +58,9 @@ type deviceFeaturesResp2 struct {
 	} `json:"aggregations"`
 }
 
-type bucketResp struct {
-	Key struct {
-		DataRegion             string `json:"data.region"`
-		DataDeviceDefinitionID string `json:"data.deviceDefinitionId"`
-	} `json:"key"`
-	DocCount     int `json:"doc_count"`
-	Integrations struct {
-		DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
-		SumOtherDocCount        int `json:"sum_other_doc_count"`
-		Buckets                 []struct {
-			Key               string `json:"key"`
-			DocCount          int    `json:"doc_count"`
-			DeviceDefinitions struct {
-				DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
-				SumOtherDocCount        int `json:"sum_other_doc_count"`
-				Buckets                 []struct {
-					Key      string `json:"key"`
-					DocCount int    `json:"doc_count"`
-					Regions  struct {
-						DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
-						SumOtherDocCount        int `json:"sum_other_doc_count"`
-						Buckets                 []struct {
-							Key      string `json:"key"`
-							DocCount int    `json:"doc_count"`
-							Features struct {
-								Buckets map[string]interface{} `json:"buckets"`
-							} `json:"features"`
-						} `json:"buckets"`
-					} `json:"regions"`
-				} `json:"buckets"`
-			} `json:"deviceDefinitions"`
-		} `json:"buckets"`
-	} `json:"integrations"`
-}
-
 // GetDeviceFeatures queries elastic for the presence of the given filterList (integration_features), returns all of them regardless if seen or not
-func (d *ElasticSearch) GetDeviceFeatures(envName string, filterList map[string]any) (deviceFeaturesResp2, error) {
-	var aggregatedResponses deviceFeaturesResp2
+func (d *ElasticSearch) GetDeviceFeatures(envName string, filterList map[string]any) (DeviceFeaturesResp, error) {
+	var aggregatedResponses DeviceFeaturesResp
 	var request getDeviceFeaturesRequest
 
 	request.Size = 0
@@ -136,7 +78,7 @@ func (d *ElasticSearch) GetDeviceFeatures(envName string, filterList map[string]
 	regionExists.Exists.Field = "data.region"
 	request.Query.Bool.Must = append(request.Query.Bool.Must, regionExists)
 
-	request.Aggs.MyBuckets.Composite.Size = 100
+	request.Aggs.MyBuckets.Composite.Size = 500
 	deviceDefIDSource := deviceDefSource{}
 	deviceDefIDSource.DataDeviceDefinitionID.Terms.Field = "data.deviceDefinitionId"
 	regionSource := regionSource{}
@@ -157,10 +99,10 @@ func (d *ElasticSearch) GetDeviceFeatures(envName string, filterList map[string]
 
 	url := fmt.Sprintf("%s/device-status-%s-*/_search", d.BaseURL, envName)
 	for {
-		deviceFeatures := deviceFeaturesResp2{}
+		deviceFeatures := DeviceFeaturesResp{}
 		err := d.buildAndExecRequest("POST", url, request, &deviceFeatures)
 		if err != nil {
-			return deviceFeaturesResp2{}, errors.Wrap(err, "error when trying to fetch device features from elasticsearch")
+			return DeviceFeaturesResp{}, errors.Wrap(err, "error when trying to fetch device features from elasticsearch")
 		}
 		aggregatedResponses.Aggregations.MyBuckets.Buckets = append(aggregatedResponses.Aggregations.MyBuckets.Buckets, deviceFeatures.Aggregations.MyBuckets.Buckets...)
 		if deviceFeatures.Aggregations.MyBuckets.AfterKey.DataDeviceDefinitionID == "" && deviceFeatures.Aggregations.MyBuckets.AfterKey.DataRegion == "" {
