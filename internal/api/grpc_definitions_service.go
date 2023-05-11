@@ -161,28 +161,39 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 	return result, nil
 }
 
+func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
+	return &p_grpc.Integration{
+		Id:                      integration.ID,
+		Type:                    integration.Type,
+		Style:                   integration.Style,
+		Vendor:                  integration.Vendor,
+		AutoPiDefaultTemplateId: int32(integration.AutoPiDefaultTemplateID),
+		RefreshLimitSecs:        int32(integration.RefreshLimitSecs),
+		TokenId:                 uint64(integration.TokenID),
+		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
+			BEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+			HEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
+		},
+	}, nil
+}
+
 func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, _ *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
 
 	item := qryResult.(coremodels.GetIntegrationQueryResult)
-	result := &p_grpc.Integration{
-		Id:                      item.ID,
-		Type:                    item.Type,
-		Style:                   item.Style,
-		Vendor:                  item.Vendor,
-		AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
-		RefreshLimitSecs:        int32(item.RefreshLimitSecs),
-		TokenId:                 uint64(item.TokenID),
-		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
-			BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
-			HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
-			ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
-			PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
-		},
-	}
+	return s.prepareIntegrationResponse(item)
+}
 
-	return result, nil
+func (s *GrpcDefinitionsService) GetIntegrationByTokenID(ctx context.Context, in *p_grpc.GetIntegrationByTokenIDRequest) (*p_grpc.Integration, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByTokenIDQuery{
+		TokenID: int(in.TokenId),
+	})
+
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	return s.prepareIntegrationResponse(item)
 }
 
 func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_grpc.GetDeviceDefinitionIntegrationRequest) (*p_grpc.GetDeviceDefinitionIntegrationResponse, error) {

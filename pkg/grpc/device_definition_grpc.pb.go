@@ -61,6 +61,7 @@ type DeviceDefinitionServiceClient interface {
 	DeleteDeviceType(ctx context.Context, in *DeleteDeviceTypeRequest, opts ...grpc.CallOption) (*BaseResponse, error)
 	GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *GetDeviceDefinitionHardwareTemplateByIDRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionHardwareTemplateByIDResponse, error)
 	SyncDeviceDefinitionsWithElasticSearch(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SyncStatusResult, error)
+	GetIntegrationByTokenID(ctx context.Context, in *GetIntegrationByTokenIDRequest, opts ...grpc.CallOption) (*Integration, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -436,6 +437,15 @@ func (c *deviceDefinitionServiceClient) SyncDeviceDefinitionsWithElasticSearch(c
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetIntegrationByTokenID(ctx context.Context, in *GetIntegrationByTokenIDRequest, opts ...grpc.CallOption) (*Integration, error) {
+	out := new(Integration)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetIntegrationByTokenID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -478,6 +488,7 @@ type DeviceDefinitionServiceServer interface {
 	DeleteDeviceType(context.Context, *DeleteDeviceTypeRequest) (*BaseResponse, error)
 	GetDeviceDefinitionHardwareTemplateByID(context.Context, *GetDeviceDefinitionHardwareTemplateByIDRequest) (*GetDeviceDefinitionHardwareTemplateByIDResponse, error)
 	SyncDeviceDefinitionsWithElasticSearch(context.Context, *emptypb.Empty) (*SyncStatusResult, error)
+	GetIntegrationByTokenID(context.Context, *GetIntegrationByTokenIDRequest) (*Integration, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -598,6 +609,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionHardwareTem
 }
 func (UnimplementedDeviceDefinitionServiceServer) SyncDeviceDefinitionsWithElasticSearch(context.Context, *emptypb.Empty) (*SyncStatusResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncDeviceDefinitionsWithElasticSearch not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetIntegrationByTokenID(context.Context, *GetIntegrationByTokenIDRequest) (*Integration, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationByTokenID not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -1300,6 +1314,24 @@ func _DeviceDefinitionService_SyncDeviceDefinitionsWithElasticSearch_Handler(srv
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetIntegrationByTokenID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIntegrationByTokenIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationByTokenID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetIntegrationByTokenID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetIntegrationByTokenID(ctx, req.(*GetIntegrationByTokenIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1454,6 +1486,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SyncDeviceDefinitionsWithElasticSearch",
 			Handler:    _DeviceDefinitionService_SyncDeviceDefinitionsWithElasticSearch_Handler,
+		},
+		{
+			MethodName: "GetIntegrationByTokenID",
+			Handler:    _DeviceDefinitionService_GetIntegrationByTokenID_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

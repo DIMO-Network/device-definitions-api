@@ -306,6 +306,10 @@ message GetIntegrationRequest {
   repeated string id = 1;
 }
 
+message GetIntegrationByTokenIDRequest {
+  uint64 token_id = 1;
+}
+
 message CreateDeviceMakeRequest {
   string name = 1;
   string hardware_template_id = 2;
@@ -478,4 +482,5 @@ service DeviceDefinitionService {
   rpc DeleteDeviceType(DeleteDeviceTypeRequest) returns (BaseResponse);
   rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
   rpc SyncDeviceDefinitionsWithElasticSearch(google.protobuf.Empty) returns (SyncStatusResult);
+  rpc GetIntegrationByTokenID(GetIntegrationByTokenIDRequest) returns (Integration);
 }
