@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -80,6 +79,5 @@ func (ch GetIntegrationByTokenIDQueryHandler) Handle(ctx context.Context, query 
 	if im.AutoPiPowertrainToTemplateID != nil {
 		response.AutoPiPowertrainToTemplateID = im.AutoPiPowertrainToTemplateID
 	}
-	log.Println(response, "responseresponse")
 	return response, nil
 }
