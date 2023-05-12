@@ -64,7 +64,7 @@ func GetIntegrationByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
 		id := c.Params("id")
-		query := &queries.GetIntegrationByIDQuery{IntegrationID: id}
+		query := &queries.GetIntegrationByIDQuery{IntegrationID: []string{id}}
 
 		result, _ := m.Send(c.UserContext(), query)
 

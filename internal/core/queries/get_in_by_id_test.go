@@ -51,7 +51,7 @@ func (s *GetIntegrationByIDQueryHandlerSuite) TestGetIntegrationByIDQuery_Succes
 	integration := setupCreateSmartCarIntegration(s.T(), s.pdb)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetIntegrationByIDQuery{
-		IntegrationID: integration.ID,
+		IntegrationID: []string{integration.ID},
 	})
 	result := qryResult.(coremodels.GetIntegrationQueryResult)
 
@@ -68,7 +68,7 @@ func (s *GetIntegrationByIDQueryHandlerSuite) TestGetIntegrationByIDQuery_Except
 	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetIntegrationByIDQuery{
-		IntegrationID: integrationID,
+		IntegrationID: []string{integrationID},
 	})
 
 	s.Nil(qryResult)
