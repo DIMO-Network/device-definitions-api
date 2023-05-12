@@ -179,9 +179,9 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 	}, nil
 }
 
-func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, _ *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
+func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDQuery{})
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByIDQuery{IntegrationID: in.Id})
 
 	item := qryResult.(coremodels.GetIntegrationQueryResult)
 	return s.prepareIntegrationResponse(item)

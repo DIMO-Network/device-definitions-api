@@ -14,7 +14,7 @@ import (
 )
 
 type GetIntegrationByIDQuery struct {
-	IntegrationID string `json:"integration_id"`
+	IntegrationID []string `json:"integration_id" validate:"required"`
 }
 
 func (*GetIntegrationByIDQuery) Key() string { return "GetIntegrationByIDQuery" }
@@ -31,7 +31,13 @@ func (ch GetIntegrationByIDQueryHandler) Handle(ctx context.Context, query media
 
 	qry := query.(*GetIntegrationByIDQuery)
 
-	v, err := models.Integrations(models.IntegrationWhere.ID.EQ(qry.IntegrationID)).One(ctx, ch.DBS().Reader)
+	if len(qry.IntegrationID) == 0 {
+		return nil, &exceptions.ValidationError{
+			Err: errors.New("IntegrationID is required"),
+		}
+	}
+
+	v, err := models.Integrations(models.IntegrationWhere.ID.EQ(qry.IntegrationID[0])).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
