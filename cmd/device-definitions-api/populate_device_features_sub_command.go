@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"strconv"
 	"strings"
 
 	"github.com/google/subcommands"
+	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -16,7 +16,6 @@ import (
 	elastic "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch"
 	elasticModels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elasticsearch/models"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -77,25 +76,28 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 		return err
 	}
 
-	for _, i := range resp.Aggregations.Integrations.Buckets {
-		intID := strings.TrimPrefix(i.Key, "dimo/integration/")
+	var n int
+	for _, d := range resp.Aggregations.MyBuckets.Buckets {
+		ddID := d.Key.DataDeviceDefinitionID
+		region := d.Key.DataRegion
+		for _, i := range d.Integrations.Buckets {
+			intID := strings.TrimPrefix(i.Key, "dimo/integration/")
 
-		integration, err := models.FindIntegration(ctx, pdb.DBS().Reader, intID)
-		if err != nil {
-			logger.Err(err).Msg("Error occurred fetching integration.")
-			continue
-		}
-
-		for _, d := range i.DeviceDefinitions.Buckets {
-			ddID := d.Key
+			integration, err := models.FindIntegration(ctx, pdb.DBS().Reader, intID)
+			if err != nil {
+				logger.Err(err).Msg("Error occurred fetching integration.")
+				continue
+			}
 
 			deviceDef, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(ddID),
 				qm.Load(models.DeviceDefinitionRels.DeviceMake),
 				qm.Load(models.DeviceDefinitionRels.DeviceType)).One(ctx, pdb.DBS().Reader)
+
 			if err != nil {
 				logger.Err(err).Msg("Error occurred fetching device definition.")
 				continue
 			}
+
 			// skip smartcar integration if Tesla
 			if integration.Vendor == common.SmartCarVendor && deviceDef.R.DeviceMake.NameSlug == "tesla" {
 				continue
@@ -103,47 +105,49 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			// map of regions and features for this dd, then fill in
 			regionToFeatures := map[string][]elasticModels.DeviceIntegrationFeatures{}
 
-			for _, r := range d.Regions.Buckets {
-				region := r.Key
-				logger := logger.With().Str("integrationId", intID).Str("deviceDefinitionId", ddID).Str("region", region).Logger()
+			logger := logger.With().Str("integrationId", intID).Str("deviceDefinitionId", ddID).Str("region", region).Logger()
 
-				deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, region)
-				insert := false
-				if err != nil {
-					if errors.Is(err, sql.ErrNoRows) {
-						insert = true
-						deviceInt = &models.DeviceIntegration{
-							DeviceDefinitionID: ddID,
-							IntegrationID:      intID,
-							Region:             region,
-						}
-					} else {
-						logger.Err(err).Msgf("error occurred fetching device integration dd_id %s", ddID)
-						continue
-					}
-				}
-
-				feature := prepareFeatureData(&logger, r.Features.Buckets, deviceDef)
-				// populate the map for future iteration to copy populated region to empty region (autopi only)
-				regionToFeatures[region] = feature
-
-				err = deviceInt.Features.Marshal(&feature)
-				if err != nil {
-					logger.Err(err).Msg("could not marshal feature information into device integration.")
-					continue
-				}
-				if insert {
-					err = deviceInt.Insert(ctx, pdb.DBS().Writer, boil.Infer())
-					if err != nil {
-						logger.Err(err).Msg("could not insert device integration with feature information.")
+			deviceInt, err := models.FindDeviceIntegration(ctx, pdb.DBS().Reader, ddID, intID, region)
+			insert := false
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					insert = true
+					deviceInt = &models.DeviceIntegration{
+						DeviceDefinitionID: ddID,
+						IntegrationID:      intID,
+						Region:             region,
 					}
 				} else {
-					if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
-						logger.Err(err).Msg("could not update device integration with feature information.")
-					}
+					logger.Err(err).Msgf("error occurred fetching device integration dd_id %s", ddID)
+					continue
 				}
 			}
+			for _, b := range i.DeviceDefinitions.Buckets {
+				for _, r := range b.Regions.Buckets {
+					feature := prepareFeatureData(&logger, r.Features.Buckets, deviceDef)
 
+					// populate the map for future iteration to copy populated region to empty region (autopi only)
+					regionToFeatures[region] = feature
+
+					err = deviceInt.Features.Marshal(&feature)
+					if err != nil {
+						logger.Err(err).Msg("could not marshal feature information into device integration.")
+						continue
+					}
+					if insert {
+						err = deviceInt.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+						if err != nil {
+							logger.Err(err).Msg("could not insert device integration with feature information.")
+						}
+					} else {
+						if _, err := deviceInt.Update(ctx, pdb.DBS().Writer, boil.Infer()); err != nil {
+							logger.Err(err).Msg("could not update device integration with feature information.")
+						}
+					}
+
+					n++
+				}
+			}
 			if integration.Vendor == common.AutoPiVendor {
 				// look at all regions and copy from feature populated ones to ones that have 0 features reported but with SupportLevel as Maybe.
 				// note this method also writes to the db for the "other" regions
@@ -151,7 +155,8 @@ func populateDeviceFeaturesFromEs(ctx context.Context, logger zerolog.Logger, s 
 			}
 		}
 	}
-	logger.Info().Msgf("processed %d integrations from elastic", len(resp.Aggregations.Integrations.Buckets))
+
+	logger.Info().Msgf("processed %d integrations from elastic", n)
 
 	return nil
 }
@@ -216,10 +221,10 @@ func prepareFeatureData(logger *zerolog.Logger, i map[string]elastic.ElasticFilt
 	return ft
 }
 
-func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
+func getIntegrationFeatures(ctx context.Context, d db.Store) (jsonObj, error) {
 	ifeats, err := models.IntegrationFeatures().All(ctx, d.DBS().Reader)
 	if err != nil {
-		return "", err
+		return jsonObj{}, err
 	}
 
 	filters := jsonObj{}
@@ -232,12 +237,7 @@ func getIntegrationFeatures(ctx context.Context, d db.Store) (string, error) {
 		}
 	}
 
-	esFilters, err := json.Marshal(filters)
-	if err != nil {
-		return "", err
-	}
-
-	return string(esFilters), nil
+	return filters, nil
 }
 
 // copyFeaturesToMissingRegion looks for a region that has no features and tries copying. expects device integrations to exist in the DB but not necessarily in regionToFeatures
