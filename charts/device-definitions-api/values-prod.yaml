@@ -3,9 +3,6 @@ image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
   tag: 786c005
-cronJob:
-  enabled: true
-  schedule: 0 0 * * 0
 env:
   ENVIRONMENT: prod
   PORT: '8080'
@@ -55,3 +52,11 @@ tolerations: []
 affinity: {}
 podDisruptionBudget:
   minAvailable: 1
+jobs:
+  - name: search-index-load
+    schedule: 0 0 * * 0
+    args:
+      - "-c"
+      - "/device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;"
+
+#            args: ['-c', '/device-definitions-api sync -smartcar-sync && /device-definitions-api sync -search-sync-dds && /device-definitions-api sync -populate-device-features; CODE=$?; echo "smart-car-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
