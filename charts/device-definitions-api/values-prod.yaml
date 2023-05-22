@@ -58,5 +58,8 @@ jobs:
     args:
       - "-c"
       - "/device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;"
-
-#            args: ['-c', '/device-definitions-api sync -smartcar-sync && /device-definitions-api sync -search-sync-dds && /device-definitions-api sync -populate-device-features; CODE=$?; echo "smart-car-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
+  - name: update-feature-compatibility
+    schedule: 0 0 * * 0
+    args:
+      - "-c"
+      - "/device-definitions-api populate-device-features; CODE=$?; exit $CODE;"

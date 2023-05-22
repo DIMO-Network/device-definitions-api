@@ -40,12 +40,12 @@ type syncDeviceFeatureCmd struct {
 	settings config.Settings
 }
 
-func (*syncDeviceFeatureCmd) Name() string     { return "populate-device-features" }
-func (*syncDeviceFeatureCmd) Synopsis() string { return "populate-device-features args to stdout." }
+func (*syncDeviceFeatureCmd) Name() string { return "populate-device-features" }
+func (*syncDeviceFeatureCmd) Synopsis() string {
+	return "runs through all signals we get per definition from elastic and updates device_integrations.features with what we support"
+}
 func (*syncDeviceFeatureCmd) Usage() string {
-	return `populate-device-features [] <some text>:
-	sync args.
-  `
+	return `populate-device-features`
 }
 
 func (p *syncDeviceFeatureCmd) SetFlags(_ *flag.FlagSet) {

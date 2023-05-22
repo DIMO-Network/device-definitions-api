@@ -39,12 +39,12 @@ type syncOpsCmd struct {
 	vinNumbers            bool
 }
 
-func (*syncOpsCmd) Name() string     { return "sync" }
-func (*syncOpsCmd) Synopsis() string { return "sync args to stdout." }
+func (*syncOpsCmd) Name() string { return "sync" }
+func (*syncOpsCmd) Synopsis() string {
+	return "pick a sync option from the list of supported operations."
+}
 func (*syncOpsCmd) Usage() string {
-	return `sync [-search-sync-dds|-ipfs-sync-data|-smartcar-compatibility|-create-tesla-integrations|-nhtsa-sync-recalls] <some text>:
-	sync args.
-  `
+	return `sync [-search-sync-dds|-ipfs-sync-data|-smartcar-compatibility|-create-tesla-integrations|-nhtsa-sync-recalls]`
 }
 
 func (p *syncOpsCmd) SetFlags(f *flag.FlagSet) {
@@ -211,6 +211,7 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 
 }
 
+// vinNumbersSync reads in the passed in list of vins from the filename and calls third party to decode and insert into our vin_numbers db
 func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logger, filename string) {
 
 	//db
