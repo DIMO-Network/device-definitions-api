@@ -56,10 +56,10 @@ jobs:
   - name: search-index-load
     schedule: 0 0 * * 0
     args:
-      - '-c'
-      - /device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;
+      - "-c"
+      - "/device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;"
   - name: update-feature-compatibility
     schedule: 0 0 * * 0
     args:
-      - '-c'
-      - /device-definitions-api populate-device-features; CODE=$?; exit $CODE;
+      - "-c"
+      - "/device-definitions-api populate-device-features; CODE=$?; exit $CODE;"
