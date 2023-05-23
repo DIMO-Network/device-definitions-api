@@ -1,13 +1,14 @@
-{{- if .Values.cronJob.enabled }}
+{{- range $job := .Values.jobs }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "device-definitions-api.fullname" . }}-load-dd
+  name: {{ include "device-definitions-api.fullname" . }}-{{ $job.name }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "device-definitions-api.labels" . | nindent 4 }}
 spec:
-  schedule: {{ .Values.cronJob.schedule | quote}}
+  schedule: {{ $job.schedule | quote }}
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
@@ -19,16 +20,19 @@ spec:
           {{- end }}
         spec:
           containers:
-          - name: edmunds-vehicles-sync
+          - name: device-definitions-api
             securityContext:
               {{- toYaml .Values.securityContext | nindent 14 }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
             command: ['/bin/sh']
-            args: ['-c', '/device-definitions-api sync -smartcar-sync && /device-definitions-api sync -search-sync-dds && /device-definitions-api sync -populate-device-features; CODE=$?; echo "smart-car-sync and search-sync-dds completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown; exit $CODE;']
+            {{- with $job.args }}
+            args:
+{{ toYaml . | indent 12 }}
+            {{- end }}
             envFrom:
             - configMapRef:
                 name: {{ include "device-definitions-api.fullname" . }}-config
             - secretRef:
                 name: {{ include "device-definitions-api.fullname" . }}-secret
           restartPolicy: OnFailure
-{{ end }}          
+{{- end }}

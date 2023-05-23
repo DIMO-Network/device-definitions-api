@@ -3,9 +3,6 @@ image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
   tag: 786c005
-cronJob:
-  enabled: true
-  schedule: 0 0 * * 0
 env:
   ENVIRONMENT: prod
   PORT: '8080'
@@ -55,3 +52,14 @@ tolerations: []
 affinity: {}
 podDisruptionBudget:
   minAvailable: 1
+jobs:
+  - name: search-index-load
+    schedule: 0 0 * * 0
+    args:
+      - "-c"
+      - "/device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;"
+  - name: update-feature-compatibility
+    schedule: 0 0 * * 0
+    args:
+      - "-c"
+      - "/device-definitions-api populate-device-features; CODE=$?; exit $CODE;"
