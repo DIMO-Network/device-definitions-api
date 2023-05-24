@@ -1,0 +1,15 @@
+name: Helm Lint and Test Charts
+
+on: pull_request
+
+jobs:
+  helm-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: helm-check
+        uses: igabaydulin/helm-check-action@0.2.0
+        env:
+          CHART_LOCATION: ./charts/device-definitions-api
+          CHART_VALUES: ./charts/device-definitions-api/values-prod.yaml
