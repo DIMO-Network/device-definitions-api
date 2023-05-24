@@ -4,7 +4,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: dc696aa
+  tag: 3e3f3d4
 env:
   ENVIRONMENT: prod
   PORT: '8080'
@@ -58,10 +58,10 @@ jobs:
   - name: search-index-load
     schedule: 0 0 * * 0
     args:
-      - "-c"
-      - "/device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;"
+      - '-c'
+      - /device-definitions-api sync -search-sync-dds; CODE=$?; exit $CODE;
   - name: feat-compat-updte
     schedule: 0 0 * * 0
     args:
-      - "-c"
-      - "/device-definitions-api populate-device-features; CODE=$?; exit $CODE;"
+      - '-c'
+      - /device-definitions-api populate-device-features; CODE=$?; exit $CODE;
