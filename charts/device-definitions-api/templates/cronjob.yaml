@@ -3,10 +3,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "device-definitions-api.fullname" . }}-{{ $job.name }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "device-definitions-api.fullname" $ }}-{{ $job.name }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "device-definitions-api.labels" . | nindent 4 }}
+    {{- include "device-definitions-api.labels" $ | nindent 4 }}
 spec:
   schedule: {{ $job.schedule | quote }}
   concurrencyPolicy: "Forbid"
@@ -15,15 +15,15 @@ spec:
       template:
         metadata:
           annotations:
-          {{- with .Values.podAnnotations }}
+          {{- with $.Values.podAnnotations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
         spec:
           containers:
           - name: device-definitions-api
             securityContext:
-              {{- toYaml .Values.securityContext | nindent 14 }}
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              {{- toYaml $.Values.securityContext | nindent 14 }}
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
             command: ['/bin/sh']
             {{- with $job.args }}
             args:
@@ -31,8 +31,8 @@ spec:
             {{- end }}
             envFrom:
             - configMapRef:
-                name: {{ include "device-definitions-api.fullname" . }}-config
+                name: {{ include "device-definitions-api.fullname" $ }}-config
             - secretRef:
-                name: {{ include "device-definitions-api.fullname" . }}-secret
+                name: {{ include "device-definitions-api.fullname" $ }}-secret
           restartPolicy: OnFailure
 {{- end }}
