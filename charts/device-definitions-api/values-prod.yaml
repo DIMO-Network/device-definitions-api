@@ -4,7 +4,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 3e3f3d4
+  tag: d8bcfe4
 env:
   ENVIRONMENT: prod
   PORT: '8080'
@@ -59,11 +59,11 @@ jobs:
     schedule: 0 0 * * 0
     args:
       - '-c'
-      - '/device-definitions-api sync -search-sync-dds'
-      - '; CODE=$?; wget --post-data hello=shutdown http://localhost:4191/shutdown; exit $CODE;'
+      - /device-definitions-api sync -search-sync-dds
+      - ; CODE=$?; wget --post-data hello=shutdown http://localhost:4191/shutdown; exit $CODE;
   - name: feat-compat-updte
     schedule: 0 0 * * 0
     args:
       - '-c'
-      - '/device-definitions-api populate-device-features'
-      - '; CODE=$?; wget --post-data hello=shutdown http://localhost:4191/shutdown; exit $CODE;'
+      - /device-definitions-api populate-device-features
+      - ; CODE=$?; wget --post-data hello=shutdown http://localhost:4191/shutdown; exit $CODE;
