@@ -89,11 +89,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
+	txVinNumbers, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, errors.Wrap(err, "error when beginning transaction")
+	}
+	defer txVinNumbers.Rollback() //nolint
 
-	vinDecodeNumber, err := models.FindVinNumber(ctx, dc.dbs().Reader, vin.String())
+	vinDecodeNumber, err := models.FindVinNumber(ctx, txVinNumbers, vin.String())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, err
+		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	if vinDecodeNumber != nil {
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
@@ -110,7 +115,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get device_type")
 	}
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
@@ -160,7 +165,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		// create DD if does not exist
 		if errors.Is(err, sql.ErrNoRows) {
-			dd, err = dc.ddRepository.GetOrCreate(ctx,
+			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
 				common.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
 				dbWMI.DeviceMakeID,
@@ -172,7 +177,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				nil)
 			if err != nil {
 				metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-				return nil, err
+				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
 			}
 
 			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
@@ -222,8 +227,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				SubModel:           vinInfo.SubModel,
 				Metadata:           vinInfo.MetaData,
 			}
-			err := style.Insert(ctx, dc.dbs().Writer, boil.Infer())
-			if err == nil {
+			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
+			if errStyle == nil {
 				localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
 				resp.DeviceStyleId = style.ID
 			}
@@ -269,12 +274,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str("vds", vin.VDS()).
 		Str("vis", vin.VIS()).
 		Str("check_digit", vin.CheckDigit()).Msg("decoded vin ok")
-
-	if err = vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
+	// todo problem here is that the device definition doesn't exist in the context of this transaction, since created in by the repository above
+	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 		localLog.Err(err).
 			Str("device_definition_id", dd.ID).
 			Str("device_make_id", dd.DeviceMakeID).
 			Msg("failed to insert to vin_numbers")
+	}
+	err = txVinNumbers.Commit()
+	if err != nil {
+		return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
