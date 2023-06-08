@@ -89,16 +89,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
-	tx, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	txVinNumbers, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error when beginning transaction")
 	}
-	defer tx.Rollback() //nolint
+	defer txVinNumbers.Rollback() //nolint
 
-	vinDecodeNumber, err := models.FindVinNumber(ctx, tx, vin.String())
+	vinDecodeNumber, err := models.FindVinNumber(ctx, txVinNumbers, vin.String())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, err
+		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	if vinDecodeNumber != nil {
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
@@ -112,10 +112,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, tx)
+	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get device_type")
 	}
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
@@ -161,11 +161,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
-		One(ctx, tx)
+		One(ctx, dc.dbs().Reader)
 	if err != nil {
 		// create DD if does not exist
 		if errors.Is(err, sql.ErrNoRows) {
-			dd, err = dc.ddRepository.GetOrCreate(ctx,
+			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
 				common.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
 				dbWMI.DeviceMakeID,
@@ -177,7 +177,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				nil)
 			if err != nil {
 				metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-				return nil, err
+				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
 			}
 
 			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
@@ -193,7 +193,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.DeviceDefinitionId = dd.ID
 
 	// resolve images
-	_, err = models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, tx)
+	_, err = models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
@@ -215,7 +215,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
-			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, tx)
+			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
 			// insert, if fails doesn't matter - continue just don't return the style_id
 			style = &models.DeviceStyle{
@@ -227,8 +227,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				SubModel:           vinInfo.SubModel,
 				Metadata:           vinInfo.MetaData,
 			}
-			err := style.Insert(ctx, tx, boil.Infer())
-			if err == nil {
+			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
+			if errStyle == nil {
 				localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
 				resp.DeviceStyleId = style.ID
 			}
@@ -241,7 +241,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
 		// todo - future: merge metadata properties. Also set style specific metadata - multiple places
 		dd.Metadata = vinInfo.MetaData
-		_, _ = dd.Update(ctx, tx, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+		_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
 		// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
 	}
 	// insert vin_numbers
@@ -274,16 +274,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str("vds", vin.VDS()).
 		Str("vis", vin.VIS()).
 		Str("check_digit", vin.CheckDigit()).Msg("decoded vin ok")
-
-	if err = vinDecodeNumber.Insert(ctx, tx, boil.Infer()); err != nil {
+	// todo problem here is that the device definition doesn't exist in the context of this transaction, since created in by the repository above
+	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 		localLog.Err(err).
 			Str("device_definition_id", dd.ID).
 			Str("device_make_id", dd.DeviceMakeID).
 			Msg("failed to insert to vin_numbers")
 	}
-	err = tx.Commit()
+	err = txVinNumbers.Commit()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()

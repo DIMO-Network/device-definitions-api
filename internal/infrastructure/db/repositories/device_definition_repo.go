@@ -35,7 +35,7 @@ type DeviceDefinitionRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error)
+	GetOrCreate(ctx context.Context, numbers *sql.Tx, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
 	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
@@ -200,14 +200,17 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
 	model = strings.TrimSpace(model)
 	if len(model) == 0 {
 		return nil, errors.New("invalid model, must not be blank")
 	}
-
-	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
-	defer tx.Rollback() //nolint
+	commitTx := false
+	if tx == nil {
+		tx, _ = r.DBS().Writer.BeginTx(ctx, nil)
+		commitTx = true
+		defer tx.Rollback() //nolint
+	}
 
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
@@ -316,9 +319,11 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, source str
 		return nil, &exceptions.InternalError{Err: err}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, &exceptions.InternalError{Err: err}
+	if commitTx {
+		err = tx.Commit()
+		if err != nil {
+			return nil, &exceptions.InternalError{Err: err}
+		}
 	}
 	return dd, nil
 }
