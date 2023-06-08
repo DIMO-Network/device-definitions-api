@@ -89,7 +89,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
-	tx, err := dc.dbs().Writer.BeginTx(ctx, nil)
+	tx, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return nil, err
 	}
