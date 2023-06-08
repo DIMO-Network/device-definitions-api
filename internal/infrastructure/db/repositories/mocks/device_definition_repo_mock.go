@@ -144,18 +144,18 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDevicesMMY(ctx interfac
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, numbers *sql.Tx, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreate", ctx, numbers, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
+	ret := m.ctrl.Call(m, "GetOrCreate", ctx, tx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreate indicates an expected call of GetOrCreate.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, numbers, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetOrCreate(ctx, tx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, numbers, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetOrCreate), ctx, tx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
 }
 
 // GetWithIntegrations mocks base method.

@@ -80,7 +80,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceMake = &models.DeviceMake{ID: deviceMakeID, Name: mk}
 
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
 
 	var deviceAttributes []*coremodels.UpdateDeviceTypeAttribute
 
@@ -112,7 +112,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	year := 2022
 
 	s.mockRepository.EXPECT().
-		GetOrCreate(gomock.Any(), source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(nil, errors.New("Error")).Times(1)
+		GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(nil, errors.New("Error")).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
 		Source:       source,
