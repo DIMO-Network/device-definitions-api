@@ -44,7 +44,7 @@ func (*syncOpsCmd) Synopsis() string {
 	return "pick a sync option from the list of supported operations."
 }
 func (*syncOpsCmd) Usage() string {
-	return `sync [-search-sync-dds|-ipfs-sync-data|-smartcar-compatibility|-create-tesla-integrations|-nhtsa-sync-recalls]`
+	return `sync [-search-sync-dds|-ipfs-sync-data|-smartcar-compatibility|-create-tesla-integrations|-nhtsa-sync-recalls|-powertraintype-sync]`
 }
 
 func (p *syncOpsCmd) SetFlags(f *flag.FlagSet) {

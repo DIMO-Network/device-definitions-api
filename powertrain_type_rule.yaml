@@ -1,0 +1,53 @@
+types:
+  - name: Default Rule ICE
+    type: ICE
+    default: true
+
+  - name: Rule HEV
+    type: HEV
+    makes:
+      - toyota
+    models:
+      - jimny
+
+  - name: Rule PHEV
+    type: PHEV
+    makes:
+      - audi
+
+  - name: Rule BEV
+    type: BEV
+    makes:
+      - lexus
+
+  - name: Rule FCEV
+    type: FCEV
+    makes:
+      - lotus
+
+drivly:
+  - type: HEV
+    values:
+      - Hybrid
+      - Gasoline
+
+  - type: ICE
+    values:
+      - Diesel
+      - Flexible-Fuel
+
+  - type: BEV
+    values:
+      - Electric
+      - Alternative
+
+vincario:
+  - type: ICE
+    values:
+      - Flexible Fuel Vehicle (FFV)
+      - Diesel
+      - Gasoline
+
+  - type: BEV
+    values:
+      - Electric
