@@ -44,7 +44,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		return nil, err
 	}
 
-	ch.logger.Info().Msgf("found %d device definitions verified, starting process...", len(all))
+	ch.logger.Info().Msgf("powertrain setting - found %d device definitions verified, starting process...", len(all))
 	if len(all) == 0 {
 		return SyncPowerTrainTypeCommandResult{false}, nil
 	}
