@@ -13,18 +13,30 @@ types:
       - cr-v_hybrid
       - rav4_hybrid
 
-  - name: Rule PHEV
-    type: PHEV
-    models:
-      -
+#  - name: Rule PHEV
+#    type: PHEV
+#    models:
+#      -
 
-  - name: Rule BEV
+  - name: Rule BEV makes
     type: BEV
     makes:
       - tesla
       - lucid
       - rivian
       - polestar
+
+  - name: Rule BEV models
+    type: BEV
+    makes:
+      - cadillac
+      - mercedes-benz
+    models:
+      - lyriq
+      - eqs
+      - eqa
+      - eqb
+      - eqe
 
   - name: Rule FCEV
     type: FCEV
