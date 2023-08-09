@@ -64,7 +64,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		ch.logger.Info().Msgf("%s - Make:%s Model: %s Year: %d", definition.ID, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition.Year)
 
 		if definition.R.DeviceType == nil {
-			ch.logger.Error().Msgf("ID: %s with DeviceType is empty", definition.ID, definition.R.DeviceMake.Name, definition.Model, definition.Year)
+			ch.logger.Error().Msgf("ID: %s with DeviceType is empty", definition.ID)
 			continue
 		}
 
@@ -72,32 +72,26 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		var metadataAttributes map[string]any
 
 		if err := definition.Metadata.Unmarshal(&metadataAttributes); err == nil {
-			if metadataAttributes != nil {
-				if a, ok := metadataAttributes[metadataKey]; ok && a != nil {
+			metadataAttributes = make(map[string]interface{})
+			metaData := make(map[string]interface{})
 
+			dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(definition.DeviceTypeID.String)).
+				One(ctx, ch.DBS().Reader)
+
+			if err != nil {
+				if !errors.Is(err, sql.ErrNoRows) {
+					return nil, err
 				}
-			} else {
-				metadataAttributes = make(map[string]interface{})
-				metaData := make(map[string]interface{})
-
-				dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(definition.DeviceTypeID.String)).
-					One(ctx, ch.DBS().Reader)
-
-				if err != nil {
-					if !errors.Is(err, sql.ErrNoRows) {
-						return nil, err
-					}
-				}
-
-				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
-				if err := dt.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
-					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
-						metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
-					}
-				}
-
-				metadataAttributes[metadataKey] = metaData
 			}
+
+			var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
+			if err := dt.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
+				for _, deviceAttribute := range deviceTypeAttributes["properties"] {
+					metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
+				}
+			}
+
+			metadataAttributes[metadataKey] = metaData
 		}
 
 		for key, _ := range metadataAttributes[metadataKey].(map[string]any) {
