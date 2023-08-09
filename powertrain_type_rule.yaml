@@ -7,23 +7,33 @@ types:
     type: HEV
     makes:
       - toyota
+      - honda
+      - mercedes-benz
     models:
-      - jimny
+      - cr-v_hybrid
+      - rav4_hybrid
 
   - name: Rule PHEV
     type: PHEV
-    makes:
-      - audi
+    models:
+      -
 
   - name: Rule BEV
     type: BEV
     makes:
-      - lexus
+      - tesla
+      - lucid
+      - rivian
+      - polestar
 
   - name: Rule FCEV
     type: FCEV
     makes:
-      - lotus
+      - honda
+      - hyundai
+    models:
+      - nexo
+      - cr-v_fcev
 
 drivly:
   - type: HEV
