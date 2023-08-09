@@ -101,7 +101,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		for key, _ := range metadataAttributes[metadataKey].(map[string]any) {
 
 			if key == powerTrainType {
-				powerTrainTypeValue := ch.resolvePowerTrainTypeByMake(ctx, powerTrainTypeData, definition)
+				powerTrainTypeValue := ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
 				metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType] = powerTrainTypeValue
 			}
 		}
@@ -119,7 +119,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 	return SyncPowerTrainTypeCommandResult{true}, nil
 }
 
-func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainTypeByMake(ctx context.Context, powerTrainTypeData coremodels.PowerTrainTypeRuleData,
+func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainType(ctx context.Context, powerTrainTypeData coremodels.PowerTrainTypeRuleData,
 	definition *models.DeviceDefinition) string {
 
 	for _, ptType := range powerTrainTypeData.PowerTrainTypeList {
