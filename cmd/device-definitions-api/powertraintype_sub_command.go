@@ -15,15 +15,18 @@ import (
 type powerTrainTypeCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
+
+	force bool
 }
 
 func (*powerTrainTypeCmd) Name() string     { return "syncpowertraintype" }
 func (*powerTrainTypeCmd) Synopsis() string { return "sync powertraintype" }
 func (*powerTrainTypeCmd) Usage() string {
-	return `syncpowertraintype`
+	return `syncpowertraintype [-force]`
 }
 
-func (p *powerTrainTypeCmd) SetFlags(_ *flag.FlagSet) {
+func (p *powerTrainTypeCmd) SetFlags(f *flag.FlagSet) {
+	f.BoolVar(&p.force, "force", false, "Enable Force Powertraintype")
 }
 
 func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -38,7 +41,7 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 		mediator.WithHandler(&commands.SyncPowerTrainTypeCommand{}, commands.NewSyncPowerTrainTypeCommandHandler(pdb.DBS, p.logger)),
 	)
 
-	_, _ = m.Send(ctx, &commands.SyncPowerTrainTypeCommand{})
+	_, _ = m.Send(ctx, &commands.SyncPowerTrainTypeCommand{ForceUpdate: p.force})
 
 	return subcommands.ExitSuccess
 }

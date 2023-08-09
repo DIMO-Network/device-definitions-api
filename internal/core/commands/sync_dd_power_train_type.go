@@ -2,8 +2,6 @@ package commands
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"os"
@@ -18,6 +16,7 @@ import (
 )
 
 type SyncPowerTrainTypeCommand struct {
+	ForceUpdate bool
 }
 
 type SyncPowerTrainTypeCommandResult struct {
@@ -35,7 +34,8 @@ func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zer
 	return SyncPowerTrainTypeCommandHandler{DBS: dbs, logger: logger}
 }
 
-func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
+func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+	command := query.(*SyncPowerTrainTypeCommand)
 
 	const powerTrainType = "powertrain_type"
 
@@ -48,7 +48,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		return nil, err
 	}
 
-	ch.logger.Info().Msgf("powertrain setting - found %d device definitions verified, starting process...", len(all))
+	ch.logger.Info().Msgf("powertrain setting Force (%t) - found %d device definitions verified, starting process...", command.ForceUpdate, len(all))
 	if len(all) == 0 {
 		return SyncPowerTrainTypeCommandResult{false}, nil
 	}
@@ -65,7 +65,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 	}
 
 	for _, definition := range all {
-		ch.logger.Info().Msgf("%s - Make:%s Model: %s Year: %d", definition.ID, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition.Year)
+		//ch.logger.Info().Msgf("%s - Make:%s Model: %s Year: %d", definition.ID, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition.Year)
 
 		if definition.R.DeviceType == nil {
 			ch.logger.Error().Msgf("ID: %s with DeviceType is empty", definition.ID)
@@ -76,32 +76,34 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		var metadataAttributes map[string]any
 
 		if err := definition.Metadata.Unmarshal(&metadataAttributes); err == nil {
-			metadataAttributes = make(map[string]interface{})
-			metaData := make(map[string]interface{})
+			if metadataAttributes == nil {
+				metadataAttributes = make(map[string]interface{})
+				metaData := make(map[string]interface{})
 
-			dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(definition.DeviceTypeID.String)).
-				One(ctx, ch.DBS().Reader)
-
-			if err != nil {
-				if !errors.Is(err, sql.ErrNoRows) {
-					return nil, err
+				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
+				if err := definition.R.DeviceType.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
+					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
+						metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
+					}
 				}
-			}
 
-			var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
-			if err := dt.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
-				for _, deviceAttribute := range deviceTypeAttributes["properties"] {
-					metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
-				}
+				metadataAttributes[metadataKey] = metaData
 			}
-
-			metadataAttributes[metadataKey] = metaData
 		}
 
-		for key, _ := range metadataAttributes[metadataKey].(map[string]any) {
+		for key, value := range metadataAttributes[metadataKey].(map[string]interface{}) {
 
 			if key == powerTrainType {
-				powerTrainTypeValue := ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
+				powerTrainTypeValue := value
+				if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
+					powerTrainTypeValue = ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
+				} else {
+					if command.ForceUpdate {
+						powerTrainTypeValue = ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
+						ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType], powerTrainTypeValue)
+					}
+				}
+
 				metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType] = powerTrainTypeValue
 			}
 		}
@@ -114,6 +116,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		if err = definition.Upsert(ctx, ch.DBS().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return SyncPowerTrainTypeCommandResult{true}, nil
