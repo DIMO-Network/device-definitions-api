@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"os"
 
@@ -37,6 +38,7 @@ func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zer
 func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
+		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)
