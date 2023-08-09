@@ -148,9 +148,7 @@ func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainTypeByMake(ctx conte
 		}
 	}
 
-	vins, err := models.VinNumbers(models.VinNumberWhere.DeviceDefinitionID.EQ(definition.ID),
-		models.VinNumberWhere.DeviceMakeID.EQ(definition.DeviceMakeID),
-		models.VinNumberWhere.Year.EQ(int(definition.Year))).All(ctx, ch.DBS().Reader)
+	vins, err := models.VinNumbers(models.VinNumberWhere.DeviceDefinitionID.EQ(definition.ID)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		return defaultPowerTrainType
 	}
@@ -162,7 +160,7 @@ func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainTypeByMake(ctx conte
 	vin := vins[0]
 
 	// Resolve Drivly Data
-	ch.logger.Info().Msg("Validating Drivly Data")
+	ch.logger.Info().Msg("Looking up PowerTrain from Drivly Data")
 	if vin.DrivlyData.Valid && len(powerTrainTypeData.VincarioList) > 0 {
 		var drivlyData coremodels.DrivlyData
 		err = vin.DrivlyData.Unmarshal(&drivlyData)
@@ -183,7 +181,7 @@ func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainTypeByMake(ctx conte
 	}
 
 	// Resolve Vincario Data
-	ch.logger.Info().Msg("Validating Vincario Data")
+	ch.logger.Info().Msg("Looking up PowerTrain from Vincario Data")
 	if vin.VincarioData.Valid && len(powerTrainTypeData.VincarioList) > 0 {
 		var vincarioData coremodels.VincarioData
 		err = vin.DrivlyData.Unmarshal(&vincarioData)
