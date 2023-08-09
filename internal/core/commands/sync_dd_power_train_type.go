@@ -37,6 +37,8 @@ func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zer
 
 func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
 
+	const powerTrainType = "powertrain_type"
+
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
 		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
@@ -97,9 +99,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, _ mediato
 		}
 
 		for key, _ := range metadataAttributes[metadataKey].(map[string]any) {
-			if key == "powertrain_type" {
-				powerTrainType := ch.resolvePowerTrainTypeByMake(ctx, powerTrainTypeData, definition)
-				metadataAttributes[metadataKey].(map[string]interface{})["powertrain_type"] = powerTrainType
+
+			if key == powerTrainType {
+				powerTrainTypeValue := ch.resolvePowerTrainTypeByMake(ctx, powerTrainTypeData, definition)
+				metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType] = powerTrainTypeValue
 			}
 		}
 
