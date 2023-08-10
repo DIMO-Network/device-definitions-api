@@ -1,0 +1,75 @@
+types:
+  - name: Default Rule ICE
+    type: ICE
+    default: true
+
+  - name: Rule HEV
+    type: HEV
+    makes:
+      - toyota
+      - honda
+      - mercedes-benz
+    models:
+      - cr-v_hybrid
+      - rav4_hybrid
+
+#  - name: Rule PHEV
+#    type: PHEV
+#    models:
+#      -
+
+  - name: Rule BEV makes
+    type: BEV
+    makes:
+      - tesla
+      - lucid
+      - rivian
+      - polestar
+
+  - name: Rule BEV models
+    type: BEV
+    makes:
+      - cadillac
+      - mercedes-benz
+    models:
+      - lyriq
+      - eqs
+      - eqa
+      - eqb
+      - eqe
+
+  - name: Rule FCEV
+    type: FCEV
+    makes:
+      - honda
+      - hyundai
+    models:
+      - nexo
+      - cr-v_fcev
+
+drivly:
+  - type: HEV
+    values:
+      - Hybrid
+      - Gasoline
+
+  - type: ICE
+    values:
+      - Diesel
+      - Flexible-Fuel
+
+  - type: BEV
+    values:
+      - Electric
+      - Alternative
+
+vincario:
+  - type: ICE
+    values:
+      - Flexible Fuel Vehicle (FFV)
+      - Diesel
+      - Gasoline
+
+  - type: BEV
+    values:
+      - Electric
