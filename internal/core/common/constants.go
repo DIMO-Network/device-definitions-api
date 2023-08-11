@@ -1,5 +1,9 @@
 package common
 
+const (
+	PowerTrainType = "powertrain_type"
+)
+
 type RegionEnum string
 
 const (

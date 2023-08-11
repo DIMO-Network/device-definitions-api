@@ -6,6 +6,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/google/subcommands"
@@ -34,11 +35,13 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
+	powerTrainTypeService := services.NewPowerTrainTypeService(pdb.DBS, &p.logger)
+
 	//commands
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&p.logger, &p.settings)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&p.logger, &p.settings)),
-		mediator.WithHandler(&commands.SyncPowerTrainTypeCommand{}, commands.NewSyncPowerTrainTypeCommandHandler(pdb.DBS, p.logger)),
+		mediator.WithHandler(&commands.SyncPowerTrainTypeCommand{}, commands.NewSyncPowerTrainTypeCommandHandler(pdb.DBS, p.logger, powerTrainTypeService)),
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncPowerTrainTypeCommand{ForceUpdate: p.force})

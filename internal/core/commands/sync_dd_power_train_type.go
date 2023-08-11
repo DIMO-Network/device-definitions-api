@@ -2,17 +2,17 @@ package commands
 
 import (
 	"context"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"os"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"gopkg.in/yaml.v3"
 )
 
 type SyncPowerTrainTypeCommand struct {
@@ -26,18 +26,17 @@ type SyncPowerTrainTypeCommandResult struct {
 func (*SyncPowerTrainTypeCommand) Key() string { return "SyncPowerTrainTypeCommand" }
 
 type SyncPowerTrainTypeCommandHandler struct {
-	DBS    func() *db.ReaderWriter
-	logger zerolog.Logger
+	DBS                   func() *db.ReaderWriter
+	logger                zerolog.Logger
+	powerTrainTypeService services.PowerTrainTypeService
 }
 
-func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zerolog.Logger) SyncPowerTrainTypeCommandHandler {
-	return SyncPowerTrainTypeCommandHandler{DBS: dbs, logger: logger}
+func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zerolog.Logger, powerTrainTypeService services.PowerTrainTypeService) SyncPowerTrainTypeCommandHandler {
+	return SyncPowerTrainTypeCommandHandler{DBS: dbs, logger: logger, powerTrainTypeService: powerTrainTypeService}
 }
 
 func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	command := query.(*SyncPowerTrainTypeCommand)
-
-	const powerTrainType = "powertrain_type"
 
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
 		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
@@ -53,17 +52,6 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 		return SyncPowerTrainTypeCommandResult{false}, nil
 	}
 
-	content, err := os.ReadFile("powertrain_type_rule.yaml")
-	if err != nil {
-		return nil, err
-	}
-
-	var powerTrainTypeData coremodels.PowerTrainTypeRuleData
-	err = yaml.Unmarshal(content, &powerTrainTypeData)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, definition := range all {
 		//ch.logger.Info().Msgf("%s - Make:%s Model: %s Year: %d", definition.ID, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition.Year)
 
@@ -75,11 +63,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 		metadataKey := definition.R.DeviceType.Metadatakey
 		var metadataAttributes map[string]any
 
-		if err := definition.Metadata.Unmarshal(&metadataAttributes); err == nil {
+		if err = definition.Metadata.Unmarshal(&metadataAttributes); err == nil {
+			metaData := make(map[string]interface{})
 			if metadataAttributes == nil {
 				metadataAttributes = make(map[string]interface{})
-				metaData := make(map[string]interface{})
-
 				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
 				if err := definition.R.DeviceType.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
 					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
@@ -89,22 +76,39 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 
 				metadataAttributes[metadataKey] = metaData
 			}
-		}
 
-		for key, value := range metadataAttributes[metadataKey].(map[string]interface{}) {
-
-			if key == powerTrainType {
-				powerTrainTypeValue := value
-				if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
-					powerTrainTypeValue = ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
-				} else {
-					if command.ForceUpdate {
-						powerTrainTypeValue = ch.resolvePowerTrainType(ctx, powerTrainTypeData, definition)
-						ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType], powerTrainTypeValue)
+			// Validate format
+			if _, ok := metadataAttributes[metadataKey]; ok {
+				var powerTrainTypeValue *string
+				hasPowerTrainType := false
+				for key, value := range metadataAttributes[metadataKey].(map[string]interface{}) {
+					if key == common.PowerTrainType {
+						hasPowerTrainType = true
+						if strValue, isString := value.(string); isString {
+							powerTrainTypeValue = &strValue
+						}
+						if powerTrainTypeValue == nil || *powerTrainTypeValue == "" {
+							powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
+							if err != nil {
+								ch.logger.Error().Err(err)
+							}
+						} else {
+							if command.ForceUpdate {
+								powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
+								if err != nil {
+									ch.logger.Error().Err(err)
+								}
+								ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType], *powerTrainTypeValue)
+							}
+						}
+						break
 					}
 				}
 
-				metadataAttributes[metadataKey].(map[string]interface{})[powerTrainType] = powerTrainTypeValue
+				if !hasPowerTrainType {
+					powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
+				}
+				metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
 			}
 		}
 
@@ -120,88 +124,4 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 	}
 
 	return SyncPowerTrainTypeCommandResult{true}, nil
-}
-
-func (ch SyncPowerTrainTypeCommandHandler) resolvePowerTrainType(ctx context.Context, powerTrainTypeData coremodels.PowerTrainTypeRuleData,
-	definition *models.DeviceDefinition) string {
-
-	for _, ptType := range powerTrainTypeData.PowerTrainTypeList {
-		for _, mk := range ptType.Makes {
-			if mk == definition.R.DeviceMake.NameSlug {
-				if len(ptType.Models) == 0 {
-					return ptType.Type
-				}
-
-				for _, model := range ptType.Models {
-					if model == definition.ModelSlug {
-						return ptType.Type
-					}
-				}
-
-			}
-		}
-	}
-
-	// Default
-	defaultPowerTrainType := ""
-	for _, ptType := range powerTrainTypeData.PowerTrainTypeList {
-		if ptType.Default {
-			defaultPowerTrainType = ptType.Type
-			break
-		}
-	}
-
-	vins, err := models.VinNumbers(models.VinNumberWhere.DeviceDefinitionID.EQ(definition.ID)).All(ctx, ch.DBS().Reader)
-	if err != nil {
-		return defaultPowerTrainType
-	}
-
-	if len(vins) == 0 {
-		return defaultPowerTrainType
-	}
-
-	vin := vins[0]
-
-	// Resolve Drivly Data
-	ch.logger.Info().Msg("Looking up PowerTrain from Drivly Data")
-	if vin.DrivlyData.Valid && len(powerTrainTypeData.VincarioList) > 0 {
-		var drivlyData coremodels.DrivlyData
-		err = vin.DrivlyData.Unmarshal(&drivlyData)
-		if err != nil {
-			ch.logger.Error().Err(err)
-		}
-
-		for _, item := range powerTrainTypeData.DrivlyList {
-			if len(item.Values) > 0 {
-				for _, value := range item.Values {
-					if value == drivlyData.FuelType {
-						return item.Type
-					}
-				}
-			}
-		}
-
-	}
-
-	// Resolve Vincario Data
-	ch.logger.Info().Msg("Looking up PowerTrain from Vincario Data")
-	if vin.VincarioData.Valid && len(powerTrainTypeData.VincarioList) > 0 {
-		var vincarioData coremodels.VincarioData
-		err = vin.DrivlyData.Unmarshal(&vincarioData)
-		if err != nil {
-			ch.logger.Error().Err(err)
-		}
-
-		for _, item := range powerTrainTypeData.VincarioList {
-			if len(item.Values) > 0 {
-				for _, value := range item.Values {
-					if value == vincarioData.FuelType {
-						return item.Type
-					}
-				}
-			}
-		}
-	}
-
-	return defaultPowerTrainType
 }

@@ -9,9 +9,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/DIMO-Network/device-definitions-api/pkg"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -35,12 +32,13 @@ import (
 )
 
 type DecodeVINQueryHandler struct {
-	dbs                func() *db.ReaderWriter
-	vinDecodingService services.VINDecodingService
-	logger             *zerolog.Logger
-	ddRepository       repositories.DeviceDefinitionRepository
-	vinRepository      repositories.VINRepository
-	fuelAPIService     gateways.FuelAPIService
+	dbs                   func() *db.ReaderWriter
+	vinDecodingService    services.VINDecodingService
+	logger                *zerolog.Logger
+	ddRepository          repositories.DeviceDefinitionRepository
+	vinRepository         repositories.VINRepository
+	fuelAPIService        gateways.FuelAPIService
+	powerTrainTypeService services.PowerTrainTypeService
 }
 
 type DecodeVINQuery struct {
@@ -55,14 +53,16 @@ func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
 func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService services.VINDecodingService,
 	vinRepository repositories.VINRepository,
 	repository repositories.DeviceDefinitionRepository, logger *zerolog.Logger,
-	fuelAPIService gateways.FuelAPIService) DecodeVINQueryHandler {
+	fuelAPIService gateways.FuelAPIService,
+	powerTrainTypeService services.PowerTrainTypeService) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
-		dbs:                dbs,
-		vinDecodingService: vinDecodingService,
-		logger:             logger,
-		ddRepository:       repository,
-		vinRepository:      vinRepository,
-		fuelAPIService:     fuelAPIService,
+		dbs:                   dbs,
+		vinDecodingService:    vinDecodingService,
+		logger:                logger,
+		ddRepository:          repository,
+		vinRepository:         vinRepository,
+		fuelAPIService:        fuelAPIService,
+		powerTrainTypeService: powerTrainTypeService,
 	}
 }
 
@@ -166,6 +166,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
 		One(ctx, dc.dbs().Reader)
+
+	ddExists := true
 	if err != nil {
 		// create DD if does not exist
 		if errors.Is(err, sql.ErrNoRows) {
@@ -183,7 +185,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
 			}
-
+			ddExists = false
 			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
 		} else {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
@@ -288,6 +290,60 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	err = txVinNumbers.Commit()
 	if err != nil {
 		return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
+	}
+
+	if !ddExists {
+		dd, err = models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
+			models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
+			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+			qm.Load(models.DeviceDefinitionRels.DeviceType),
+			qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, dc.dbs().Reader)
+		if err != nil {
+			return nil, errors.Wrap(err, "error when get dd for update powertraintype")
+		}
+
+		metadataKey := dd.R.DeviceType.Metadatakey
+		var metadataAttributes map[string]any
+
+		if err := dd.Metadata.Unmarshal(&metadataAttributes); err == nil {
+			if metadataAttributes == nil {
+				metadataAttributes = make(map[string]interface{})
+				metaData := make(map[string]interface{})
+
+				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
+				if err := dd.R.DeviceType.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
+					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
+						metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
+					}
+				}
+
+				metadataAttributes[metadataKey] = metaData
+			}
+		}
+
+		for key, value := range metadataAttributes[metadataKey].(map[string]interface{}) {
+
+			if key == common.PowerTrainType {
+				powerTrainTypeValue := value
+				if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
+					powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd)
+					if err != nil {
+						dc.logger.Error().Err(err)
+					}
+				}
+
+				metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
+			}
+		}
+
+		err = dd.Metadata.Marshal(metadataAttributes)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
+			return nil, err
+		}
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()

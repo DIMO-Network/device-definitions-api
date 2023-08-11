@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	_ "embed"
+	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
 	"testing"
 
@@ -30,11 +31,12 @@ type CreateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl           *gomock.Controller
-	pdb            db.Store
-	container      testcontainers.Container
-	mockRepository *repositoryMock.MockDeviceDefinitionRepository
-	ctx            context.Context
+	ctrl                      *gomock.Controller
+	pdb                       db.Store
+	container                 testcontainers.Container
+	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
+	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
+	ctx                       context.Context
 
 	queryHandler CreateDeviceDefinitionCommandHandler
 }
@@ -51,7 +53,8 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
-	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS)
+	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
+	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS, s.mockPowerTrainTypeService)
 }
 
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
