@@ -36,16 +36,16 @@ func (m *MockPowerTrainTypeService) EXPECT() *MockPowerTrainTypeServiceMockRecor
 }
 
 // ResolvePowerTrainType mocks base method.
-func (m *MockPowerTrainTypeService) ResolvePowerTrainType(ctx context.Context, definition *models.DeviceDefinition) (*string, error) {
+func (m *MockPowerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug, modelSlug string, definition *models.DeviceDefinition) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolvePowerTrainType", ctx, definition)
+	ret := m.ctrl.Call(m, "ResolvePowerTrainType", ctx, makeSlug, modelSlug, definition)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ResolvePowerTrainType indicates an expected call of ResolvePowerTrainType.
-func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(ctx, definition interface{}) *gomock.Call {
+func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(ctx, makeSlug, modelSlug, definition interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), ctx, definition)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), ctx, makeSlug, modelSlug, definition)
 }
