@@ -107,6 +107,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 
 				if !hasPowerTrainType {
 					powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
+
+					if err != nil {
+						ch.logger.Error().Err(err)
+					}
 				}
 				metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
 			}

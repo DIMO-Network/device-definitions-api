@@ -293,8 +293,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	if !ddExists {
-		dd, err = models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
-			models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
+		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(dd.ID),
 			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
 			qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, dc.dbs().Reader)
@@ -306,10 +305,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		var metadataAttributes map[string]any
 
 		if err := dd.Metadata.Unmarshal(&metadataAttributes); err == nil {
+			metaData := make(map[string]interface{})
 			if metadataAttributes == nil {
 				metadataAttributes = make(map[string]interface{})
-				metaData := make(map[string]interface{})
-
 				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
 				if err := dd.R.DeviceType.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
 					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
