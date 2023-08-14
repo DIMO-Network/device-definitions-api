@@ -225,6 +225,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	//service
 	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
+	powerTrainTypeService := services.NewPowerTrainTypeService(pdb.DBS, &logger)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -234,7 +235,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 	m, _ := mediator.New(
 		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
 		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vinDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vinDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService)),
 	)
 
 	readFile, err := os.Open(filename)

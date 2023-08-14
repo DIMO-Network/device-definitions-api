@@ -35,14 +35,15 @@ type DecodeVINQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl               *gomock.Controller
-	pdb                db.Store
-	container          testcontainers.Container
-	ctx                context.Context
-	mockDrivlyAPISvc   *mock_gateways.MockDrivlyAPIService
-	mockVincarioAPISvc *mock_gateways.MockVincarioAPIService
-	mockVINService     *mock_services.MockVINDecodingService
-	mockFuelAPIService *mock_gateways.MockFuelAPIService
+	ctrl                      *gomock.Controller
+	pdb                       db.Store
+	container                 testcontainers.Container
+	ctx                       context.Context
+	mockDrivlyAPISvc          *mock_gateways.MockDrivlyAPIService
+	mockVincarioAPISvc        *mock_gateways.MockVincarioAPIService
+	mockVINService            *mock_services.MockVINDecodingService
+	mockFuelAPIService        *mock_gateways.MockFuelAPIService
+	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -59,10 +60,11 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
+	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
 	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, repo, dbtesthelper.Logger(), s.mockFuelAPIService)
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, repo, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -232,6 +234,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	metaData, _ := json.Marshal(metaDataInfo)
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
+	//iceValue := "ICE"
+	//s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&iceValue, nil)
 	s.mockVINService.EXPECT().GetVIN(vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})

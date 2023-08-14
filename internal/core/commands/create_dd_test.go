@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	_ "embed"
+	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
 	"testing"
 
@@ -30,11 +31,12 @@ type CreateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl           *gomock.Controller
-	pdb            db.Store
-	container      testcontainers.Container
-	mockRepository *repositoryMock.MockDeviceDefinitionRepository
-	ctx            context.Context
+	ctrl                      *gomock.Controller
+	pdb                       db.Store
+	container                 testcontainers.Container
+	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
+	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
+	ctx                       context.Context
 
 	queryHandler CreateDeviceDefinitionCommandHandler
 }
@@ -51,7 +53,8 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
-	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS)
+	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
+	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS, s.mockPowerTrainTypeService)
 }
 
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
@@ -80,6 +83,8 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceMake = &models.DeviceMake{ID: deviceMakeID, Name: mk}
 
+	iceValue := "ICE"
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), mk, model, nil).Return(&iceValue, nil)
 	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
 
 	var deviceAttributes []*coremodels.UpdateDeviceTypeAttribute
@@ -111,6 +116,8 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	source := "source-01"
 	year := 2022
 
+	iceValue := "ICE"
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), mk, model, nil).Return(&iceValue, nil)
 	s.mockRepository.EXPECT().
 		GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(nil, errors.New("Error")).Times(1)
 
