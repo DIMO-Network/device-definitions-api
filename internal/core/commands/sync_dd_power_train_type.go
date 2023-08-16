@@ -57,6 +57,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 
 	for _, definition := range all {
 		//ch.logger.Info().Msgf("%s - Make:%s Model: %s Year: %d", definition.ID, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition.Year)
+		needsUpdate := false
 
 		if definition.R.DeviceType == nil {
 			ch.logger.Error().Msgf("ID: %s with DeviceType is empty", definition.ID)
@@ -97,15 +98,19 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 						if powerTrainTypeValue == nil || *powerTrainTypeValue == "" || *powerTrainTypeValue == "null" {
 							powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
 							if err != nil {
-								ch.logger.Error().Stack().Err(err).Msg("failed to ResolvePowerTrainType")
+								ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
+								return nil, err
 							}
+							needsUpdate = true
 						} else {
 							if command.ForceUpdate {
 								powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
 								if err != nil {
-									ch.logger.Error().Stack().Err(err).Msg("failed to ResolvePowerTrainType")
+									ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
+									return nil, err
 								}
 								ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType], *powerTrainTypeValue)
+								needsUpdate = true
 							}
 						}
 						break
@@ -116,8 +121,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 					powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
 
 					if err != nil {
-						ch.logger.Error().Err(err)
+						ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
+						return nil, err
 					}
+					needsUpdate = true
 				}
 				metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
 			}
@@ -127,9 +134,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 		if err != nil {
 			return nil, err
 		}
-
-		if err = definition.Upsert(ctx, ch.DBS().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
-			return nil, err
+		if needsUpdate {
+			if _, err = definition.Update(ctx, ch.DBS().Writer, boil.Whitelist(models.DeviceDefinitionColumns.UpdatedAt, models.DeviceDefinitionColumns.Metadata)); err != nil {
+				return nil, err
+			}
 		}
 
 	}
