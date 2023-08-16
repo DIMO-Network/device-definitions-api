@@ -44,7 +44,7 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 		mediator.WithHandler(&commands.SyncPowerTrainTypeCommand{}, commands.NewSyncPowerTrainTypeCommandHandler(pdb.DBS, p.logger, powerTrainTypeService)),
 	)
 
-	_, _ = m.Send(ctx, &commands.SyncPowerTrainTypeCommand{ForceUpdate: p.force})
+	_, _ = m.Send(ctx, &commands.SyncPowerTrainTypeCommand{ForceUpdate: p.force, DeviceTypeID: "vehicle_info"})
 
 	return subcommands.ExitSuccess
 }

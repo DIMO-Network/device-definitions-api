@@ -16,7 +16,8 @@ import (
 )
 
 type SyncPowerTrainTypeCommand struct {
-	ForceUpdate bool
+	ForceUpdate  bool
+	DeviceTypeID string
 }
 
 type SyncPowerTrainTypeCommandResult struct {
@@ -39,7 +40,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 	command := query.(*SyncPowerTrainTypeCommand)
 
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
-		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom("vehicle")),
+		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom(command.DeviceTypeID)),
 		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)

@@ -84,7 +84,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	dd.R.DeviceMake = &models.DeviceMake{ID: deviceMakeID, Name: mk}
 
 	iceValue := "ICE"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), mk, model, nil).Return(&iceValue, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), nil).Return(&iceValue, nil)
 	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
 
 	var deviceAttributes []*coremodels.UpdateDeviceTypeAttribute
@@ -117,7 +117,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	year := 2022
 
 	iceValue := "ICE"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), mk, model, nil).Return(&iceValue, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), nil).Return(&iceValue, nil)
 	s.mockRepository.EXPECT().
 		GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(nil, errors.New("Error")).Times(1)
 

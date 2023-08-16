@@ -89,6 +89,15 @@
       "required": false,
       "defaultValue": "",
       "options": []
+    },
+    {
+      "name": "powertrain_type",
+      "label": "powertrain_type",
+      "description": "",
+      "type": "string",
+      "required": false,
+      "defaultValue": "",
+      "options": []
     }
   ]
 }
