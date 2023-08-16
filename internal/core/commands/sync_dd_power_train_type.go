@@ -36,6 +36,8 @@ func NewSyncPowerTrainTypeCommandHandler(dbs func() *db.ReaderWriter, logger zer
 	return SyncPowerTrainTypeCommandHandler{DBS: dbs, logger: logger, powerTrainTypeService: powerTrainTypeService}
 }
 
+const vehicleTypeMDKey = "vehicle_info" // expected key for correct device type
+
 func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	command := query.(*SyncPowerTrainTypeCommand)
 
@@ -62,6 +64,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 		}
 
 		metadataKey := definition.R.DeviceType.Metadatakey
+		if metadataKey != vehicleTypeMDKey {
+			ch.logger.Info().Msgf("skipping dd id: %s because not vehicle device type: %s", definition.ID, metadataKey)
+			continue
+		}
 		var metadataAttributes map[string]any
 
 		if err = definition.Metadata.Unmarshal(&metadataAttributes); err == nil {
@@ -88,16 +94,16 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 						if strValue, isString := value.(string); isString {
 							powerTrainTypeValue = &strValue
 						}
-						if powerTrainTypeValue == nil || *powerTrainTypeValue == "" {
+						if powerTrainTypeValue == nil || *powerTrainTypeValue == "" || *powerTrainTypeValue == "null" {
 							powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
 							if err != nil {
-								ch.logger.Error().Err(err)
+								ch.logger.Error().Stack().Err(err).Msg("failed to ResolvePowerTrainType")
 							}
 						} else {
 							if command.ForceUpdate {
 								powerTrainTypeValue, err = ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, definition)
 								if err != nil {
-									ch.logger.Error().Err(err)
+									ch.logger.Error().Stack().Err(err).Msg("failed to ResolvePowerTrainType")
 								}
 								ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType], *powerTrainTypeValue)
 							}

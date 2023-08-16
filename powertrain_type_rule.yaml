@@ -13,11 +13,6 @@ types:
       - cr-v_hybrid
       - rav4_hybrid
 
-#  - name: Rule PHEV
-#    type: PHEV
-#    models:
-#      -
-
   - name: Rule BEV makes
     type: BEV
     makes:
