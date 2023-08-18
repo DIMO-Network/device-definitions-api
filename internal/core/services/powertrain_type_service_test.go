@@ -23,7 +23,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	pdb.WaitForDB(*logger)
 	defer container.Terminate(ctx) //nolint
 
-	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "test_powertrain_type_rule.yaml", logger)
+	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
 	require.NoError(t, err)
 
 	type args struct {
@@ -70,8 +70,33 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 			},
 			want: "PHEV",
 		},
-		// todo drivly
-		// todo vincario
+		{
+			name: "Inferred from Drivly fuel",
+			args: args{
+				makeSlug:   "mitsubishi",
+				modelSlug:  "cool-car",
+				drivlyData: null.JSONFrom([]byte(`{ "fuel": "Hybrid" }`)),
+			},
+			want: "HEV",
+		},
+		{
+			name: "Inferred from Drivly fuel - ICE",
+			args: args{
+				makeSlug:   "mitsubishi",
+				modelSlug:  "cool-car",
+				drivlyData: null.JSONFrom([]byte(`{ "fuel": "Gasoline" }`)),
+			},
+			want: "ICE",
+		},
+		{
+			name: "Inferred from vincario fuel - BEV",
+			args: args{
+				makeSlug:     "mitsubishi",
+				modelSlug:    "cool-car",
+				vincarioData: null.JSONFrom([]byte(`{ "FuelType": "Electric" }`)),
+			},
+			want: "BEV",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
