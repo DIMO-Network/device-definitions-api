@@ -16,7 +16,7 @@ import (
 )
 
 type PowerTrainTypeService interface {
-	ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (*string, error)
+	ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error)
 }
 
 type powerTrainTypeService struct {
@@ -25,8 +25,8 @@ type powerTrainTypeService struct {
 	powerTrainRuleData coremodels.PowerTrainTypeRuleData
 }
 
-func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, logger *zerolog.Logger) (PowerTrainTypeService, error) {
-	content, err := os.ReadFile("powertrain_type_rule.yaml")
+func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string, logger *zerolog.Logger) (PowerTrainTypeService, error) {
+	content, err := os.ReadFile(rulesFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -40,20 +40,21 @@ func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, logger *zerolog.Logge
 	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData}, nil
 }
 
-// todo needs a test
+// todo needs a test, update callers, see if any other should pass in data instead of definitionID
 
-func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (*string, error) {
+// ResolvePowerTrainType figures out the powertrain based on make, model, and optionally definitionID or vin decoder data
+func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error) {
 
 	for _, ptType := range c.powerTrainRuleData.PowerTrainTypeList {
 		for _, mk := range ptType.Makes {
 			if mk == makeSlug {
 				if len(ptType.Models) == 0 {
-					return &ptType.Type, nil
+					return ptType.Type, nil
 				}
 
 				for _, model := range ptType.Models {
 					if model == modelSlug {
-						return &ptType.Type, nil
+						return ptType.Type, nil
 					}
 				}
 
@@ -63,11 +64,11 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 	// model name based inference
 	if strings.Contains(modelSlug, "plug-in") {
 		p := coremodels.PHEV.String()
-		return &p, nil
+		return p, nil
 	}
 	if strings.Contains(modelSlug, "hybrid") {
 		p := coremodels.HEV.String()
-		return &p, nil
+		return p, nil
 	}
 
 	// Default
@@ -99,7 +100,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 			if len(item.Values) > 0 {
 				for _, value := range item.Values {
 					if value == drivlyModel.FuelType {
-						return &item.Type, nil
+						return item.Type, nil
 					}
 				}
 			}
@@ -117,12 +118,16 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 			if len(item.Values) > 0 {
 				for _, value := range item.Values {
 					if value == vincarioModel.FuelType {
-						return &item.Type, nil
+						return item.Type, nil
 					}
 				}
 			}
 		}
 	}
 
-	return &defaultPowerTrainType, nil
+	if defaultPowerTrainType == "" {
+		defaultPowerTrainType = coremodels.ICE.String()
+	}
+
+	return defaultPowerTrainType, nil
 }
