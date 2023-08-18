@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -35,7 +36,10 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	powerTrainTypeService := services.NewPowerTrainTypeService(pdb.DBS, &p.logger)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, &p.logger)
+	if err != nil {
+		p.logger.Err(err).Stack().Send()
+	}
 
 	//commands
 	m, _ := mediator.New(

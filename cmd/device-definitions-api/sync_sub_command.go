@@ -225,7 +225,10 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	//service
 	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
-	powerTrainTypeService := services.NewPowerTrainTypeService(pdb.DBS, &logger)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Stack().Send()
+	}
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)

@@ -10,8 +10,15 @@ types:
       - honda
       - mercedes-benz
     models:
-      - cr-v_hybrid
-      - rav4_hybrid
+      - cr-v-hybrid
+      - rav4-hybrid
+
+  - name: Rule PHEV
+    type: PHEV
+    makes:
+      - mitsubishi
+    models:
+      - outlander-phev
 
   - name: Rule BEV makes
     type: BEV
@@ -40,7 +47,7 @@ types:
       - hyundai
     models:
       - nexo
-      - cr-v_fcev
+      - cr-v-fcev
 
 drivly:
   - type: HEV
