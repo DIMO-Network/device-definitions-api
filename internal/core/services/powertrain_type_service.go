@@ -4,10 +4,11 @@ package services
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/volatiletech/null/v8"
 	"os"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/volatiletech/null/v8"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared/db"

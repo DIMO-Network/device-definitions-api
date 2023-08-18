@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
+	"testing"
+
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
-	"testing"
 )
 
 func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
