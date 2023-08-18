@@ -94,7 +94,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		var drivlyModel coremodels.DrivlyData
 		err := drivlyData.Unmarshal(&drivlyModel)
 		if err != nil {
-			c.logger.Error().Err(err)
+			c.logger.Error().Err(err).Send()
 		}
 		c.logger.Info().Msg("Looking up PowerTrain from Drivly Data")
 		for _, item := range c.powerTrainRuleData.DrivlyList {
@@ -112,7 +112,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		var vincarioModel coremodels.VincarioData
 		err := vincarioData.Unmarshal(&vincarioModel)
 		if err != nil {
-			c.logger.Error().Err(err)
+			c.logger.Error().Err(err).Send()
 		}
 		c.logger.Info().Msg("Looking up PowerTrain from Vincario Data")
 		for _, item := range c.powerTrainRuleData.VincarioList {

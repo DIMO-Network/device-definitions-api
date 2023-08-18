@@ -204,15 +204,15 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if errors.Is(err, sql.ErrNoRows) {
 			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
 			if err != nil {
-				localLog.Err(err)
+				localLog.Err(err).Send()
 			}
 
 			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
 			if err != nil {
-				localLog.Err(err)
+				localLog.Err(err).Send()
 			}
 		} else {
-			localLog.Err(err)
+			localLog.Err(err).Send()
 		}
 	}
 

@@ -175,7 +175,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	// Start Server from a different go routine
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Send()
 		}
 	}()
 	startMonitoringServer(logger)

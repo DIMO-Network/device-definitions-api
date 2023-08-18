@@ -36,7 +36,7 @@ func (p *syncFuelImageCmd) SetFlags(_ *flag.FlagSet) {
 func (p *syncFuelImageCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	err := fetchFuelAPIImages(ctx, p.logger, &p.settings)
 	if err != nil {
-		p.logger.Error().Err(err)
+		p.logger.Error().Err(err).Send()
 	}
 	return subcommands.ExitSuccess
 }

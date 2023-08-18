@@ -74,11 +74,11 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 	defer func() {
 		err = r.Close()
 		if err != nil {
-			ch.log.Fatal().Err(err)
+			ch.log.Fatal().Err(err).Send()
 		}
 		err = os.Remove(*filePath)
 		if err != nil {
-			ch.log.Fatal().Err(err)
+			ch.log.Fatal().Err(err).Send()
 		}
 		fmt.Println("Removed tmp file")
 	}()
@@ -136,7 +136,7 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 			}
 			medtadataJSON, err := json.Marshal(md)
 			if err != nil {
-				ch.log.Fatal().Err(err)
+				ch.log.Fatal().Err(err).Send()
 			}
 			mdJSON = null.JSONFrom(medtadataJSON)
 		}
@@ -164,7 +164,7 @@ func (ch SyncNHTSARecallsCommandHandler) Handle(ctx context.Context, query media
 
 	matchCount, err := ch.recallsRepo.MatchDeviceDefinition(ctx, NHTSARecallsMatchingVersion)
 	if err != nil {
-		ch.log.Fatal().Err(err)
+		ch.log.Fatal().Err(err).Send()
 	}
 
 	fmt.Printf("\rProcessed %d records using device definition matching version %s\n", matchCount, NHTSARecallsMatchingVersion)
