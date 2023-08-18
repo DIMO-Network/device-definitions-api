@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	gomock "github.com/golang/mock/gomock"
+	null "github.com/volatiletech/null/v8"
 )
 
 // MockPowerTrainTypeService is a mock of PowerTrainTypeService interface.
@@ -36,16 +36,16 @@ func (m *MockPowerTrainTypeService) EXPECT() *MockPowerTrainTypeServiceMockRecor
 }
 
 // ResolvePowerTrainType mocks base method.
-func (m *MockPowerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug, modelSlug string, definition *models.DeviceDefinition) (*string, error) {
+func (m *MockPowerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug, modelSlug string, definitionID *string, drivlyData, vincarioData null.JSON) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolvePowerTrainType", ctx, makeSlug, modelSlug, definition)
+	ret := m.ctrl.Call(m, "ResolvePowerTrainType", ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ResolvePowerTrainType indicates an expected call of ResolvePowerTrainType.
-func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(ctx, makeSlug, modelSlug, definition interface{}) *gomock.Call {
+func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), ctx, makeSlug, modelSlug, definition)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData)
 }
