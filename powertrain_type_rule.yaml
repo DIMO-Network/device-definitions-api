@@ -53,12 +53,12 @@ drivly:
   - type: HEV
     values:
       - Hybrid
-      - Gasoline
 
   - type: ICE
     values:
       - Diesel
       - Flexible-Fuel
+      - Gasoline
 
   - type: BEV
     values:

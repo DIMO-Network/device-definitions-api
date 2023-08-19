@@ -55,7 +55,7 @@ func (p *syncDeviceFeatureCmd) SetFlags(_ *flag.FlagSet) {
 func (p *syncDeviceFeatureCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	err := populateDeviceFeaturesFromEs(ctx, p.logger, &p.settings)
 	if err != nil {
-		p.logger.Error().Err(err)
+		p.logger.Error().Err(err).Send()
 	}
 	return subcommands.ExitSuccess
 }

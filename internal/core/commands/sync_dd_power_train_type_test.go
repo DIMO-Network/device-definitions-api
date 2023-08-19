@@ -66,7 +66,7 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Su
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
 
 	ICE := "ICE"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&ICE, nil).Times(1)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), null.JSON{}, null.JSON{}).Return(ICE, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncPowerTrainTypeCommand{DeviceTypeID: dd.DeviceTypeID.String})
 	require.NoError(s.T(), err, "handler failed to execute")
@@ -104,7 +104,7 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Wi
 	dd := setupDeviceDefinitionForPowerTrain(s.T(), s.pdb, mk, model, year)
 
 	HEV := "HEV"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&HEV, nil).Times(1)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), null.JSON{}, null.JSON{}).Return(HEV, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &SyncPowerTrainTypeCommand{ForceUpdate: true, DeviceTypeID: dd.DeviceTypeID.String})
 	require.NoError(s.T(), err, "handler failed to execute")

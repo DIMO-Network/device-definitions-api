@@ -55,7 +55,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
 	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
-	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, &logger)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
@@ -175,7 +175,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	// Start Server from a different go routine
 	go func() {
 		if err := app.Listen(":" + settings.Port); err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Send()
 		}
 	}()
 	startMonitoringServer(logger)

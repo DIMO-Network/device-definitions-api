@@ -204,15 +204,15 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if errors.Is(err, sql.ErrNoRows) {
 			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
 			if err != nil {
-				localLog.Err(err)
+				localLog.Err(err).Send()
 			}
 
 			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
 			if err != nil {
-				localLog.Err(err)
+				localLog.Err(err).Send()
 			}
 		} else {
-			localLog.Err(err)
+			localLog.Err(err).Send()
 		}
 	}
 
@@ -324,7 +324,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			if key == common.PowerTrainType {
 				powerTrainTypeValue := value
 				if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
-					powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd)
+					drivlyData := null.JSON{}
+					vincarioData := null.JSON{}
+					if vinInfo.Source == coremodels.DrivlyProvider {
+						drivlyData = vinInfo.MetaData
+					} else {
+						vincarioData = vinInfo.MetaData
+					}
+					powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
 					if err != nil {
 						dc.logger.Error().Err(err)
 					}

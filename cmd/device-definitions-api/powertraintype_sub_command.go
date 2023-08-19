@@ -36,7 +36,7 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, &p.logger)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &p.logger)
 	if err != nil {
 		p.logger.Err(err).Stack().Send()
 	}
