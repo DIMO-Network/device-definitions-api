@@ -41,8 +41,6 @@ func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string,
 	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData}, nil
 }
 
-// todo needs a test, update callers, see if any other should pass in data instead of definitionID
-
 // ResolvePowerTrainType figures out the powertrain based on make, model, and optionally definitionID or vin decoder data
 func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error) {
 
