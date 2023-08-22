@@ -333,7 +333,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 					}
 					powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
 					if err != nil {
-						dc.logger.Error().Err(err)
+						dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
 					}
 				}
 
