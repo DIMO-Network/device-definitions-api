@@ -127,9 +127,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// if year is 0, prefer vincario for decode, since most likely non USA.
 	if resp.Year == 0 {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
-		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.VincarioProvider)
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider)
 	} else {
-		vinInfo, err = dc.vinDecodingService.GetVIN(vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
 	if err != nil || len(vinInfo.Model) == 0 || vinInfo.Year == 0 {
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {

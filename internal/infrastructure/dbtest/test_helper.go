@@ -159,6 +159,41 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 	return dd
 }
 
+func SetupCreateDeviceDefinitionTeslaModel(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
+	dt := SetupCreateDeviceType(t, pdb)
+	dd := &models.DeviceDefinition{
+		ID:           "22N2y6TCaDBYPUsXJb3u02bqN2I",
+		DeviceMakeID: dm.ID,
+		Model:        model,
+		Year:         int16(year),
+		Verified:     true,
+		DeviceTypeID: null.StringFrom(dt.ID),
+		ModelSlug:    common.SlugString(model),
+	}
+
+	deviceTypeInfo := make(map[string]interface{})
+	metaData := make(map[string]interface{})
+	var ai map[string][]interface{}
+	defaultValue := "defaultValue"
+	if err := dt.Properties.Unmarshal(&ai); err == nil {
+		metaData["fuel_type"] = defaultValue
+		metaData["driven_wheels"] = "4"
+		metaData["number_of_doors"] = "4"
+		metaData["mpg"] = defaultValue
+	}
+	deviceTypeInfo[dt.Metadatakey] = metaData
+	_ = dd.Metadata.Marshal(deviceTypeInfo)
+
+	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
+	dd.R = dd.R.NewStruct()
+	dd.R.DeviceMake = &dm
+	dd.R.DeviceType = dt
+
+	return dd
+}
+
 func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
 	dt := SetupCreateDeviceType(t, pdb)
 	dd := &models.DeviceDefinition{

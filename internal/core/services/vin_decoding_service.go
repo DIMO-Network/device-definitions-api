@@ -3,8 +3,10 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,24 +22,40 @@ import (
 )
 
 type VINDecodingService interface {
-	GetVIN(vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error)
+	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error)
 }
 
 type vinDecodingService struct {
 	drivlyAPISvc   gateways.DrivlyAPIService
 	vincarioAPISvc gateways.VincarioAPIService
 	logger         *zerolog.Logger
+	repository     repositories.DeviceDefinitionRepository
 }
 
-func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, logger *zerolog.Logger) VINDecodingService {
-	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, logger: logger}
+func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService,
+	vincarioAPISvc gateways.VincarioAPIService,
+	logger *zerolog.Logger,
+	repository repositories.DeviceDefinitionRepository) VINDecodingService {
+	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, logger: logger, repository: repository}
 }
 
-func (c vinDecodingService) GetVIN(vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
+func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
+
+	const DefaultDeviceDefinitionID = "22N2y6TCaDBYPUsXJb3u02bqN2I"
+
 	result := &models.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
 	if !validateVIN(vin) {
 		return nil, fmt.Errorf("invalid vin: %s", vin)
+	}
+
+	if strings.HasPrefix(vin, "0SC") {
+		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionID)
+		if err != nil {
+			return nil, err
+		}
+		result = buildFromDD(vin, dd)
+		return result, nil
 	}
 
 	switch provider {
@@ -177,4 +195,24 @@ func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoDa
 
 func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
+}
+
+func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodingInfoData {
+
+	v := &models.VINDecodingInfoData{
+		VIN:   vin,
+		Year:  int32(info.Year),
+		Make:  info.R.DeviceMake.Name,
+		Model: info.Model,
+	}
+
+	if len(info.R.DeviceStyles) > 0 {
+		v.StyleName = info.R.DeviceStyles[0].Name
+	}
+
+	if info.ExternalID.Valid {
+		v.ExternalID = info.ExternalID.String
+	}
+
+	return v
 }

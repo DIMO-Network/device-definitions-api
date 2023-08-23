@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -36,16 +37,16 @@ func (m *MockVINDecodingService) EXPECT() *MockVINDecodingServiceMockRecorder {
 }
 
 // GetVIN mocks base method.
-func (m *MockVINDecodingService) GetVIN(vin string, dt *models0.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
+func (m *MockVINDecodingService) GetVIN(ctx context.Context, vin string, dt *models0.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVIN", vin, dt, provider)
+	ret := m.ctrl.Call(m, "GetVIN", ctx, vin, dt, provider)
 	ret0, _ := ret[0].(*models.VINDecodingInfoData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVIN indicates an expected call of GetVIN.
-func (mr *MockVINDecodingServiceMockRecorder) GetVIN(vin, dt, provider interface{}) *gomock.Call {
+func (mr *MockVINDecodingServiceMockRecorder) GetVIN(ctx, vin, dt, provider interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVIN", reflect.TypeOf((*MockVINDecodingService)(nil).GetVIN), vin, dt, provider)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVIN", reflect.TypeOf((*MockVINDecodingService)(nil).GetVIN), ctx, vin, dt, provider)
 }
