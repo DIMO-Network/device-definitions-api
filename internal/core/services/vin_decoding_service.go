@@ -41,7 +41,7 @@ func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService,
 
 func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
 
-	const DefaultDeviceDefinitionId = "22N2y6TCaDBYPUsXJb3u02bqN2I"
+	const DefaultDeviceDefinitionID = "22N2y6TCaDBYPUsXJb3u02bqN2I"
 
 	result := &models.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
@@ -50,7 +50,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 	}
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionId)
+		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionID)
 		if err != nil {
 			return nil, err
 		}
