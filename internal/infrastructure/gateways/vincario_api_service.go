@@ -62,7 +62,7 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, erro
 		// find the property in the struct with the label name in the key metadata
 		err := setStructPropertiesByMetadataKey(&infoResp, s2.Label, s2.Value)
 		if err != nil {
-			va.log.Warn().Err(err).Msg("could not set struct properties")
+			va.log.Debug().Err(err).Msg("could not set struct properties")
 		}
 	}
 
