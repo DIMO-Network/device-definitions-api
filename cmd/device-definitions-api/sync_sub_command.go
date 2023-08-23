@@ -223,16 +223,16 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 	vincarioAPIService := gateways.NewVincarioAPIService(s, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(s, &logger)
 
+	//repos
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	vinRepository := repositories.NewVINRepository(pdb.DBS)
+
 	//service
-	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
+	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger, deviceDefinitionRepository)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Stack().Send()
 	}
-
-	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
-	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//commands
 	m, _ := mediator.New(

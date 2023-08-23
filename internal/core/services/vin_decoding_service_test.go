@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/testcontainers/testcontainers-go"
 
+	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/golang/mock/gomock"
@@ -22,12 +23,13 @@ type VINDecodingServiceSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl               *gomock.Controller
-	pdb                db.Store
-	container          testcontainers.Container
-	ctx                context.Context
-	mockDrivlyAPISvc   *mock_gateways.MockDrivlyAPIService
-	mockVincarioAPISvc *mock_gateways.MockVincarioAPIService
+	ctrl                           *gomock.Controller
+	pdb                            db.Store
+	container                      testcontainers.Container
+	ctx                            context.Context
+	mockDrivlyAPISvc               *mock_gateways.MockDrivlyAPIService
+	mockVincarioAPISvc             *mock_gateways.MockVincarioAPIService
+	mockDeviceDefinitionRepository *mock_repository.MockDeviceDefinitionRepository
 
 	vinDecodingService VINDecodingService
 }
@@ -50,8 +52,9 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 
 	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
+	s.mockDeviceDefinitionRepository = mock_repository.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, dbtesthelper.Logger())
+	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
@@ -60,6 +63,7 @@ func (s *VINDecodingServiceSuite) TearDownTest() {
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
+	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 	const makeID = "Ford"
 
@@ -88,7 +92,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -96,6 +100,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
+	ctx := context.Background()
 	const vin = "WAUZZZ4M0KD018683"
 	const makeID = "Test"
 
@@ -118,9 +123,25 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
 	assert.Equal(s.T(), result.Source, coremodels.VincarioProvider)
+}
+
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
+	ctx := context.Background()
+	const vin = "0SCZZZ4M0KD018683"
+
+	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Tesla", s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionTeslaModel(s.T(), dm, "Model 3", 2021, s.pdb)
+
+	s.mockDeviceDefinitionRepository.EXPECT().GetByID(ctx, dd.ID).Times(1).Return(dd, nil)
+
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
 }

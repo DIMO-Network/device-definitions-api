@@ -54,7 +54,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger, deviceDefinitionRepository)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
