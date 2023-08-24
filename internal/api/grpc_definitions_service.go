@@ -529,6 +529,19 @@ func (s *GrpcDefinitionsService) GetDeviceStyleByID(ctx context.Context, in *p_g
 		HardwareTemplateId: ds.HardwareTemplateID,
 	}
 
+	if len(ds.DeviceDefinition.DeviceAttributes) > 0 {
+		for _, prop := range ds.DeviceDefinition.DeviceAttributes {
+			result.DeviceAttributes = append(result.DeviceAttributes, &p_grpc.DeviceTypeAttribute{
+				Name:        prop.Name,
+				Label:       prop.Label,
+				Value:       prop.Value,
+				Description: prop.Description,
+				Required:    prop.Required,
+				Options:     prop.Option,
+			})
+		}
+	}
+
 	return result, nil
 }
 

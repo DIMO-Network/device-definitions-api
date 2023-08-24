@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -20,11 +21,12 @@ type GetDeviceStyleByIDQuery struct {
 func (*GetDeviceStyleByIDQuery) Key() string { return "GetDeviceStyleByIDQuery" }
 
 type GetDeviceStyleByIDQueryHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS     func() *db.ReaderWriter
+	DDCache services.DeviceDefinitionCacheService
 }
 
-func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter) GetDeviceStyleByIDQueryHandler {
-	return GetDeviceStyleByIDQueryHandler{DBS: dbs}
+func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) GetDeviceStyleByIDQueryHandler {
+	return GetDeviceStyleByIDQueryHandler{DBS: dbs, DDCache: cache}
 }
 
 func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -55,6 +57,17 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	if v.HardwareTemplateID.Valid {
 		result.HardwareTemplateID = v.HardwareTemplateID.String
+	}
+
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, result.DeviceDefinitionID)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device definition"),
+		}
+	}
+
+	result.DeviceDefinition = coremodels.GetDeviceDefinitionStyleQueryResult{
+		DeviceAttributes: dd.DeviceAttributes,
 	}
 
 	return result, nil
