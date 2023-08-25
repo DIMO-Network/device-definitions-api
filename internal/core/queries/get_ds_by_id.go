@@ -87,7 +87,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	hasPowertrain := false
 	for _, item := range result.DeviceDefinition.DeviceAttributes {
-		if item.Name == common.PowerTrainType {
+		if item.Name == common.PowerTrainType && len(powerTrainType) > 0 {
 			item.Value = powerTrainType
 			hasPowertrain = true
 			break
