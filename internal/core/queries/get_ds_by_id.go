@@ -102,8 +102,9 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			powerTrainType = models.PowertrainICE
 		}
 		result.DeviceDefinition.DeviceAttributes = append(result.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
-			Name:        common.DefaultDeviceType,
-			Description: common.DefaultDeviceType,
+			Name:        common.PowerTrainType,
+			Description: common.PowerTrainType,
+			Type:        common.DefaultDeviceType,
 			Value:       powerTrainType,
 		})
 	}
