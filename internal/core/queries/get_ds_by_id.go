@@ -4,6 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -20,11 +24,12 @@ type GetDeviceStyleByIDQuery struct {
 func (*GetDeviceStyleByIDQuery) Key() string { return "GetDeviceStyleByIDQuery" }
 
 type GetDeviceStyleByIDQueryHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS     func() *db.ReaderWriter
+	DDCache services.DeviceDefinitionCacheService
 }
 
-func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter) GetDeviceStyleByIDQueryHandler {
-	return GetDeviceStyleByIDQueryHandler{DBS: dbs}
+func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) GetDeviceStyleByIDQueryHandler {
+	return GetDeviceStyleByIDQueryHandler{DBS: dbs, DDCache: cache}
 }
 
 func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -55,6 +60,52 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	if v.HardwareTemplateID.Valid {
 		result.HardwareTemplateID = v.HardwareTemplateID.String
+	}
+
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, result.DeviceDefinitionID)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device definition"),
+		}
+	}
+
+	result.DeviceDefinition = coremodels.GetDeviceDefinitionStyleQueryResult{
+		DeviceAttributes: dd.DeviceAttributes,
+	}
+
+	// Set default powertrain
+	name := strings.ToLower(result.Name)
+	powerTrainType := ""
+	if strings.Contains(name, "phev") {
+		powerTrainType = models.PowertrainPHEV
+	} else if strings.Contains(name, "hev") {
+		powerTrainType = models.PowertrainHEV
+	} else if strings.Contains(name, "plug-in") {
+		powerTrainType = models.PowertrainPHEV
+	} else if strings.Contains(name, "hybrid") {
+		powerTrainType = models.PowertrainHEV
+	}
+
+	hasPowertrain := false
+	for _, item := range result.DeviceDefinition.DeviceAttributes {
+		if item.Name == common.PowerTrainType {
+			hasPowertrain = true
+			if len(powerTrainType) > 0 {
+				item.Value = powerTrainType
+			}
+			break
+		}
+	}
+
+	if !hasPowertrain {
+		if len(powerTrainType) == 0 {
+			powerTrainType = models.PowertrainICE
+		}
+		result.DeviceDefinition.DeviceAttributes = append(result.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
+			Name:        common.DefaultDeviceType,
+			Description: common.DefaultDeviceType,
+			Value:       powerTrainType,
+		})
 	}
 
 	return result, nil

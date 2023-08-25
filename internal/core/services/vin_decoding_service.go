@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
