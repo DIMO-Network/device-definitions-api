@@ -76,25 +76,30 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 	name := strings.ToLower(result.Name)
 	powerTrainType := ""
 	if strings.Contains(name, "phev") {
-		powerTrainType = "PHEV"
+		powerTrainType = models.PowertrainPHEV
 	} else if strings.Contains(name, "hev") {
-		powerTrainType = "HEV"
+		powerTrainType = models.PowertrainHEV
 	} else if strings.Contains(name, "plug-in") {
-		powerTrainType = "PHEV"
+		powerTrainType = models.PowertrainPHEV
 	} else if strings.Contains(name, "hybrid") {
-		powerTrainType = "HEV"
+		powerTrainType = models.PowertrainHEV
 	}
 
 	hasPowertrain := false
 	for _, item := range result.DeviceDefinition.DeviceAttributes {
-		if item.Name == common.PowerTrainType && len(powerTrainType) > 0 {
-			item.Value = powerTrainType
+		if item.Name == common.PowerTrainType {
 			hasPowertrain = true
+			if len(powerTrainType) > 0 {
+				item.Value = powerTrainType
+			}
 			break
 		}
 	}
 
 	if !hasPowertrain {
+		if len(powerTrainType) == 0 {
+			powerTrainType = models.PowertrainICE
+		}
 		result.DeviceDefinition.DeviceAttributes = append(result.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
 			Name:        common.DefaultDeviceType,
 			Description: common.DefaultDeviceType,
