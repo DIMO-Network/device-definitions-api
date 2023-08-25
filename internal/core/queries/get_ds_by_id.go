@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -68,6 +70,36 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	result.DeviceDefinition = coremodels.GetDeviceDefinitionStyleQueryResult{
 		DeviceAttributes: dd.DeviceAttributes,
+	}
+
+	// Set default powertrain
+	name := strings.ToLower(result.Name)
+	powerTrainType := ""
+	if strings.Contains(name, "phev") {
+		powerTrainType = "PHEV"
+	} else if strings.Contains(name, "hev") {
+		powerTrainType = "HEV"
+	} else if strings.Contains(name, "plug-in") {
+		powerTrainType = "PHEV"
+	} else if strings.Contains(name, "hybrid") {
+		powerTrainType = "HEV"
+	}
+
+	hasPowertrain := false
+	for _, item := range result.DeviceDefinition.DeviceAttributes {
+		if item.Name == common.PowerTrainType {
+			item.Value = powerTrainType
+			hasPowertrain = true
+			break
+		}
+	}
+
+	if !hasPowertrain {
+		result.DeviceDefinition.DeviceAttributes = append(result.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
+			Name:        common.DefaultDeviceType,
+			Description: common.DefaultDeviceType,
+			Value:       powerTrainType,
+		})
 	}
 
 	return result, nil
