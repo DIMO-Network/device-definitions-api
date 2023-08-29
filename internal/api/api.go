@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"github.com/TheFellow/go-mediator/mediator"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 
@@ -20,7 +22,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
-	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
@@ -71,6 +72,17 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		logger.Fatal().Err(err).Send()
 	}
 	defer prv.Close(context.Background())
+
+	//base custom commands
+	cm, _ := commands.New(
+		commands.WithHandler(&commands.DemoCommand{}, commands.NewDemoCommandHandler(pdb.DBS)),
+	)
+
+	if result, err := cm.Send(ctx, &commands.DemoCommand{ID: "0001", Name: "test"}); err != nil {
+		fmt.Printf("Error handling command: %s\n", err)
+	} else {
+		fmt.Printf("Handler returned result: %+v\n", result)
+	}
 
 	//commands
 	m, _ := mediator.New(
