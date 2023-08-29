@@ -50,6 +50,7 @@ func (m *CustomMediator) Send(ctx context.Context, command CommandRequest) (Comm
 	return nil, errors.New("No handler registered for the command")
 }
 
+// todo: pending custom middleware
 type Middleware interface {
 	Execute(command CommandRequest, next HandlerFunc) (*CommandResult, error)
 }
