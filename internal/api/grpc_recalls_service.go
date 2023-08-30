@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
 )
 

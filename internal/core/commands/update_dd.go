@@ -15,7 +15,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
 
-	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"

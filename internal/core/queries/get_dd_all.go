@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type GetAllDeviceDefinitionQuery struct {

@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/shared/db"
 )
 
@@ -16,7 +18,6 @@ func (c *DemoCommand) Key() string {
 }
 
 type DemoCommandResult struct {
-	CommandResult
 	ID string `json:"id"`
 }
 
@@ -24,11 +25,11 @@ type DemoCommandHandler struct {
 	DBS func() *db.ReaderWriter
 }
 
-func NewDemoCommandHandler(dbs func() *db.ReaderWriter) *DemoCommandHandler {
-	return &DemoCommandHandler{DBS: dbs}
+func NewDemoCommandHandler(dbs func() *db.ReaderWriter) DemoCommandHandler {
+	return DemoCommandHandler{DBS: dbs}
 }
 
-func (c *DemoCommandHandler) Handle(ctx context.Context, cmd CommandRequest) (CommandResult, error) {
+func (c DemoCommandHandler) Handle(ctx context.Context, cmd mediator.Message) (interface{}, error) {
 	command := cmd.(*DemoCommand)
 	fmt.Printf("DemoCommandHandler handling the command with name: %s\n", command.Name)
 

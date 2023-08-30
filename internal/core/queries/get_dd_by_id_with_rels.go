@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type GetDeviceDefinitionWithRelsQuery struct {

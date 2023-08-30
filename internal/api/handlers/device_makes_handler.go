@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 
 	_ "github.com/DIMO-Network/device-definitions-api/pkg/grpc" // required for swagger to generate models
