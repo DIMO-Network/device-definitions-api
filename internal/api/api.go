@@ -72,18 +72,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	}
 	defer prv.Close(context.Background())
 
-	//cm, _ := mediator.New(
-	//	mediator.WithHandler(&commands.DemoCommand{}, commands.NewDemoCommandHandler(pdb.DBS)),
-	//	// ...
-	//)
-	//
-	//if result, err := cm.Send(ctx, &commands.DemoCommand{ID: "0001", Name: "test"}); err != nil {
-	//	fmt.Printf("Error handling command: %s\n", err)
-	//} else {
-	//	fmt.Printf("Handler returned result: %+v\n", result)
-	//}
-
-	//commands
+	//custom commands
 	m, _ := mediator.New(
 		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),

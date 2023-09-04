@@ -50,6 +50,11 @@ var (
 		[]string{"method", "status"},
 	)
 
+	GRPCPanicsCount = promauto.NewCounter(prometheus.CounterOpts{
+		Name: serviceName + "panics_total",
+		Help: "Total Panics recovered",
+	})
+
 	HTTPRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: serviceName + "http_request_count",

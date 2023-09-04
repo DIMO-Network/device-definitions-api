@@ -2,7 +2,10 @@ package mediator
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Handler interface {
@@ -38,7 +41,28 @@ func WithHandler(command Message, handler Handler) Option {
 
 func (m *Mediator) Send(ctx context.Context, command Message) (interface{}, error) {
 	if handler, ok := m.handlers[command.Key()]; ok {
-		return handler.Handle(ctx, command)
+		result, err := handler.Handle(ctx, command)
+		if err != nil {
+			if _, ok := err.(*exceptions.NotFoundError); ok {
+				metrics.NotFoundRequestError.With(prometheus.Labels{"method": command.Key()}).Inc()
+			}
+
+			if _, ok := err.(*exceptions.ConflictError); ok {
+				metrics.ConflictRequestError.With(prometheus.Labels{"method": command.Key()}).Inc()
+			}
+
+			if _, ok := err.(*exceptions.ValidationError); ok {
+				metrics.BadRequestError.With(prometheus.Labels{"method": command.Key()}).Inc()
+			}
+
+			if _, ok := err.(*exceptions.InternalError); ok {
+				metrics.InternalError.With(prometheus.Labels{"method": command.Key()}).Inc()
+			}
+
+			panic(err)
+		}
+
+		return result, nil
 	}
 	return nil, errors.New("No handler registered for the command")
 }
