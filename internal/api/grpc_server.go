@@ -5,13 +5,13 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	pkggrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/TheFellow/go-mediator/mediator"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
@@ -30,12 +30,15 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 	integrationService := NewGrpcIntegrationService(m, &logger)
 	decodeService := NewGrpcVinDecoderService(m, &logger)
 
+	logger.Info().Msgf("Starting gRPC server on port %s", s.GRPCPort)
+	gp := common.GrpcConfig{Logger: &logger}
+
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			metrics.ValidationMiddleware(),
-			recoveryMiddleware(),
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_prometheus.UnaryServerInterceptor,
+			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(gp.GrpcConfig)),
 		)),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 	)
@@ -57,11 +60,4 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 	if err := server.Serve(lis); err != nil {
 		logger.Fatal().Msgf("Failed to serve over port %v: %v", s.GRPCPort, err)
 	}
-}
-
-func recoveryMiddleware() grpc.UnaryServerInterceptor {
-	recoveryOpts := []grpc_recovery.Option{
-		grpc_recovery.WithRecoveryHandler(common.GrpcConfig),
-	}
-	return grpc_recovery.UnaryServerInterceptor(recoveryOpts...)
 }

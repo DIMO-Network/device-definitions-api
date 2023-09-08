@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gosimple/slug"
 	shell "github.com/ipfs/go-ipfs-api"
 	files "github.com/ipfs/go-ipfs-files"

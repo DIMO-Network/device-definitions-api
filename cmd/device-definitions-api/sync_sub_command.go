@@ -14,14 +14,13 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
 )
@@ -99,9 +98,9 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService, logger)),
 	)
 
@@ -115,9 +114,9 @@ func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncIPFSDataCommand{}, commands.NewSyncIPFSDataCommandHandler(pdb.DBS, s.IPFSNodeEndpoint)),
 	)
 
@@ -137,9 +136,9 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSmartCartForwardCompatibilityCommand{},
 			commands.NewSyncSmartCartForwardCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
@@ -161,9 +160,9 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncSmartCartCompatibilityCommand{},
 			commands.NewSyncSmartCartCompatibilityCommandHandler(pdb.DBS, smartCartService, deviceDefinitionRepository)),
 	)
@@ -180,9 +179,9 @@ func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolo
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncTeslaIntegrationCommand{}, commands.NewSyncTestlaIntegrationCommandHandler(pdb.DBS, &logger)),
 	)
 
@@ -202,8 +201,8 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
 		mediator.WithHandler(&commands.SyncNHTSARecallsCommand{}, commands.NewSyncNHTSARecallsCommandHandler(pdb.DBS, &logger, deviceNHTSARecallsRepository, deviceDefinitionRepository, &s.NHTSARecallsFileURL)),
 	)
 
@@ -236,8 +235,8 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
 		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vinDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService)),
 	)
 

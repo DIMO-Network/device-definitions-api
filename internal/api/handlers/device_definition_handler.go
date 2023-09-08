@@ -3,9 +3,9 @@ package handlers
 import (
 	"strconv"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate modesl
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/gofiber/fiber/v2"
 )
 

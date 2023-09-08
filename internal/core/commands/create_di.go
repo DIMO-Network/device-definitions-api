@@ -12,10 +12,10 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type CreateDeviceIntegrationCommand struct {

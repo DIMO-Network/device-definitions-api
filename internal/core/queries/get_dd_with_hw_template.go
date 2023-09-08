@@ -7,8 +7,8 @@ import (
 	"github.com/DIMO-Network/shared/db"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
 )
 

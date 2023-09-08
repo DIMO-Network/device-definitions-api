@@ -3,8 +3,8 @@ package commands
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/TheFellow/go-mediator/mediator"
 )
 
 type CreateDeviceMakeCommand struct {

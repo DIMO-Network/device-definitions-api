@@ -4,12 +4,11 @@ import (
 	"context"
 	"flag"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
 )
@@ -43,8 +42,8 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 
 	//commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&p.logger, &p.settings)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&p.logger, &p.settings)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&p.logger, &p.settings)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&p.logger, &p.settings)),
 		mediator.WithHandler(&commands.SyncPowerTrainTypeCommand{},
 			commands.NewSyncPowerTrainTypeCommandHandler(pdb.DBS, p.logger, powerTrainTypeService)),
 	)

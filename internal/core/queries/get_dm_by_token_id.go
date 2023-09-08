@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"

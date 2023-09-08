@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
-	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/gofiber/fiber/v2"
 )
 

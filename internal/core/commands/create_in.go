@@ -11,7 +11,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
-	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 )
 
 type CreateIntegrationCommand struct {

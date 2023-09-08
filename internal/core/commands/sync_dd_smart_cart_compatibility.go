@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 

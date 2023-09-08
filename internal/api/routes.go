@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/DIMO-Network/device-definitions-api/internal/api/handlers"
-	"github.com/TheFellow/go-mediator/mediator"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/gofiber/fiber/v2"
 )
 

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/TheFellow/go-mediator/mediator"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

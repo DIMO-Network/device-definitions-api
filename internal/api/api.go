@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 
 	"os"
@@ -20,7 +21,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
-	"github.com/TheFellow/go-mediator/mediator"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
@@ -72,11 +72,11 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	}
 	defer prv.Close(context.Background())
 
-	//commands
+	//custom commands
 	m, _ := mediator.New(
-		mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
-		mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
-		mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
+		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
+		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
+		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionGroupQueryHandler(deviceDefinitionRepository, makeRepository)),
 		mediator.WithHandler(&queries.GetDevicesMMYQuery{}, queries.NewGetDevicesMMYQueryHandler(deviceDefinitionRepository)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),

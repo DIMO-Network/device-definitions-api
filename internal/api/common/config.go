@@ -2,9 +2,12 @@ package common
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -52,7 +55,13 @@ func FiberConfig(disableStartupMsg bool) fiber.Config {
 	}
 }
 
-func GrpcConfig(p any) (err error) {
+type GrpcConfig struct {
+	Logger *zerolog.Logger
+}
+
+func (pr *GrpcConfig) GrpcConfig(p any) (err error) {
+
+	fmt.Printf("error executing request %+v \n", err)
 
 	if e, ok := p.(*exceptions.ValidationError); ok {
 		return status.Errorf(codes.InvalidArgument, e.Error())
@@ -65,7 +74,12 @@ func GrpcConfig(p any) (err error) {
 	if e, ok := p.(*exceptions.ConflictError); ok {
 		return status.Errorf(codes.Aborted, e.Error())
 	}
-	fmt.Printf("error executing request %+v \n", err)
+
+	metrics.GRPCPanicsCount.Inc()
+
+	pr.Logger.Err(fmt.Errorf("%s", p)).
+		Str("stack", string(debug.Stack())).
+		Msg("grpc recovered from panic")
 
 	return status.Errorf(codes.Internal, "An error occurred while processing your request: %v", p)
 }
