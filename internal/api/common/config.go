@@ -2,13 +2,14 @@ package common
 
 import (
 	"fmt"
+	"runtime/debug"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"runtime/debug"
 )
 
 func FiberConfig(disableStartupMsg bool) fiber.Config {

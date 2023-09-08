@@ -2,6 +2,7 @@ package mediator
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/pkg/errors"

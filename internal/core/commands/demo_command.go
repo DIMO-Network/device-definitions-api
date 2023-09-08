@@ -29,7 +29,7 @@ func NewDemoCommandHandler(dbs func() *db.ReaderWriter) DemoCommandHandler {
 	return DemoCommandHandler{DBS: dbs}
 }
 
-func (c DemoCommandHandler) Handle(ctx context.Context, cmd mediator.Message) (interface{}, error) {
+func (c DemoCommandHandler) Handle(_ context.Context, cmd mediator.Message) (interface{}, error) {
 	command := cmd.(*DemoCommand)
 	fmt.Printf("DemoCommandHandler handling the command with name: %s\n", command.Name)
 
