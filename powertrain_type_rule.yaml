@@ -9,16 +9,29 @@ types:
       - toyota
       - honda
       - mercedes-benz
+      - kia
     models:
       - cr-v-hybrid
       - rav4-hybrid
+      - prius
+      - prius-c
+      - niro
 
   - name: Rule PHEV
     type: PHEV
     makes:
       - mitsubishi
+      - ford
+      - chevrolet
+      - toyota
+      - jeep
     models:
       - outlander-phev
+      - c-max-Energi
+      - fusion-energi
+      - volt
+      - prius-prime
+      - grand-cherokee-4xe
 
   - name: Rule BEV makes
     type: BEV
@@ -33,12 +46,21 @@ types:
     makes:
       - cadillac
       - mercedes-benz
+      - ford
+      - bmw
+      - volkswagen
+      - kia
     models:
       - lyriq
       - eqs
       - eqa
       - eqb
       - eqe
+      - mustang-mach-e
+      - i3
+      - id.3
+      - id.4
+      - niro-ev
 
   - name: Rule FCEV
     type: FCEV
