@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
@@ -36,58 +38,57 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	qry := query.(*GetDeviceStyleByIDQuery)
 
-	v, err := models.DeviceStyles(models.DeviceStyleWhere.ID.EQ(qry.DeviceStyleID)).One(ctx, ch.DBS().Reader)
+	ds, err := models.DeviceStyles(models.DeviceStyleWhere.ID.EQ(qry.DeviceStyleID)).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
 				Err: fmt.Errorf("could not find device style id: %s", qry.DeviceStyleID),
 			}
 		}
-
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-
-	result := coremodels.GetDeviceStyleQueryResult{
-		ID:                 v.ID,
-		DeviceDefinitionID: v.DeviceDefinitionID,
-		Name:               v.Name,
-		ExternalStyleID:    v.ExternalStyleID,
-		Source:             v.Source,
-		SubModel:           v.SubModel,
-	}
-
-	if v.HardwareTemplateID.Valid {
-		result.HardwareTemplateID = v.HardwareTemplateID.String
-	}
-
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, result.DeviceDefinitionID)
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, ds.DeviceDefinitionID)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),
 		}
 	}
 
-	result.DeviceDefinition = coremodels.GetDeviceDefinitionStyleQueryResult{
-		DeviceAttributes: dd.DeviceAttributes,
+	deviceStyleResult := coremodels.GetDeviceStyleQueryResult{
+		ID:                 ds.ID,
+		DeviceDefinitionID: ds.DeviceDefinitionID,
+		Name:               ds.Name,
+		ExternalStyleID:    ds.ExternalStyleID,
+		Source:             ds.Source,
+		SubModel:           ds.SubModel,
+		HardwareTemplateID: ds.HardwareTemplateID.String,
+		DeviceDefinition: coremodels.GetDeviceDefinitionStyleQueryResult{
+			DeviceAttributes: dd.DeviceAttributes,
+		},
+	}
+	// first see if style metadata has powertrain, most cases will be blank
+	powerTrainType := gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).String()
+	if len(powerTrainType) == 0 {
+		// Set powertrain based on naming logic
+		name := strings.ToLower(deviceStyleResult.Name)
+		if strings.Contains(name, "phev") {
+			powerTrainType = models.PowertrainPHEV
+		} else if strings.Contains(name, "hev") {
+			powerTrainType = models.PowertrainHEV
+		} else if strings.Contains(name, "plug-in") {
+			powerTrainType = models.PowertrainPHEV
+		} else if strings.Contains(name, "hybrid") {
+			powerTrainType = models.PowertrainHEV
+		} else if strings.Contains(name, "electric") {
+			powerTrainType = models.PowertrainBEV
+		}
 	}
 
-	// Set default powertrain
-	name := strings.ToLower(result.Name)
-	powerTrainType := ""
-	if strings.Contains(name, "phev") {
-		powerTrainType = models.PowertrainPHEV
-	} else if strings.Contains(name, "hev") {
-		powerTrainType = models.PowertrainHEV
-	} else if strings.Contains(name, "plug-in") {
-		powerTrainType = models.PowertrainPHEV
-	} else if strings.Contains(name, "hybrid") {
-		powerTrainType = models.PowertrainHEV
-	}
-
+	// override any existing powertrain inherited from device definition, only if we came up with something worthy from above logic
 	hasPowertrain := false
-	for _, item := range result.DeviceDefinition.DeviceAttributes {
+	for _, item := range deviceStyleResult.DeviceDefinition.DeviceAttributes {
 		if item.Name == common.PowerTrainType {
 			hasPowertrain = true
 			if len(powerTrainType) > 0 {
@@ -97,11 +98,12 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		}
 	}
 
+	// if no powertrain attribute found, set it, defaulting to ICE if nothing resulted from above logic
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
 			powerTrainType = models.PowertrainICE
 		}
-		result.DeviceDefinition.DeviceAttributes = append(result.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
+		deviceStyleResult.DeviceDefinition.DeviceAttributes = append(deviceStyleResult.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
 			Name:        common.PowerTrainType,
 			Description: common.PowerTrainType,
 			Type:        common.DefaultDeviceType,
@@ -109,5 +111,5 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		})
 	}
 
-	return result, nil
+	return deviceStyleResult, nil
 }
