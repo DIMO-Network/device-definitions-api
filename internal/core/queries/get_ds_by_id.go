@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 
@@ -66,22 +68,23 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			DeviceAttributes: dd.DeviceAttributes,
 		},
 	}
-
-	// Set default powertrain
-	name := strings.ToLower(deviceStyleResult.Name)
-	powerTrainType := ""
-	if strings.Contains(name, "phev") {
-		powerTrainType = models.PowertrainPHEV
-	} else if strings.Contains(name, "hev") {
-		powerTrainType = models.PowertrainHEV
-	} else if strings.Contains(name, "plug-in") {
-		powerTrainType = models.PowertrainPHEV
-	} else if strings.Contains(name, "hybrid") {
-		powerTrainType = models.PowertrainHEV
-	} else if strings.Contains(name, "electric") {
-		powerTrainType = models.PowertrainBEV
+	// first see if style metadata has powertrain, most cases will be blank
+	powerTrainType := gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).String()
+	if len(powerTrainType) == 0 {
+		// Set powertrain based on naming logic
+		name := strings.ToLower(deviceStyleResult.Name)
+		if strings.Contains(name, "phev") {
+			powerTrainType = models.PowertrainPHEV
+		} else if strings.Contains(name, "hev") {
+			powerTrainType = models.PowertrainHEV
+		} else if strings.Contains(name, "plug-in") {
+			powerTrainType = models.PowertrainPHEV
+		} else if strings.Contains(name, "hybrid") {
+			powerTrainType = models.PowertrainHEV
+		} else if strings.Contains(name, "electric") {
+			powerTrainType = models.PowertrainBEV
+		}
 	}
-	// todo get powertrain from ds metadata - note this trumps all
 
 	// override any existing powertrain inherited from device definition, only if we came up with something worthy from above logic
 	hasPowertrain := false

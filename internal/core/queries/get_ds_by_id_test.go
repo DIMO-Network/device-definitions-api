@@ -2,6 +2,9 @@ package queries
 
 import (
 	"context"
+	"fmt"
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -11,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"testing"
 )
 
 func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
@@ -30,9 +32,10 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "Escape", 2022, pdb)
 	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti Hybrid", "drivly", "1", pdb)
 	dsNormal := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti", "drivly", "2", pdb)
-	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti", "drivly", "3", pdb)
-	dsWithPowertrain.Metadata = null.JSONFrom([]byte(`{"powertrain_type" = "BEV"}`))
-	_, _ = dsWithPowertrain.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.ID, "super energiii", "drivly", "3", pdb)
+	dsWithPowertrain.Metadata = null.JSONFrom([]byte(fmt.Sprintf(`{"%s" = "BEV"}`, common.PowerTrainType)))
+	_, err := dsWithPowertrain.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
 	rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd)
 	require.NoError(t, err)
