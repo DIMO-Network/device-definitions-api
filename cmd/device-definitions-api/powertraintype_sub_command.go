@@ -20,14 +20,18 @@ type powerTrainTypeCmd struct {
 	force bool
 }
 
-func (*powerTrainTypeCmd) Name() string     { return "syncpowertraintype" }
-func (*powerTrainTypeCmd) Synopsis() string { return "sync powertraintype" }
+func (*powerTrainTypeCmd) Name() string { return "syncpowertraintype" }
+func (*powerTrainTypeCmd) Synopsis() string {
+	return "figures out the right powertrain for a device definition based on rules and logic."
+}
 func (*powerTrainTypeCmd) Usage() string {
-	return `syncpowertraintype [-force]`
+	return `syncpowertraintype [-force]
+			force flag will overwrite any powertrain settings already set. can be useful when update rules.
+			This script does not set anything on device_styles metadata powertrain.`
 }
 
 func (p *powerTrainTypeCmd) SetFlags(f *flag.FlagSet) {
-	f.BoolVar(&p.force, "force", false, "Enable Force Powertraintype")
+	f.BoolVar(&p.force, "force", false, "set powertrain even if already set - default is to not modify.")
 }
 
 func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
