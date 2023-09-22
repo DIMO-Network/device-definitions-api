@@ -33,7 +33,7 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti Hybrid", "drivly", "1", pdb)
 	dsNormal := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti", "drivly", "2", pdb)
 	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.ID, "super energiii", "drivly", "3", pdb)
-	dsWithPowertrain.Metadata = null.JSONFrom([]byte(fmt.Sprintf(`{"%s" = "BEV"}`, common.PowerTrainType)))
+	dsWithPowertrain.Metadata = null.JSONFrom([]byte(fmt.Sprintf(`{"%s": "BEV"}`, common.PowerTrainType)))
 	_, err := dsWithPowertrain.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
