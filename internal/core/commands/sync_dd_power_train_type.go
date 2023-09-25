@@ -111,8 +111,10 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 									ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
 									return nil, err
 								}
-								ch.logger.Info().Msgf("Current Powertraintype:%s | New Powertraintype: %s", metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType], *powerTrainTypeValue)
-								needsUpdate = true
+								if metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] != *powerTrainTypeValue {
+									ch.logger.Info().Msgf("Current powertrain_type: %s | New powertrain_type: %s", metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType], *powerTrainTypeValue)
+									needsUpdate = true
+								}
 							}
 						}
 						break
