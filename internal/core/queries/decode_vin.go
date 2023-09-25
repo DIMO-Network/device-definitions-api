@@ -319,25 +319,28 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			}
 		}
 
-		for key, value := range metadataAttributes[metadataKey].(map[string]interface{}) {
+		if metadataAttributes != nil {
+			if metadataValue, ok := metadataAttributes[metadataKey]; ok {
+				for key, value := range metadataValue.(map[string]interface{}) {
+					if key == common.PowerTrainType {
+						powerTrainTypeValue := value
+						if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
+							drivlyData := null.JSON{}
+							vincarioData := null.JSON{}
+							if vinInfo.Source == coremodels.DrivlyProvider {
+								drivlyData = vinInfo.MetaData
+							} else {
+								vincarioData = vinInfo.MetaData
+							}
+							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
+							if err != nil {
+								dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
+							}
+						}
 
-			if key == common.PowerTrainType {
-				powerTrainTypeValue := value
-				if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
-					drivlyData := null.JSON{}
-					vincarioData := null.JSON{}
-					if vinInfo.Source == coremodels.DrivlyProvider {
-						drivlyData = vinInfo.MetaData
-					} else {
-						vincarioData = vinInfo.MetaData
-					}
-					powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
-					if err != nil {
-						dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
+						metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
 					}
 				}
-
-				metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
 			}
 		}
 
