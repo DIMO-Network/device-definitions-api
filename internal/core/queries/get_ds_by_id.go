@@ -65,7 +65,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		SubModel:           ds.SubModel,
 		HardwareTemplateID: ds.HardwareTemplateID.String,
 		DeviceDefinition: coremodels.GetDeviceDefinitionStyleQueryResult{
-			DeviceAttributes: dd.DeviceAttributes,
+			DeviceAttributes: dd.DeviceAttributes, // copy any attributes from parent DD
 		},
 	}
 	// first see if style metadata has powertrain, most cases will be blank
@@ -83,6 +83,10 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			powerTrainType = models.PowertrainHEV
 		} else if strings.Contains(name, "electric") {
 			powerTrainType = models.PowertrainBEV
+		} else if strings.Contains(name, "4xe") {
+			powerTrainType = models.PowertrainPHEV
+		} else if strings.Contains(name, "energi") {
+			powerTrainType = models.PowertrainPHEV
 		}
 	}
 
@@ -98,10 +102,15 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		}
 	}
 
-	// if no powertrain attribute found, set it, defaulting to ICE if nothing resulted from above logic
+	// if no powertrain attribute found, set it, defaulting to parent DD if nothing resulted from above logic
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
-			powerTrainType = models.PowertrainICE
+			ddPt := gjson.Get(dd.Metadata.(string), "vehicle_info."+common.PowerTrainType).String()
+			if len(ddPt) > 0 {
+				powerTrainType = ddPt
+			} else {
+				powerTrainType = models.PowertrainICE // default to ICE if nothing found
+			}
 		}
 		deviceStyleResult.DeviceDefinition.DeviceAttributes = append(deviceStyleResult.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
 			Name:        common.PowerTrainType,
