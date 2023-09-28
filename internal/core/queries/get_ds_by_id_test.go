@@ -30,22 +30,32 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "Escape", 2022, pdb)
-	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti Hybrid", "drivly", "1", pdb)
+	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
 	dsNormal := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti", "drivly", "2", pdb)
 	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.ID, "super energiii", "drivly", "3", pdb)
 	dsWithPowertrain.Metadata = null.JSONFrom([]byte(fmt.Sprintf(`{"%s": "BEV"}`, common.PowerTrainType)))
 	_, err := dsWithPowertrain.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
+	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "Focus", 2022, pdb)
+	ddWithPt.Metadata = null.JSONFrom([]byte(`{"vehicle_info": {"powertrain_type": "ICE"}}`))
+	_, err = ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+	dsHybridOverride := dbtesthelper.SetupCreateStyle(t, ddWithPt.ID, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
 
 	rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd)
 	require.NoError(t, err)
-	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.ID).Times(3).Return(rp, nil) // expect 3 times call since used in 3 tests
+	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.ID).Times(3).Return(rp, nil)       // expect 3 times call since used in 3 tests
+	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), ddWithPt.ID).Times(1).Return(rp, nil) // expect 1 times call since used in 1 tests
 
 	tests := []struct {
 		name           string
 		query          *GetDeviceStyleByIDQuery
 		wantPowertrain string
 	}{
+		{name: "powertrain overriden from device definitions",
+			query:          &GetDeviceStyleByIDQuery{DeviceStyleID: dsHybridOverride.ID},
+			wantPowertrain: coremodels.HEV.String(),
+		},
 		{name: "powertrain inherited from device definitions",
 			query:          &GetDeviceStyleByIDQuery{DeviceStyleID: dsNormal.ID},
 			wantPowertrain: coremodels.ICE.String(),
@@ -69,7 +79,11 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 			require.NoError(t, err)
 
 			result := got.(coremodels.GetDeviceStyleQueryResult)
-			assert.Equal(t, dd.ID, result.DeviceDefinitionID)
+			if result.ID == dsHybridOverride.ID {
+				assert.Equal(t, ddWithPt.ID, result.DeviceDefinitionID)
+			} else {
+				assert.Equal(t, dd.ID, result.DeviceDefinitionID)
+			}
 			pt := ""
 			for _, attribute := range result.DeviceDefinition.DeviceAttributes {
 				if attribute.Name == "powertrain_type" {

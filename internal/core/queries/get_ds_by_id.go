@@ -103,6 +103,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 	}
 
 	// if no powertrain attribute found, set it, defaulting to parent DD if nothing resulted from above logic
+	// todo test for parent DD no powertrain type, but the style is a hybrid or other resolved by string value.
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
 			ddPt := gjson.Get(dd.Metadata.(string), "vehicle_info."+common.PowerTrainType).String()
