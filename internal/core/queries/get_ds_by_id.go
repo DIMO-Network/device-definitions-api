@@ -92,18 +92,17 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	// override any existing powertrain inherited from device definition, only if we came up with something worthy from above logic
 	hasPowertrain := false
-	for _, item := range deviceStyleResult.DeviceDefinition.DeviceAttributes {
+	for i, item := range deviceStyleResult.DeviceDefinition.DeviceAttributes {
 		if item.Name == common.PowerTrainType {
 			hasPowertrain = true
 			if len(powerTrainType) > 0 {
-				item.Value = powerTrainType
+				deviceStyleResult.DeviceDefinition.DeviceAttributes[i].Value = powerTrainType
 			}
 			break
 		}
 	}
 
 	// if no powertrain attribute found, set it, defaulting to parent DD if nothing resulted from above logic
-	// todo test for parent DD no powertrain type, but the style is a hybrid or other resolved by string value.
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
 			ddPt := gjson.Get(dd.Metadata.(string), "vehicle_info."+common.PowerTrainType).String()
