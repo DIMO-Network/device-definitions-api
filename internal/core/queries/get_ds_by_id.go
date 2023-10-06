@@ -92,11 +92,12 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	// override any existing powertrain inherited from device definition, only if we came up with something worthy from above logic
 	hasPowertrain := false
-	for _, item := range deviceStyleResult.DeviceDefinition.DeviceAttributes {
+	for i, item := range deviceStyleResult.DeviceDefinition.DeviceAttributes {
 		if item.Name == common.PowerTrainType {
 			hasPowertrain = true
+			// todo test to make sure this overrides the parent DD powertrain_type
 			if len(powerTrainType) > 0 {
-				item.Value = powerTrainType
+				deviceStyleResult.DeviceDefinition.DeviceAttributes[i].Value = powerTrainType
 			}
 			break
 		}
