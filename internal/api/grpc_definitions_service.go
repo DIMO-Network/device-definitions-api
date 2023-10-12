@@ -141,6 +141,8 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
+		points := common.IntegrationAttributes[item.ID].Points
+		manufTkn := common.IntegrationAttributes[item.ID].ManufTokenID
 		result.Integrations = append(result.Integrations, &p_grpc.Integration{
 			Id:                      item.ID,
 			Type:                    item.Type,
@@ -155,6 +157,8 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 			},
+			Points:              &points,
+			ManufacturerTokenId: &manufTkn,
 		})
 	}
 
@@ -162,6 +166,8 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 }
 
 func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
+	points := common.IntegrationAttributes[integration.ID].Points
+	manufTkn := common.IntegrationAttributes[integration.ID].ManufTokenID
 	return &p_grpc.Integration{
 		Id:                      integration.ID,
 		Type:                    integration.Type,
@@ -176,6 +182,8 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 		},
+		Points:              &points,
+		ManufacturerTokenId: &manufTkn,
 	}, nil
 }
 
@@ -207,12 +215,16 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Cont
 	result := &p_grpc.GetDeviceDefinitionIntegrationResponse{}
 
 	for _, queryResult := range queryResult {
+		points := common.IntegrationAttributes[queryResult.ID].Points
+		manufTkn := common.IntegrationAttributes[queryResult.ID].ManufTokenID
 		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
 			Integration: &p_grpc.Integration{
-				Id:     queryResult.ID,
-				Type:   queryResult.Type,
-				Style:  queryResult.Style,
-				Vendor: queryResult.Vendor,
+				Id:                  queryResult.ID,
+				Type:                queryResult.Type,
+				Style:               queryResult.Style,
+				Vendor:              queryResult.Vendor,
+				Points:              &points,
+				ManufacturerTokenId: &manufTkn,
 			},
 			Region: queryResult.Region,
 		})

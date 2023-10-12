@@ -22,6 +22,14 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+var IntegrationAttributes = map[string]struct {
+	Points       int64
+	ManufTokenID uint64
+}{
+	"27qftVRWQYpVDcO5DltO5Ojbjxk": {Points: 6000, ManufTokenID: 137},
+	"2ULfuC8U9dOqRshZBAi0lMM1Rrx": {Points: 2000, ManufTokenID: 142},
+}
+
 func JSONOrDefault(j null.JSON) json.RawMessage {
 	if !j.Valid || len(j.JSON) == 0 {
 		return []byte(`{}`)
@@ -353,14 +361,17 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
 	for _, di := range dd.DeviceIntegrations {
-
+		points := IntegrationAttributes[di.ID].Points
+		manufTkn := IntegrationAttributes[di.ID].ManufTokenID
 		deviceIntegration := &grpc.DeviceIntegration{
 			DeviceDefinitionId: dd.DeviceDefinitionID,
 			Integration: &grpc.Integration{
-				Id:     di.ID,
-				Type:   di.Type,
-				Style:  di.Style,
-				Vendor: di.Vendor,
+				Id:                  di.ID,
+				Type:                di.Type,
+				Style:               di.Style,
+				Vendor:              di.Vendor,
+				Points:              &points,
+				ManufacturerTokenId: &manufTkn,
 			},
 			Region: di.Region,
 		}
