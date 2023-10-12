@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
+	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
@@ -23,6 +25,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 //go:embed device_type_vehicle_properties.json
@@ -304,11 +307,13 @@ func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, sour
 
 func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
 	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeAPI,
-		Style:            models.IntegrationStyleWebhook,
-		Vendor:           common.AutoPiVendor,
-		RefreshLimitSecs: 1800,
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeAPI,
+		Style:               models.IntegrationStyleWebhook,
+		Vendor:              common.AutoPiVendor,
+		RefreshLimitSecs:    1800,
+		Points:              null.IntFrom(6000),
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -327,11 +332,13 @@ func SetupCreateWMI(t *testing.T, id string, deviceMakeID string, pdb db.Store) 
 
 func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
 	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeAPI,
-		Style:            models.IntegrationStyleWebhook,
-		Vendor:           common.SmartCarVendor,
-		RefreshLimitSecs: 1800,
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeAPI,
+		Style:               models.IntegrationStyleWebhook,
+		Vendor:              common.SmartCarVendor,
+		RefreshLimitSecs:    1800,
+		Points:              null.IntFrom(2000),
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(7), 0)),
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -340,11 +347,13 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 
 func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
 	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeHardware,
-		Style:            models.IntegrationStyleAddon,
-		Vendor:           "Hardware",
-		RefreshLimitSecs: 1800,
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeHardware,
+		Style:               models.IntegrationStyleAddon,
+		Vendor:              "Hardware",
+		RefreshLimitSecs:    1800,
+		Points:              null.IntFrom(2000),
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(7), 0)),
 	}
 	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")

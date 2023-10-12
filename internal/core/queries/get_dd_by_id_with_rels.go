@@ -16,12 +16,14 @@ type GetDeviceDefinitionWithRelsQuery struct {
 }
 
 type GetDeviceDefinitionWithRelsQueryResult struct {
-	ID           string          `json:"id"`
-	Type         string          `json:"type"`
-	Style        string          `json:"style"`
-	Vendor       string          `json:"vendor"`
-	Region       string          `json:"region"`
-	Capabilities json.RawMessage `json:"capabilities"`
+	ID                  string          `json:"id"`
+	Type                string          `json:"type"`
+	Style               string          `json:"style"`
+	Vendor              string          `json:"vendor"`
+	Region              string          `json:"region"`
+	Capabilities        json.RawMessage `json:"capabilities"`
+	Points              *int64          `json:"points"`
+	ManufacturerTokenID *uint64         `json:"manufacturer_token_id"`
 }
 
 func (*GetDeviceDefinitionWithRelsQuery) Key() string {
@@ -54,13 +56,17 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 	var integrations []GetDeviceDefinitionWithRelsQueryResult
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
+			points := int64(di.R.Integration.Points.Int)
+			manufTknID, _ := di.R.Integration.ManufacturerTokenID.Uint64()
 			integrations = append(integrations, GetDeviceDefinitionWithRelsQueryResult{
-				ID:           di.R.Integration.ID,
-				Type:         di.R.Integration.Type,
-				Style:        di.R.Integration.Style,
-				Vendor:       di.R.Integration.Vendor,
-				Region:       di.Region,
-				Capabilities: common.JSONOrDefault(di.Features),
+				ID:                  di.R.Integration.ID,
+				Type:                di.R.Integration.Type,
+				Style:               di.R.Integration.Style,
+				Vendor:              di.R.Integration.Vendor,
+				Region:              di.Region,
+				Capabilities:        common.JSONOrDefault(di.Features),
+				Points:              &points,
+				ManufacturerTokenID: &manufTknID,
 			})
 		}
 	}

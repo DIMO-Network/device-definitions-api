@@ -64,12 +64,14 @@ type DeviceType struct {
 }
 
 type DeviceIntegration struct {
-	ID       string                     `json:"id"`
-	Type     string                     `json:"type"`
-	Style    string                     `json:"style"`
-	Vendor   string                     `json:"vendor"`
-	Region   string                     `json:"region"`
-	Features []DeviceIntegrationFeature `json:"features"`
+	ID                  string                     `json:"id"`
+	Type                string                     `json:"type"`
+	Style               string                     `json:"style"`
+	Vendor              string                     `json:"vendor"`
+	Region              string                     `json:"region"`
+	Points              *int64                     `json:"points"`
+	ManufacturerTokenID *uint64                    `json:"manufacturer_token_id"`
+	Features            []DeviceIntegrationFeature `json:"features"`
 }
 
 type DeviceIntegrationFeature struct {
