@@ -46,8 +46,7 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.M
 				}
 			}
 		}
-		points := int64(v.Points.Int)
-		manufTknID, _ := v.ManufacturerTokenID.Uint64()
+
 		result[i] = coremodels.GetIntegrationQueryResult{
 			ID:                      v.ID,
 			Type:                    v.Type,
@@ -56,9 +55,20 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.M
 			AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
 			RefreshLimitSecs:        v.RefreshLimitSecs,
 			TokenID:                 v.TokenID.Int,
-			Points:                  &points,
-			ManufacturerTokenID:     &manufTknID,
 		}
+
+		if !v.ManufacturerTokenID.IsZero() {
+			if m, ok := v.ManufacturerTokenID.Int64(); ok {
+				manufTknID := uint64(m)
+				result[i].ManufacturerTokenID = &manufTknID
+			}
+		}
+
+		if v.Points.Ptr() != nil {
+			points := int64(v.Points.Int)
+			result[i].Points = &points
+		}
+
 		if im.AutoPiPowertrainToTemplateID != nil {
 			result[i].AutoPiPowertrainToTemplateID = im.AutoPiPowertrainToTemplateID
 		}
