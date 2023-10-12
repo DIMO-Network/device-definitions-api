@@ -19,6 +19,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
@@ -31,80 +32,94 @@ type Integration struct {
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	// How often can integration be called in seconds
-	RefreshLimitSecs int       `boil:"refresh_limit_secs" json:"refresh_limit_secs" toml:"refresh_limit_secs" yaml:"refresh_limit_secs"`
-	Metadata         null.JSON `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	TokenID          null.Int  `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
+	RefreshLimitSecs    int               `boil:"refresh_limit_secs" json:"refresh_limit_secs" toml:"refresh_limit_secs" yaml:"refresh_limit_secs"`
+	Metadata            null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	TokenID             null.Int          `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
+	Points              null.Int          `boil:"points" json:"points,omitempty" toml:"points" yaml:"points,omitempty"`
+	ManufacturerTokenID types.NullDecimal `boil:"manufacturer_token_id" json:"manufacturer_token_id,omitempty" toml:"manufacturer_token_id" yaml:"manufacturer_token_id,omitempty"`
 
 	R *integrationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L integrationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var IntegrationColumns = struct {
-	ID               string
-	Type             string
-	Style            string
-	Vendor           string
-	CreatedAt        string
-	UpdatedAt        string
-	RefreshLimitSecs string
-	Metadata         string
-	TokenID          string
+	ID                  string
+	Type                string
+	Style               string
+	Vendor              string
+	CreatedAt           string
+	UpdatedAt           string
+	RefreshLimitSecs    string
+	Metadata            string
+	TokenID             string
+	Points              string
+	ManufacturerTokenID string
 }{
-	ID:               "id",
-	Type:             "type",
-	Style:            "style",
-	Vendor:           "vendor",
-	CreatedAt:        "created_at",
-	UpdatedAt:        "updated_at",
-	RefreshLimitSecs: "refresh_limit_secs",
-	Metadata:         "metadata",
-	TokenID:          "token_id",
+	ID:                  "id",
+	Type:                "type",
+	Style:               "style",
+	Vendor:              "vendor",
+	CreatedAt:           "created_at",
+	UpdatedAt:           "updated_at",
+	RefreshLimitSecs:    "refresh_limit_secs",
+	Metadata:            "metadata",
+	TokenID:             "token_id",
+	Points:              "points",
+	ManufacturerTokenID: "manufacturer_token_id",
 }
 
 var IntegrationTableColumns = struct {
-	ID               string
-	Type             string
-	Style            string
-	Vendor           string
-	CreatedAt        string
-	UpdatedAt        string
-	RefreshLimitSecs string
-	Metadata         string
-	TokenID          string
+	ID                  string
+	Type                string
+	Style               string
+	Vendor              string
+	CreatedAt           string
+	UpdatedAt           string
+	RefreshLimitSecs    string
+	Metadata            string
+	TokenID             string
+	Points              string
+	ManufacturerTokenID string
 }{
-	ID:               "integrations.id",
-	Type:             "integrations.type",
-	Style:            "integrations.style",
-	Vendor:           "integrations.vendor",
-	CreatedAt:        "integrations.created_at",
-	UpdatedAt:        "integrations.updated_at",
-	RefreshLimitSecs: "integrations.refresh_limit_secs",
-	Metadata:         "integrations.metadata",
-	TokenID:          "integrations.token_id",
+	ID:                  "integrations.id",
+	Type:                "integrations.type",
+	Style:               "integrations.style",
+	Vendor:              "integrations.vendor",
+	CreatedAt:           "integrations.created_at",
+	UpdatedAt:           "integrations.updated_at",
+	RefreshLimitSecs:    "integrations.refresh_limit_secs",
+	Metadata:            "integrations.metadata",
+	TokenID:             "integrations.token_id",
+	Points:              "integrations.points",
+	ManufacturerTokenID: "integrations.manufacturer_token_id",
 }
 
 // Generated where
 
 var IntegrationWhere = struct {
-	ID               whereHelperstring
-	Type             whereHelperstring
-	Style            whereHelperstring
-	Vendor           whereHelperstring
-	CreatedAt        whereHelpertime_Time
-	UpdatedAt        whereHelpertime_Time
-	RefreshLimitSecs whereHelperint
-	Metadata         whereHelpernull_JSON
-	TokenID          whereHelpernull_Int
+	ID                  whereHelperstring
+	Type                whereHelperstring
+	Style               whereHelperstring
+	Vendor              whereHelperstring
+	CreatedAt           whereHelpertime_Time
+	UpdatedAt           whereHelpertime_Time
+	RefreshLimitSecs    whereHelperint
+	Metadata            whereHelpernull_JSON
+	TokenID             whereHelpernull_Int
+	Points              whereHelpernull_Int
+	ManufacturerTokenID whereHelpertypes_NullDecimal
 }{
-	ID:               whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"id\""},
-	Type:             whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"type\""},
-	Style:            whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"style\""},
-	Vendor:           whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"vendor\""},
-	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"integrations\".\"created_at\""},
-	UpdatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"integrations\".\"updated_at\""},
-	RefreshLimitSecs: whereHelperint{field: "\"device_definitions_api\".\"integrations\".\"refresh_limit_secs\""},
-	Metadata:         whereHelpernull_JSON{field: "\"device_definitions_api\".\"integrations\".\"metadata\""},
-	TokenID:          whereHelpernull_Int{field: "\"device_definitions_api\".\"integrations\".\"token_id\""},
+	ID:                  whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"id\""},
+	Type:                whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"type\""},
+	Style:               whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"style\""},
+	Vendor:              whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"vendor\""},
+	CreatedAt:           whereHelpertime_Time{field: "\"device_definitions_api\".\"integrations\".\"created_at\""},
+	UpdatedAt:           whereHelpertime_Time{field: "\"device_definitions_api\".\"integrations\".\"updated_at\""},
+	RefreshLimitSecs:    whereHelperint{field: "\"device_definitions_api\".\"integrations\".\"refresh_limit_secs\""},
+	Metadata:            whereHelpernull_JSON{field: "\"device_definitions_api\".\"integrations\".\"metadata\""},
+	TokenID:             whereHelpernull_Int{field: "\"device_definitions_api\".\"integrations\".\"token_id\""},
+	Points:              whereHelpernull_Int{field: "\"device_definitions_api\".\"integrations\".\"points\""},
+	ManufacturerTokenID: whereHelpertypes_NullDecimal{field: "\"device_definitions_api\".\"integrations\".\"manufacturer_token_id\""},
 }
 
 // IntegrationRels is where relationship names are stored.
@@ -135,9 +150,9 @@ func (r *integrationR) GetDeviceIntegrations() DeviceIntegrationSlice {
 type integrationL struct{}
 
 var (
-	integrationAllColumns            = []string{"id", "type", "style", "vendor", "created_at", "updated_at", "refresh_limit_secs", "metadata", "token_id"}
+	integrationAllColumns            = []string{"id", "type", "style", "vendor", "created_at", "updated_at", "refresh_limit_secs", "metadata", "token_id", "points", "manufacturer_token_id"}
 	integrationColumnsWithoutDefault = []string{"id", "type", "style", "vendor"}
-	integrationColumnsWithDefault    = []string{"created_at", "updated_at", "refresh_limit_secs", "metadata", "token_id"}
+	integrationColumnsWithDefault    = []string{"created_at", "updated_at", "refresh_limit_secs", "metadata", "token_id", "points", "manufacturer_token_id"}
 	integrationPrimaryKeyColumns     = []string{"id"}
 	integrationGeneratedColumns      = []string{}
 )
