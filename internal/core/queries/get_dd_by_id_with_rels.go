@@ -56,7 +56,6 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 	var integrations []GetDeviceDefinitionWithRelsQueryResult
 	if dd.R != nil {
 		for _, di := range dd.R.DeviceIntegrations {
-			points := int64(di.R.Integration.Points.Int)
 			integrations = append(integrations, GetDeviceDefinitionWithRelsQueryResult{
 				ID:           di.R.Integration.ID,
 				Type:         di.R.Integration.Type,
@@ -64,12 +63,20 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 				Vendor:       di.R.Integration.Vendor,
 				Region:       di.Region,
 				Capabilities: common.JSONOrDefault(di.Features),
-				Points:       &points,
 			})
 
-			if manufTknID, ok := di.R.Integration.ManufacturerTokenID.Uint64(); ok {
-				integrations[len(integrations)-1].ManufacturerTokenID = &manufTknID
+			if !di.R.Integration.ManufacturerTokenID.IsZero() {
+				if m, ok := di.R.Integration.ManufacturerTokenID.Int64(); ok {
+					manufTknID := uint64(m)
+					integrations[len(integrations)-1].ManufacturerTokenID = &manufTknID
+				}
 			}
+
+			if di.R.Integration.Points.Ptr() != nil {
+				points := int64(di.R.Integration.Points.Int)
+				integrations[len(integrations)-1].Points = &points
+			}
+
 		}
 	}
 
