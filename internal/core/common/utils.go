@@ -22,14 +22,6 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-var IntegrationAttributes = map[string]struct {
-	Points       int64
-	ManufTokenID uint64
-}{
-	"27qftVRWQYpVDcO5DltO5Ojbjxk": {Points: 6000, ManufTokenID: 137},
-	"2ULfuC8U9dOqRshZBAi0lMM1Rrx": {Points: 2000, ManufTokenID: 142},
-}
-
 func JSONOrDefault(j null.JSON) json.RawMessage {
 	if !j.Valid || len(j.JSON) == 0 {
 		return []byte(`{}`)
