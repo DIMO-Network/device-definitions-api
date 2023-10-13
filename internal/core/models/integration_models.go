@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 )
 
 type PowertrainType string
@@ -50,6 +51,6 @@ type GetIntegrationQueryResult struct {
 	RefreshLimitSecs             int                    `json:"refresh_limit_secs"`
 	AutoPiPowertrainToTemplateID map[PowertrainType]int `json:"auto_pi_power_train_to_template_id,omitempty"`
 	TokenID                      int                    `json:"token_id"`
-	Points                       *int64                 `json:"points"`
-	ManufacturerTokenID          *uint64                `json:"manufacturer_token_id"`
+	Points                       int                    `json:"points"`
+	ManufacturerTokenID          *big.Int               `json:"manufacturer_token_id"`
 }

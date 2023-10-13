@@ -305,16 +305,27 @@ func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, sour
 }
 
 func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
+
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "AutoPi",
+		NameSlug: "autopi",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
+	}
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
 	integration := &models.Integration{
 		ID:                  ksuid.New().String(),
 		Type:                models.IntegrationTypeAPI,
 		Style:               models.IntegrationStyleWebhook,
 		Vendor:              common.AutoPiVendor,
 		RefreshLimitSecs:    1800,
-		Points:              null.IntFrom(6000),
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
+		Points:              6000,
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
@@ -330,31 +341,52 @@ func SetupCreateWMI(t *testing.T, id string, deviceMakeID string, pdb db.Store) 
 }
 
 func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "Smartcar",
+		NameSlug: "smartcar",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(143), 0)),
+	}
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
 	integration := &models.Integration{
 		ID:                  ksuid.New().String(),
 		Type:                models.IntegrationTypeAPI,
 		Style:               models.IntegrationStyleWebhook,
 		Vendor:              common.SmartCarVendor,
 		RefreshLimitSecs:    1800,
-		Points:              null.IntFrom(2000),
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(7), 0)),
+		Points:              6000,
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(143), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
 
 func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
+
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "Macaron",
+		NameSlug: "macaron",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
+	}
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
 	integration := &models.Integration{
 		ID:                  ksuid.New().String(),
 		Type:                models.IntegrationTypeHardware,
 		Style:               models.IntegrationStyleAddon,
 		Vendor:              "Hardware",
 		RefreshLimitSecs:    1800,
-		Points:              null.IntFrom(2000),
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(7), 0)),
+		Points:              6000,
+		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }

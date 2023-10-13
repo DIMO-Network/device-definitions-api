@@ -155,16 +155,19 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 			},
-			Points:              item.Points,
-			ManufacturerTokenId: item.ManufacturerTokenID,
+			Points: int64(item.Points),
 		})
+
+		if item.ManufacturerTokenID != nil {
+			result.Integrations[len(result.Integrations)-1].ManufacturerTokenId = item.ManufacturerTokenID.Uint64()
+		}
 	}
 
 	return result, nil
 }
 
 func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
-	return &p_grpc.Integration{
+	integ := &p_grpc.Integration{
 		Id:                      integration.ID,
 		Type:                    integration.Type,
 		Style:                   integration.Style,
@@ -178,9 +181,12 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 		},
-		Points:              integration.Points,
-		ManufacturerTokenId: integration.ManufacturerTokenID,
-	}, nil
+		Points: int64(integration.Points),
+	}
+	if integration.ManufacturerTokenID != nil {
+		integ.ManufacturerTokenId = integration.ManufacturerTokenID.Uint64()
+	}
+	return integ, nil
 }
 
 func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
@@ -213,12 +219,10 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Cont
 	for _, queryResult := range queryResult {
 		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
 			Integration: &p_grpc.Integration{
-				Id:                  queryResult.ID,
-				Type:                queryResult.Type,
-				Style:               queryResult.Style,
-				Vendor:              queryResult.Vendor,
-				Points:              queryResult.Points,
-				ManufacturerTokenId: queryResult.ManufacturerTokenID,
+				Id:     queryResult.ID,
+				Type:   queryResult.Type,
+				Style:  queryResult.Style,
+				Vendor: queryResult.Vendor,
 			},
 			Region: queryResult.Region,
 		})

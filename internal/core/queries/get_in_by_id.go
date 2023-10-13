@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -70,6 +71,11 @@ func (ch GetIntegrationByIDQueryHandler) Handle(ctx context.Context, query media
 		AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
 		RefreshLimitSecs:        v.RefreshLimitSecs,
 		TokenID:                 v.TokenID.Int,
+		Points:                  v.Points,
+	}
+
+	if !v.ManufacturerTokenID.IsZero() {
+		result.ManufacturerTokenID = v.ManufacturerTokenID.Big.Int(new(big.Int))
 	}
 
 	if im.AutoPiPowertrainToTemplateID != nil {

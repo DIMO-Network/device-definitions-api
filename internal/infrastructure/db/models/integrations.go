@@ -19,6 +19,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
@@ -31,11 +32,11 @@ type Integration struct {
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	// How often can integration be called in seconds
-	RefreshLimitSecs    int       `boil:"refresh_limit_secs" json:"refresh_limit_secs" toml:"refresh_limit_secs" yaml:"refresh_limit_secs"`
-	Metadata            null.JSON `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	TokenID             null.Int  `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
-	Points              int       `boil:"points" json:"points" toml:"points" yaml:"points"`
-	ManufacturerTokenID null.Int  `boil:"manufacturer_token_id" json:"manufacturer_token_id,omitempty" toml:"manufacturer_token_id" yaml:"manufacturer_token_id,omitempty"`
+	RefreshLimitSecs    int               `boil:"refresh_limit_secs" json:"refresh_limit_secs" toml:"refresh_limit_secs" yaml:"refresh_limit_secs"`
+	Metadata            null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	TokenID             null.Int          `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
+	Points              int               `boil:"points" json:"points" toml:"points" yaml:"points"`
+	ManufacturerTokenID types.NullDecimal `boil:"manufacturer_token_id" json:"manufacturer_token_id,omitempty" toml:"manufacturer_token_id" yaml:"manufacturer_token_id,omitempty"`
 
 	R *integrationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L integrationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -106,7 +107,7 @@ var IntegrationWhere = struct {
 	Metadata            whereHelpernull_JSON
 	TokenID             whereHelpernull_Int
 	Points              whereHelperint
-	ManufacturerTokenID whereHelpernull_Int
+	ManufacturerTokenID whereHelpertypes_NullDecimal
 }{
 	ID:                  whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"id\""},
 	Type:                whereHelperstring{field: "\"device_definitions_api\".\"integrations\".\"type\""},
@@ -118,7 +119,7 @@ var IntegrationWhere = struct {
 	Metadata:            whereHelpernull_JSON{field: "\"device_definitions_api\".\"integrations\".\"metadata\""},
 	TokenID:             whereHelpernull_Int{field: "\"device_definitions_api\".\"integrations\".\"token_id\""},
 	Points:              whereHelperint{field: "\"device_definitions_api\".\"integrations\".\"points\""},
-	ManufacturerTokenID: whereHelpernull_Int{field: "\"device_definitions_api\".\"integrations\".\"manufacturer_token_id\""},
+	ManufacturerTokenID: whereHelpertypes_NullDecimal{field: "\"device_definitions_api\".\"integrations\".\"manufacturer_token_id\""},
 }
 
 // IntegrationRels is where relationship names are stored.

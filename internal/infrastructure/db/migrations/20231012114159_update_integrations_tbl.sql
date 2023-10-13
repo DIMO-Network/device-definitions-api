@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 SET search_path = device_definitions_api, public;
 ALTER TABLE integrations ADD COLUMN points INT NOT NULL DEFAULT 0;
-ALTER TABLE integrations ADD COLUMN manufacturer_token_id INT;
+ALTER TABLE integrations ADD COLUMN manufacturer_token_id NUMERIC(78);
 ALTER TABLE integrations ADD CONSTRAINT manufacturer_token_id_fkey FOREIGN KEY (manufacturer_token_id) REFERENCES device_makes(token_id);
 
 
