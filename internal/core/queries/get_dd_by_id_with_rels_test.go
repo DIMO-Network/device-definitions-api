@@ -3,18 +3,14 @@ package queries
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/ericlagergren/decimal"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type GetDeviceDefinitionWithRelsQuerySuite struct {
@@ -50,8 +46,6 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 	integrationID := "2D5YSfCcPYW4pTs3NaaqDioUyyl-INT"
 	vendor := "AutoPI"
 	style := ""
-	points := int64(2000)
-	manufTokenID := uint64(7)
 
 	dd := &models.DeviceDefinition{
 		ID:    deviceDefinitionID,
@@ -65,7 +59,7 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 		Region:             "east-us",
 	}
 	di.R = di.R.NewStruct()
-	di.R.Integration = &models.Integration{ID: "1", Type: "", Style: style, Vendor: vendor, Points: null.IntFrom(int(points)), ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(int64(manufTokenID)), 0))}
+	di.R.Integration = &models.Integration{ID: "1", Type: "", Style: style, Vendor: vendor}
 
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceIntegrations = models.DeviceIntegrationSlice{di}
@@ -79,8 +73,6 @@ func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_
 	s.Len(result, 1)
 	assert.Equal(s.T(), vendor, result[0].Vendor)
 	assert.Equal(s.T(), style, result[0].Style)
-	assert.Equal(s.T(), &points, result[0].Points)
-	assert.Equal(s.T(), &manufTokenID, result[0].ManufacturerTokenID)
 }
 
 func (s *GetDeviceDefinitionWithRelsQuerySuite) TestGetDeviceDefinitionWithRels_Empty() {

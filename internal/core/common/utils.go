@@ -356,12 +356,10 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		deviceIntegration := &grpc.DeviceIntegration{
 			DeviceDefinitionId: dd.DeviceDefinitionID,
 			Integration: &grpc.Integration{
-				Id:                  di.ID,
-				Type:                di.Type,
-				Style:               di.Style,
-				Vendor:              di.Vendor,
-				Points:              di.Points,
-				ManufacturerTokenId: di.ManufacturerTokenID,
+				Id:     di.ID,
+				Type:   di.Type,
+				Style:  di.Style,
+				Vendor: di.Vendor,
 			},
 			Region: di.Region,
 		}

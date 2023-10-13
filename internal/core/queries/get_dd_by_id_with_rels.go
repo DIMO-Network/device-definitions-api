@@ -16,14 +16,12 @@ type GetDeviceDefinitionWithRelsQuery struct {
 }
 
 type GetDeviceDefinitionWithRelsQueryResult struct {
-	ID                  string          `json:"id"`
-	Type                string          `json:"type"`
-	Style               string          `json:"style"`
-	Vendor              string          `json:"vendor"`
-	Region              string          `json:"region"`
-	Capabilities        json.RawMessage `json:"capabilities"`
-	Points              *int64          `json:"points"`
-	ManufacturerTokenID *uint64         `json:"manufacturer_token_id"`
+	ID           string          `json:"id"`
+	Type         string          `json:"type"`
+	Style        string          `json:"style"`
+	Vendor       string          `json:"vendor"`
+	Region       string          `json:"region"`
+	Capabilities json.RawMessage `json:"capabilities"`
 }
 
 func (*GetDeviceDefinitionWithRelsQuery) Key() string {
@@ -64,19 +62,6 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 				Region:       di.Region,
 				Capabilities: common.JSONOrDefault(di.Features),
 			})
-
-			if !di.R.Integration.ManufacturerTokenID.IsZero() {
-				if m, ok := di.R.Integration.ManufacturerTokenID.Int64(); ok {
-					manufTknID := uint64(m)
-					integrations[len(integrations)-1].ManufacturerTokenID = &manufTknID
-				}
-			}
-
-			if di.R.Integration.Points.Ptr() != nil {
-				points := int64(di.R.Integration.Points.Int)
-				integrations[len(integrations)-1].Points = &points
-			}
-
 		}
 	}
 
