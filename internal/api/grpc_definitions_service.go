@@ -141,7 +141,7 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 	result := &p_grpc.GetIntegrationResponse{}
 
 	for _, item := range integrations {
-		result.Integrations = append(result.Integrations, &p_grpc.Integration{
+		intg := &p_grpc.Integration{
 			Id:                      item.ID,
 			Type:                    item.Type,
 			Style:                   item.Style,
@@ -156,11 +156,12 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 			},
 			Points: int64(item.Points),
-		})
+		}
 
 		if item.ManufacturerTokenID != nil {
-			result.Integrations[len(result.Integrations)-1].ManufacturerTokenId = item.ManufacturerTokenID.Uint64()
+			intg.ManufacturerTokenId = item.ManufacturerTokenID.Uint64()
 		}
+		result.Integrations = append(result.Integrations, intg)
 	}
 
 	return result, nil
