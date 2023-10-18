@@ -158,8 +158,8 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 			Points: int64(item.Points),
 		}
 
-		if item.ManufacturerTokenID != nil {
-			intg.ManufacturerTokenId = item.ManufacturerTokenID.Uint64()
+		if item.ManufacturerTokenID != 0 {
+			intg.ManufacturerTokenId = uint64(item.ManufacturerTokenID)
 		}
 		result.Integrations = append(result.Integrations, intg)
 	}
@@ -184,8 +184,8 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 		},
 		Points: int64(integration.Points),
 	}
-	if integration.ManufacturerTokenID != nil {
-		integ.ManufacturerTokenId = integration.ManufacturerTokenID.Uint64()
+	if integration.ManufacturerTokenID != 0 {
+		integ.ManufacturerTokenId = uint64(integration.TokenID)
 	}
 	return integ, nil
 }

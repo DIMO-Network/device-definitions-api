@@ -323,7 +323,7 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 		Vendor:              common.AutoPiVendor,
 		RefreshLimitSecs:    1800,
 		Points:              6000,
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
+		ManufacturerTokenID: null.IntFrom(144),
 	}
 	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -358,7 +358,7 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		Vendor:              common.SmartCarVendor,
 		RefreshLimitSecs:    1800,
 		Points:              6000,
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(143), 0)),
+		ManufacturerTokenID: null.IntFrom(143),
 	}
 	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -384,7 +384,7 @@ func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		Vendor:              "Hardware",
 		RefreshLimitSecs:    1800,
 		Points:              6000,
-		ManufacturerTokenID: types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
+		ManufacturerTokenID: null.IntFrom(142),
 	}
 	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
