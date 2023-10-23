@@ -353,7 +353,6 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	// build object for integrations that have all the info
 	rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
 	for _, di := range dd.DeviceIntegrations {
-
 		deviceIntegration := &grpc.DeviceIntegration{
 			DeviceDefinitionId: dd.DeviceDefinitionID,
 			Integration: &grpc.Integration{

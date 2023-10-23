@@ -149,20 +149,23 @@ var DeviceMakeWhere = struct {
 
 // DeviceMakeRels is where relationship names are stored.
 var DeviceMakeRels = struct {
-	DeviceDefinitions string
-	VinNumbers        string
-	Wmis              string
+	DeviceDefinitions             string
+	ManufacturerTokenIntegrations string
+	VinNumbers                    string
+	Wmis                          string
 }{
-	DeviceDefinitions: "DeviceDefinitions",
-	VinNumbers:        "VinNumbers",
-	Wmis:              "Wmis",
+	DeviceDefinitions:             "DeviceDefinitions",
+	ManufacturerTokenIntegrations: "ManufacturerTokenIntegrations",
+	VinNumbers:                    "VinNumbers",
+	Wmis:                          "Wmis",
 }
 
 // deviceMakeR is where relationships are stored.
 type deviceMakeR struct {
-	DeviceDefinitions DeviceDefinitionSlice `boil:"DeviceDefinitions" json:"DeviceDefinitions" toml:"DeviceDefinitions" yaml:"DeviceDefinitions"`
-	VinNumbers        VinNumberSlice        `boil:"VinNumbers" json:"VinNumbers" toml:"VinNumbers" yaml:"VinNumbers"`
-	Wmis              WmiSlice              `boil:"Wmis" json:"Wmis" toml:"Wmis" yaml:"Wmis"`
+	DeviceDefinitions             DeviceDefinitionSlice `boil:"DeviceDefinitions" json:"DeviceDefinitions" toml:"DeviceDefinitions" yaml:"DeviceDefinitions"`
+	ManufacturerTokenIntegrations IntegrationSlice      `boil:"ManufacturerTokenIntegrations" json:"ManufacturerTokenIntegrations" toml:"ManufacturerTokenIntegrations" yaml:"ManufacturerTokenIntegrations"`
+	VinNumbers                    VinNumberSlice        `boil:"VinNumbers" json:"VinNumbers" toml:"VinNumbers" yaml:"VinNumbers"`
+	Wmis                          WmiSlice              `boil:"Wmis" json:"Wmis" toml:"Wmis" yaml:"Wmis"`
 }
 
 // NewStruct creates a new relationship struct
@@ -175,6 +178,13 @@ func (r *deviceMakeR) GetDeviceDefinitions() DeviceDefinitionSlice {
 		return nil
 	}
 	return r.DeviceDefinitions
+}
+
+func (r *deviceMakeR) GetManufacturerTokenIntegrations() IntegrationSlice {
+	if r == nil {
+		return nil
+	}
+	return r.ManufacturerTokenIntegrations
 }
 
 func (r *deviceMakeR) GetVinNumbers() VinNumberSlice {
@@ -494,6 +504,20 @@ func (o *DeviceMake) DeviceDefinitions(mods ...qm.QueryMod) deviceDefinitionQuer
 	return DeviceDefinitions(queryMods...)
 }
 
+// ManufacturerTokenIntegrations retrieves all the integration's Integrations with an executor via manufacturer_token_id column.
+func (o *DeviceMake) ManufacturerTokenIntegrations(mods ...qm.QueryMod) integrationQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"device_definitions_api\".\"integrations\".\"manufacturer_token_id\"=?", o.TokenID),
+	)
+
+	return Integrations(queryMods...)
+}
+
 // VinNumbers retrieves all the vin_number's VinNumbers with an executor.
 func (o *DeviceMake) VinNumbers(mods ...qm.QueryMod) vinNumberQuery {
 	var queryMods []qm.QueryMod
@@ -628,6 +652,120 @@ func (deviceMakeL) LoadDeviceDefinitions(ctx context.Context, e boil.ContextExec
 					foreign.R = &deviceDefinitionR{}
 				}
 				foreign.R.DeviceMake = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadManufacturerTokenIntegrations allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (deviceMakeL) LoadManufacturerTokenIntegrations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceMake interface{}, mods queries.Applicator) error {
+	var slice []*DeviceMake
+	var object *DeviceMake
+
+	if singular {
+		var ok bool
+		object, ok = maybeDeviceMake.(*DeviceMake)
+		if !ok {
+			object = new(DeviceMake)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceMake)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceMake))
+			}
+		}
+	} else {
+		s, ok := maybeDeviceMake.(*[]*DeviceMake)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceMake)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceMake))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &deviceMakeR{}
+		}
+		args = append(args, object.TokenID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &deviceMakeR{}
+			}
+
+			for _, a := range args {
+				if queries.Equal(a, obj.TokenID) {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.TokenID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`device_definitions_api.integrations`),
+		qm.WhereIn(`device_definitions_api.integrations.manufacturer_token_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load integrations")
+	}
+
+	var resultSlice []*Integration
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice integrations")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on integrations")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for integrations")
+	}
+
+	if len(integrationAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ManufacturerTokenIntegrations = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &integrationR{}
+			}
+			foreign.R.ManufacturerToken = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.TokenID, foreign.ManufacturerTokenID) {
+				local.R.ManufacturerTokenIntegrations = append(local.R.ManufacturerTokenIntegrations, foreign)
+				if foreign.R == nil {
+					foreign.R = &integrationR{}
+				}
+				foreign.R.ManufacturerToken = local
 				break
 			}
 		}
@@ -914,6 +1052,133 @@ func (o *DeviceMake) AddDeviceDefinitions(ctx context.Context, exec boil.Context
 			rel.R.DeviceMake = o
 		}
 	}
+	return nil
+}
+
+// AddManufacturerTokenIntegrations adds the given related objects to the existing relationships
+// of the device_make, optionally inserting them as new records.
+// Appends related to o.R.ManufacturerTokenIntegrations.
+// Sets related.R.ManufacturerToken appropriately.
+func (o *DeviceMake) AddManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Integration) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ManufacturerTokenID, o.TokenID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"device_definitions_api\".\"integrations\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_token_id"}),
+				strmangle.WhereClause("\"", "\"", 2, integrationPrimaryKeyColumns),
+			)
+			values := []interface{}{o.TokenID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ManufacturerTokenID, o.TokenID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &deviceMakeR{
+			ManufacturerTokenIntegrations: related,
+		}
+	} else {
+		o.R.ManufacturerTokenIntegrations = append(o.R.ManufacturerTokenIntegrations, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &integrationR{
+				ManufacturerToken: o,
+			}
+		} else {
+			rel.R.ManufacturerToken = o
+		}
+	}
+	return nil
+}
+
+// SetManufacturerTokenIntegrations removes all previously related items of the
+// device_make replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.ManufacturerToken's ManufacturerTokenIntegrations accordingly.
+// Replaces o.R.ManufacturerTokenIntegrations with related.
+// Sets related.R.ManufacturerToken's ManufacturerTokenIntegrations accordingly.
+func (o *DeviceMake) SetManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Integration) error {
+	query := "update \"device_definitions_api\".\"integrations\" set \"manufacturer_token_id\" = null where \"manufacturer_token_id\" = $1"
+	values := []interface{}{o.TokenID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.ManufacturerTokenIntegrations {
+			queries.SetScanner(&rel.ManufacturerTokenID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.ManufacturerToken = nil
+		}
+		o.R.ManufacturerTokenIntegrations = nil
+	}
+
+	return o.AddManufacturerTokenIntegrations(ctx, exec, insert, related...)
+}
+
+// RemoveManufacturerTokenIntegrations relationships from objects passed in.
+// Removes related items from R.ManufacturerTokenIntegrations (uses pointer comparison, removal does not keep order)
+// Sets related.R.ManufacturerToken.
+func (o *DeviceMake) RemoveManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, related ...*Integration) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ManufacturerTokenID, nil)
+		if rel.R != nil {
+			rel.R.ManufacturerToken = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_token_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.ManufacturerTokenIntegrations {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.ManufacturerTokenIntegrations)
+			if ln > 1 && i < ln-1 {
+				o.R.ManufacturerTokenIntegrations[i] = o.R.ManufacturerTokenIntegrations[ln-1]
+			}
+			o.R.ManufacturerTokenIntegrations = o.R.ManufacturerTokenIntegrations[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

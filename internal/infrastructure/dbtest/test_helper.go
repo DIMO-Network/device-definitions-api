@@ -5,15 +5,16 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
+	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
@@ -23,6 +24,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 //go:embed device_type_vehicle_properties.json
@@ -33,7 +35,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	settings := getTestDbSettings(dbName)
 	pgPort := "5432/tcp"
-	dbURL := func(port nat.Port) string {
+	dbURL := func(host string, port nat.Port) string {
 		return fmt.Sprintf("postgres://%s:%s@localhost:%s/%s?sslmode=disable", settings.DB.User, settings.DB.Password, port.Port(), settings.DB.Name)
 	}
 	cr := testcontainers.ContainerRequest{
@@ -41,7 +43,7 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 		Env:          map[string]string{"POSTGRES_USER": settings.DB.User, "POSTGRES_PASSWORD": settings.DB.Password, "POSTGRES_DB": settings.DB.Name},
 		ExposedPorts: []string{pgPort},
 		Cmd:          []string{"postgres", "-c", "fsync=off"},
-		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL).Timeout(time.Second * 15),
+		WaitingFor:   wait.ForSQL(nat.Port(pgPort), "postgres", dbURL),
 	}
 
 	pgContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -303,14 +305,27 @@ func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, sour
 }
 
 func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
-	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeAPI,
-		Style:            models.IntegrationStyleWebhook,
-		Vendor:           common.AutoPiVendor,
-		RefreshLimitSecs: 1800,
+
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "AutoPi",
+		NameSlug: "autopi",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
+	integration := &models.Integration{
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeAPI,
+		Style:               models.IntegrationStyleWebhook,
+		Vendor:              common.AutoPiVendor,
+		RefreshLimitSecs:    1800,
+		Points:              6000,
+		ManufacturerTokenID: null.IntFrom(144),
+	}
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
@@ -326,27 +341,52 @@ func SetupCreateWMI(t *testing.T, id string, deviceMakeID string, pdb db.Store) 
 }
 
 func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
-	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeAPI,
-		Style:            models.IntegrationStyleWebhook,
-		Vendor:           common.SmartCarVendor,
-		RefreshLimitSecs: 1800,
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "Smartcar",
+		NameSlug: "smartcar",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(143), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
+	integration := &models.Integration{
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeAPI,
+		Style:               models.IntegrationStyleWebhook,
+		Vendor:              common.SmartCarVendor,
+		RefreshLimitSecs:    1800,
+		Points:              6000,
+		ManufacturerTokenID: null.IntFrom(143),
+	}
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
 
 func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
-	integration := &models.Integration{
-		ID:               ksuid.New().String(),
-		Type:             models.IntegrationTypeHardware,
-		Style:            models.IntegrationStyleAddon,
-		Vendor:           "Hardware",
-		RefreshLimitSecs: 1800,
+
+	dMake := &models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     "Macaron",
+		NameSlug: "macaron",
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
 	}
-	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+
+	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "database error")
+
+	integration := &models.Integration{
+		ID:                  ksuid.New().String(),
+		Type:                models.IntegrationTypeHardware,
+		Style:               models.IntegrationStyleAddon,
+		Vendor:              "Hardware",
+		RefreshLimitSecs:    1800,
+		Points:              6000,
+		ManufacturerTokenID: null.IntFrom(142),
+	}
+	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
