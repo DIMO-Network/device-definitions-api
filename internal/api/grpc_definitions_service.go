@@ -155,12 +155,10 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 			},
-			Points: int64(item.Points),
+			Points:              int64(item.Points),
+			ManufacturerTokenId: uint64(item.ManufacturerTokenID),
 		}
 
-		if item.ManufacturerTokenID != 0 {
-			intg.ManufacturerTokenId = uint64(item.ManufacturerTokenID)
-		}
 		result.Integrations = append(result.Integrations, intg)
 	}
 
@@ -168,7 +166,7 @@ func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb
 }
 
 func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
-	integ := &p_grpc.Integration{
+	return &p_grpc.Integration{
 		Id:                      integration.ID,
 		Type:                    integration.Type,
 		Style:                   integration.Style,
@@ -182,12 +180,9 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
 			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
 		},
-		Points: int64(integration.Points),
-	}
-	if integration.ManufacturerTokenID != 0 {
-		integ.ManufacturerTokenId = uint64(integration.TokenID)
-	}
-	return integ, nil
+		Points:              int64(integration.Points),
+		ManufacturerTokenId: uint64(integration.ManufacturerTokenID),
+	}, nil
 }
 
 func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
