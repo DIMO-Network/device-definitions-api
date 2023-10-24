@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -53,6 +54,8 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Me
 			ExternalIds:      string(v.ExternalIds.JSON),
 			ExternalIdsTyped: common.ExternalIdsToGRPC(eids),
 			Metadata:         common.DeviceMakeMetadataToGRPC(md),
+			CreatedAt:        timestamppb.New(v.CreatedAt),
+			UpdatedAt:        timestamppb.New(v.UpdatedAt),
 		}
 
 		if !v.TokenID.IsZero() {

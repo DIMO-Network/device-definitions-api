@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"math/big"
 	"strings"
 
@@ -74,6 +75,8 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		ExternalIds:      string(v.ExternalIds.JSON),
 		ExternalIdsTyped: common.ExternalIdsToGRPC(eids),
 		Metadata:         common.DeviceMakeMetadataToGRPC(md),
+		CreatedAt:        timestamppb.New(v.CreatedAt),
+		UpdatedAt:        timestamppb.New(v.UpdatedAt),
 	}
 
 	if !v.TokenID.IsZero() {
