@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"math/big"
+	"time"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -100,6 +101,8 @@ type DeviceMake struct {
 	Metadata           json.RawMessage     `json:"metadata"`
 	MetadataTyped      *DeviceMakeMetadata `json:"metadataTyped"`
 	HardwareTemplateID null.String         `json:"hardware_template_id"`
+	CreatedAt          time.Time           `json:"created_at,omitempty"`
+	UpdatedAt          time.Time           `json:"updated_at,omitempty"`
 }
 
 type ExternalID struct {

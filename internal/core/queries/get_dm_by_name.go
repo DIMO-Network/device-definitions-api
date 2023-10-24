@@ -57,6 +57,8 @@ func (ch GetDeviceMakeByNameQueryHandler) Handle(ctx context.Context, query medi
 		Metadata:           common.JSONOrDefault(v.Metadata),
 		MetadataTyped:      common.BuildDeviceMakeMetadata(v.Metadata),
 		HardwareTemplateID: v.HardwareTemplateID,
+		CreatedAt:          v.CreatedAt,
+		UpdatedAt:          v.UpdatedAt,
 	}
 
 	if !v.TokenID.IsZero() {

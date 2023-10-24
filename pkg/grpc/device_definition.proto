@@ -105,6 +105,8 @@ message DeviceMake {
   repeated ExternalID external_ids_typed = 8;
   Metadata metadata = 9;
   string hardware_template_id = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
 }
 
 message VehicleInfo {
