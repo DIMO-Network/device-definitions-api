@@ -69,6 +69,10 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		p := coremodels.HEV.String()
 		return p, nil
 	}
+	if strings.Contains(modelSlug, "e-tron") {
+		p := coremodels.BEV.String()
+		return p, nil
+	}
 
 	// Default
 	defaultPowerTrainType := ""
