@@ -8,7 +8,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockElasticSearchService is a mock of ElasticSearchService interface.

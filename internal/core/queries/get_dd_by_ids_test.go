@@ -8,10 +8,10 @@ import (
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 type GetDeviceDefinitionByIDsQueryHandlerSuite struct {

@@ -3,8 +3,9 @@ package queries
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"math/big"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"

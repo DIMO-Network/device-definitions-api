@@ -4,6 +4,8 @@ import (
 	"context"
 	_ "embed"
 
+	"go.uber.org/mock/gomock"
+
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
 	"testing"
@@ -18,7 +20,6 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

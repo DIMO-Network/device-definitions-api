@@ -6,10 +6,10 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 type GetDeviceDefinitionByMakeModelYearQuerySuite struct {

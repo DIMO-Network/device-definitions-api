@@ -10,7 +10,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +17,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"go.uber.org/mock/gomock"
 )
 
 type DeviceDefinitionRepositorySuite struct {

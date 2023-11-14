@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/tidwall/sjson"
 	"strconv"
+
+	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"

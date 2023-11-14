@@ -7,11 +7,11 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 type CreateDeviceMakeCommandHandlerSuite struct {

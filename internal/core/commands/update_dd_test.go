@@ -12,7 +12,6 @@ import (
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/tidwall/gjson"
+	"go.uber.org/mock/gomock"
 )
 
 type UpdateDeviceDefinitionCommandHandlerSuite struct {

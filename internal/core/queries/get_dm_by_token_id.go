@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"math/big"
 	"strings"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"

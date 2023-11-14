@@ -22,13 +22,13 @@ import (
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/tidwall/gjson"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"go.uber.org/mock/gomock"
 )
 
 type DecodeVINQueryHandlerSuite struct {
