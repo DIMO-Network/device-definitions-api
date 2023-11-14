@@ -18,6 +18,7 @@ import (
 
 type PowerTrainTypeService interface {
 	ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error)
+	ResolvePowerTrainFromVinInfo(vinInfo *coremodels.VINDecodingInfoData) string
 }
 
 type powerTrainTypeService struct {
@@ -41,9 +42,40 @@ func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string,
 	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData}, nil
 }
 
+// ResolvePowerTrainFromVinInfo uses standard vin info StyleName and FuelType to figure out powertrain, otherwise returns an empty string
+func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *coremodels.VINDecodingInfoData) string {
+	// style name based inference
+	pt := powertrainNameInference(vinInfo.StyleName)
+	if pt != "" {
+		return pt
+	}
+	// we may need a parameter for the provider type and then case below
+	// drivly loop, using fuel type to try to get powertrain
+	for _, item := range c.powerTrainRuleData.DrivlyList {
+		if len(item.Values) > 0 {
+			for _, value := range item.Values {
+				if value == vinInfo.FuelType {
+					return item.Type
+				}
+			}
+		}
+	}
+	// loop over for vincario
+	for _, item := range c.powerTrainRuleData.VincarioList {
+		if len(item.Values) > 0 {
+			for _, value := range item.Values {
+				if value == vinInfo.FuelType {
+					return item.Type
+				}
+			}
+		}
+	}
+	// return empty if no matches
+	return ""
+}
+
 // ResolvePowerTrainType figures out the powertrain based on make, model, and optionally definitionID or vin decoder data
 func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error) {
-
 	for _, ptType := range c.powerTrainRuleData.PowerTrainTypeList {
 		for _, mk := range ptType.Makes {
 			if mk == makeSlug {
@@ -56,22 +88,12 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 						return ptType.Type, nil
 					}
 				}
-
 			}
 		}
 	}
-	// model name based inference
-	if strings.Contains(modelSlug, "plug-in") {
-		p := coremodels.PHEV.String()
-		return p, nil
-	}
-	if strings.Contains(modelSlug, "hybrid") {
-		p := coremodels.HEV.String()
-		return p, nil
-	}
-	if strings.Contains(modelSlug, "e-tron") {
-		p := coremodels.BEV.String()
-		return p, nil
+	pt := powertrainNameInference(modelSlug)
+	if pt != "" {
+		return pt, nil
 	}
 
 	// Default
@@ -133,4 +155,20 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 	}
 
 	return defaultPowerTrainType, nil
+}
+
+// powertrainNameInference figures out powertrain just from name
+func powertrainNameInference(name string) string {
+	// model name based inference
+	if strings.Contains(name, "plug-in") {
+		return coremodels.PHEV.String()
+	}
+	if strings.Contains(name, "hybrid") {
+		return coremodels.HEV.String()
+	}
+	if strings.Contains(name, "e-tron") {
+		return coremodels.BEV.String()
+	}
+
+	return ""
 }
