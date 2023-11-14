@@ -234,10 +234,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				Metadata:           vinInfo.MetaData,
 			}
 			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
-			if errStyle == nil {
-				localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
-				resp.DeviceStyleId = style.ID
+			if errStyle != nil {
+				localLog.Err(errStyle).Msgf("error creating style with values: %+v", style)
+				return nil, errStyle
 			}
+			localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
+			resp.DeviceStyleId = style.ID
+
 		} else if err == nil {
 			resp.DeviceStyleId = style.ID
 		}
@@ -280,7 +283,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str("vds", vin.VDS()).
 		Str("vis", vin.VIS()).
 		Str("check_digit", vin.CheckDigit()).Msg("decoded vin ok")
-	// todo problem here is that the device definition doesn't exist in the context of this transaction, since created in by the repository above
+	// note we use a transaction here all throughout and commit at the end
 	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 		localLog.Err(err).
 			Str("device_definition_id", dd.ID).
