@@ -10,7 +10,7 @@ import (
 	time "time"
 
 	redis "github.com/go-redis/redis/v8"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockRedisCacheService is a mock of RedisCacheService interface.

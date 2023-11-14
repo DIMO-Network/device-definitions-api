@@ -23,4 +23,5 @@ type VINDecodingInfoData struct {
 	ExternalID string
 	MetaData   null.JSON
 	Raw        []byte
+	FuelType   string
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/tidwall/sjson"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -220,18 +222,33 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
+		externalStyleID := common.SlugString(vinInfo.StyleName)
+		// see if match existing style exists. First search is based on db device_definition_style_idx
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
-			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
+			models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
+			models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
-			// insert, if fails doesn't matter - continue just don't return the style_id
+			style, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
+				models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
+		}
+
+		if errors.Is(err, sql.ErrNoRows) {
 			style = &models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				DeviceDefinitionID: dd.ID,
 				Name:               vinInfo.StyleName,
-				ExternalStyleID:    common.SlugString(vinInfo.StyleName),
+				ExternalStyleID:    externalStyleID,
 				Source:             string(vinInfo.Source),
 				SubModel:           vinInfo.SubModel,
 				Metadata:           vinInfo.MetaData,
+			}
+			// style level powertrain
+			pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo)
+			if pt != "" {
+				metadataWithPT, metadataErr := sjson.SetBytes(vinInfo.MetaData.JSON, common.PowerTrainType, pt)
+				if metadataErr == nil {
+					style.Metadata = null.JSONFrom(metadataWithPT)
+				}
 			}
 			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
 			if errStyle != nil {

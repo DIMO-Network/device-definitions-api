@@ -167,6 +167,7 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecoding
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
 		Raw:        raw,
+		FuelType:   info.FuelType,
 	}
 	m, err := info.GetMetadata()
 	if err != nil {
@@ -190,6 +191,7 @@ func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoDa
 		ExternalID: info.GetExternalID(),
 		Source:     models.DrivlyProvider,
 		Raw:        raw,
+		FuelType:   info.Fuel,
 	}
 	return v
 }
