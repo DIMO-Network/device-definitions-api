@@ -131,6 +131,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("ICE")
 	// db setup
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
@@ -236,9 +237,10 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	metaData, _ := json.Marshal(metaDataInfo)
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
-	//iceValue := "ICE"
+	styleLevelPT := "PHEV"
 	//s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&iceValue, nil)
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return(styleLevelPT)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
@@ -258,6 +260,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
 	s.Assert().Equal(ds.ExternalStyleID, common.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(styleLevelPT, gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).Str)
 	// validate vin number was create
 	vn, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)
 	require.NoError(s.T(), err)
@@ -407,6 +410,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("HEV")
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	s.NoError(err)
