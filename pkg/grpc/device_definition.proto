@@ -186,6 +186,7 @@ message CreateDeviceDefinitionRequest {
   string device_type_id = 5;
   repeated DeviceTypeAttributeRequest device_attributes = 6;
   string hardware_template_id = 7;
+  bool verified = 8;
 }
 
 message CreateDeviceIntegrationRequest {

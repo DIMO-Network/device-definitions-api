@@ -30,6 +30,7 @@ type CreateDeviceDefinitionCommand struct {
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
+	Verified         bool                                    `json:"verified"`
 }
 
 type CreateDeviceDefinitionCommandResult struct {
@@ -98,7 +99,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
-	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, false, &command.HardwareTemplateID)
+	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, command.Verified, &command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
 	}

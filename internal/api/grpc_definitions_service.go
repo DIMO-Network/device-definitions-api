@@ -236,6 +236,7 @@ func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in 
 		Year:               int(in.Year),
 		DeviceTypeID:       in.DeviceTypeId,
 		HardwareTemplateID: in.HardwareTemplateId,
+		Verified:           in.Verified,
 	}
 
 	if len(in.DeviceAttributes) > 0 {
