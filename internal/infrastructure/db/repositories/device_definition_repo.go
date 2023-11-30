@@ -33,6 +33,7 @@ type DeviceDefinitionRepository interface {
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
+	GetDevicesByMakeYearRange(ctx context.Context, makeID string, yearStart, yearEnd int32) ([]*models.DeviceDefinition, error)
 	GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error)
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, tx *sql.Tx, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error)
@@ -114,6 +115,29 @@ func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.Devi
 		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*models.DeviceDefinition{}, err
+		}
+
+		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	return dd, err
+}
+
+func (r *deviceDefinitionRepository) GetDevicesByMakeYearRange(ctx context.Context, makeID string, yearStart, yearEnd int32) ([]*models.DeviceDefinition, error) {
+	dd, err := models.DeviceDefinitions(
+		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
+		models.DeviceDefinitionWhere.Year.GTE(int16(yearStart)),
+		models.DeviceDefinitionWhere.Year.LTE(int16(yearEnd)),
+		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
+		models.DeviceDefinitionWhere.Verified.EQ(true),
+		qm.OrderBy("model, year")).All(ctx, r.DBS().Reader)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

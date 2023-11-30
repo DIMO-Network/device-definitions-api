@@ -59,6 +59,7 @@ const (
 	DeviceDefinitionService_GetDeviceDefinitionHardwareTemplateByID_FullMethodName  = "/grpc.DeviceDefinitionService/GetDeviceDefinitionHardwareTemplateByID"
 	DeviceDefinitionService_SyncDeviceDefinitionsWithElasticSearch_FullMethodName   = "/grpc.DeviceDefinitionService/SyncDeviceDefinitionsWithElasticSearch"
 	DeviceDefinitionService_GetIntegrationByTokenID_FullMethodName                  = "/grpc.DeviceDefinitionService/GetIntegrationByTokenID"
+	DeviceDefinitionService_GetDeviceDefinitionByMakeAndYearRange_FullMethodName    = "/grpc.DeviceDefinitionService/GetDeviceDefinitionByMakeAndYearRange"
 )
 
 // DeviceDefinitionServiceClient is the client API for DeviceDefinitionService service.
@@ -104,6 +105,7 @@ type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *GetDeviceDefinitionHardwareTemplateByIDRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionHardwareTemplateByIDResponse, error)
 	SyncDeviceDefinitionsWithElasticSearch(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SyncStatusResult, error)
 	GetIntegrationByTokenID(ctx context.Context, in *GetIntegrationByTokenIDRequest, opts ...grpc.CallOption) (*Integration, error)
+	GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *GetDeviceDefinitionByMakeAndYearRangeRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -488,6 +490,15 @@ func (c *deviceDefinitionServiceClient) GetIntegrationByTokenID(ctx context.Cont
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *GetDeviceDefinitionByMakeAndYearRangeRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
+	out := new(GetDeviceDefinitionResponse)
+	err := c.cc.Invoke(ctx, DeviceDefinitionService_GetDeviceDefinitionByMakeAndYearRange_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -531,6 +542,7 @@ type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionHardwareTemplateByID(context.Context, *GetDeviceDefinitionHardwareTemplateByIDRequest) (*GetDeviceDefinitionHardwareTemplateByIDResponse, error)
 	SyncDeviceDefinitionsWithElasticSearch(context.Context, *emptypb.Empty) (*SyncStatusResult, error)
 	GetIntegrationByTokenID(context.Context, *GetIntegrationByTokenIDRequest) (*Integration, error)
+	GetDeviceDefinitionByMakeAndYearRange(context.Context, *GetDeviceDefinitionByMakeAndYearRangeRequest) (*GetDeviceDefinitionResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -654,6 +666,9 @@ func (UnimplementedDeviceDefinitionServiceServer) SyncDeviceDefinitionsWithElast
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetIntegrationByTokenID(context.Context, *GetIntegrationByTokenIDRequest) (*Integration, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIntegrationByTokenID not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMakeAndYearRange(context.Context, *GetDeviceDefinitionByMakeAndYearRangeRequest) (*GetDeviceDefinitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByMakeAndYearRange not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -1374,6 +1389,24 @@ func _DeviceDefinitionService_GetIntegrationByTokenID_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceDefinitionByMakeAndYearRange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceDefinitionByMakeAndYearRangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByMakeAndYearRange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeviceDefinitionService_GetDeviceDefinitionByMakeAndYearRange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByMakeAndYearRange(ctx, req.(*GetDeviceDefinitionByMakeAndYearRangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1532,6 +1565,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetIntegrationByTokenID",
 			Handler:    _DeviceDefinitionService_GetIntegrationByTokenID_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitionByMakeAndYearRange",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitionByMakeAndYearRange_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

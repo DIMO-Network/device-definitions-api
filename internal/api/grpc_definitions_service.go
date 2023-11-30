@@ -804,3 +804,15 @@ func (s *GrpcDefinitionsService) SyncDeviceDefinitionsWithElasticSearch(_ contex
 
 	return &p_grpc.SyncStatusResult{Status: true}, nil
 }
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
+		Make:      in.Make,
+		StartYear: in.StartYear,
+		EndYear:   in.EndYear,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
