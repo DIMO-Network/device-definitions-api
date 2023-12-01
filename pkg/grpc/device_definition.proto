@@ -448,6 +448,12 @@ message SyncStatusResult {
   bool status = 1;
 }
 
+message GetDeviceDefinitionByMakeAndYearRangeRequest {
+  string make = 1;
+  int32 start_year = 2;
+  int32 end_year = 3;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -488,4 +494,5 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
   rpc SyncDeviceDefinitionsWithElasticSearch(google.protobuf.Empty) returns (SyncStatusResult);
   rpc GetIntegrationByTokenID(GetIntegrationByTokenIDRequest) returns (Integration);
+  rpc GetDeviceDefinitionByMakeAndYearRange(GetDeviceDefinitionByMakeAndYearRangeRequest) returns (GetDeviceDefinitionResponse);
 }
