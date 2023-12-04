@@ -18,7 +18,7 @@ type GetDeviceDefinitionQueryResult struct {
 	DeviceMake         DeviceMake    `json:"make"`
 	Type               DeviceType    `json:"type"`
 	VehicleInfo        VehicleInfo   `json:"vehicleData,omitempty"`
-	Metadata           interface{}   `json:"metadata"`
+	Metadata           []byte        `json:"metadata"`
 	Verified           bool          `json:"verified"`
 	ExternalIds        []*ExternalID `json:"externalIds"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations

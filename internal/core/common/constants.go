@@ -2,6 +2,8 @@ package common
 
 const (
 	PowerTrainType = "powertrain_type"
+	// VehicleMetadataKey is the default json key where we store vehicle metadata in device_definitions.metadata
+	VehicleMetadataKey = "vehicle_info"
 )
 
 type RegionEnum string
