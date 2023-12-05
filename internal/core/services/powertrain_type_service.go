@@ -116,7 +116,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		// first see if we have already figured out powertrain for this DD
 		dd, _ := models.FindDeviceDefinition(ctx, c.DBS().Reader, *definitionID)
 		if dd != nil && dd.Metadata.Valid {
-			ddPt := gjson.GetBytes(dd.Metadata.JSON, common.PowerTrainType).String()
+			ddPt := gjson.GetBytes(dd.Metadata.JSON, common.VehicleMetadataKey+"."+common.PowerTrainType).String()
 			if ddPt != "" {
 				return ddPt, nil
 			}

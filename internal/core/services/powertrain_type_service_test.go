@@ -24,13 +24,14 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	pdb.WaitForDB(*logger)
 	defer container.Terminate(ctx) //nolint
 
-	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
-	require.NoError(t, err)
 	// used for test case where get powertrain from dd
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
 	ddWithPt.Metadata = null.JSONFrom([]byte(`{"vehicle_info": {"powertrain_type": "BEV"}}`))
-	_, err = ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	_, err := ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
+
+	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
 	require.NoError(t, err)
 
 	type args struct {
