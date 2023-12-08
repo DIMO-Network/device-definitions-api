@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/volatiletech/sqlboiler/v4/boil"
+
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,6 +24,13 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	logger := dbtesthelper.Logger()
 	pdb.WaitForDB(*logger)
 	defer container.Terminate(ctx) //nolint
+
+	// used for test case where get powertrain from dd
+	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
+	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
+	ddWithPt.Metadata = null.JSONFrom([]byte(`{"vehicle_info": {"powertrain_type": "BEV"}}`))
+	_, err := ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err)
 
 	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
 	require.NoError(t, err)
@@ -94,6 +103,13 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 				makeSlug:     "mitsubishi",
 				modelSlug:    "cool-car",
 				vincarioData: null.JSONFrom([]byte(`{ "FuelType": "Electric" }`)),
+			},
+			want: "BEV",
+		},
+		{
+			name: "device definition already has powertrain - BEV",
+			args: args{
+				definitionID: &ddWithPt.ID,
 			},
 			want: "BEV",
 		},

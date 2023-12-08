@@ -112,6 +112,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		if err != nil {
+			pt = coremodels.ICE.String()
+		}
+		resp.Powertrain = pt
 
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 
@@ -249,6 +254,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				if metadataErr == nil {
 					style.Metadata = null.JSONFrom(metadataWithPT)
 				}
+				// todo unit test for this getting set in this scenario
+				resp.Powertrain = pt
 			}
 			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
 			if errStyle != nil {
@@ -375,6 +382,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
+
+	// if powertrain not set yet, try resolving for it
+	if resp.Powertrain == "" {
+		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &resp.DeviceDefinitionId, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		resp.Powertrain = pt
+	}
 
 	return resp, nil
 }

@@ -7,6 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/tidwall/gjson"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
 
@@ -28,6 +31,9 @@ type powerTrainTypeService struct {
 }
 
 func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string, logger *zerolog.Logger) (PowerTrainTypeService, error) {
+	if rulesFileName == "" {
+		rulesFileName = "powertrain_type_rule.yaml"
+	}
 	content, err := os.ReadFile(rulesFileName)
 	if err != nil {
 		return nil, err
@@ -76,6 +82,7 @@ func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *coremodels.
 
 // ResolvePowerTrainType figures out the powertrain based on make, model, and optionally definitionID or vin decoder data
 func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error) {
+	// iterate over hard coded rules in yaml file first
 	for _, ptType := range c.powerTrainRuleData.PowerTrainTypeList {
 		for _, mk := range ptType.Makes {
 			if mk == makeSlug {
@@ -104,8 +111,18 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 			break
 		}
 	}
-	// if definitionId is not nil set the drivlyData & vincarioData from a vin number that matches ddID
+
 	if definitionID != nil {
+		// future: what about style. also, use the dd cache service
+		// first see if we have already figured out powertrain for this DD
+		dd, _ := models.FindDeviceDefinition(ctx, c.DBS().Reader, *definitionID)
+		if dd != nil && dd.Metadata.Valid {
+			ddPt := gjson.GetBytes(dd.Metadata.JSON, common.VehicleMetadataKey+"."+common.PowerTrainType).String()
+			if ddPt != "" {
+				return ddPt, nil
+			}
+		}
+		// if definitionId is not nil set the drivlyData & vincarioData from a vin number that matches ddID
 		vins, err := models.VinNumbers(models.VinNumberWhere.DeviceDefinitionID.EQ(*definitionID)).All(ctx, c.DBS().Reader)
 		if err == nil && len(vins) > 0 {
 			drivlyData = vins[0].DrivlyData

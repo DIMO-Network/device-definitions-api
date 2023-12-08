@@ -176,7 +176,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			MakeSlug:  dd.R.DeviceMake.NameSlug,
 			ModelSlug: dd.ModelSlug,
 		},
-		Metadata:    string(dd.Metadata.JSON),
+		Metadata:    dd.Metadata.JSON,
 		Verified:    dd.Verified,
 		ExternalIds: BuildExternalIds(dd.ExternalIds),
 	}
