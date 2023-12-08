@@ -112,8 +112,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		// todo unit test that just checks if has been set - use mocked powertrain type service
-		resp.Powertrain = resolvePowertrain(ctx, dc.powerTrainTypeService, vinDecodeNumber).String()
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		if err != nil {
+			pt = coremodels.ICE.String()
+		}
+		resp.Powertrain = pt
 
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 
@@ -380,25 +383,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
 
-	// if powertrain not set yet, try resolving for it todo unit test for this case
+	// if powertrain not set yet, try resolving for it
 	if resp.Powertrain == "" {
-		pt := resolvePowertrain(ctx, dc.powerTrainTypeService, vinDecodeNumber)
-		resp.Powertrain = pt.String()
+		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &resp.DeviceDefinitionId, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		resp.Powertrain = pt
 	}
 
 	return resp, nil
-}
-
-func resolvePowertrain(ctx context.Context, powertrainSvc services.PowerTrainTypeService, vinNumber *models.VinNumber) coremodels.PowertrainType {
-	if vinNumber == nil {
-		// this should be rare but guard in case
-		return coremodels.ICE
-	}
-	pt, err := powertrainSvc.ResolvePowerTrainType(ctx, "", "", &vinNumber.DeviceDefinitionID, vinNumber.DrivlyData, vinNumber.VincarioData)
-	if err != nil {
-		return coremodels.ICE
-	}
-	return coremodels.PowertrainType(pt)
 }
 
 // vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set
