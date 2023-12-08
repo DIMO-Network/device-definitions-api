@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"testing"
+
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/stretchr/testify/assert"

@@ -4,10 +4,11 @@ package services
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/tidwall/gjson"
 	"os"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/tidwall/gjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
