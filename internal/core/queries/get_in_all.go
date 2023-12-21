@@ -26,7 +26,6 @@ func NewGetAllIntegrationQueryHandler(dbs func() *db.ReaderWriter) GetAllIntegra
 }
 
 func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
-
 	all, err := models.Integrations(qm.Limit(100)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
@@ -68,5 +67,4 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.M
 	}
 
 	return result, nil
-
 }
