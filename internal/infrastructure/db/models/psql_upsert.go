@@ -42,9 +42,6 @@ func buildUpsertQueryPostgres(dia drivers.Dialect, tableName string, updateOnCon
 		buf.WriteString(") DO UPDATE SET ")
 
 		for i, v := range update {
-			if len(v) == 0 {
-				continue
-			}
 			if i != 0 {
 				buf.WriteByte(',')
 			}

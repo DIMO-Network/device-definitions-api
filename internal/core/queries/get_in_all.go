@@ -55,12 +55,12 @@ func (ch GetAllIntegrationQueryHandler) Handle(ctx context.Context, _ mediator.M
 			AutoPiDefaultTemplateID: im.AutoPiDefaultTemplateID,
 			RefreshLimitSecs:        v.RefreshLimitSecs,
 			TokenID:                 v.TokenID.Int,
-			Points:                  v.Points,
+			//	Points:                  v.Points,
 		}
 
-		if !v.ManufacturerTokenID.IsZero() {
-			result[i].ManufacturerTokenID = v.ManufacturerTokenID.Int
-		}
+		//if !v.ManufacturerTokenID.IsZero() {
+		//	result[i].ManufacturerTokenID = v.ManufacturerTokenID.Int
+		//}
 
 		if im.AutoPiPowertrainToTemplateID != nil {
 			result[i].AutoPiPowertrainToTemplateID = im.AutoPiPowertrainToTemplateID
