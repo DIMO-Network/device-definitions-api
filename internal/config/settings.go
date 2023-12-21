@@ -32,3 +32,7 @@ type Settings struct {
 	VincarioAPIKey                 string         `yaml:"VINCARIO_API_KEY"`
 	VincarioAPISecret              string         `yaml:"VINCARIO_API_SECRET"`
 }
+
+func (s *Settings) IsProd() bool {
+	return s.Environment == "prod"
+}

@@ -18,7 +18,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/trace"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
 	swagger "github.com/arsmn/fiber-swagger/v2"
@@ -36,7 +35,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	pdb.WaitForDB(logger)
 
 	// redis
-	redisCache := redis.NewRedisCacheService(settings.Environment == "prod", settings.Redis)
+	redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
 
 	//infra
 	drivlyAPIService := gateways.NewDrivlyAPIService(settings)
@@ -59,18 +58,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
-
-	//services
-	prv, err := trace.NewProvider(trace.ProviderConfig{
-		JaegerEndpoint: settings.TraceMonitorView,
-		ServiceName:    settings.ServiceName,
-		ServiceVersion: settings.ServiceVersion,
-		Environment:    settings.Environment,
-	})
-	if err != nil {
-		logger.Fatal().Err(err).Send()
-	}
-	defer prv.Close(context.Background())
 
 	//custom commands
 	m, _ := mediator.New(
