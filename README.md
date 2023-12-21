@@ -124,3 +124,8 @@ swag init -g cmd/device-definitions-api/main.go --parseDependency --parseInterna
 ```
 
 To check what cli version you have installed: `swag --version`.
+
+## Gotchas
+
+If you update all libraries, it will also update a decimal library that breaks sqlboiler.
+You want this version: `github.com/ericlagergren/decimal v0.0.0-20181231230500-73749d4874d5` - replace it in go.mod file
