@@ -47,7 +47,7 @@ func (p *migrateDBCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interf
 		p.logger.Fatal().Err(err).Msg("could not create schema:")
 	}
 	goose.SetTableName("device_definitions_api.migrations")
-	if err := goose.Run(command, sqlDb.DBS().Writer.DB, "internal/infrastructure/db/migrations"); err != nil {
+	if err := goose.RunContext(ctx, command, sqlDb.DBS().Writer.DB, "internal/infrastructure/db/migrations"); err != nil {
 		p.logger.Fatal().Err(err).Msg("failed to apply go code migrations")
 	}
 	return subcommands.ExitSuccess

@@ -60,9 +60,6 @@ func (p *syncOpsCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interfac
 	if p.searchSync {
 		searchSyncDD(ctx, &p.settings, p.logger)
 	}
-	if p.ipfs {
-		ipfsSyncData(ctx, &p.settings, p.logger)
-	}
 	if p.smartCarCompatibility {
 		smartCarCompatibility(ctx, &p.settings, p.logger)
 	}
@@ -105,22 +102,6 @@ func searchSyncDD(ctx context.Context, s *config.Settings, logger zerolog.Logger
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncSearchDataCommand{})
-}
-
-func ipfsSyncData(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
-	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
-	pdb.WaitForDB(logger)
-
-	//commands
-	m, _ := mediator.New(
-		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncIPFSDataCommand{}, commands.NewSyncIPFSDataCommandHandler(pdb.DBS, s.IPFSNodeEndpoint)),
-	)
-
-	_, _ = m.Send(ctx, &commands.SyncIPFSDataCommand{})
 }
 
 func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerolog.Logger) {

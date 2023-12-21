@@ -16,7 +16,7 @@ CREATE TABLE reviews (
 );
 
 ALTER TABLE reviews ADD CONSTRAINT device_definition_id_pkey PRIMARY KEY (device_definition_id);
-ALTER TABLE reviews ADD CONSTRAINT device_definition_id_fkey FOREIGN KEY (device_definition_id) REFERENCES device_definitions (id)
+ALTER TABLE reviews ADD CONSTRAINT device_definition_id_fkey FOREIGN KEY (device_definition_id) REFERENCES device_definitions (id);
 
 -- +goose Down
 -- +goose StatementBegin

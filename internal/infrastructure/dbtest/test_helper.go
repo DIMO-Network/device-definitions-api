@@ -75,7 +75,6 @@ func StartContainerDatabase(ctx context.Context, dbName string, t *testing.T, mi
 		return handleContainerStartErr(ctx, errors.Wrapf(err, "failed to apply schema. session: %s, port: %s",
 			pgContainer.SessionID(), mappedPort.Port()), pgContainer, t)
 	}
-	logger.Info().Msgf("set default search_path for user postgres to %s", dbName)
 	// add truncate tables func
 	_, err = pdb.DBS().Writer.Exec(fmt.Sprintf(`
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
@@ -95,7 +94,7 @@ $$ LANGUAGE plpgsql;
 	}
 
 	goose.SetTableName(dbName + ".migrations")
-	if err := goose.Run("up", pdb.DBS().Writer.DB, migrationsDirRelPath); err != nil {
+	if err := goose.RunContext(ctx, "up", pdb.DBS().Writer.DB, migrationsDirRelPath); err != nil {
 		return handleContainerStartErr(ctx, errors.Wrap(err, "failed to apply goose migrations for test"), pgContainer, t)
 	}
 
