@@ -66,7 +66,7 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	ddRepository := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, ddRepository, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockAutoIsoAPIService, s.mockPowerTrainTypeService)
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, ddRepository, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {

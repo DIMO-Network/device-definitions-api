@@ -27,17 +27,15 @@ type VINDecodingService interface {
 }
 
 type vinDecodingService struct {
-	drivlyAPISvc   gateways.DrivlyAPIService
-	vincarioAPISvc gateways.VincarioAPIService
-	logger         *zerolog.Logger
-	repository     repositories.DeviceDefinitionRepository
+	drivlyAPISvc      gateways.DrivlyAPIService
+	vincarioAPISvc    gateways.VincarioAPIService
+	logger            *zerolog.Logger
+	repository        repositories.DeviceDefinitionRepository
+	autoIsoAPIService gateways.AutoIsoAPIService
 }
 
-func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService,
-	vincarioAPISvc gateways.VincarioAPIService,
-	logger *zerolog.Logger,
-	repository repositories.DeviceDefinitionRepository) VINDecodingService {
-	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, logger: logger, repository: repository}
+func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger, repository repositories.DeviceDefinitionRepository) VINDecodingService {
+	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger, repository: repository}
 }
 
 func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
@@ -72,6 +70,15 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
 		}
 		result, err = buildFromVincario(vinVincarioInfo)
+		if err != nil {
+			return nil, err
+		}
+	case models.AutoIsoProvider:
+		vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
+		}
+		result, err = buildFromAutoIso(vinAutoIsoInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -153,6 +160,28 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 	}
 
 	return udta
+}
+
+func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInfoData, error) {
+	raw, _ := json.Marshal(info)
+	if info == nil {
+		return nil, fmt.Errorf("vin info was nil")
+	}
+	yr, err := strconv.Atoi(info.FunctionResponse.Data.Decoder.ModelYear.Value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid decode year: %+v", *info)
+	}
+
+	v := &models.VINDecodingInfoData{
+		VIN:    info.Vin,
+		Year:   int32(yr),
+		Make:   strings.TrimSpace(info.FunctionResponse.Data.Decoder.Make.Value),
+		Model:  strings.TrimSpace(info.FunctionResponse.Data.Decoder.Model.Value),
+		Source: models.AutoIsoProvider,
+		Raw:    raw,
+	}
+
+	return v, nil
 }
 
 func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecodingInfoData, error) {

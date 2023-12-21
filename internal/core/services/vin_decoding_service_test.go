@@ -54,7 +54,7 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
 	s.mockDeviceDefinitionRepository = mock_repository.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
+	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, nil, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {

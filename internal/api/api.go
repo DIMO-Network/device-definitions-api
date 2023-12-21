@@ -54,7 +54,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, &logger, deviceDefinitionRepository)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
@@ -121,7 +121,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&commands.CreateIntegrationFeatureCommand{}, commands.NewCreateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateIntegrationFeatureCommand{}, commands.NewUpdateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteIntegrationFeatureCommand{}, commands.NewDeleteIntegrationFeatureCommandHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, autoIsoAPIService, powerTrainTypeService)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService)),
 
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionByMakeYearRangeQuery{}, queries.NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(deviceDefinitionRepository)),
 
@@ -129,7 +129,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
-			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, autoIsoAPIService, powerTrainTypeService),
+			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService),
 			queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS),
 			queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService),
 		)),
@@ -149,7 +149,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//routes
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Send([]byte("Welcome dimo api!"))
+		return c.Send([]byte("device definitions api running!"))
 	})
 
 	RegisterDeviceDefinitionsRoutes(app, *m)
