@@ -115,6 +115,9 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 	if result.Source == "" {
 		return nil, fmt.Errorf("could not decode from any provider for vin: %s", vin)
 	}
+	if result.Year == 0 {
+		return nil, fmt.Errorf("unable to decode vin: %s - year returned as 0", vin)
+	}
 
 	return result, nil
 }
@@ -171,7 +174,7 @@ func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInf
 	if err != nil {
 		return nil, fmt.Errorf("invalid decode year: %+v", *info)
 	}
-
+	// todo continue filling this in
 	v := &models.VINDecodingInfoData{
 		VIN:    info.Vin,
 		Year:   int32(yr),
