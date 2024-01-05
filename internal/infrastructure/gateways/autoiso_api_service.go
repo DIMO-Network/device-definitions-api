@@ -54,7 +54,7 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 	}
 	// get percent match from autoiso, if below 50 return err - kinda of an experiment for now
 	percentMatchStr := strings.TrimSuffix(v.FunctionResponse.Data.API.DataMatching, "%")
-	percentMatch, err := strconv.ParseFloat(percentMatchStr, 64)
+	percentMatch, _ := strconv.ParseFloat(percentMatchStr, 64)
 	if percentMatch < 50.0 {
 		return nil, fmt.Errorf("decode failed due to low DataMatching percent: %f", percentMatch)
 	}

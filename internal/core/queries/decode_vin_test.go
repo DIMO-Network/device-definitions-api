@@ -39,11 +39,8 @@ type DecodeVINQueryHandlerSuite struct {
 	pdb                       db.Store
 	container                 testcontainers.Container
 	ctx                       context.Context
-	mockDrivlyAPISvc          *mock_gateways.MockDrivlyAPIService
-	mockVincarioAPISvc        *mock_gateways.MockVincarioAPIService
 	mockVINService            *mock_services.MockVINDecodingService
 	mockFuelAPIService        *mock_gateways.MockFuelAPIService
-	mockAutoIsoAPIService     *mock_gateways.MockAutoIsoAPIService
 	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
 
 	queryHandler DecodeVINQueryHandler
@@ -58,8 +55,6 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.ctx = context.Background()
 
-	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
-	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
 
