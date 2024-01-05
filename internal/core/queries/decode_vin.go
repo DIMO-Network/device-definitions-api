@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/DIMO-Network/device-definitions-api/pkg"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -148,14 +147,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Err(err).Msgf("failed to decode vin from provider %s", vinInfo.Source)
-		return resp, pkg.ErrFailedVINDecode
+		return resp, err
 	}
 	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
 	if len(vinInfo.Model) == 0 {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
-		return nil, pkg.ErrFailedVINDecode
+		return nil, err
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)

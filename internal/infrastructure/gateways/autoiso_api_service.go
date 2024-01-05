@@ -5,9 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
-	"time"
 )
 
 //go:generate mockgen -source autoiso_api_service.go -destination mocks/autoiso_api_service_mock.go -package mocks
@@ -56,17 +57,17 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 type AutoIsoVINResponse struct {
 	Version          string `json:"version"`
 	Vin              string `json:"vin"`
-	ApiStatus        string `json:"apiStatus"`
+	APIStatus        string `json:"apiStatus"`
 	ResponseDate     string `json:"responseDate"`
 	FunctionName     string `json:"functionName"`
 	FunctionResponse struct {
 		Data struct {
-			Api struct {
+			API struct {
 				CoreVersion     string `json:"core_version"`
 				EndpointVersion int    `json:"endpoint_version"`
-				JsonVersion     string `json:"json_version"`
-				ApiType         string `json:"api_type"`
-				ApiCache        string `json:"api_cache"`
+				JSONVersion     string `json:"json_version"`
+				APIType         string `json:"api_type"`
+				APICache        string `json:"api_cache"`
 				DataPrecision   int    `json:"data_precision"`
 				DataMatching    string `json:"data_matching"`
 				LexLang         string `json:"lex_lang"`
