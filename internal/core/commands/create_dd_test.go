@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	_ "embed"
+	"fmt"
 
 	"go.uber.org/mock/gomock"
 
@@ -62,6 +63,13 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
 	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
+}
+
+func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCommand_Success() {

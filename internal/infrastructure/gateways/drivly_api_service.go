@@ -47,6 +47,10 @@ func (ds *drivlyAPIService) GetVINInfo(vin string) (*DrivlyVINResponse, error) {
 		return nil, err
 	}
 
+	if v.Year == "0" || len(v.Year) == 0 || len(v.Model) == 0 || len(v.Make) == 0 {
+		return nil, fmt.Errorf("decode failed due to invalid MMY")
+	}
+
 	return v, nil
 }
 
@@ -60,7 +64,7 @@ func executeAPI(httpClient shared.HTTPClientWrapper, path string) ([]byte, error
 	}
 
 	if err != nil && res.StatusCode != 404 {
-		return nil, errors.Wrapf(err, "error calling driv.ly api => %s", path)
+		return nil, errors.Wrapf(err, "error calling api => %s", path)
 	}
 	defer res.Body.Close()
 

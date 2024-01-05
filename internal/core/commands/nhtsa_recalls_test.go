@@ -88,6 +88,13 @@ func (s *SyncNHTSARecallsCommandHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
+func (s *SyncNHTSARecallsCommandHandlerSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 type TestMMYSets []struct {
 	Make      string
 	Model     string

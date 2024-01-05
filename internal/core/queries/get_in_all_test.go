@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -52,6 +53,13 @@ func (s *GetAllIntegrationQueryHandlerSuite) SetupTest() {
 func (s *GetAllIntegrationQueryHandlerSuite) TearDownTest() {
 	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
+}
+
+func (s *GetAllIntegrationQueryHandlerSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *GetAllIntegrationQueryHandlerSuite) TestGetAllDeviceDefinitionQuery_With_Items_Success() {

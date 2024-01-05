@@ -52,6 +52,13 @@ func (s *GetRecallsByMakeQueryHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
+func (s *GetRecallsByMakeQueryHandlerSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 func (s *GetRecallsByMakeQueryHandlerSuite) TestGetRecallsByMakeQuery_Success() {
 	ctx := context.Background()
 

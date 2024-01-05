@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/DIMO-Network/device-definitions-api/pkg"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -131,31 +131,35 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
 	var vinInfo = &coremodels.VINDecodingInfoData{}
-	// if year is 0, prefer vincario for decode, since most likely non USA.
-	if resp.Year == 0 {
+	// if year is 0 or way in future, prefer autoiso and vincario for decode, since most likely non USA.
+	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider)
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AutoIsoProvider)
+		if err != nil {
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider)
+		}
 	} else {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
-	if err != nil || len(vinInfo.Model) == 0 || vinInfo.Year == 0 {
+	// if no luck decoding VIN, try buildingVinInfo from known data passed in
+	if err != nil {
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
-			// if no luck decoding VIN, try buildingVinInfo from known data passed in
+			// note if this is successful, err gets set to nil
 			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
 		}
 	}
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		localLog.Err(err).Msgf("failed to decode vin from provider %s", vinInfo.Source)
-		return resp, pkg.ErrFailedVINDecode
+		localLog.Err(err).Msgf("failed to decode vin from provider")
+		return nil, err
 	}
 	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
 	if len(vinInfo.Model) == 0 {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
-		return nil, pkg.ErrFailedVINDecode
+		return nil, err
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
@@ -299,6 +303,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if vinInfo.Source == coremodels.VincarioProvider && len(vinInfo.Raw) > 0 {
 		vinDecodeNumber.VincarioData = null.JSONFrom(vinInfo.Raw)
 	}
+	if vinInfo.Source == coremodels.AutoIsoProvider && len(vinInfo.Raw) > 0 {
+		vinDecodeNumber.AutoisoData = null.JSONFrom(vinInfo.Raw)
+	}
 
 	localLog.Info().Str("device_definition_id", dd.ID).
 		Str("device_make_id", dd.DeviceMakeID).
@@ -405,6 +412,10 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel stri
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
 	vinInfo.Source = "probably smartcar"
+
+	if len(vinInfo.Model) == 0 || len(vinInfo.Make) == 0 || vinInfo.Year == 0 {
+		return nil, fmt.Errorf("unable to decode from known info")
+	}
 
 	return vinInfo, nil
 }

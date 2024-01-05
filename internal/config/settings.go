@@ -31,6 +31,8 @@ type Settings struct {
 	VincarioAPIURL                 string         `yaml:"VINCARIO_API_URL"`
 	VincarioAPIKey                 string         `yaml:"VINCARIO_API_KEY"`
 	VincarioAPISecret              string         `yaml:"VINCARIO_API_SECRET"`
+	AutoIsoAPIUid                  string         `yaml:"AUTO_ISO_API_UID"`
+	AutoIsoAPIKey                  string         `yaml:"AUTO_ISO_API_KEY"`
 }
 
 func (s *Settings) IsProd() bool {

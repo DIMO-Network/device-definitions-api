@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -56,6 +57,13 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 func (s *CacheDeviceDefinitionSuite) TearDownTest() {
 	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
+}
+
+func (s *CacheDeviceDefinitionSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *CacheDeviceDefinitionSuite) TestCacheDeviceDefinitionByID_Success() {

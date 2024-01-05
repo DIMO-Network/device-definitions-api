@@ -9,6 +9,7 @@ type DecodeProviderEnum string
 const (
 	DrivlyProvider   DecodeProviderEnum = "drivly"
 	VincarioProvider DecodeProviderEnum = "vincario"
+	AutoIsoProvider  DecodeProviderEnum = "autoiso"
 	AllProviders     DecodeProviderEnum = ""
 )
 

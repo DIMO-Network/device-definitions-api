@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -29,6 +31,7 @@ type VINDecodingServiceSuite struct {
 	ctx                            context.Context
 	mockDrivlyAPISvc               *mock_gateways.MockDrivlyAPIService
 	mockVincarioAPISvc             *mock_gateways.MockVincarioAPIService
+	mockAutoIsoAPISvc              *mock_gateways.MockAutoIsoAPIService
 	mockDeviceDefinitionRepository *mock_repository.MockDeviceDefinitionRepository
 
 	vinDecodingService VINDecodingService
@@ -52,14 +55,22 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 
 	s.mockDrivlyAPISvc = mock_gateways.NewMockDrivlyAPIService(s.ctrl)
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
+	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
 	s.mockDeviceDefinitionRepository = mock_repository.NewMockDeviceDefinitionRepository(s.ctrl)
 
-	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
+	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
 	dbtesthelper.TruncateTables(s.pdb.DBS().Writer.DB, s.T())
 	s.ctrl.Finish()
+}
+
+func (s *VINDecodingServiceSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
@@ -101,7 +112,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	ctx := context.Background()
-	const vin = "WAUZZZ4M0KD018683"
+	const vin = "WAUZZZKM04D018683"
 	const makeID = "Test"
 
 	vinInfoResp := &gateways.VincarioInfoResponse{
@@ -118,8 +129,10 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 		Height:             31,
 		Wheelbase:          1,
 	}
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	// vincario is the last fallback
 	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vinInfoResp, nil)
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
@@ -128,6 +141,28 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
 	assert.Equal(s.T(), result.Source, coremodels.VincarioProvider)
+}
+
+//go:embed autoiso_resp.json
+var testAutoIsoJSON []byte
+
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
+	ctx := context.Background()
+	const vin = "WAUZZZKM04D018683"
+
+	vinInfoResp := &gateways.AutoIsoVINResponse{}
+	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
+
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
+
+	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
+	assert.Equal(s.T(), result.Source, coremodels.AutoIsoProvider)
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
