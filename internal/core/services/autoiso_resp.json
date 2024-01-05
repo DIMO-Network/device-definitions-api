@@ -1,0 +1,141 @@
+{
+  "version": "3.0",
+  "vin": "WAUZZZKM04D018683",
+  "apiStatus": "OK",
+  "responseDate": "2023-12-21 18:06:36",
+  "functionName": "api/v3/getSimpleDecoder",
+  "functionResponse": {
+    "data": {
+      "api": {
+        "core_version": "2.4.10",
+        "endpoint_version": 2,
+        "json_version": "1.0.0",
+        "api_type": "API Free - Full mode - en",
+        "api_cache": "off",
+        "data_precision": 1,
+        "data_matching": "58.54%",
+        "lex_lang": "en"
+      },
+      "analyze": {
+        "vin_orginal": {
+          "desc": "Entered VIN",
+          "value": "WAUZZZ8K79A090954"
+        },
+        "vin_corrected": {
+          "desc": "Corrected VIN",
+          "value": "WAUZZZ8K79A090954"
+        },
+        "vin_year": {
+          "desc": "Year Identifier",
+          "value": "9"
+        },
+        "vin_serial": {
+          "desc": "Serial number",
+          "value": "090954"
+        },
+        "checkdigit": {
+          "desc": "Check Digit",
+          "value": "valid"
+        }
+      },
+      "decoder": {
+        "make": {
+          "desc": "Make",
+          "value": "Audi"
+        },
+        "model": {
+          "desc": "Model",
+          "value": "A4"
+        },
+        "model_year": {
+          "desc": "Model year",
+          "value": "2008"
+        },
+        "body": {
+          "desc": "Body type",
+          "value": "Sedan"
+        },
+        "fuel_type": {
+          "desc": "Fuel type",
+          "value": "Diesel"
+        },
+        "vehicle_type": {
+          "desc": "Vehicle type",
+          "value": "Passenger Vehicle"
+        },
+        "doors": {
+          "desc": "Doors number",
+          "value": "5"
+        },
+        "engine_displ_cm3": {
+          "desc": "Displacement SI",
+          "value": "1968 cm3"
+        },
+        "engine_displ_l": {
+          "desc": "Displacement Nominal",
+          "value": "2.0 l"
+        },
+        "engine_power_hp": {
+          "desc": "Horsepower",
+          "value": "140 HP"
+        },
+        "engine_power_kw": {
+          "desc": "Kilowatts",
+          "value": "104 kW"
+        },
+        "engine_conf": {
+          "desc": "Engine configuration",
+          "value": "V Engine"
+        },
+        "engine_type": {
+          "desc": "Engine type",
+          "value": "L4"
+        },
+        "engine_version": {
+          "desc": "Engine version",
+          "value": "TDI"
+        },
+        "engine_head": {
+          "desc": "Valve operation",
+          "value": "OHC"
+        },
+        "engine_valves": {
+          "desc": "Valves",
+          "value": "8"
+        },
+        "engine_cylinders": {
+          "desc": "Cylinders",
+          "value": "4"
+        },
+        "engine_displ_cid": {
+          "desc": "Displacement CID",
+          "value": "120 cid"
+        },
+        "engine_turbo": {
+          "desc": "Charger (turbo/super/diesel)",
+          "value": "Y"
+        },
+        "drive_type": {
+          "desc": "Driveline",
+          "value": "FWD"
+        },
+        "gearbox_type": {
+          "desc": "Transmission type",
+          "value": "Manual"
+        },
+        "emission_std": {
+          "desc": "Emission Standard",
+          "value": "EURO 4",
+          "co2_gkm": "139"
+        }
+      }
+    }
+  },
+  "licenseInfo": {
+    "licenseNumber": "E7C23T8CR4A5K69ES540A6F2P",
+    "validTo": "2030-12-31",
+    "remainingCredits": 29997,
+    "remainingMonthlyLimit": 29999,
+    "remainingDailyLimit": 1000
+  }
+}

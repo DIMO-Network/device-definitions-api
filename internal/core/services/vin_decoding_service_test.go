@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -135,15 +136,18 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	assert.Equal(s.T(), result.Source, coremodels.VincarioProvider)
 }
 
+//go:embed autoiso_resp.json
+var testAutoIsoJSON []byte
+
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	ctx := context.Background()
 	const vin = "WAUZZZKM04D018683"
 
 	vinInfoResp := &gateways.AutoIsoVINResponse{}
+	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
+
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	// vincario is the last fallback
-	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vinInfoResp, nil)
+	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
@@ -151,7 +155,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
-	assert.Equal(s.T(), result.Source, coremodels.VincarioProvider)
+	assert.Equal(s.T(), result.Source, coremodels.AutoIsoProvider)
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
