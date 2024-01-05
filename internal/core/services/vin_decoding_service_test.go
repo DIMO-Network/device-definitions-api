@@ -66,6 +66,13 @@ func (s *VINDecodingServiceSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
+func (s *VINDecodingServiceSuite) TearDownSuite() {
+	fmt.Printf("shutting down postgres at with session: %s \n", s.container.SessionID())
+	if err := s.container.Terminate(s.ctx); err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
