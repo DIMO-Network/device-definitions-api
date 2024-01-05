@@ -141,9 +141,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	} else {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
-	if err != nil || len(vinInfo.Model) == 0 || vinInfo.Year == 0 {
+	// if no luck decoding VIN, try buildingVinInfo from known data passed in
+	if err != nil {
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
-			// if no luck decoding VIN, try buildingVinInfo from known data passed in
+			// note if this is successful, err gets set to nil
 			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
 		}
 	}
@@ -151,7 +152,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Err(err).Msgf("failed to decode vin from provider")
-		return resp, err
+		return nil, err
 	}
 	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
@@ -302,6 +303,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if vinInfo.Source == coremodels.VincarioProvider && len(vinInfo.Raw) > 0 {
 		vinDecodeNumber.VincarioData = null.JSONFrom(vinInfo.Raw)
 	}
+	if vinInfo.Source == coremodels.AutoIsoProvider && len(vinInfo.Raw) > 0 {
+		vinDecodeNumber.AutoisoData = null.JSONFrom(vinInfo.Raw)
+	}
 
 	localLog.Info().Str("device_definition_id", dd.ID).
 		Str("device_make_id", dd.DeviceMakeID).
@@ -408,6 +412,10 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel stri
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
 	vinInfo.Source = "probably smartcar"
+
+	if len(vinInfo.Model) == 0 || len(vinInfo.Make) == 0 || vinInfo.Year == 0 {
+		return nil, fmt.Errorf("unable to decode from known info")
+	}
 
 	return vinInfo, nil
 }

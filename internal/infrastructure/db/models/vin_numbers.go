@@ -39,6 +39,7 @@ type VinNumber struct {
 	Year               int         `boil:"year" json:"year" toml:"year" yaml:"year"`
 	VincarioData       null.JSON   `boil:"vincario_data" json:"vincario_data,omitempty" toml:"vincario_data" yaml:"vincario_data,omitempty"`
 	DrivlyData         null.JSON   `boil:"drivly_data" json:"drivly_data,omitempty" toml:"drivly_data" yaml:"drivly_data,omitempty"`
+	AutoisoData        null.JSON   `boil:"autoiso_data" json:"autoiso_data,omitempty" toml:"autoiso_data" yaml:"autoiso_data,omitempty"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -60,6 +61,7 @@ var VinNumberColumns = struct {
 	Year               string
 	VincarioData       string
 	DrivlyData         string
+	AutoisoData        string
 }{
 	Vin:                "vin",
 	Wmi:                "wmi",
@@ -76,6 +78,7 @@ var VinNumberColumns = struct {
 	Year:               "year",
 	VincarioData:       "vincario_data",
 	DrivlyData:         "drivly_data",
+	AutoisoData:        "autoiso_data",
 }
 
 var VinNumberTableColumns = struct {
@@ -94,6 +97,7 @@ var VinNumberTableColumns = struct {
 	Year               string
 	VincarioData       string
 	DrivlyData         string
+	AutoisoData        string
 }{
 	Vin:                "vin_numbers.vin",
 	Wmi:                "vin_numbers.wmi",
@@ -110,6 +114,7 @@ var VinNumberTableColumns = struct {
 	Year:               "vin_numbers.year",
 	VincarioData:       "vin_numbers.vincario_data",
 	DrivlyData:         "vin_numbers.drivly_data",
+	AutoisoData:        "vin_numbers.autoiso_data",
 }
 
 // Generated where
@@ -130,6 +135,7 @@ var VinNumberWhere = struct {
 	Year               whereHelperint
 	VincarioData       whereHelpernull_JSON
 	DrivlyData         whereHelpernull_JSON
+	AutoisoData        whereHelpernull_JSON
 }{
 	Vin:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
 	Wmi:                whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
@@ -146,6 +152,7 @@ var VinNumberWhere = struct {
 	Year:               whereHelperint{field: "\"device_definitions_api\".\"vin_numbers\".\"year\""},
 	VincarioData:       whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"vincario_data\""},
 	DrivlyData:         whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"drivly_data\""},
+	AutoisoData:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"autoiso_data\""},
 }
 
 // VinNumberRels is where relationship names are stored.
@@ -196,9 +203,9 @@ func (r *vinNumberR) GetDeviceMake() *DeviceMake {
 type vinNumberL struct{}
 
 var (
-	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data"}
+	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data"}
 	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "device_definition_id"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data"}
+	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )
