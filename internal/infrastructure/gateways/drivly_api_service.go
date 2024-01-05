@@ -47,6 +47,10 @@ func (ds *drivlyAPIService) GetVINInfo(vin string) (*DrivlyVINResponse, error) {
 		return nil, err
 	}
 
+	if v.Year == "0" || len(v.Year) == 0 || len(v.Model) == 0 || len(v.Make) == 0 {
+		return nil, fmt.Errorf("decode failed due to invalid MMY")
+	}
+
 	return v, nil
 }
 

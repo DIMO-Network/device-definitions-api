@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,6 +51,17 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 	err = json.Unmarshal(res, v)
 	if err != nil {
 		return nil, err
+	}
+	// get percent match from autoiso, if below 50 return err - kinda of an experiment for now
+	percentMatchStr := strings.TrimSuffix(v.FunctionResponse.Data.API.DataMatching, "%")
+	percentMatch, err := strconv.ParseFloat(percentMatchStr, 64)
+	if percentMatch < 50.0 {
+		return nil, fmt.Errorf("decode failed due to low DataMatching percent: %f", percentMatch)
+	}
+
+	if v.FunctionResponse.Data.Decoder.ModelYear.Value == "0" || len(v.FunctionResponse.Data.Decoder.ModelYear.Value) == 0 ||
+		len(v.FunctionResponse.Data.Decoder.Model.Value) == 0 || len(v.FunctionResponse.Data.Decoder.Make.Value) == 0 {
+		return nil, fmt.Errorf("decode failed due to invalid MMY")
 	}
 
 	return v, nil
