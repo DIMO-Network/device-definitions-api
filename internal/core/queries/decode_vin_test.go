@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -553,23 +554,18 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_ErrDecodeProvider_PartialDe
 	// future - another test for decode model when we have the info
 }
 
-func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeProviderBlankModel() {
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeErr() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
 	_ = dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
 
-	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
-		Source: "vincario",
-		Model:  "",
-		Make:   "Ford",
-	}
-	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(vinDecodingInfoData, nil)
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin})
 	assert.Nil(s.T(), qryResult)
-	assert.Error(s.T(), err, "decoded model name is blank")
+	assert.Error(s.T(), err, "unable to decode")
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/tidwall/sjson"
 
@@ -130,10 +131,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
 	var vinInfo = &coremodels.VINDecodingInfoData{}
-	// if year is 0, prefer vincario for decode, since most likely non USA.
-	if resp.Year == 0 {
+	// if year is 0 or way in future, prefer autoiso and vincario for decode, since most likely non USA.
+	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider)
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AutoIsoProvider)
+		if err != nil {
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider)
+		}
 	} else {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders) // this will try drivly first, then vincario
 	}
@@ -146,7 +150,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		localLog.Err(err).Msgf("failed to decode vin from provider %s", vinInfo.Source)
+		localLog.Err(err).Msgf("failed to decode vin from provider")
 		return resp, err
 	}
 	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
