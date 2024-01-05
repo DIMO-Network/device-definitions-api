@@ -176,12 +176,14 @@ func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInf
 	}
 	// todo continue filling this in
 	v := &models.VINDecodingInfoData{
-		VIN:    info.Vin,
-		Year:   int32(yr),
-		Make:   strings.TrimSpace(info.FunctionResponse.Data.Decoder.Make.Value),
-		Model:  strings.TrimSpace(info.FunctionResponse.Data.Decoder.Model.Value),
-		Source: models.AutoIsoProvider,
-		Raw:    raw,
+		VIN:        info.Vin,
+		Year:       int32(yr),
+		Make:       strings.TrimSpace(info.FunctionResponse.Data.Decoder.Make.Value),
+		Model:      strings.TrimSpace(info.FunctionResponse.Data.Decoder.Model.Value),
+		Source:     models.AutoIsoProvider,
+		Raw:        raw,
+		ExternalID: info.Vin,
+		FuelType:   info.FunctionResponse.Data.Decoder.FuelType.Value,
 	}
 
 	return v, nil

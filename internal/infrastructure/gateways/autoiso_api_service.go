@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -194,4 +195,32 @@ type AutoIsoVINResponse struct {
 		RemainingMonthlyLimit int    `json:"remainingMonthlyLimit"`
 		RemainingDailyLimit   int    `json:"remainingDailyLimit"`
 	} `json:"licenseInfo"`
+}
+
+// GetStyle returns a standard style string built from the data we have
+func (v *AutoIsoVINResponse) GetStyle() string {
+	s := ""
+	// eg. Diesel
+	if len(v.FunctionResponse.Data.Decoder.FuelType.Value) > 0 {
+		s += v.FunctionResponse.Data.Decoder.FuelType.Value + " "
+	}
+	// eg. TDI
+	if len(v.FunctionResponse.Data.Decoder.EngineVersion.Value) > 0 {
+		s += v.FunctionResponse.Data.Decoder.EngineVersion.Value + " "
+	}
+	// eg. Manual
+	if len(v.FunctionResponse.Data.Decoder.GearboxType.Value) > 0 {
+		s += v.FunctionResponse.Data.Decoder.GearboxType.Value + " "
+	}
+	// eg. FWD / AWD
+	if len(v.FunctionResponse.Data.Decoder.DriveType.Value) > 0 {
+		s += v.FunctionResponse.Data.Decoder.DriveType.Value + " "
+	}
+
+	return strings.TrimSpace(s)
+}
+
+// GetSubModel returns the Body type, which we can use as the sub model.
+func (v *AutoIsoVINResponse) GetSubModel() string {
+	return strings.TrimSpace(v.FunctionResponse.Data.Decoder.Body.Value)
 }
