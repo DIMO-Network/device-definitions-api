@@ -56,7 +56,8 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 	percentMatchStr := strings.TrimSuffix(v.FunctionResponse.Data.API.DataMatching, "%")
 	percentMatch, _ := strconv.ParseFloat(percentMatchStr, 64)
 	if percentMatch < 50.0 {
-		return nil, fmt.Errorf("decode failed due to low DataMatching percent: %f", percentMatch)
+		return nil, fmt.Errorf("decode failed due to low DataMatching percent: %f. MMY: %s %s %s", percentMatch,
+			v.FunctionResponse.Data.Decoder.Make.Value, v.FunctionResponse.Data.Decoder.Model.Value, v.FunctionResponse.Data.Decoder.ModelYear.Value)
 	}
 
 	if v.FunctionResponse.Data.Decoder.ModelYear.Value == "0" || len(v.FunctionResponse.Data.Decoder.ModelYear.Value) == 0 ||
