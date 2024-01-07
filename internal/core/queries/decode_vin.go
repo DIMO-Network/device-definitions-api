@@ -148,17 +148,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
 		}
 	}
+	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		localLog.Err(err).Msgf("failed to decode vin from provider")
-		return nil, err
-	}
-	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
-
-	if len(vinInfo.Model) == 0 {
-		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		localLog.Warn().Msg("decoded model name must have a minimum of 1 characters.")
+		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
 		return nil, err
 	}
 
