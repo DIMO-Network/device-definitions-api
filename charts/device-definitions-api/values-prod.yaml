@@ -56,7 +56,7 @@ podDisruptionBudget:
   minAvailable: 1
 jobs:
   - name: search-index-load
-    schedule: 0 0 * * 0
+    schedule: 0 0 * * 1
     args:
       - '-c'
       - /device-definitions-api sync -search-sync-dds; CODE=$?; echo "weekly elastic mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
