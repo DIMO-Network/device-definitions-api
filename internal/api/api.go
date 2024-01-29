@@ -158,7 +158,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	RegisterDeviceMakesRoutes(app, *m)
 	RegisterVINRoutes(app, *m)
 
-	app.Get("/docs/*", swagger.HandlerDefault)
+	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
 	go StartGrpcServer(logger, settings, *m)
 
