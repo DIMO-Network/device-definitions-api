@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -77,7 +78,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		DecodeProvider: null.StringFrom("manual"),
 		Year:           processedVIN.Year(),
 	}
-	if vinNumber.Year == 0 {
+	if vinNumber.Year == 0 || vinNumber.Year < 2008 || vinNumber.Year > time.Now().Year() {
 		year, err := cmdLineInput("enter model year")
 		if err != nil {
 			fmt.Println(err.Error())
