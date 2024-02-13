@@ -26,13 +26,13 @@ func TestBuildExternalIds(t *testing.T) {
 
 func TestExternalIdsToGRPC(t *testing.T) {
 
-	extIds := []*coremodels.ExternalID{
+	extIDs := []*coremodels.ExternalID{
 		{Vendor: "edmunds", ID: "123"},
 		{Vendor: "nhtsa", ID: "qwert"},
 		{Vendor: "adac", ID: "890"},
 	}
 
-	got := ExternalIdsToGRPC(extIds)
+	got := ExternalIdsToGRPC(extIDs)
 
 	assert.Equal(t, 3, len(got))
 

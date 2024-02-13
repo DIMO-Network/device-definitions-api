@@ -92,10 +92,10 @@ func SlugString(term string) string {
 
 }
 
-func BuildExternalIds(externalIdsJSON null.JSON) []*models.ExternalID {
+func BuildExternalIds(externalIDsJSON null.JSON) []*models.ExternalID {
 	var externalIds []*models.ExternalID
 	var ei map[string]string
-	if err := externalIdsJSON.Unmarshal(&ei); err == nil {
+	if err := externalIDsJSON.Unmarshal(&ei); err == nil {
 		for vendor, id := range ei {
 			externalIds = append(externalIds, &models.ExternalID{
 				Vendor: vendor,
@@ -137,9 +137,9 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 	return dmMetadata
 }
 
-func ExternalIdsFromGRPC(externalIdsGRPC []*grpc.ExternalID) []*models.ExternalID {
-	externalIds := make([]*models.ExternalID, len(externalIdsGRPC))
-	for i, ei := range externalIdsGRPC {
+func ExternalIdsFromGRPC(externalIDsGRPC []*grpc.ExternalID) []*models.ExternalID {
+	externalIds := make([]*models.ExternalID, len(externalIDsGRPC))
+	for i, ei := range externalIDsGRPC {
 		externalIds[i] = &models.ExternalID{
 			Vendor: ei.Vendor,
 			ID:     ei.Id,
@@ -164,8 +164,8 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			LogoURL:            dd.R.DeviceMake.LogoURL,
 			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
 			NameSlug:           dd.R.DeviceMake.NameSlug,
-			ExternalIds:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
-			ExternalIdsTyped:   BuildExternalIds(dd.R.DeviceMake.ExternalIds),
+			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIDsTyped:   BuildExternalIds(dd.R.DeviceMake.ExternalIds),
 			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
 		},
 		Type: models.DeviceType{
@@ -178,7 +178,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		},
 		Metadata:    dd.Metadata.JSON,
 		Verified:    dd.Verified,
-		ExternalIds: BuildExternalIds(dd.ExternalIds),
+		ExternalIDs: BuildExternalIds(dd.ExternalIds),
 	}
 
 	if !dd.R.DeviceMake.TokenID.IsZero() {
@@ -314,7 +314,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			ModelSlug: dd.Type.ModelSlug,
 		},
 		Verified:    dd.Verified,
-		ExternalIds: ExternalIdsToGRPC(dd.ExternalIds),
+		ExternalIds: ExternalIdsToGRPC(dd.ExternalIDs),
 	}
 
 	if dd.DeviceMake.TokenID != nil {
