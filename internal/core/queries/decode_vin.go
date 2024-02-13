@@ -206,7 +206,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
 		}
 	}
-	localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
+
+	if vinInfo != nil {
+		localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
+	}
 
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
