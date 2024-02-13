@@ -53,7 +53,7 @@ func (ch GetDeviceMakeByNameQueryHandler) Handle(ctx context.Context, query medi
 		OemPlatformName:    v.OemPlatformName,
 		NameSlug:           v.NameSlug,
 		ExternalIDs:        common.JSONOrDefault(v.ExternalIds),
-		ExternalIDsTyped:   common.BuildExternalIds(v.ExternalIds),
+		ExternalIDsTyped:   common.BuildExternalIDs(v.ExternalIds),
 		Metadata:           common.JSONOrDefault(v.Metadata),
 		MetadataTyped:      common.BuildDeviceMakeMetadata(v.Metadata),
 		HardwareTemplateID: v.HardwareTemplateID,

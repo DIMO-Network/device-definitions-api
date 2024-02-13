@@ -42,7 +42,7 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Me
 	}
 
 	for i, v := range all {
-		eids := common.BuildExternalIds(v.ExternalIds)
+		eids := common.BuildExternalIDs(v.ExternalIds)
 		md := &coremodels.DeviceMakeMetadata{}
 		_ = v.Metadata.Unmarshal(md)
 
@@ -53,7 +53,7 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Me
 			OemPlatformName:  v.OemPlatformName.String,
 			NameSlug:         v.NameSlug,
 			ExternalIds:      string(v.ExternalIds.JSON),
-			ExternalIdsTyped: common.ExternalIdsToGRPC(eids),
+			ExternalIdsTyped: common.ExternalIDsToGRPC(eids),
 			Metadata:         common.DeviceMakeMetadataToGRPC(md),
 			CreatedAt:        timestamppb.New(v.CreatedAt),
 			UpdatedAt:        timestamppb.New(v.UpdatedAt),

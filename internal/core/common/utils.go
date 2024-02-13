@@ -92,7 +92,7 @@ func SlugString(term string) string {
 
 }
 
-func BuildExternalIds(externalIDsJSON null.JSON) []*models.ExternalID {
+func BuildExternalIDs(externalIDsJSON null.JSON) []*models.ExternalID {
 	var externalIDs []*models.ExternalID
 	var ei map[string]string
 	if err := externalIDsJSON.Unmarshal(&ei); err == nil {
@@ -118,7 +118,7 @@ func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata 
 	return dmMetadata
 }
 
-func ExternalIdsToGRPC(externalIDs []*models.ExternalID) []*grpc.ExternalID {
+func ExternalIDsToGRPC(externalIDs []*models.ExternalID) []*grpc.ExternalID {
 	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIDs))
 	for i, ei := range externalIDs {
 		externalIDsGRPC[i] = &grpc.ExternalID{
@@ -165,7 +165,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
 			NameSlug:           dd.R.DeviceMake.NameSlug,
 			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
-			ExternalIDsTyped:   BuildExternalIds(dd.R.DeviceMake.ExternalIds),
+			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
 			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
 		},
 		Type: models.DeviceType{
@@ -178,7 +178,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		},
 		Metadata:    dd.Metadata.JSON,
 		Verified:    dd.Verified,
-		ExternalIDs: BuildExternalIds(dd.ExternalIds),
+		ExternalIDs: BuildExternalIDs(dd.ExternalIds),
 	}
 
 	if !dd.R.DeviceMake.TokenID.IsZero() {
@@ -314,7 +314,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			ModelSlug: dd.Type.ModelSlug,
 		},
 		Verified:    dd.Verified,
-		ExternalIds: ExternalIdsToGRPC(dd.ExternalIDs),
+		ExternalIds: ExternalIDsToGRPC(dd.ExternalIDs),
 	}
 
 	if dd.DeviceMake.TokenID != nil {

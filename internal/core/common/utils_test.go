@@ -17,7 +17,7 @@ func TestBuildExternalIds(t *testing.T) {
 
 	json := null.JSONFrom([]byte(`{"edmunds": "123", "nhtsa": "qwert", "adac": "890" }`))
 
-	got := BuildExternalIds(json)
+	got := BuildExternalIDs(json)
 
 	assert.Contains(t, got, &coremodels.ExternalID{Vendor: "edmunds", ID: "123"})
 	assert.Contains(t, got, &coremodels.ExternalID{Vendor: "nhtsa", ID: "qwert"})
@@ -32,7 +32,7 @@ func TestExternalIdsToGRPC(t *testing.T) {
 		{Vendor: "adac", ID: "890"},
 	}
 
-	got := ExternalIdsToGRPC(extIDs)
+	got := ExternalIDsToGRPC(extIDs)
 
 	assert.Equal(t, 3, len(got))
 
