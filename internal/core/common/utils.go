@@ -93,17 +93,17 @@ func SlugString(term string) string {
 }
 
 func BuildExternalIds(externalIDsJSON null.JSON) []*models.ExternalID {
-	var externalIds []*models.ExternalID
+	var externalIDs []*models.ExternalID
 	var ei map[string]string
 	if err := externalIDsJSON.Unmarshal(&ei); err == nil {
 		for vendor, id := range ei {
-			externalIds = append(externalIds, &models.ExternalID{
+			externalIDs = append(externalIDs, &models.ExternalID{
 				Vendor: vendor,
 				ID:     id,
 			})
 		}
 	}
-	return externalIds
+	return externalIDs
 }
 
 func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata {
@@ -118,9 +118,9 @@ func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata 
 	return dmMetadata
 }
 
-func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
-	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIds))
-	for i, ei := range externalIds {
+func ExternalIdsToGRPC(externalIDs []*models.ExternalID) []*grpc.ExternalID {
+	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIDs))
+	for i, ei := range externalIDs {
 		externalIDsGRPC[i] = &grpc.ExternalID{
 			Vendor: ei.Vendor,
 			Id:     ei.ID,
@@ -137,7 +137,7 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 	return dmMetadata
 }
 
-func ExternalIdsFromGRPC(externalIDsGRPC []*grpc.ExternalID) []*models.ExternalID {
+func ExternalIDsFromGRPC(externalIDsGRPC []*grpc.ExternalID) []*models.ExternalID {
 	externalIDs := make([]*models.ExternalID, len(externalIDsGRPC))
 	for i, ei := range externalIDsGRPC {
 		externalIDs[i] = &models.ExternalID{

@@ -405,7 +405,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 		Verified:           in.Verified,
 		DeviceMakeID:       in.DeviceMakeId,
 		DeviceTypeID:       in.DeviceTypeId,
-		ExternalIds:        common.ExternalIdsFromGRPC(in.ExternalIds),
+		ExternalIds:        common.ExternalIDsFromGRPC(in.ExternalIds),
 		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
