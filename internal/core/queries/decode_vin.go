@@ -44,10 +44,11 @@ type DecodeVINQueryHandler struct {
 }
 
 type DecodeVINQuery struct {
-	VIN        string `json:"vin"`
-	KnownModel string `json:"knownModel"`
-	KnownYear  int32  `json:"knownYear"`
-	Country    string `json:"country"`
+	VIN                string `json:"vin"`
+	KnownModel         string `json:"knownModel"`
+	KnownYear          int32  `json:"knownYear"`
+	Country            string `json:"country"`
+	DeviceDefinitionID string `json:"device_definition_id"`
 }
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
@@ -107,6 +108,65 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	if vinDecodeNumber != nil {
+		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
+		resp.Year = int32(vinDecodeNumber.Year)
+		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
+		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
+		resp.Source = vinDecodeNumber.DecodeProvider.String
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		if err != nil {
+			pt = coremodels.ICE.String()
+		}
+		resp.Powertrain = pt
+
+		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
+
+		return resp, nil
+	}
+
+	// If DeviceDefinitionID exists so add to vin number table.
+	if len(qry.DeviceDefinitionID) > 0 {
+
+		dd, err := dc.ddRepository.GetByID(ctx, qry.DeviceDefinitionID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get device definition id")
+		}
+
+		dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, dd.R.DeviceMake.Name)
+		if err != nil {
+			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+			dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
+			return resp, nil
+		}
+
+		// insert vin_numbers
+		vinDecodeNumber = &models.VinNumber{
+			Vin:                vin.String(),
+			DeviceDefinitionID: dd.ID,
+			DeviceMakeID:       dd.DeviceMakeID,
+			Wmi:                dbWMI.Wmi,
+			VDS:                vin.VDS(),
+			Vis:                vin.VIS(),
+			CheckDigit:         vin.CheckDigit(),
+			SerialNumber:       vin.SerialNumber(),
+			DecodeProvider:     null.StringFrom("manual"),
+			Year:               int(dd.Year),
+		}
+		if len(dd.R.DeviceStyles) > 0 {
+			vinDecodeNumber.StyleID = null.StringFrom(dd.R.DeviceStyles[0].ID)
+		}
+		// note we use a transaction here all throughout and commit at the end
+		if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
+			localLog.Err(err).
+				Str("device_definition_id", dd.ID).
+				Str("device_make_id", dd.DeviceMakeID).
+				Msg("failed to insert to vin_numbers")
+		}
+		err = txVinNumbers.Commit()
+		if err != nil {
+			return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
+		}
+
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
