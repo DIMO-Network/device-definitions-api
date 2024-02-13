@@ -119,14 +119,14 @@ func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata 
 }
 
 func ExternalIdsToGRPC(externalIds []*models.ExternalID) []*grpc.ExternalID {
-	externalIdsGRPC := make([]*grpc.ExternalID, len(externalIds))
+	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIds))
 	for i, ei := range externalIds {
-		externalIdsGRPC[i] = &grpc.ExternalID{
+		externalIDsGRPC[i] = &grpc.ExternalID{
 			Vendor: ei.Vendor,
 			Id:     ei.ID,
 		}
 	}
-	return externalIdsGRPC
+	return externalIDsGRPC
 }
 
 func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
@@ -138,14 +138,14 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 }
 
 func ExternalIdsFromGRPC(externalIDsGRPC []*grpc.ExternalID) []*models.ExternalID {
-	externalIds := make([]*models.ExternalID, len(externalIDsGRPC))
+	externalIDs := make([]*models.ExternalID, len(externalIDsGRPC))
 	for i, ei := range externalIDsGRPC {
-		externalIds[i] = &models.ExternalID{
+		externalIDs[i] = &models.ExternalID{
 			Vendor: ei.Vendor,
 			ID:     ei.Id,
 		}
 	}
-	return externalIds
+	return externalIDs
 }
 
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
