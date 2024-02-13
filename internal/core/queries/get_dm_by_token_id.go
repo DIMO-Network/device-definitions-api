@@ -63,7 +63,7 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		}
 	}
 
-	eids := common.BuildExternalIds(v.ExternalIds)
+	eids := common.BuildExternalIDs(v.ExternalIds)
 	md := &coremodels.DeviceMakeMetadata{}
 	_ = v.Metadata.Unmarshal(md)
 
@@ -74,7 +74,7 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		OemPlatformName:  v.OemPlatformName.String,
 		NameSlug:         v.NameSlug,
 		ExternalIds:      string(v.ExternalIds.JSON),
-		ExternalIdsTyped: common.ExternalIdsToGRPC(eids),
+		ExternalIdsTyped: common.ExternalIDsToGRPC(eids),
 		Metadata:         common.DeviceMakeMetadataToGRPC(md),
 		CreatedAt:        timestamppb.New(v.CreatedAt),
 		UpdatedAt:        timestamppb.New(v.UpdatedAt),

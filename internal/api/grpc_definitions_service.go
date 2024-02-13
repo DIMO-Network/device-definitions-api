@@ -307,8 +307,8 @@ func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_
 		NameSlug:         deviceMake.NameSlug,
 		LogoUrl:          deviceMake.LogoURL.String,
 		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIds),
-		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
+		ExternalIds:      string(deviceMake.ExternalIDs),
+		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
 	}
 
 	if deviceMake.TokenID != nil {
@@ -335,8 +335,8 @@ func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_
 		NameSlug:         deviceMake.NameSlug,
 		LogoUrl:          deviceMake.LogoURL.String,
 		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIds),
-		ExternalIdsTyped: common.ExternalIdsToGRPC(deviceMake.ExternalIdsTyped),
+		ExternalIds:      string(deviceMake.ExternalIDs),
+		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
 	}
 
 	if deviceMake.TokenID != nil {
@@ -405,7 +405,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 		Verified:           in.Verified,
 		DeviceMakeID:       in.DeviceMakeId,
 		DeviceTypeID:       in.DeviceTypeId,
-		ExternalIds:        common.ExternalIdsFromGRPC(in.ExternalIds),
+		ExternalIds:        common.ExternalIDsFromGRPC(in.ExternalIds),
 		HardwareTemplateID: in.HardwareTemplateId,
 	}
 

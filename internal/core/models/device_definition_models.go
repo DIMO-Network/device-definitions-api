@@ -20,7 +20,7 @@ type GetDeviceDefinitionQueryResult struct {
 	VehicleInfo        VehicleInfo   `json:"vehicleData,omitempty"`
 	Metadata           []byte        `json:"metadata"`
 	Verified           bool          `json:"verified"`
-	ExternalIds        []*ExternalID `json:"externalIds"`
+	ExternalIDs        []*ExternalID `json:"externalIds"`
 	// DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations
 	DeviceIntegrations     []DeviceIntegration   `json:"deviceIntegrations"`
 	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
@@ -96,8 +96,8 @@ type DeviceMake struct {
 	OemPlatformName    null.String         `json:"oem_platform_name"`
 	TokenID            *big.Int            `json:"tokenId,omitempty"`
 	NameSlug           string              `json:"nameSlug"`
-	ExternalIds        json.RawMessage     `json:"external_ids"`
-	ExternalIdsTyped   []*ExternalID       `json:"externalIdsTyped"`
+	ExternalIDs        json.RawMessage     `json:"external_ids"`
+	ExternalIDsTyped   []*ExternalID       `json:"externalIdsTyped"`
 	Metadata           json.RawMessage     `json:"metadata"`
 	MetadataTyped      *DeviceMakeMetadata `json:"metadataTyped"`
 	HardwareTemplateID null.String         `json:"hardware_template_id"`

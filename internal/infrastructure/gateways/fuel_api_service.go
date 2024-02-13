@@ -108,7 +108,7 @@ func (fs *fuelAPIService) imageRequest(mk, mdl string, yr int, prodID int, prodF
 	height := gjson.Get(imageData, "products.0.productFormats.0.height").Int()
 	angle := gjson.Get(imageData, "products.0.productFormats.0.angle").String()
 	img := FuelDeviceImages{FuelAPIID: vehicleID, Width: int(width), Height: int(height), Angle: angle, Images: make([]FuelImage, 0)}
-	gjson.Get(imageData, "products.0.productFormats.0.assets").ForEach(func(key gjson.Result, value gjson.Result) bool {
+	gjson.Get(imageData, "products.0.productFormats.0.assets").ForEach(func(_ gjson.Result, value gjson.Result) bool {
 		imageURL := value.Get("url").Str
 		color := value.Get("shotCode.color.simple_name").Str
 		img.Images = append(img.Images, FuelImage{SourceURL: imageURL, Color: color})
