@@ -126,6 +126,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// If DeviceDefinitionID passed in, override VIN decoding
+	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DeviceDefinitionID)
 	if len(qry.DeviceDefinitionID) > 0 {
 		dd, err := dc.ddRepository.GetByID(ctx, qry.DeviceDefinitionID)
 		if err != nil {
@@ -138,6 +139,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			localLog.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
 			return resp, nil
 		}
+
+		localLog.Info().Msgf("Insert Manual WMI %s", dbWMI)
 
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
@@ -152,6 +155,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			DecodeProvider:     null.StringFrom("manual"),
 			Year:               int(dd.Year),
 		}
+
+		localLog.Info().Msgf("Insert Manual VIN %s", vinDecodeNumber)
+
 		// no style, maybe for future way to pick the Style from Admin
 
 		// note we use a transaction here all throughout and commit at the end
