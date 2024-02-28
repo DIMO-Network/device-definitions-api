@@ -43,6 +43,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
 	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
+	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -54,7 +55,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
