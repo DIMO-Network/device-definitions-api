@@ -33,3 +33,10 @@ FUEL_API_KEY:
 VINCARIO_API_URL: https://api.vindecoder.eu/3.2
 VINCARIO_API_KEY: xxx
 VINCARIO_API_SECRET: xxx
+DATGROUP_WS_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
+DATGROUP_WS_AUTH_URL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
+DATGROUP_WS_CUSTOMERLOGIN: xxx
+DATGROUP_WS_CUSTOMERNUMBER: xxx
+DATGROUP_WS_CUSTOMERPASSWORD: xxx
+DATGROUP_WS_INTERFACEPARTNERNUMBER: xxx
+DATGROUP_WS_INTERFACEPARTNERSIGNATURE: xxx
