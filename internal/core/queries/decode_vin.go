@@ -191,20 +191,18 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
 	var vinInfo = &coremodels.VINDecodingInfoData{}
-	vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.DATGroupProvider, qry.Country)
-
-	localLog.Info().Msgf("DATGroupProvider => %s", vinInfo)
-
-	// if year is 0 or way in future, prefer autoiso and vincario for decode, since most likely non USA.
+	// if year is 0 or way in future, prefer datgroup, autoiso and vincario for decode, since most likely non USA.
 	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AutoIsoProvider, qry.Country)
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.DATGroupProvider, qry.Country)
+		localLog.Info().Msgf("error =======> ", err)
 		if err != nil {
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider, qry.Country)
 		}
 	} else {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first, then vincario
 	}
+
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in
 	if err != nil {
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {

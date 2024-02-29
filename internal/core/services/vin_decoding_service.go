@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/datgroup"
 	"regexp"
 	"strconv"
 	"strings"
@@ -51,7 +50,9 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		return nil, fmt.Errorf("invalid vin: %s", vin)
 	}
 
-	localLog := c.logger.With().Str("vin", vin).Logger()
+	localLog := c.logger.With().
+		Str("vin", vin).
+		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
 		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionID)
@@ -88,11 +89,11 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			return nil, err
 		}
 	case models.DATGroupProvider:
-		vinAutoIsoInfo, err := c.DATGroupAPIService.GetVIN(ctx, vin, country)
+		vinInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
 		}
-		result, err = buildFromDATGroup(vinAutoIsoInfo)
+		result, err = buildFromDATGroup(vinInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -107,6 +108,18 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 				localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
 			}
 			result.MetaData = metadata
+		}
+		// if nothing from drivly, try DATGroup
+		if result.Source == "" {
+			datGroupInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
+			if err != nil {
+				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
+			} else {
+				result, err = buildFromDATGroup(datGroupInfo)
+				if err != nil {
+					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from DATGroup data")
+				}
+			}
 		}
 		// if nothing from drivly, try autoiso
 		if result.Source == "" {
@@ -277,23 +290,28 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 	return v
 }
 
-func buildFromDATGroup(info *datgroup.GetVehicleIdentificationByVinResponse) (*models.VINDecodingInfoData, error) {
+func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*models.VINDecodingInfoData, error) {
 	raw, _ := xml.Marshal(info)
 	if info == nil {
 		return nil, fmt.Errorf("vin info was nil")
 	}
 
+	dossier := info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier[0].Vehicle
 	v := &models.VINDecodingInfoData{
-		VIN: string(*info.VXS.Dossier[0].Vehicle.VINResult.VINVehicle.VINumber.VinCode),
-		//Year:       int32(yr),
-		//Make:       strings.TrimSpace(info.FunctionResponse.Data.Decoder.Make.Value),
-		//Model:      strings.TrimSpace(info.FunctionResponse.Data.Decoder.Model.Value),
-		//Source:     models.AutoIsoProvider,
-		//ExternalID: info.Vin,
+		VIN:  dossier.VINResult.VINVehicle.VINumber.VinCode,
+		Year: int32(dossier.BuildYear),
+		//Year:       2022,
+		Make:       strings.TrimSpace(dossier.ManufacturerName),
+		Model:      strings.TrimSpace(dossier.BaseModelName),
+		Source:     models.DATGroupProvider,
+		ExternalID: dossier.VINResult.VINVehicle.VINumber.VinCode,
 		//StyleName:  info.GetStyle(),
 		//SubModel:   info.GetSubModel(),
 		Raw: raw,
-		//FuelType:   info.FunctionResponse.Data.Decoder.FuelType.Value,
+	}
+
+	if dossier.TechInfo != nil {
+		v.FuelType = dossier.TechInfo.FuelMethodType
 	}
 
 	return v, nil
