@@ -32,6 +32,7 @@ type VINDecodingServiceSuite struct {
 	mockDrivlyAPISvc               *mock_gateways.MockDrivlyAPIService
 	mockVincarioAPISvc             *mock_gateways.MockVincarioAPIService
 	mockAutoIsoAPISvc              *mock_gateways.MockAutoIsoAPIService
+	mockDATGroupAPIService         *mock_gateways.MockDATGroupAPIService
 	mockDeviceDefinitionRepository *mock_repository.MockDeviceDefinitionRepository
 
 	vinDecodingService VINDecodingService
@@ -57,8 +58,10 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockVincarioAPISvc = mock_gateways.NewMockVincarioAPIService(s.ctrl)
 	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
 	s.mockDeviceDefinitionRepository = mock_repository.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
+	s.mockDATGroupAPIService = mock_gateways.NewMockDATGroupAPIService(s.ctrl)
 
-	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository)
+	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(), s.mockDeviceDefinitionRepository, s.mockDATGroupAPIService)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
@@ -77,6 +80,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 	const makeID = "Ford"
+	const country = "US"
 
 	vinInfoResp := &gateways.DrivlyVINResponse{
 		Vin:                 vin,
@@ -103,7 +107,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -114,6 +118,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	ctx := context.Background()
 	const vin = "WAUZZZKM04D018683"
 	const makeID = "Test"
+	const country = "US"
 
 	vinInfoResp := &gateways.VincarioInfoResponse{
 		VIN:                vin,
@@ -136,7 +141,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -149,6 +154,7 @@ var testAutoIsoJSON []byte
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	ctx := context.Background()
 	const vin = "WAUZZZKM04D018683"
+	const country = "US"
 
 	vinInfoResp := &gateways.AutoIsoVINResponse{}
 	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
@@ -158,7 +164,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -168,6 +174,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 	ctx := context.Background()
 	const vin = "0SCZZZ4M0KD018683"
+	const country = "US"
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 	dm := dbtesthelper.SetupCreateMake(s.T(), "Tesla", s.pdb)
@@ -175,7 +182,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 
 	s.mockDeviceDefinitionRepository.EXPECT().GetByID(ctx, dd.ID).Times(1).Return(dd, nil)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
