@@ -365,6 +365,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if vinInfo.Source == coremodels.AutoIsoProvider && len(vinInfo.Raw) > 0 {
 		vinDecodeNumber.AutoisoData = null.JSONFrom(vinInfo.Raw)
 	}
+	if vinInfo.Source == coremodels.DATGroupProvider && len(vinInfo.Raw) > 0 {
+		vinDecodeNumber.DatgroupData = null.JSONFrom(vinInfo.Raw)
+	}
 
 	localLog.Info().Str("device_definition_id", dd.ID).
 		Str("device_make_id", dd.DeviceMakeID).
