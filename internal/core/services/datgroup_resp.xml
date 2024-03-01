@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+    <S:Body>
+        <ns4:getVehicleIdentificationByVinResponse xmlns:ns4="http://sphinx.dat.de/services/VehicleIdentificationService">
+            <VXS>
+                <ns1:Dossier xmlns:ns1="http://www.dat.de/vxs">
+                    <ns1:Country>TR</ns1:Country>
+                    <ns1:Language>us_US</ns1:Language>
+                    <ns1:Vehicle>
+                        <ns1:DatECode>010200020060001</ns1:DatECode>
+                        <ns1:Container>TR001</ns1:Container>
+                        <ns1:ConstructionTime>5274</ns1:ConstructionTime>
+                        <ns1:ConstructionTimeFrom>5120</ns1:ConstructionTimeFrom>
+                        <ns1:ConstructionTimeTo>5409</ns1:ConstructionTimeTo>
+                        <ns1:SalesDescription>500 1.4 T-Jet 16V Abarth Turismo</ns1:SalesDescription>
+                        <ns1:VehicleTypeName>Pkw, SUV, Kleintransporter</ns1:VehicleTypeName>
+                        <ns1:VehicleTypeNameN origin="dat">Pkw, SUV, Kleintransporter</ns1:VehicleTypeNameN>
+                        <ns1:ManufacturerName origin="dat">Abarth</ns1:ManufacturerName>
+                        <ns1:BaseModelName origin="dat">500 (150)(2008-&gt;)</ns1:BaseModelName>
+                        <ns1:SubModelName origin="dat">595 Turismo</ns1:SubModelName>
+                        <ns1:ContainerName>TR - Kapı:3 1.4 T-Jet 16V EU5, Turismo, 2012 - 2013</ns1:ContainerName>
+                        <ns1:ContainerNameN origin="dat">TR - Kapı:3 1.4 T-Jet 16V EU5, Turismo, 2012 - 2013</ns1:ContainerNameN>
+                        <ns1:MainTypeGroupName>500</ns1:MainTypeGroupName>
+                        <ns1:VehicleType>1</ns1:VehicleType>
+                        <ns1:Manufacturer>20</ns1:Manufacturer>
+                        <ns1:BaseModel>2</ns1:BaseModel>
+                        <ns1:BuildYear>2020</ns1:BuildYear>
+                        <ns1:SubModel>6</ns1:SubModel>
+                        <ns1:MainTypeGroup>500</ns1:MainTypeGroup>
+                        <ns1:IdentificationSource>IDENTIFICATIONSOURCE_VIN</ns1:IdentificationSource>
+                        <ns1:VinAccuracy>0</ns1:VinAccuracy>
+                        <ns1:ReleaseIndicator>ALL</ns1:ReleaseIndicator>
+                        <ns1:SubModelVariant>1</ns1:SubModelVariant>
+                        <ns1:Equipment>
+                            <ns1:SeriesEquipment>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26803</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Airbag Fahrer-/Beifahrerseite</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR1</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40000</ns1:DatEquipmentId>
+                                    <ns1:Description>Anti-Blockier-System (ABS)</ns1:Description>
+                                    <ns1:EquipmentGroup>ABS</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25213</ns1:DatEquipmentId>
+                                    <ns1:Description>Anzeigeinstrumente Sportdesign</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24083</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Audiosystem: Radio mit CD- und MP3-Player</ns1:Description>
+                                    <ns1:EquipmentGroup>CD</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>15201</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Außenspiegel elektr. verstell- und heizbar, beide</ns1:Description>
+                                    <ns1:EquipmentGroup>AUSP</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>15807</ns1:DatEquipmentId>
+                                            <ns1:Description>Außenspiegel Wagenfarbe</ns1:Description>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25702</ns1:DatEquipmentId>
+                                    <ns1:Description>Außentemperaturanzeige</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26909</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Beifahrerairbag abschaltbar</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR2</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18505</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Bi-Xenon-Scheinwerfer</ns1:Description>
+                                    <ns1:EquipmentGroup>XELI</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>19000</ns1:DatEquipmentId>
+                                            <ns1:Description>Scheinwerfer-Reinigungsanlage (SRA)</ns1:Description>
+                                            <ns1:EquipmentGroup>SWRA</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24826</ns1:DatEquipmentId>
+                                    <ns1:Description>Blue &amp; Me (Bluetooth mit Sprachsteuerung, USB-Schnittstelle, MP3)</ns1:Description>
+                                    <ns1:EquipmentGroup>MP3A</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25508</ns1:DatEquipmentId>
+                                    <ns1:Description>Bordcomputer</ns1:Description>
+                                    <ns1:EquipmentGroup>COMP</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40591</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Bremssättel Rot lackiert</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40307</ns1:DatEquipmentId>
+                                    <ns1:Description>Elektr. Bremskraftverteilung</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69815</ns1:DatEquipmentId>
+                                    <ns1:Description>Elektrische Servolenkung Dual-Drive</ns1:Description>
+                                    <ns1:EquipmentGroup>SL</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70110</ns1:DatEquipmentId>
+                                    <ns1:Description>Elektron. Differentialsperre</ns1:Description>
+                                    <ns1:EquipmentGroup>ASD</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70308</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Elektron. Stabilitäts-Programm (ESP)</ns1:Description>
+                                    <ns1:EquipmentGroup>ESP</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>70303</ns1:DatEquipmentId>
+                                            <ns1:Description>Antriebs-Schlupfregelung (ASR)</ns1:Description>
+                                            <ns1:EquipmentGroup>ASR</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>70603</ns1:DatEquipmentId>
+                                            <ns1:Description>Fahrassistenz-System: Berganfahrhilfe</ns1:Description>
+                                            <ns1:EquipmentGroup>FA16</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>79706</ns1:DatEquipmentId>
+                                            <ns1:Description>Motor-Schleppmoment-Regulator (MSR)</ns1:Description>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70103</ns1:DatEquipmentId>
+                                    <ns1:Description>Elektron. Traktionskontrolle</ns1:Description>
+                                    <ns1:EquipmentGroup>ASC</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40801</ns1:DatEquipmentId>
+                                    <ns1:Description>Fahrassistenz-System: Bremsassistent</ns1:Description>
+                                    <ns1:EquipmentGroup>FA01</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>35001</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Fensterheber elektrisch vorn</ns1:Description>
+                                    <ns1:EquipmentGroup>FH2</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>35300</ns1:DatEquipmentId>
+                                            <ns1:Description>Zentralverriegelung</ns1:Description>
+                                            <ns1:EquipmentGroup>ZV</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>75005</ns1:DatEquipmentId>
+                                    <ns1:Description>Getriebe 5-Gang</ns1:Description>
+                                    <ns1:EquipmentGroup>SG5</ns1:EquipmentGroup>
+                                    <ns1:EquipmentClass>11</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>22800</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Heckscheibe heizbar</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>19300</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Heckscheibenwischer</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26170</ns1:DatEquipmentId>
+                                    <ns1:Description>Innenausstattung: Einlagen Armaturenbrett, mattgrau</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>39308</ns1:DatEquipmentId>
+                                    <ns1:Description>Isofix-Aufnahmen für Kindersitz an Rücksitz</ns1:Description>
+                                    <ns1:EquipmentGroup>KISI</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>10003</ns1:DatEquipmentId>
+                                    <ns1:Description>Karosserie: 3-türig</ns1:Description>
+                                    <ns1:EquipmentClass>2</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>28901</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Klimaautomatik</ns1:Description>
+                                    <ns1:EquipmentGroup>KLI2</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>29200</ns1:DatEquipmentId>
+                                            <ns1:Description>Innenraumfilter: Pollenfilter</ns1:Description>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26701</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Knieairbag Fahrerseite</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR5</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26808</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Kopf-Airbag-System vorn und hinten</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR4</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>34805</ns1:DatEquipmentId>
+                                    <ns1:Description>Kopfstützen hinten</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25290</ns1:DatEquipmentId>
+                                    <ns1:Description>Ladedruckanzeige</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69304</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Lenkrad (Sport/Leder) mit Multifunktion</ns1:Description>
+                                    <ns1:EquipmentGroup>LEN7</ns1:EquipmentGroup>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>24401</ns1:DatEquipmentId>
+                                            <ns1:Description>Audiobedienung am Lenkrad</ns1:Description>
+                                            <ns1:EquipmentGroup>LEN5</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69503</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Lenksäule (Lenkrad) höhenverstellbar</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>48286</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>LM-Felgen</ns1:Description>
+                                    <ns1:EquipmentGroup>ALU</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>82625</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Motor 1,4 Ltr. - 118 kW KAT</ns1:Description>
+                                    <ns1:EquipmentClass>1</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18300</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Nebelscheinwerfer</ns1:Description>
+                                    <ns1:EquipmentGroup>BEL</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26603</ns1:DatEquipmentId>
+                                    <ns1:Description>Pedale Aluminium</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>32609</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Positions-Memory für Beifahrersitz</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>4408</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Raucher-Paket</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>68802</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Reifen-Reparaturkit</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>33600</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Rücksitzbank klappbar</ns1:Description>
+                                    <ns1:EquipmentGroup>SITH</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>77225</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Schadstoffarm nach Abgasnorm Euro 5</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26903</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Seitenairbag vorn</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR3</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>23103</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Seitenscheiben hinten und Heckscheibe abgedunkelt</ns1:Description>
+                                    <ns1:EquipmentGroup>SORO</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>11404</ns1:DatEquipmentId>
+                                    <ns1:Description>Seitenschweller Wagenfarbe</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>77607</ns1:DatEquipmentId>
+                                    <ns1:Description>Sport-Auspuffanlage</ns1:Description>
+                                    <ns1:EquipmentGroup>SPAA</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>42001</ns1:DatEquipmentId>
+                                    <ns1:Description>Sport-Fahrwerk tiefergelegt</ns1:Description>
+                                    <ns1:EquipmentGroup>SPFW</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>1907</ns1:DatEquipmentId>
+                                    <ns1:Description>Sport-Paket</ns1:Description>
+                                    <ns1:ContainedEquipmentPositions>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>13104</ns1:DatEquipmentId>
+                                            <ns1:Description>Einstiegsleisten (verchromt)</ns1:Description>
+                                        </ns1:EquipmentPosition>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>21003</ns1:DatEquipmentId>
+                                            <ns1:Description>Dachspoiler Wagenfarbe</ns1:Description>
+                                            <ns1:EquipmentGroup>SPOI</ns1:EquipmentGroup>
+                                        </ns1:EquipmentPosition>
+                                        <ns1:EquipmentPosition>
+                                            <ns1:DatEquipmentId>77105</ns1:DatEquipmentId>
+                                            <ns1:Description>Auspuffblende verchromt</ns1:Description>
+                                        </ns1:EquipmentPosition>
+                                    </ns1:ContainedEquipmentPositions>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26602</ns1:DatEquipmentId>
+                                    <ns1:Description>Sport-Pedalerie</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>32004</ns1:DatEquipmentId>
+                                    <ns1:Description>Sportsitze Leder</ns1:Description>
+                                    <ns1:EquipmentGroup>SPSI</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>21300</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Stoßfänger Wagenfarbe</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18904</ns1:DatEquipmentId>
+                                    <ns1:Description>Tagfahrlicht</ns1:Description>
+                                    <ns1:EquipmentGroup>TFAL</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>77505</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Tankdeckel abschließbar</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>22000</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Verglasung getönt</ns1:Description>
+                                    <ns1:EquipmentGroup>WDG</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>38106</ns1:DatEquipmentId>
+                                    <ns1:Description>Wegfahrsperre (elektronisch)</ns1:Description>
+                                    <ns1:EquipmentGroup>WFS</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>22300</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Wärmeschutzverglasung</ns1:Description>
+                                    <ns1:EquipmentGroup>WDG</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>35301</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Zentralverriegelung mit Fernbedienung</ns1:Description>
+                                    <ns1:EquipmentGroup>ZV</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                            </ns1:SeriesEquipment>
+                            <ns1:SpecialEquipment>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25802</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Einparkhilfe elektronisch</ns1:Description>
+                                    <ns1:OriginalPrice>7434</ns1:OriginalPrice>
+                                    <ns1:EquipmentGroup>PDC1</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25796</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Einparkhilfe hinten</ns1:Description>
+                                    <ns1:OriginalPrice>9410.5</ns1:OriginalPrice>
+                                    <ns1:EquipmentGroup>PDC1</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37901</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Innenspiegel mit Abblendautomatik</ns1:Description>
+                                    <ns1:OriginalPrice>2478</ns1:OriginalPrice>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>16708</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Panorama-Schiebedach elektrisch</ns1:Description>
+                                    <ns1:OriginalPrice>22302</ns1:OriginalPrice>
+                                    <ns1:EquipmentGroup>SD2</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>32704</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Sitz vorn links höhenverstellbar</ns1:Description>
+                                    <ns1:OriginalPrice>2478</ns1:OriginalPrice>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>16321</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId/>
+                                    <ns1:Description>Skydome - elektr. Panoramadach mit Sonnenrollo</ns1:Description>
+                                    <ns1:OriginalPrice>24544</ns1:OriginalPrice>
+                                    <ns1:EquipmentGroup>SD2</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                            </ns1:SpecialEquipment>
+                        </ns1:Equipment>
+                        <ns1:DATECodeEquipment>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>82625</ns1:DatEquipmentId>
+                                <ns1:Description>Motor 1,4 Ltr. - 118 kW KAT</ns1:Description>
+                                <ns1:EquipmentClass>1</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>10003</ns1:DatEquipmentId>
+                                <ns1:Description>Karosserie: 3-türig</ns1:Description>
+                                <ns1:EquipmentClass>2</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>75005</ns1:DatEquipmentId>
+                                <ns1:Description>Getriebe 5-Gang</ns1:Description>
+                                <ns1:EquipmentClass>11</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                        </ns1:DATECodeEquipment>
+                        <ns1:VINResult>
+                            <ns1:VinInterfaceVersion>2.5</ns1:VinInterfaceVersion>
+                            <ns1:VINECodes>
+                                <ns1:VINECode>
+                                    <ns1:Sign>0</ns1:Sign>
+                                    <ns1:Country>TR</ns1:Country>
+                                    <ns1:VehicleTypeKey>1</ns1:VehicleTypeKey>
+                                    <ns1:ManufacturerKey>20</ns1:ManufacturerKey>
+                                    <ns1:VehicleMainTypeKey>2</ns1:VehicleMainTypeKey>
+                                    <ns1:VehicleSubTypeKey>6</ns1:VehicleSubTypeKey>
+                                    <ns1:VehicleSubTypeVariantKey>1</ns1:VehicleSubTypeVariantKey>
+                                    <ns1:ConstructionTimeMin>5250</ns1:ConstructionTimeMin>
+                                    <ns1:ConstructionTime>5274</ns1:ConstructionTime>
+                                    <ns1:ConstructionTimeEdge>5120</ns1:ConstructionTimeEdge>
+                                    <ns1:ConstructionTimeProd>5274</ns1:ConstructionTimeProd>
+                                    <ns1:ConstructionTimePriceList>5200</ns1:ConstructionTimePriceList>
+                                    <ns1:VINContainers>
+                                        <ns1:VINContainer>
+                                            <ns1:Container>001</ns1:Container>
+                                            <ns1:VehicleTypeKey>5</ns1:VehicleTypeKey>
+                                            <ns1:ManufacturerKey>20</ns1:ManufacturerKey>
+                                            <ns1:VehicleMainTypeKey>1535</ns1:VehicleMainTypeKey>
+                                            <ns1:VehicleSubTypeKey>1</ns1:VehicleSubTypeKey>
+                                            <ns1:VehicleConstructionTime>5274</ns1:VehicleConstructionTime>
+                                        </ns1:VINContainer>
+                                    </ns1:VINContainers>
+                                </ns1:VINECode>
+                            </ns1:VINECodes>
+                            <ns1:VINEquipments>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>AUSSENFARBE (HELLBLAU)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>BETRIEBSANLEITUNG DEUTSCH/SPRACHE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>BEZUEGE EXTRA SERIE 2</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>BLUE &amp; ME</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>DEUTSCHE SPRACHE KUNDENSPEZ.</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>EXPRESSO ESPERIENCE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>GESCHWINDIGKEITSMESSER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>HUBRAUM (1368 CC)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>INNENFARBE (STOFF SCHWARZ)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>KAROSSERIE (2 HOHLRÄUME)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>KRAFTSTOFF (BENZIN)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>LEISTUNG (99 KW - 135 CV)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>LENKUNG (LINKS)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>MARKE (ABARTH)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>MARKTAUSSTATTUNG (ITALIEN/ZENTRALEUROPA)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>MARKTAUSSTATTUNG NUTZFAHRZEUGE (ITALIEN/ZENTRALEUROPA)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>Model: 500 1.4 ABARTH TURISMO 5M</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>SPRACHSCHILD ZONE 1</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>STROMVERSORGUNG (TURBO)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>TEILWEISE ZELLOPHANIERUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>TYPEBSCHILD KUNDENDIENST "CIAO FIAT"</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ShortName>WS-IC: 0</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>1809</ns1:AvNumberDat>
+                                    <ns1:ShortName>Höhenverstellbarer Sicherheits</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>3579</ns1:AvNumberDat>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>4408</ns1:AvNumberDat>
+                                    <ns1:ShortName>ZIGARETTENANZÜNDER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>11398</ns1:AvNumberDat>
+                                    <ns1:ShortName>LACKIERUNG PASTELL EXTRA SERIE 2</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15102</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SPIEGEL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15200</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SPIEGEL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15201</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SPIEGEL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>16321</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHES SCHIEBEDACH</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>16606</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHES SCHIEBEDACH</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>16708</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHES SCHIEBEDACH</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>16903</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHES SCHIEBEDACH</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18008</ns1:AvNumberDat>
+                                    <ns1:ShortName>SCHEINWERFER MIT GASENTLADUNGSLAMPEN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18300</ns1:AvNumberDat>
+                                    <ns1:ShortName>NEBELSCHEINWERFER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18505</ns1:AvNumberDat>
+                                    <ns1:ShortName>SCHEINWERFER MIT GASENTLADUNGSLAMPEN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18617</ns1:AvNumberDat>
+                                    <ns1:ShortName>NEBELSCHEINWERFER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>19300</ns1:AvNumberDat>
+                                    <ns1:ShortName>REAR WINDSHIELD WIPER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>21300</ns1:AvNumberDat>
+                                    <ns1:ShortName>LACKIERTE STOSSTANGE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>21303</ns1:AvNumberDat>
+                                    <ns1:ShortName>LACKIERTE STOSSTANGE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22000</ns1:AvNumberDat>
+                                    <ns1:ShortName>VERDUNKELTE SCHEIBEN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22005</ns1:AvNumberDat>
+                                    <ns1:ShortName>THERMOFENSTER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22300</ns1:AvNumberDat>
+                                    <ns1:ShortName>THERMOFENSTER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22800</ns1:AvNumberDat>
+                                    <ns1:ShortName>REAR WINDSHIELD DEFROST</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>23009</ns1:AvNumberDat>
+                                    <ns1:ShortName>VERDUNKELTE SCHEIBEN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>23103</ns1:AvNumberDat>
+                                    <ns1:ShortName>VERDUNKELTE SCHEIBEN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24083</ns1:AvNumberDat>
+                                    <ns1:ShortName>AUTORADIO</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24104</ns1:AvNumberDat>
+                                    <ns1:ShortName>AUTORADIO</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25796</ns1:AvNumberDat>
+                                    <ns1:ShortName>PARKSENSOREN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25802</ns1:AvNumberDat>
+                                    <ns1:ShortName>PARKSENSOREN</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26701</ns1:AvNumberDat>
+                                    <ns1:ShortName>KNIEAIRBAG-MODUL FAHRERSEITE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26801</ns1:AvNumberDat>
+                                    <ns1:ShortName>FAHRERAIRBAG-MODUL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26802</ns1:AvNumberDat>
+                                    <ns1:ShortName>BEIFAHRERAIRBAG-MODUL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26803</ns1:AvNumberDat>
+                                    <ns1:ShortName>BEIFAHRERAIRBAG-MODUL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26803</ns1:AvNumberDat>
+                                    <ns1:ShortName>FAHRERAIRBAG-MODUL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26804</ns1:AvNumberDat>
+                                    <ns1:ShortName>WINDOWBAG-MODULE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26808</ns1:AvNumberDat>
+                                    <ns1:ShortName>WINDOWBAG-MODULE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26903</ns1:AvNumberDat>
+                                    <ns1:ShortName>SEITENAIRBAG-MODULE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26903</ns1:AvNumberDat>
+                                    <ns1:ShortName>WINDOWBAG-MODULE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26909</ns1:AvNumberDat>
+                                    <ns1:ShortName>BEIFAHRERAIRBAG-MODUL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>28901</ns1:AvNumberDat>
+                                    <ns1:ShortName>KLIMAANLAGE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>29003</ns1:AvNumberDat>
+                                    <ns1:ShortName>KLIMAANLAGE</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>32609</ns1:AvNumberDat>
+                                    <ns1:ShortName>BEIFAHRERSITZ SPEZIEFISCH</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>32704</ns1:AvNumberDat>
+                                    <ns1:ShortName>MECHANISCH EINSTELLBARER FAHRERSITZ</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33501</ns1:AvNumberDat>
+                                    <ns1:ShortName>GETEILTE RÜCKSITZBANK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33600</ns1:AvNumberDat>
+                                    <ns1:ShortName>GETEILTE RÜCKSITZBANK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33603</ns1:AvNumberDat>
+                                    <ns1:ShortName>GETEILTE RÜCKSITZBANK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33608</ns1:AvNumberDat>
+                                    <ns1:ShortName>GETEILTE RÜCKSITZBANK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35001</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SCHEIBENHEBER + TÜRVERRIEGELUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35001</ns1:AvNumberDat>
+                                    <ns1:ShortName>VORDERE ELEKTRISCHE SCHEIBENHEBER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35300</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SCHEIBENHEBER + TÜRVERRIEGELUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35300</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE TÜRVERRIEGELUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35301</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE TÜRVERRIEGELUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35301</ns1:AvNumberDat>
+                                    <ns1:ShortName>FERNBEDIENUNG FAHRZEUGSCHUTZ</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35405</ns1:AvNumberDat>
+                                    <ns1:ShortName>FERNBEDIENUNG FAHRZEUGSCHUTZ</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37901</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTROCHROMATISCHER RÜCKSPIEGEL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>40591</ns1:AvNumberDat>
+                                    <ns1:ShortName>Paket Pandemonio</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>48286</ns1:AvNumberDat>
+                                    <ns1:ShortName>LEICHTMETALLRÄDER</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>68802</ns1:AvNumberDat>
+                                    <ns1:ShortName>REIFENPANNENKIT</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>68904</ns1:AvNumberDat>
+                                    <ns1:ShortName>LEDERLENKRAD BELUEFTET</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69300</ns1:AvNumberDat>
+                                    <ns1:ShortName>LEDERLENKRAD BELUEFTET</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69304</ns1:AvNumberDat>
+                                    <ns1:ShortName>LEDERLENKRAD BELUEFTET</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69502</ns1:AvNumberDat>
+                                    <ns1:ShortName>EINSTELLBARES LENKRAD</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69503</ns1:AvNumberDat>
+                                    <ns1:ShortName>EINSTELLBARES LENKRAD</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69802</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRISCHE SERVOLENKUNG</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>70308</ns1:AvNumberDat>
+                                    <ns1:ShortName>ELEKTRONISCHES STABILITÄTSPROGRAMM (E.S.P.)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>77225</ns1:AvNumberDat>
+                                    <ns1:ShortName>ZULASSUNG EURO 5</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>77505</ns1:AvNumberDat>
+                                    <ns1:ShortName>TANKDECKEL MIT SCHLUESSEL</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>82625</ns1:AvNumberDat>
+                                </ns1:VINEquipment>
+                            </ns1:VINEquipments>
+                            <ns1:VINColors>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>A1</ns1:ColorID>
+                                    <ns1:Code>COLEST952</ns1:Code>
+                                    <ns1:Description>AUSSENFARBE (HELLBLAU)</ns1:Description>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>I1</ns1:ColorID>
+                                    <ns1:Code>COLINT402</ns1:Code>
+                                    <ns1:Description>INNENFARBE (STOFF SCHWARZ)</ns1:Description>
+                                </ns1:VINColor>
+                            </ns1:VINColors>
+                            <ns1:VINVehicle>
+                                <ns1:VINumber>
+                                    <ns1:VinCode>ZFADEXTESTSTUB001</ns1:VinCode>
+                                </ns1:VINumber>
+                            </ns1:VINVehicle>
+                        </ns1:VINResult>
+                        <ns1:TokenOfVinResult>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkYXQiLCJ0aW1lc3RhbXAiOjE3MDkwOTgxNzQwMjIsImN1c3RvbWVyIjoiMzgwMDc3MiIsImludGVyZmFjZVBhcnRuZXIiOiIzODAwNzcyIiwidmluUmVzdWx0SGFzaCI6Imhhc2gwMV8tNzAwMTAzODY0In0.-xISogwR1kClx0OuX6CecGRl30MA4Q91rNW52_tHerk</ns1:TokenOfVinResult>
+                    </ns1:Vehicle>
+                </ns1:Dossier>
+            </VXS>
+        </ns4:getVehicleIdentificationByVinResponse>
+    </S:Body>
+</S:Envelope>
