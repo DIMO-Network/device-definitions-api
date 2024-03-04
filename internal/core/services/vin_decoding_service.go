@@ -305,7 +305,7 @@ func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*m
 		Model:      strings.TrimSpace(dossier.BaseModelName),
 		Source:     models.DATGroupProvider,
 		ExternalID: dossier.VINResult.VINVehicle.VINumber.VinCode,
-		//StyleName:  info.GetStyle(),
+		StyleName:  dossier.SubModelName,
 		//SubModel:   info.GetSubModel(),
 		Raw: raw,
 	}
