@@ -5,6 +5,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -23,22 +24,23 @@ import (
 )
 
 type VINDecodingService interface {
-	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error)
+	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error)
 }
 
 type vinDecodingService struct {
-	drivlyAPISvc      gateways.DrivlyAPIService
-	vincarioAPISvc    gateways.VincarioAPIService
-	logger            *zerolog.Logger
-	repository        repositories.DeviceDefinitionRepository
-	autoIsoAPIService gateways.AutoIsoAPIService
+	drivlyAPISvc       gateways.DrivlyAPIService
+	vincarioAPISvc     gateways.VincarioAPIService
+	logger             *zerolog.Logger
+	repository         repositories.DeviceDefinitionRepository
+	autoIsoAPIService  gateways.AutoIsoAPIService
+	DATGroupAPIService gateways.DATGroupAPIService
 }
 
-func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger, repository repositories.DeviceDefinitionRepository) VINDecodingService {
-	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger, repository: repository}
+func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger, repository repositories.DeviceDefinitionRepository, datGroupAPIService gateways.DATGroupAPIService) VINDecodingService {
+	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger, repository: repository, DATGroupAPIService: datGroupAPIService}
 }
 
-func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum) (*models.VINDecodingInfoData, error) {
+func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error) {
 
 	const DefaultDeviceDefinitionID = "22N2y6TCaDBYPUsXJb3u02bqN2I"
 
@@ -48,7 +50,9 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		return nil, fmt.Errorf("invalid vin: %s", vin)
 	}
 
-	localLog := c.logger.With().Str("vin", vin).Logger()
+	localLog := c.logger.With().
+		Str("vin", vin).
+		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
 		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionID)
@@ -84,6 +88,15 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, err
 		}
+	case models.DATGroupProvider:
+		vinInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
+		}
+		result, err = buildFromDATGroup(vinInfo)
+		if err != nil {
+			return nil, err
+		}
 	case models.AllProviders:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
@@ -95,6 +108,18 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 				localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
 			}
 			result.MetaData = metadata
+		}
+		// if nothing from drivly, try DATGroup
+		if result.Source == "" {
+			datGroupInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
+			if err != nil {
+				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
+			} else {
+				result, err = buildFromDATGroup(datGroupInfo)
+				if err != nil {
+					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from DATGroup data")
+				}
+			}
 		}
 		// if nothing from drivly, try autoiso
 		if result.Source == "" {
@@ -263,4 +288,31 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 	}
 
 	return v
+}
+
+func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*models.VINDecodingInfoData, error) {
+	raw, _ := xml.Marshal(info)
+	if info == nil {
+		return nil, fmt.Errorf("vin info was nil")
+	}
+
+	dossier := info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier[0].Vehicle
+	v := &models.VINDecodingInfoData{
+		VIN:  dossier.VINResult.VINVehicle.VINumber.VinCode,
+		Year: int32(dossier.BuildYear),
+		//Year:       2022,
+		Make:       strings.TrimSpace(dossier.ManufacturerName),
+		Model:      strings.TrimSpace(dossier.BaseModelName),
+		Source:     models.DATGroupProvider,
+		ExternalID: dossier.VINResult.VINVehicle.VINumber.VinCode,
+		StyleName:  dossier.SubModelName,
+		//SubModel:   info.GetSubModel(),
+		Raw: raw,
+	}
+
+	if dossier.TechInfo != nil {
+		v.FuelType = dossier.TechInfo.FuelMethodType
+	}
+
+	return v, nil
 }

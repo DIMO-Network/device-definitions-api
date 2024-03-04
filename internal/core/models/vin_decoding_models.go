@@ -10,6 +10,7 @@ const (
 	DrivlyProvider   DecodeProviderEnum = "drivly"
 	VincarioProvider DecodeProviderEnum = "vincario"
 	AutoIsoProvider  DecodeProviderEnum = "autoiso"
+	DATGroupProvider DecodeProviderEnum = "dat"
 	AllProviders     DecodeProviderEnum = ""
 )
 
