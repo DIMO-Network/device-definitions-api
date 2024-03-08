@@ -6,18 +6,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"strings"
 )
 
 type GetDeviceCompatibilityRequest struct {
@@ -42,11 +42,12 @@ type DeviceDefinitionRepository interface {
 }
 
 type deviceDefinitionRepository struct {
-	DBS func() *db.ReaderWriter
+	DBS                            func() *db.ReaderWriter
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
-func NewDeviceDefinitionRepository(dbs func() *db.ReaderWriter) DeviceDefinitionRepository {
-	return &deviceDefinitionRepository{DBS: dbs}
+func NewDeviceDefinitionRepository(dbs func() *db.ReaderWriter, deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DeviceDefinitionRepository {
+	return &deviceDefinitionRepository{DBS: dbs, deviceDefinitionOnChainService: deviceDefinitionOnChainService}
 }
 
 func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
@@ -323,6 +324,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
 	}
+
 	// by default add autopi compatibility
 	di := &models.DeviceIntegration{
 		DeviceDefinitionID: dd.ID,
@@ -348,7 +350,19 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		if err != nil {
 			return nil, &exceptions.InternalError{Err: err}
 		}
+
+		// Create DD onchain
+		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, m.TokenID, *dd)
+		if err == nil {
+			dd.TRXHashHex = null.StringFrom(*trx)
+			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
+			}
+		}
 	}
+
 	return dd, nil
 }
 
@@ -433,6 +447,17 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 	err := tx.Commit()
 	if err != nil {
 		return nil, &exceptions.InternalError{Err: err}
+	}
+
+	// Create onchain
+	trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+	if err == nil {
+		dd.TRXHashHex = null.StringFrom(*trx)
+		if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
+			return nil, &exceptions.InternalError{
+				Err: err,
+			}
+		}
 	}
 
 	return dd, nil

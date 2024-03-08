@@ -111,9 +111,10 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
 
 	//commands
 	m, _ := mediator.New(
@@ -135,9 +136,10 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
 
 	//commands
 	m, _ := mediator.New(
@@ -176,9 +178,11 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
+
 	//repos
 	deviceNHTSARecallsRepository := repositories.NewDeviceNHTSARecallsRepository(pdb.DBS)
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
 
 	//commands
 	m, _ := mediator.New(
@@ -203,9 +207,10 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 	vincarioAPIService := gateways.NewVincarioAPIService(s, &logger)
 	datGroupWSService := gateways.NewDATGroupAPIService(s, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(s, &logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
 	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//service

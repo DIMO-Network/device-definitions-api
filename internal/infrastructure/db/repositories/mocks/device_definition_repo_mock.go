@@ -11,8 +11,8 @@ import (
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositories "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	null "github.com/volatiletech/null/v8"
 	gomock "go.uber.org/mock/gomock"
+	v8 "github.com/volatiletech/null/v8"
 )
 
 // MockDeviceDefinitionRepository is a mock of DeviceDefinitionRepository interface.
@@ -159,7 +159,7 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetDevicesMMY(ctx interfac
 }
 
 // GetOrCreate mocks base method.
-func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx, source, extID, makeOrID, model string, year int, deviceTypeID string, metaData v8.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrCreate", ctx, tx, source, extID, makeOrID, model, year, deviceTypeID, metaData, verified, hardwareTemplateID)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
