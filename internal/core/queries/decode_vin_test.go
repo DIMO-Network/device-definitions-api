@@ -35,13 +35,14 @@ type DecodeVINQueryHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                      *gomock.Controller
-	pdb                       db.Store
-	container                 testcontainers.Container
-	ctx                       context.Context
-	mockVINService            *mock_services.MockVINDecodingService
-	mockFuelAPIService        *mock_gateways.MockFuelAPIService
-	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	ctx                                context.Context
+	mockVINService                     *mock_services.MockVINDecodingService
+	mockFuelAPIService                 *mock_gateways.MockFuelAPIService
+	mockPowerTrainTypeService          *mock_services.MockPowerTrainTypeService
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
 	queryHandler DecodeVINQueryHandler
 }
@@ -57,9 +58,10 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
-	ddRepository := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	ddRepository := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, vinRepository, ddRepository, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService)
 }

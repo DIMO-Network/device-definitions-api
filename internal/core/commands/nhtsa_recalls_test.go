@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,14 +30,15 @@ type SyncNHTSARecallsCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                *gomock.Controller
-	pdb                 db.Store
-	container           testcontainers.Container
-	ctx                 context.Context
-	recallsRepo         repositories.DeviceNHTSARecallsRepository
-	DDRepo              repositories.DeviceDefinitionRepository
-	mockRecallsDataFile string
-	server              *httptest.Server
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	ctx                                context.Context
+	recallsRepo                        repositories.DeviceNHTSARecallsRepository
+	DDRepo                             repositories.DeviceDefinitionRepository
+	mockRecallsDataFile                string
+	server                             *httptest.Server
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
 	commandHandler SyncNHTSARecallsCommandHandler
 }
@@ -72,8 +74,11 @@ func (s *SyncNHTSARecallsCommandHandlerSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
+
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+
 	s.recallsRepo = repositories.NewDeviceNHTSARecallsRepository(s.pdb.DBS)
-	s.DDRepo = repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	s.DDRepo = repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 	s.mockRecallsDataFile = s.server.URL + testRemoteFilePath
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)

@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	_ "embed"
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -26,13 +27,14 @@ type UpdateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                      *gomock.Controller
-	pdb                       db.Store
-	container                 testcontainers.Container
-	ctx                       context.Context
-	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
-	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
-	commandHandler            UpdateDeviceDefinitionCommandHandler
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	ctx                                context.Context
+	mockDeviceDefinitionCache          *mockService.MockDeviceDefinitionCacheService
+	mockRepository                     *repositoryMock.MockDeviceDefinitionRepository
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
+	commandHandler                     UpdateDeviceDefinitionCommandHandler
 }
 
 func TestUpdateDeviceDefinitionCommandHandler(t *testing.T) {
@@ -50,6 +52,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
@@ -69,7 +72,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	year := 2020
 	// using real DB for integration test
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
-	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 	cmdHandler := NewUpdateDeviceDefinitionCommandHandler(repo, s.pdb.DBS, s.mockDeviceDefinitionCache)
 
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)

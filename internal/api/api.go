@@ -43,9 +43,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
 	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)

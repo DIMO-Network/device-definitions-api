@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -24,10 +25,11 @@ type DeviceDefinitionRepositorySuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl      *gomock.Controller
-	pdb       db.Store
-	container testcontainers.Container
-	ctx       context.Context
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	ctx                                context.Context
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
 	repository DeviceDefinitionRepository
 }
@@ -48,7 +50,9 @@ func (s *DeviceDefinitionRepositorySuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.repository = NewDeviceDefinitionRepository(s.pdb.DBS)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+
+	s.repository = NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 }
 
 func (s *DeviceDefinitionRepositorySuite) TearDownTest() {
@@ -66,6 +70,9 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_New_Ma
 	hardwareTemplateID := ksuid.New().String()
 
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
+
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Times(1).Return("0x", nil)
+
 	dd, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
 
 	s.NoError(err)
@@ -142,6 +149,9 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 		Vendor: common.AutoPiVendor,
 	}
 	s.NoError(i.Insert(ctx, s.pdb.DBS().Writer, boil.Infer()))
+
+	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Times(1).Return(&trx_hash_hex, nil)
 
 	dd, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
 	s.NoError(err)
