@@ -21,7 +21,7 @@ type GetDeviceDefinitionByIDsQueryHandlerSuite struct {
 	ctrl                      *gomock.Controller
 	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
 
-	queryHandler GetDeviceDefinitionByIdsQueryHandler
+	queryHandler GetDeviceDefinitionByIDsQueryHandler
 }
 
 func TestGetDeviceDefinitionByIdsQueryHandler(t *testing.T) {
@@ -34,7 +34,7 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) SetupTest() {
 
 	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
 	logger := dbtest.Logger()
-	s.queryHandler = NewGetDeviceDefinitionByIdsQueryHandler(s.mockDeviceDefinitionCache, logger)
+	s.queryHandler = NewGetDeviceDefinitionByIDsQueryHandler(s.mockDeviceDefinitionCache, logger)
 }
 
 func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TearDownTest() {
@@ -99,7 +99,7 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 
 	s.mockDeviceDefinitionCache.EXPECT().GetDeviceDefinitionByID(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdsQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDsQuery{
 		DeviceDefinitionID: []string{deviceDefinitionID},
 	})
 	result := qryResult.(*grpc.GetDeviceDefinitionResponse)
@@ -124,7 +124,7 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds_BadRequest_Exception() {
 	ctx := context.Background()
 
-	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIdsQuery{
+	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDsQuery{
 		DeviceDefinitionID: []string{},
 	})
 

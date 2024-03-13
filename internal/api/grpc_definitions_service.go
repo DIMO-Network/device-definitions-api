@@ -27,7 +27,7 @@ func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.D
 
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIdsQuery{
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDsQuery{
 		DeviceDefinitionID: in.Ids,
 	})
 
@@ -80,10 +80,10 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 
 	for _, deviceDefinition := range ddResult {
 		var ei map[string]string
-		var extIds []*p_grpc.ExternalID
+		var extIDs []*p_grpc.ExternalID
 		if err := deviceDefinition.ExternalIds.Unmarshal(&ei); err != nil {
 			for vendor, id := range ei {
-				extIds = append(extIds, &p_grpc.ExternalID{
+				extIDs = append(extIDs, &p_grpc.ExternalID{
 					Vendor: vendor,
 					Id:     id,
 				})
@@ -102,7 +102,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 			External:     deviceDefinition.ExternalID.String,
 			DeviceMakeId: deviceDefinition.DeviceMakeID,
 			Make:         deviceDefinition.Make,
-			ExternalIds:  extIds,
+			ExternalIds:  extIDs,
 		})
 	}
 
