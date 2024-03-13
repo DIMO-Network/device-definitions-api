@@ -230,6 +230,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
+		Make:      vinInfoResp.Make,
 		Source:    "drivly",
 		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
@@ -404,6 +405,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		StyleName: buildStyleName(vinInfoResp),
 		SubModel:  vinInfoResp.SubModel,
+		Make:      vinInfoResp.Make,
 		Source:    "drivly",
 		Year:      int32(yr),
 		Model:     vinInfoResp.Model,
