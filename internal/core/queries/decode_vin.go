@@ -140,8 +140,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return resp, nil
 		}
 
-		localLog.Info().Msgf("Insert Manual WMI %s", dbWMI)
-
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
 			Vin:                vin.String(),
@@ -155,8 +153,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			DecodeProvider:     null.StringFrom("manual"),
 			Year:               int(dd.Year),
 		}
-
-		localLog.Info().Msgf("Insert Manual VIN %s", vinDecodeNumber)
 
 		// no style, maybe for future way to pick the Style from Admin
 

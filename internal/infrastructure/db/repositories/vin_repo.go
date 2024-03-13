@@ -27,12 +27,21 @@ func NewVINRepository(dbs func() *db.ReaderWriter) VINRepository {
 	return &vinRepository{DBS: dbs}
 }
 
-func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make string) (*models.Wmi, error) {
+func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, makeSlug string) (*models.Wmi, error) {
 	if len(wmi) != 3 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid wmi for GetOrCreate: %s", wmi)}
 	}
+	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(common.SlugString(makeSlug))).One(ctx, r.DBS().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.NotFoundError{
+				Err: errors.Errorf("failed to find makeSlug from vin decode with name slug: %s", common.SlugString(makeSlug)),
+			}
+		}
+		return nil, err
+	}
 
-	dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi)
+	dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, &exceptions.InternalError{
 			Err: err,
@@ -40,14 +49,6 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make str
 	}
 
 	if dbWMI == nil {
-		deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(common.SlugString(make))).One(ctx, r.DBS().Reader)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, &exceptions.NotFoundError{
-					Err: errors.Errorf("failed to find make from vin decode with name slug: %s", common.SlugString(make)),
-				}
-			}
-		}
 
 		dbWMI = &models.Wmi{
 			Wmi:          wmi,
