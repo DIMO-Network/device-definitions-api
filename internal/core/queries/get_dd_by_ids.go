@@ -13,27 +13,27 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type GetDeviceDefinitionByIdsQuery struct {
+type GetDeviceDefinitionByIDsQuery struct {
 	DeviceDefinitionID []string `json:"deviceDefinitionId" validate:"required"`
 }
 
-func (*GetDeviceDefinitionByIdsQuery) Key() string { return "GetDeviceDefinitionByIdsQuery" }
+func (*GetDeviceDefinitionByIDsQuery) Key() string { return "GetDeviceDefinitionByIDsQuery" }
 
-type GetDeviceDefinitionByIdsQueryHandler struct {
+type GetDeviceDefinitionByIDsQueryHandler struct {
 	DDCache services.DeviceDefinitionCacheService
 	log     *zerolog.Logger
 }
 
-func NewGetDeviceDefinitionByIdsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger) GetDeviceDefinitionByIdsQueryHandler {
-	return GetDeviceDefinitionByIdsQueryHandler{
+func NewGetDeviceDefinitionByIDsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger) GetDeviceDefinitionByIDsQueryHandler {
+	return GetDeviceDefinitionByIDsQueryHandler{
 		DDCache: cache,
 		log:     log,
 	}
 }
 
-func (ch GetDeviceDefinitionByIdsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetDeviceDefinitionByIdsQuery)
+	qry := query.(*GetDeviceDefinitionByIDsQuery)
 
 	if len(qry.DeviceDefinitionID) == 0 {
 		return nil, &exceptions.ValidationError{
