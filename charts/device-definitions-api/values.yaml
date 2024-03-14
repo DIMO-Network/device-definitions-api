@@ -49,9 +49,9 @@ env:
   FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
-  ETHEREUM_NETWORK:
-  ETHEREUM_REGISTRY_ADDRESS: 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
-  ETHEREUM_WALLET_PRIVATE_KEY:
+  ETHEREUM_NETWORK: https://polygon-mumbai.g.alchemy.com/v2/05OIkMxh_T7oxZKoHNWzmi2UxX5djlBU
+  ETHEREUM_REGISTRY_ADDRESS: 0x4De1bCf2B7E851E31216fC07989caA902A604784
+  ETHEREUM_WALLET_PRIVATE_KEY: 94dbd9c58eaba7a67456e354852b5109b13271fb4e0ee6656deba44b62ab67e4
 service:
   type: ClusterIP
   ports:

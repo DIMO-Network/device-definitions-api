@@ -34,13 +34,14 @@ import (
 )
 
 type DecodeVINQueryHandler struct {
-	dbs                   func() *db.ReaderWriter
-	vinDecodingService    services.VINDecodingService
-	logger                *zerolog.Logger
-	ddRepository          repositories.DeviceDefinitionRepository
-	vinRepository         repositories.VINRepository
-	fuelAPIService        gateways.FuelAPIService
-	powerTrainTypeService services.PowerTrainTypeService
+	dbs                            func() *db.ReaderWriter
+	vinDecodingService             services.VINDecodingService
+	logger                         *zerolog.Logger
+	ddRepository                   repositories.DeviceDefinitionRepository
+	vinRepository                  repositories.VINRepository
+	fuelAPIService                 gateways.FuelAPIService
+	powerTrainTypeService          services.PowerTrainTypeService
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
 type DecodeVINQuery struct {
@@ -57,15 +58,17 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 	vinRepository repositories.VINRepository,
 	repository repositories.DeviceDefinitionRepository, logger *zerolog.Logger,
 	fuelAPIService gateways.FuelAPIService,
-	powerTrainTypeService services.PowerTrainTypeService) DecodeVINQueryHandler {
+	powerTrainTypeService services.PowerTrainTypeService,
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
-		dbs:                   dbs,
-		vinDecodingService:    vinDecodingService,
-		logger:                logger,
-		ddRepository:          repository,
-		vinRepository:         vinRepository,
-		fuelAPIService:        fuelAPIService,
-		powerTrainTypeService: powerTrainTypeService,
+		dbs:                            dbs,
+		vinDecodingService:             vinDecodingService,
+		logger:                         logger,
+		ddRepository:                   repository,
+		vinRepository:                  vinRepository,
+		fuelAPIService:                 fuelAPIService,
+		powerTrainTypeService:          powerTrainTypeService,
+		deviceDefinitionOnChainService: deviceDefinitionOnChainService,
 	}
 }
 
@@ -442,6 +445,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		err = dd.Metadata.Marshal(metadataAttributes)
 		if err != nil {
 			return nil, err
+		}
+
+		// Create DD onchain
+		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+		if err != nil {
+			localLog.Err(err).Msg("")
+		}
+		if err == nil {
+			dd.TRXHashHex = null.StringFrom(*trx)
+			fmt.Println(dd.TRXHashHex)
 		}
 
 		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {

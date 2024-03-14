@@ -353,9 +353,13 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 
 		// Create DD onchain
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, m.TokenID, *dd)
+		if err != nil {
+			fmt.Println(err)
+		}
 		if err == nil {
 			dd.TRXHashHex = null.StringFrom(*trx)
-			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
+			fmt.Println(dd.TRXHashHex)
+			if _, err = dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
 				return nil, &exceptions.InternalError{
 					Err: err,
 				}
@@ -451,6 +455,9 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 	// Create onchain
 	trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+	if err != nil {
+		fmt.Println(err)
+	}
 	if err == nil {
 		dd.TRXHashHex = null.StringFrom(*trx)
 		if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
