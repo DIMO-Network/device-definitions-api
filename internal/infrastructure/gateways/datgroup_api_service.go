@@ -42,7 +42,7 @@ func (ai *datGroupAPIService) GetVIN(vin, country string) (*GetVehicleIdentifica
 			Locale: LocaleRequest{
 				Country:             "US",
 				DatCountryIndicator: country,
-				Language:            "us",
+				Language:            "EN",
 			},
 		},
 	}
