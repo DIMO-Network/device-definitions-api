@@ -43,6 +43,10 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error) {
 
+	if !e.Settings.EthereumSendTransaction {
+		return nil, nil
+	}
+
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
