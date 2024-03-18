@@ -50,6 +50,7 @@ env:
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
   DAT_GROUP_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
   DAT_GROUP_AUTHURL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
+  PRIVATE_KEY_MODE: false
 service:
   type: ClusterIP
   ports:

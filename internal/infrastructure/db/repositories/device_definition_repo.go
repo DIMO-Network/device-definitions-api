@@ -450,12 +450,14 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 	}
 
 	// Create onchain
-	trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
-	if err == nil {
-		dd.TRXHashHex = null.StringFrom(*trx)
-		if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
-			return nil, &exceptions.InternalError{
-				Err: err,
+	if dd.R != nil && dd.R.DeviceMake != nil {
+		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+		if err == nil {
+			dd.TRXHashHex = null.StringFrom(*trx)
+			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
+				return nil, &exceptions.InternalError{
+					Err: err,
+				}
 			}
 		}
 	}
