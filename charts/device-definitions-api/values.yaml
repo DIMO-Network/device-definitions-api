@@ -51,6 +51,7 @@ env:
   DAT_GROUP_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
   DAT_GROUP_AUTHURL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
   PRIVATE_KEY_MODE: false
+  ETHEREUM_SEND_TRANSACTION: true
 service:
   type: ClusterIP
   ports:

@@ -20,6 +20,7 @@ env:
   REDIS_CLUSTER_MODE: true
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
+  ETHEREUM_SEND_TRANSACTION: false
 ingress:
   enabled: true
   className: nginx
