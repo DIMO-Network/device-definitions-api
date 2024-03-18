@@ -50,6 +50,7 @@ env:
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
   PRIVATE_KEY_MODE: false
+  ETHEREUM_SEND_TRANSACTION: true
 service:
   type: ClusterIP
   ports:
