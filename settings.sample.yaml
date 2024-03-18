@@ -40,3 +40,5 @@ PRIVATE_KEY_MODE: true
 # Private key for default Hardhat account 0. Well-known.
 SENDER_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 ETHEREUM_REGISTRY_ADDRESS: 0xdc64a140aa3e981100a9beca4e685f962f0cf6c9
+# Send transaction to etherum network
+ETHEREUM_SEND_TRANSACTION: true

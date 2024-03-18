@@ -38,6 +38,7 @@ type Settings struct {
 	PrivateKeyMode                 bool           `yaml:"PRIVATE_KEY_MODE"`
 	KMSKeyID                       string         `yaml:"KMS_KEY_ID"`
 	EthereumRegistryAddress        string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
+	EthereumSendTransaction        bool           `yaml:"ETHEREUM_SEND_TRANSACTION"`
 }
 
 func (s *Settings) IsProd() bool {
