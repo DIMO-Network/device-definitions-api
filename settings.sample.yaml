@@ -33,6 +33,10 @@ FUEL_API_KEY:
 VINCARIO_API_URL: https://api.vindecoder.eu/3.2
 VINCARIO_API_KEY: xxx
 VINCARIO_API_SECRET: xxx
-ETHEREUM_NETWORK:
-ETHEREUM_REGISTRY_ADDRESS:
-ETHEREUM_WALLET_PRIVATE_KEY:
+# Hardhat default port.
+ETHEREUM_RPC_URL: http://127.0.0.1:8545
+# Use the next variable. Never use this in production!
+PRIVATE_KEY_MODE: true
+# Private key for default Hardhat account 0. Well-known.
+SENDER_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+ETHEREUM_REGISTRY_ADDRESS: 0xdc64a140aa3e981100a9beca4e685f962f0cf6c9

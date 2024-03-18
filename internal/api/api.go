@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -28,7 +30,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
+func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, send sender.Sender) {
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
@@ -37,13 +39,23 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	// redis
 	redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
 
+	ethClient, err := ethclient.Dial(settings.EthereumRPCURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+
 	//infra
 	drivlyAPIService := gateways.NewDrivlyAPIService(settings)
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
 	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)

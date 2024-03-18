@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"os"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -109,9 +110,24 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
+	send, err := createSender(ctx, s, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger, ethClient, chainID, send)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
@@ -134,9 +150,24 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
+	send, err := createSender(ctx, s, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+
 	//infra
 	smartCartService := gateways.NewSmartCarService(pdb.DBS, logger)
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger, ethClient, chainID, send)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
@@ -178,7 +209,22 @@ func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Lo
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
+	send, err := createSender(ctx, s, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger, ethClient, chainID, send)
 
 	//repos
 	deviceNHTSARecallsRepository := repositories.NewDeviceNHTSARecallsRepository(pdb.DBS)
@@ -202,11 +248,26 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
 	pdb.WaitForDB(logger)
 
+	send, err := createSender(ctx, s, &logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+
 	//infra
 	drivlyAPIService := gateways.NewDrivlyAPIService(s)
 	vincarioAPIService := gateways.NewVincarioAPIService(s, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(s, &logger)
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger, ethClient, chainID, send)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)

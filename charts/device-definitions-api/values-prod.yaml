@@ -21,9 +21,6 @@ env:
   REDIS_CLUSTER_MODE: true
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
-  ETHEREUM_NETWORK:
-  ETHEREUM_REGISTRY_ADDRESS:
-  ETHEREUM_WALLET_PRIVATE_KEY:
 ingress:
   enabled: true
   className: nginx

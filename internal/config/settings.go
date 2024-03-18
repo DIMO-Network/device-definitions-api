@@ -33,9 +33,11 @@ type Settings struct {
 	VincarioAPISecret              string         `yaml:"VINCARIO_API_SECRET"`
 	AutoIsoAPIUid                  string         `yaml:"AUTO_ISO_API_UID"`
 	AutoIsoAPIKey                  string         `yaml:"AUTO_ISO_API_KEY"`
-	EthereumNetwork                string         `yaml:"ETHEREUM_NETWORK"`
+	EthereumRPCURL                 string         `yaml:"ETHEREUM_RPC_URL"`
+	SenderPrivateKey               string         `yaml:"SENDER_PRIVATE_KEY"`
+	PrivateKeyMode                 bool           `yaml:"PRIVATE_KEY_MODE"`
+	KMSKeyID                       string         `yaml:"KMS_KEY_ID"`
 	EthereumRegistryAddress        string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
-	EthereumWalletPrivateKey       string         `yaml:"ETHEREUM_WALLET_PRIVATE_KEY"`
 }
 
 func (s *Settings) IsProd() bool {

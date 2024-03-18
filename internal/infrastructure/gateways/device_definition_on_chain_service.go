@@ -2,15 +2,15 @@ package gateways
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	eth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
@@ -26,57 +26,41 @@ type DeviceDefinitionOnChainService interface {
 type deviceDefinitionOnChainService struct {
 	Settings *config.Settings
 	Logger   *zerolog.Logger
+	client   *ethclient.Client
+	sender   sender.Sender
+	chainID  *big.Int
 }
 
-func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger) DeviceDefinitionOnChainService {
+func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client, chainID *big.Int, sender sender.Sender) DeviceDefinitionOnChainService {
 	return &deviceDefinitionOnChainService{
 		Settings: settings,
 		Logger:   logger,
+		client:   client,
+		chainID:  chainID,
+		sender:   sender,
 	}
 }
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error) {
-	if len(e.Settings.EthereumNetwork) == 0 {
-		return nil, nil
-	}
 
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	client, err := ethclient.Dial(e.Settings.EthereumNetwork)
-	if err != nil {
-		return nil, fmt.Errorf("failed connect to Etherum Network: %w", err)
-	}
-
 	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
-	privateKey, err := crypto.HexToECDSA(e.Settings.EthereumWalletPrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("privateKey: %w", err)
-	}
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("error casting public key to ECDSA")
-	}
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	fromAddress := e.sender.Address()
 
-	chainID, err := client.ChainID(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed get ChainID: %w", err)
-	}
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
+	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed get PendingNonceAt: %w", err)
 	}
 
-	gasPrice, err := client.SuggestGasPrice(ctx)
+	gasPrice, err := e.client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed get SuggestGasPrice: %w", err)
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	//auth.Value = big.NewInt(0)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300000)
@@ -85,7 +69,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, man
 
 	manufacturerId := manufacturerID.Big.Int(new(big.Int))
 
-	queryInstance, err := contracts.NewRegistry(contractAddress, client)
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
 	}
@@ -97,7 +81,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, man
 		return nil, fmt.Errorf("failed get GetManufacturerNameById: %w", err)
 	}
 
-	instance, err := contracts.NewRegistryTransactor(contractAddress, client)
+	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
 	}
@@ -132,6 +116,21 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, man
 	trx := tx.Hash().Hex()
 
 	return &trx, nil
+}
+
+func NewKeyedTransactorWithChainID(context context.Context, send sender.Sender, chainID *big.Int) (*bind.TransactOpts, error) {
+	signer := eth_types.LatestSignerForChainID(chainID)
+	return &bind.TransactOpts{
+		From: send.Address(),
+		Signer: func(address common.Address, tx *eth_types.Transaction) (*eth_types.Transaction, error) {
+			signature, err := send.Sign(context, signer.Hash(tx))
+			if err != nil {
+				return nil, err
+			}
+			return tx.WithSignature(signer, signature)
+		},
+		Context: context,
+	}, nil
 }
 
 func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttribute {

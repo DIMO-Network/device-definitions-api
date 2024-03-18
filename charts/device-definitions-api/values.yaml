@@ -49,9 +49,7 @@ env:
   FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
-  ETHEREUM_NETWORK:
-  ETHEREUM_REGISTRY_ADDRESS:
-  ETHEREUM_WALLET_PRIVATE_KEY:
+  PRIVATE_KEY_MODE: false
 service:
   type: ClusterIP
   ports:
