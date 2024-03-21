@@ -66,7 +66,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//cache services
-	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
+	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, deviceDefinitionOnChainService)
 	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
@@ -149,6 +149,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService, logger)),
 		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
+
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionOnChainByIDQuery{}, queries.NewGetDeviceDefinitionOnChainByIDQueryHandler(ddCacheService, pdb.DBS)),
 	)
 
 	//fiber
@@ -170,6 +173,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	RegisterDeviceTypeRoutes(app, *m)
 	RegisterDeviceMakesRoutes(app, *m)
 	RegisterVINRoutes(app, *m)
+	RegisterDeviceDefinitionsRoutesV2(app, *m)
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 

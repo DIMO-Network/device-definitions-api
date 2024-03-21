@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -15,11 +17,16 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/types"
-	"math/big"
+
+	"github.com/textileio/go-tableland/pkg/client"
+	clientV1 "github.com/textileio/go-tableland/pkg/client/v1"
+	"github.com/textileio/go-tableland/pkg/wallet"
 )
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error)
 }
 
@@ -39,6 +46,96 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 		chainID:  chainID,
 		sender:   sender,
 	}
+}
+
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
+	if manufacturerID.IsZero() {
+		return nil, fmt.Errorf("manufacturerID has not value")
+	}
+	wallet, _ := wallet.NewWallet("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+
+	options := []clientV1.NewClientOption{
+		clientV1.NewClientChain(client.Chains[client.ChainIDs.Local]),
+		clientV1.NewClientLocal(),
+		clientV1.NewClientContractBackend(e.client),
+	}
+
+	// create the new client
+	client, err := clientV1.NewClient(
+		ctx, wallet, options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []clientV1.ReadOption{
+		clientV1.ReadFormat(clientV1.Objects),
+	}
+
+	query := fmt.Sprintf("SELECT * FROM _%d_%d WHERE id = '%s'", e.chainID, manufacturerID, ID)
+	var model []DeviceDefinitionTablelandModel
+	err = client.Read(
+		ctx, query,
+		&model, opts...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result *models.DeviceDefinition
+	for _, item := range model {
+		result.ID = item.KSUID
+		result.Year = item.Year
+		result.Model = item.Model
+	}
+
+	return result, nil
+}
+
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal) ([]*models.DeviceDefinition, error) {
+	if manufacturerID.IsZero() {
+		return nil, fmt.Errorf("manufacturerID has not value")
+	}
+	wallet, _ := wallet.NewWallet("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+
+	options := []clientV1.NewClientOption{
+		clientV1.NewClientChain(client.Chains[client.ChainIDs.Local]),
+		clientV1.NewClientLocal(),
+		clientV1.NewClientContractBackend(e.client),
+	}
+
+	// create the new client
+	client, err := clientV1.NewClient(
+		ctx, wallet, options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []clientV1.ReadOption{
+		clientV1.ReadFormat(clientV1.Objects),
+	}
+
+	query := fmt.Sprintf("SELECT * FROM _%d_%d", e.chainID, manufacturerID)
+	var model []DeviceDefinitionTablelandModel
+	err = client.Read(
+		ctx, query,
+		&model, opts...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*models.DeviceDefinition
+	for _, item := range model {
+		result = append(result, &models.DeviceDefinition{
+			ID:    item.KSUID,
+			Year:  item.Year,
+			Model: item.Model,
+		})
+	}
+
+	return result, nil
 }
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error) {
@@ -159,4 +256,17 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 type DeviceTypeAttribute struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type DeviceDefinitionTablelandModel struct {
+	ID       string `json:"id"`
+	KSUID    string `json:"ksuid"`
+	Model    string `json:"model"`
+	Year     int16  `json:"year"`
+	Metadata struct {
+		DeviceAttributes []struct {
+			Name  string `json:"name"`
+			Value string `json:"value,omitempty"`
+		} `json:"device_attributes"`
+	} `json:"metadata"`
 }
