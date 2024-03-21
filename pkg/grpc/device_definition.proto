@@ -9,6 +9,7 @@ package grpc;
 
 message GetDeviceDefinitionRequest {
   repeated string ids = 1;
+  string make_slug = 2;
 }
 message GetDeviceDefinitionBySlugRequest {
   string slug = 1;
@@ -454,6 +455,10 @@ message GetDeviceDefinitionByMakeAndYearRangeRequest {
   int32 end_year = 3;
 }
 
+message GetDeviceDefinitionsOnChainRequest {
+  string make_slug = 1;
+}
+
 service DeviceDefinitionService {
   rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionBySlug(GetDeviceDefinitionBySlugRequest) returns (GetDeviceDefinitionItemResponse);
@@ -495,4 +500,7 @@ service DeviceDefinitionService {
   rpc SyncDeviceDefinitionsWithElasticSearch(google.protobuf.Empty) returns (SyncStatusResult);
   rpc GetIntegrationByTokenID(GetIntegrationByTokenIDRequest) returns (Integration);
   rpc GetDeviceDefinitionByMakeAndYearRange(GetDeviceDefinitionByMakeAndYearRangeRequest) returns (GetDeviceDefinitionResponse);
+
+  rpc GetDeviceDefinitionOnChainByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+  rpc GetDeviceDefinitionsOnChain(GetDeviceDefinitionsOnChainRequest) returns (GetDeviceDefinitionResponse);
 }

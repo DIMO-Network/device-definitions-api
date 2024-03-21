@@ -13,6 +13,11 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/device-definitions", handlers.GetDeviceDefinitionByMMY(m)).Name("device-definitions")
 }
 
+func RegisterDeviceDefinitionsRoutesV2(app fiber.Router, m mediator.Mediator) {
+	app.Get("/v2/device-definitions/:make", handlers.GetDeviceDefinitionV2All(m)).Name("device-definitions-all-v2")
+	app.Get("/v2/device-definitions/:make/:id", handlers.GetDeviceDefinitionV2ByID(m)).Name("device-definitions-by-id-v2")
+}
+
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/integrations", handlers.GetIntegrations(m)).Name("integrations")
 	app.Get("/integrations/:id", handlers.GetIntegrationByID(m)).Name("integrations-by-id")

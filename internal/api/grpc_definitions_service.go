@@ -816,3 +816,25 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx conte
 
 	return result, nil
 }
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionOnChainByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionOnChainByIDQuery{
+		DeviceDefinitionID: in.Ids[0],
+		MakeSlug:           in.MakeSlug,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.GetDeviceDefinitionsOnChainRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionOnChainQuery{
+		MakeSlug: in.MakeSlug,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
