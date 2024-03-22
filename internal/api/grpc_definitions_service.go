@@ -835,6 +835,8 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context
 		Year:               int(in.Year),
 		Model:              in.Model,
 		MakeSlug:           in.MakeSlug,
+		PageSize:           in.PageSize,
+		PageIndex:          in.PageIndex,
 	})
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)

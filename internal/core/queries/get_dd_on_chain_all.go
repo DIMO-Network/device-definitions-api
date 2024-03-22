@@ -20,6 +20,8 @@ type GetAllDeviceDefinitionOnChainQuery struct {
 	DeviceDefinitionID string `json:"device_definition_id"`
 	Year               int    `json:"year"`
 	Model              string `json:"model"`
+	PageIndex          int32  `json:"page_index"`
+	PageSize           int32  `json:"page_size"`
 }
 
 func (*GetAllDeviceDefinitionOnChainQuery) Key() string { return "GetAllDeviceDefinitionOnChainQuery" }
@@ -53,7 +55,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 		}
 	}
 
-	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year)
+	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year, qry.PageIndex, qry.PageSize)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	gomock "go.uber.org/mock/gomock"
+	gomock "github.com/golang/mock/gomock"
 	types "github.com/volatiletech/sqlboiler/v4/types"
 )
 
@@ -67,16 +67,16 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionByI
 }
 
 // GetDeviceDefinitions mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID, model string, year int) ([]*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitions", manufacturerID, ID, model, year)
+	ret := m.ctrl.Call(m, "GetDeviceDefinitions", manufacturerID, ID, model, year, pageIndex, pageSize)
 	ret0, _ := ret[0].([]*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDeviceDefinitions indicates an expected call of GetDeviceDefinitions.
-func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitions(manufacturerID, ID, model, year interface{}) *gomock.Call {
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitions(manufacturerID, ID, model, year, pageIndex, pageSize interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitions), manufacturerID, ID, model, year)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitions), manufacturerID, ID, model, year, pageIndex, pageSize)
 }
