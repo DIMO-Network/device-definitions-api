@@ -39,6 +39,7 @@ type Settings struct {
 	KMSKeyID                       string         `yaml:"KMS_KEY_ID"`
 	EthereumRegistryAddress        string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
 	EthereumSendTransaction        bool           `yaml:"ETHEREUM_SEND_TRANSACTION"`
+	TablelandAPIGateway            string         `yaml:"TABLELAND_API_GATEWAY"`
 	EthereumWalletPrivateKey       string         `yaml:"ETHEREUM_WALLET_PRIVATE_KEY"`
 	DatGroupURL                       string         `yaml:"DAT_GROUP_URL"`
 	DatGroupAUTHURL                   string         `yaml:"DAT_GROUP_AUTHURL"`
@@ -47,7 +48,6 @@ type Settings struct {
 	DatGroupCustomerPassword          string         `yaml:"DAT_GROUP_CUSTOMER_PASSWORD"`
 	DatGroupInterfacePartnerNumber    string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_NUMBER"`
 	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
-
 }
 
 func (s *Settings) IsProd() bool {

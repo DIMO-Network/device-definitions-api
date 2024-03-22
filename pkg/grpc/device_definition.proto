@@ -277,6 +277,7 @@ message FilterDeviceDefinitionRequest {
   repeated string verified_vin_list = 6;
   int32 page_index = 7;
   int32 page_size = 8;
+  string make_slug = 9;
 }
 
 message GetFilteredDeviceDefinitionsResponse {
@@ -502,5 +503,5 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionByMakeAndYearRange(GetDeviceDefinitionByMakeAndYearRangeRequest) returns (GetDeviceDefinitionResponse);
 
   rpc GetDeviceDefinitionOnChainByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
-  rpc GetDeviceDefinitionsOnChain(GetDeviceDefinitionsOnChainRequest) returns (GetDeviceDefinitionResponse);
+  rpc GetDeviceDefinitionsOnChain(FilterDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
 }

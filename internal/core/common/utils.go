@@ -251,6 +251,102 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	return rp, nil
 }
 
+func BuildFromDeviceDefinitionOnChainToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
+	if dd.R == nil || dd.R.DeviceMake == nil {
+		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
+	}
+	rp := &models.GetDeviceDefinitionQueryResult{
+		DeviceDefinitionID: dd.ID,
+		ExternalID:         dd.ExternalID.String,
+		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		Source:             dd.Source.String,
+		HardwareTemplateID: dd.HardwareTemplateID.String,
+		DeviceMake: models.DeviceMake{
+			ID:                 dd.R.DeviceMake.ID,
+			Name:               dd.R.DeviceMake.Name,
+			LogoURL:            dd.R.DeviceMake.LogoURL,
+			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
+			NameSlug:           dd.R.DeviceMake.NameSlug,
+			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
+			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
+		},
+		Type: models.DeviceType{
+			//Type:      strings.TrimSpace(dd.R.DeviceType.ID),
+			Make:      dd.R.DeviceMake.Name,
+			Model:     dd.Model,
+			Year:      int(dd.Year),
+			MakeSlug:  dd.R.DeviceMake.NameSlug,
+			ModelSlug: dd.ModelSlug,
+		},
+		Metadata:    dd.Metadata.JSON,
+		Verified:    dd.Verified,
+		ExternalIDs: BuildExternalIDs(dd.ExternalIds),
+	}
+
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
+	}
+
+	// build object for integrations that have all the info
+	rp.DeviceIntegrations = []models.DeviceIntegration{}
+	rp.DeviceStyles = []models.DeviceStyle{}
+	rp.CompatibleIntegrations = []models.DeviceIntegration{}
+	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
+
+	// pull out the device type device attributes, egGetDev. vehicle information
+	//rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
+
+	if dd.R.DeviceIntegrations != nil {
+		for _, di := range dd.R.DeviceIntegrations {
+			deviceIntegration := models.DeviceIntegration{
+				ID:     di.R.Integration.ID,
+				Type:   di.R.Integration.Type,
+				Style:  di.R.Integration.Style,
+				Vendor: di.R.Integration.Vendor,
+				Region: di.Region,
+			}
+
+			if di.Features.Valid {
+				var deviceIntegrationFeature []models.DeviceIntegrationFeature
+				if err := di.Features.Unmarshal(&deviceIntegrationFeature); err == nil {
+					//nolint
+					deviceIntegration.Features = deviceIntegrationFeature
+				}
+			}
+			rp.DeviceIntegrations = append(rp.DeviceIntegrations, deviceIntegration)
+
+			rp.CompatibleIntegrations = rp.DeviceIntegrations
+		}
+	}
+
+	if dd.R.DeviceStyles != nil {
+		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+
+		for _, ds := range dd.R.DeviceStyles {
+			deviceStyle := models.DeviceStyle{
+				ID:                 ds.ID,
+				DeviceDefinitionID: ds.DeviceDefinitionID,
+				ExternalStyleID:    ds.ExternalStyleID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
+				Metadata:           GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
+			}
+
+			if ds.HardwareTemplateID.Valid {
+				deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
+			}
+
+			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
+		}
+	}
+	// trying pulling most recent images, pick the biggest one and where not exact image = false
+	rp.ImageURL = GetDefaultImageURL(dd)
+
+	return rp, nil
+}
+
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
 func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 	img := ""

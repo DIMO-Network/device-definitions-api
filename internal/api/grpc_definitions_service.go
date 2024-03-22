@@ -829,9 +829,12 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionOnChainByID(ctx context.Cont
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.GetDeviceDefinitionsOnChainRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionOnChainQuery{
-		MakeSlug: in.MakeSlug,
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		Year:               int(in.Year),
+		Model:              in.Model,
+		MakeSlug:           in.MakeSlug,
 	})
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)

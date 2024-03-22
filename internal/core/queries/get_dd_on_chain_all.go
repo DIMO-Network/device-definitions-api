@@ -16,7 +16,10 @@ import (
 )
 
 type GetAllDeviceDefinitionOnChainQuery struct {
-	MakeSlug string `json:"makeSlug"`
+	MakeSlug           string `json:"make_slug"`
+	DeviceDefinitionID string `json:"device_definition_id"`
+	Year               int    `json:"year"`
+	Model              string `json:"model"`
 }
 
 func (*GetAllDeviceDefinitionOnChainQuery) Key() string { return "GetAllDeviceDefinitionOnChainQuery" }
@@ -26,9 +29,10 @@ type GetAllDeviceDefinitionOnChainQueryHandler struct {
 	DeviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetAllDeviceDefinitionOnChainQueryHandler(dbs func() *db.ReaderWriter) GetAllDeviceDefinitionOnChainQueryHandler {
+func NewGetAllDeviceDefinitionOnChainQueryHandler(dbs func() *db.ReaderWriter, deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) GetAllDeviceDefinitionOnChainQueryHandler {
 	return GetAllDeviceDefinitionOnChainQueryHandler{
-		DBS: dbs,
+		DBS:                            dbs,
+		DeviceDefinitionOnChainService: deviceDefinitionOnChainService,
 	}
 }
 
@@ -49,14 +53,18 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 		}
 	}
 
-	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(ctx, make.TokenID)
+	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year)
 	if err != nil {
 		return nil, err
 	}
 
 	response := &grpc.GetDeviceDefinitionResponse{}
 	for _, v := range all {
-		dd, err := common.BuildFromDeviceDefinitionToQueryResult(v)
+
+		v.R = v.R.NewStruct()
+		v.R.DeviceMake = make
+
+		dd, err := common.BuildFromDeviceDefinitionOnChainToQueryResult(v)
 		if err != nil {
 			return nil, err
 		}

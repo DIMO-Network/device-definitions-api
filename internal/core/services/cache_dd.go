@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -74,23 +73,35 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	if params.UseOnChainData {
-		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.ManufacturerID, id)
+		if dd == nil {
+			return nil, nil
+		}
 
+		rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if dd == nil {
-		return nil, nil
-	}
+	if params.UseOnChainData {
+		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(params.Make.TokenID, id)
 
-	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		if dd == nil {
+			return nil, nil
+		}
+
+		dd.R = dd.R.NewStruct()
+		dd.R.DeviceMake = params.Make
+		rp, err = common.BuildFromDeviceDefinitionOnChainToQueryResult(dd)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	rpJSON, _ := json.Marshal(rp)
@@ -188,7 +199,7 @@ func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx cont
 
 type GetDeviceDefinitionCacheOptions struct {
 	UseOnChainData bool
-	ManufacturerID types.NullDecimal
+	Make           *repomodels.DeviceMake
 }
 
 var defaultGetDeviceDefinitionCacheOptions = GetDeviceDefinitionCacheOptions{
@@ -197,9 +208,9 @@ var defaultGetDeviceDefinitionCacheOptions = GetDeviceDefinitionCacheOptions{
 
 type GetDeviceDefinitionOption func(*GetDeviceDefinitionCacheOptions)
 
-func UseOnChain(manufacturerID types.NullDecimal) GetDeviceDefinitionOption {
+func UseOnChain(deviceMake *repomodels.DeviceMake) GetDeviceDefinitionOption {
 	return func(opts *GetDeviceDefinitionCacheOptions) {
 		opts.UseOnChainData = true
-		opts.ManufacturerID = manufacturerID
+		opts.Make = deviceMake
 	}
 }
