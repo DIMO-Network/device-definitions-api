@@ -46,6 +46,8 @@ func GetDeviceDefinitionV2ByID(m mediator.Mediator) fiber.Handler {
 func GetDeviceDefinitionV2All(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		make := c.Params("make")
+		model := c.Params("model")
+		yearStr := c.Params("year")
 		pageIndexStr := c.Params("pageIndex")
 		pageSizeStr := c.Params("pageSize")
 
@@ -67,7 +69,16 @@ func GetDeviceDefinitionV2All(m mediator.Mediator) fiber.Handler {
 			pageSize = int32(pageSize64)
 		}
 
-		query := &queries.GetAllDeviceDefinitionOnChainQuery{MakeSlug: make, PageIndex: pageIndex, PageSize: pageSize}
+		year, err := strconv.Atoi(yearStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("year must be a valid integer")
+		}
+
+		query := &queries.GetAllDeviceDefinitionOnChainQuery{MakeSlug: make,
+			Model:     model,
+			Year:      year,
+			PageIndex: pageIndex,
+			PageSize:  pageSize}
 
 		result, _ := m.Send(c.UserContext(), query)
 
