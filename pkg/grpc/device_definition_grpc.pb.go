@@ -64,7 +64,7 @@ type DeviceDefinitionServiceClient interface {
 	GetIntegrationByTokenID(ctx context.Context, in *GetIntegrationByTokenIDRequest, opts ...grpc.CallOption) (*Integration, error)
 	GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *GetDeviceDefinitionByMakeAndYearRangeRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionOnChainByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
-	GetDeviceDefinitionsOnChain(ctx context.Context, in *GetDeviceDefinitionsOnChainRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionsOnChain(ctx context.Context, in *FilterDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -467,7 +467,7 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionOnChainByID(ctx conte
 	return out, nil
 }
 
-func (c *deviceDefinitionServiceClient) GetDeviceDefinitionsOnChain(ctx context.Context, in *GetDeviceDefinitionsOnChainRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionsOnChain(ctx context.Context, in *FilterDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
 	out := new(GetDeviceDefinitionResponse)
 	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionsOnChain", in, out, opts...)
 	if err != nil {
@@ -521,7 +521,7 @@ type DeviceDefinitionServiceServer interface {
 	GetIntegrationByTokenID(context.Context, *GetIntegrationByTokenIDRequest) (*Integration, error)
 	GetDeviceDefinitionByMakeAndYearRange(context.Context, *GetDeviceDefinitionByMakeAndYearRangeRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionOnChainByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
-	GetDeviceDefinitionsOnChain(context.Context, *GetDeviceDefinitionsOnChainRequest) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionsOnChain(context.Context, *FilterDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -652,7 +652,7 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMakeAndYe
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionOnChainByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionOnChainByID not implemented")
 }
-func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionsOnChain(context.Context, *GetDeviceDefinitionsOnChainRequest) (*GetDeviceDefinitionResponse, error) {
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionsOnChain(context.Context, *FilterDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionsOnChain not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
@@ -1411,7 +1411,7 @@ func _DeviceDefinitionService_GetDeviceDefinitionOnChainByID_Handler(srv interfa
 }
 
 func _DeviceDefinitionService_GetDeviceDefinitionsOnChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeviceDefinitionsOnChainRequest)
+	in := new(FilterDeviceDefinitionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1423,7 +1423,7 @@ func _DeviceDefinitionService_GetDeviceDefinitionsOnChain_Handler(srv interface{
 		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitionsOnChain",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionsOnChain(ctx, req.(*GetDeviceDefinitionsOnChainRequest))
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionsOnChain(ctx, req.(*FilterDeviceDefinitionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

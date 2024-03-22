@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/pkg/errors"
 
@@ -51,7 +53,7 @@ func (ch GetDeviceDefinitionOnChainByIDQueryHandler) Handle(ctx context.Context,
 		}
 	}
 
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID, services.UseOnChain(make.TokenID))
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID, services.UseOnChain(make))
 
 	if err != nil {
 		return nil, err
@@ -63,5 +65,9 @@ func (ch GetDeviceDefinitionOnChainByIDQueryHandler) Handle(ctx context.Context,
 		}
 	}
 
-	return dd, nil
+	response := &grpc.GetDeviceDefinitionResponse{}
+	rp := common.BuildFromQueryResultToGRPC(dd)
+	response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
+
+	return response, nil
 }

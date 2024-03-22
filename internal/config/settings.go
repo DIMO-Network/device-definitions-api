@@ -39,6 +39,7 @@ type Settings struct {
 	KMSKeyID                       string         `yaml:"KMS_KEY_ID"`
 	EthereumRegistryAddress        string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
 	EthereumSendTransaction        bool           `yaml:"ETHEREUM_SEND_TRANSACTION"`
+	TablelandAPIGateway            string         `yaml:"TABLELAND_API_GATEWAY"`
 }
 
 func (s *Settings) IsProd() bool {

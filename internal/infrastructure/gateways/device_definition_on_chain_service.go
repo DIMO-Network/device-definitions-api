@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
@@ -17,16 +16,17 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/types"
-
-	"github.com/textileio/go-tableland/pkg/client"
-	clientV1 "github.com/textileio/go-tableland/pkg/client/v1"
-	"github.com/textileio/go-tableland/pkg/wallet"
+	"math/big"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
 )
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
-	GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal) ([]*models.DeviceDefinition, error)
+	GetDeviceDefinitionByID(manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error)
 }
 
@@ -48,86 +48,66 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 	}
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
-	wallet, _ := wallet.NewWallet("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
 
-	options := []clientV1.NewClientOption{
-		clientV1.NewClientChain(client.Chains[client.ChainIDs.Local]),
-		clientV1.NewClientLocal(),
-		clientV1.NewClientContractBackend(e.client),
+	statement := fmt.Sprintf("SELECT * FROM _%d_%d WHERE id = '%s'", e.chainID, manufacturerID, ID)
+	queryParams := map[string]string{
+		"statement": statement,
 	}
+	var modelTableland []DeviceDefinitionTablelandModel
 
-	// create the new client
-	client, err := clientV1.NewClient(
-		ctx, wallet, options...)
-
-	if err != nil {
+	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
-	opts := []clientV1.ReadOption{
-		clientV1.ReadFormat(clientV1.Objects),
-	}
-
-	query := fmt.Sprintf("SELECT * FROM _%d_%d WHERE id = '%s'", e.chainID, manufacturerID, ID)
-	var model []DeviceDefinitionTablelandModel
-	err = client.Read(
-		ctx, query,
-		&model, opts...)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result *models.DeviceDefinition
-	for _, item := range model {
+	var result models.DeviceDefinition
+	for _, item := range modelTableland {
 		result.ID = item.KSUID
 		result.Year = item.Year
 		result.Model = item.Model
+		break
 	}
 
-	return result, nil
+	return &result, nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal) ([]*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int) ([]*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
-	wallet, _ := wallet.NewWallet("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
 
-	options := []clientV1.NewClientOption{
-		clientV1.NewClientChain(client.Chains[client.ChainIDs.Local]),
-		clientV1.NewClientLocal(),
-		clientV1.NewClientContractBackend(e.client),
+	var conditions []string
+	if year > 1980 && year < 2999 {
+		conditions = append(conditions, fmt.Sprintf("year = %d", year))
+	}
+	if len(model) > 0 {
+		conditions = append(conditions, fmt.Sprintf("model = '%s'", model))
+	}
+	if len(ID) > 0 {
+		conditions = append(conditions, fmt.Sprintf("id = '%s'", ID))
 	}
 
-	// create the new client
-	client, err := clientV1.NewClient(
-		ctx, wallet, options...)
-
-	if err != nil {
-		return nil, err
+	whereClause := strings.Join(conditions, " AND ")
+	if whereClause != "" {
+		whereClause = " WHERE " + whereClause
 	}
 
-	opts := []clientV1.ReadOption{
-		clientV1.ReadFormat(clientV1.Objects),
+	statement := fmt.Sprintf("SELECT * FROM _%d_%d%s", e.chainID, manufacturerID, whereClause)
+
+	queryParams := map[string]string{
+		"statement": statement,
 	}
 
-	query := fmt.Sprintf("SELECT * FROM _%d_%d", e.chainID, manufacturerID)
-	var model []DeviceDefinitionTablelandModel
-	err = client.Read(
-		ctx, query,
-		&model, opts...)
-
-	if err != nil {
+	var modelTableland []DeviceDefinitionTablelandModel
+	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
 	var result []*models.DeviceDefinition
-	for _, item := range model {
+	for _, item := range modelTableland {
 		result = append(result, &models.DeviceDefinition{
 			ID:    item.KSUID,
 			Year:  item.Year,
@@ -136,6 +116,37 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	}
 
 	return result, nil
+}
+
+func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]string, result interface{}) error {
+	fullURL, err := url.Parse(e.Settings.TablelandAPIGateway)
+	if err != nil {
+		return err
+	}
+
+	fullURL.Path = path.Join(fullURL.Path, "api/v1/query")
+
+	if queryParams != nil {
+		values := fullURL.Query()
+		for key, value := range queryParams {
+			values.Set(key, value)
+		}
+		fullURL.RawQuery = values.Encode()
+	}
+
+	resp, err := http.Get(fullURL.String())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	fmt.Print(resp.Body)
+
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error) {
