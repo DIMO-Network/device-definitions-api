@@ -26,7 +26,7 @@ import (
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitionByID(manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
-	GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int) ([]*models.DeviceDefinition, error)
+	GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error)
 }
 
@@ -74,7 +74,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(manufacturerID 
 	return &result, nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int) ([]*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
@@ -95,7 +95,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID typ
 		whereClause = " WHERE " + whereClause
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM _%d_%d%s", e.chainID, manufacturerID, whereClause)
+	statement := fmt.Sprintf("SELECT * FROM _%d_%d%s LIMIT %d OFFSET %d", e.chainID, manufacturerID, whereClause, pageSize, pageIndex)
 
 	queryParams := map[string]string{
 		"statement": statement,

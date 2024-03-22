@@ -173,7 +173,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	RegisterDeviceTypeRoutes(app, *m)
 	RegisterDeviceMakesRoutes(app, *m)
 	RegisterVINRoutes(app, *m)
-	RegisterDeviceDefinitionsRoutesV2(app, *m)
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
