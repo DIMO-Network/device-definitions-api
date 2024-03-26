@@ -85,7 +85,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 	}
 
 	if params.UseOnChainData {
-		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(params.Make.TokenID, id)
+		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.Make.TokenID, id)
 
 		if err != nil {
 			return nil, err
@@ -97,7 +97,10 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 
 		dd.R = dd.R.NewStruct()
 		dd.R.DeviceMake = params.Make
-		rp, err = common.BuildFromDeviceDefinitionOnChainToQueryResult(dd)
+		dd.R.DeviceType = &repomodels.DeviceType{
+			Metadatakey: common.VehicleMetadataKey,
+		}
+		rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
 		if err != nil {
 			return nil, err
 		}

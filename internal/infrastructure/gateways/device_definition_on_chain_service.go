@@ -25,8 +25,8 @@ import (
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
-	GetDeviceDefinitionByID(manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
-	GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error)
 }
 
@@ -48,12 +48,25 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 	}
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM _%d_%d WHERE id = '%s'", e.chainID, manufacturerID, ID)
+	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	manufacturerId := manufacturerID.Big.Int(new(big.Int))
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerId)
+	if err != nil {
+		e.Logger.Info().Msgf("%s", err)
+		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+	}
+
+	statement := fmt.Sprintf("SELECT * FROM _%s WHERE id = '%s'", tableName, ID)
 	queryParams := map[string]string{
 		"statement": statement,
 	}
@@ -65,18 +78,48 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(manufacturerID 
 
 	var result models.DeviceDefinition
 	for _, item := range modelTableland {
-		result.ID = item.KSUID
+		result.ID = item.ID
 		result.Year = item.Year
 		result.Model = item.Model
+
+		if item.Metadata.DeviceAttributes != nil && len(item.Metadata.DeviceAttributes) > 0 {
+			deviceTypeInfo := make(map[string]interface{})
+			metaData := make(map[string]interface{})
+
+			for _, attr := range item.Metadata.DeviceAttributes {
+				metaData[attr.Name] = attr.Value
+			}
+
+			deviceTypeInfo["vehicle_info"] = metaData
+			json, err := json.Marshal(deviceTypeInfo)
+			if err == nil {
+				result.Metadata = null.JSONFrom(json)
+			}
+		}
+
 		break
 	}
 
 	return &result, nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
+	}
+
+	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
+	fromAddress := e.sender.Address()
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	manufacturerId := manufacturerID.Big.Int(new(big.Int))
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true, From: fromAddress}, manufacturerId)
+	if err != nil {
+		e.Logger.Info().Msgf("%s", err)
+		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
 	}
 
 	var conditions []string
@@ -95,7 +138,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID typ
 		whereClause = " WHERE " + whereClause
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM _%d_%d%s LIMIT %d OFFSET %d", e.chainID, manufacturerID, whereClause, pageSize, pageIndex)
+	statement := fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", tableName, whereClause, pageSize, pageIndex)
 
 	queryParams := map[string]string{
 		"statement": statement,
@@ -108,11 +151,28 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(manufacturerID typ
 
 	var result []*models.DeviceDefinition
 	for _, item := range modelTableland {
-		result = append(result, &models.DeviceDefinition{
-			ID:    item.KSUID,
+		data := &models.DeviceDefinition{
+			ID:    item.ID,
 			Year:  item.Year,
 			Model: item.Model,
-		})
+		}
+
+		if item.Metadata.DeviceAttributes != nil && len(item.Metadata.DeviceAttributes) > 0 {
+			deviceTypeInfo := make(map[string]interface{})
+			metaData := make(map[string]interface{})
+
+			for _, attr := range item.Metadata.DeviceAttributes {
+				metaData[attr.Name] = attr.Value
+			}
+
+			deviceTypeInfo["vehicle_info"] = metaData
+			json, err := json.Marshal(deviceTypeInfo)
+			if err == nil {
+				data.Metadata = null.JSONFrom(json)
+			}
+		}
+
+		result = append(result, data)
 	}
 
 	return result, nil

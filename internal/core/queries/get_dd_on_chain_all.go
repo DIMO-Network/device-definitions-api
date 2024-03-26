@@ -55,7 +55,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 		}
 	}
 
-	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year, qry.PageIndex, qry.PageSize)
+	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(ctx, make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year, qry.PageIndex, qry.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,10 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 
 		v.R = v.R.NewStruct()
 		v.R.DeviceMake = make
-
-		dd, err := common.BuildFromDeviceDefinitionOnChainToQueryResult(v)
+		v.R.DeviceType = &models.DeviceType{
+			Metadatakey: common.VehicleMetadataKey,
+		}
+		dd, err := common.BuildFromDeviceDefinitionToQueryResult(v)
 		if err != nil {
 			return nil, err
 		}
