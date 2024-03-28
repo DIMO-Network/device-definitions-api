@@ -13,29 +13,29 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
-type GetDeviceDefinitionImagesByIdsQuery struct {
+type GetDeviceDefinitionImagesByIDsQuery struct {
 	DeviceDefinitionID []string `json:"deviceDefinitionId" validate:"required"`
 }
 
-func (*GetDeviceDefinitionImagesByIdsQuery) Key() string {
-	return "GetDeviceDefinitionImagesByIdsQuery"
+func (*GetDeviceDefinitionImagesByIDsQuery) Key() string {
+	return "GetDeviceDefinitionImagesByIDsQuery"
 }
 
-type GetDeviceDefinitionImagesByIdsQueryHandler struct {
+type GetDeviceDefinitionImagesByIDsQueryHandler struct {
 	log *zerolog.Logger
 	dbs func() *db.ReaderWriter
 }
 
-func NewGetDeviceDefinitionImagesByIdsQueryHandler(dbs func() *db.ReaderWriter, log *zerolog.Logger) GetDeviceDefinitionImagesByIdsQueryHandler {
-	return GetDeviceDefinitionImagesByIdsQueryHandler{
+func NewGetDeviceDefinitionImagesByIDsQueryHandler(dbs func() *db.ReaderWriter, log *zerolog.Logger) GetDeviceDefinitionImagesByIDsQueryHandler {
+	return GetDeviceDefinitionImagesByIDsQueryHandler{
 		log: log,
 		dbs: dbs,
 	}
 }
 
-func (ch GetDeviceDefinitionImagesByIdsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
+func (ch GetDeviceDefinitionImagesByIDsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetDeviceDefinitionImagesByIdsQuery)
+	qry := query.(*GetDeviceDefinitionImagesByIDsQuery)
 
 	if len(qry.DeviceDefinitionID) == 0 {
 		return nil, &exceptions.ValidationError{

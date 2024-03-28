@@ -16,7 +16,6 @@ env:
   SERVICE_NAME: device-definitions-api
   JWT_KEY_SET_URL: https://auth.dimo.zone/keys
   DEPLOYMENT_BASE_URL: https://device-definitions-api.dimo.zone
-  TOR_PROXY_URL: socks5://tor.p2p:9050
   REDIS_USER: default
   REDIS_CLUSTER_MODE: true
   REDIS_TLS: true

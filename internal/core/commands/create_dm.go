@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package commands
 
 import (
@@ -10,7 +11,7 @@ import (
 type CreateDeviceMakeCommand struct {
 	Name               string `json:"name"`
 	LogoURL            string `json:"logo_url"`
-	ExternalIds        string `json:"external_ids,omitempty"`
+	ExternalIDs        string `json:"external_ids,omitempty"`
 	Metadata           string `json:"metadata,omitempty"`
 	HardwareTemplateID string `json:"hardware_template_id,omitempty"`
 }
@@ -33,7 +34,7 @@ func (ch CreateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 
 	command := query.(*CreateDeviceMakeCommand)
 
-	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, command.LogoURL, command.ExternalIds, command.Metadata, command.HardwareTemplateID)
+	dm, err := ch.Repository.GetOrCreate(ctx, command.Name, command.LogoURL, command.ExternalIDs, command.Metadata, command.HardwareTemplateID)
 
 	if err != nil {
 		return nil, err

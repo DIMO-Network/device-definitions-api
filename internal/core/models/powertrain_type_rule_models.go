@@ -1,4 +1,5 @@
-package models //nolint:all
+//nolint:all
+package models
 
 type PowerTrainTypeRuleData struct {
 	PowerTrainTypeList []PowerTrainType           `yaml:"types"`
@@ -20,10 +21,10 @@ type PowerTrainTypeOptionData struct {
 }
 
 type DrivlyData struct {
-	VIN      string `json:"vin"`
-	Make     string `json:"make"`
-	Model    string `json:"model"`
-	FuelType string `json:"fuel"`
+	VIN   string `json:"vin"`
+	Make  string `json:"make"`
+	Model string `json:"model"`
+	Fuel  string `json:"fuel"`
 }
 
 type VincarioData struct {

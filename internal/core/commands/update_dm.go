@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package commands
 
 import (
@@ -22,7 +23,7 @@ type UpdateDeviceMakeCommand struct {
 	LogoURL            null.String     `json:"logo_url"`
 	OemPlatformName    null.String     `json:"oem_platform_name"`
 	TokenID            *big.Int        `json:"tokenId,omitempty"`
-	ExternalIds        json.RawMessage `json:"external_ids"`
+	ExternalIDs        json.RawMessage `json:"external_ids"`
 	Metadata           json.RawMessage `json:"metadata"`
 	HardwareTemplateID string          `json:"hardware_template_id,omitempty"`
 }
@@ -74,7 +75,7 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 		dm.OemPlatformName = command.OemPlatformName
 	}
 
-	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIds))
+	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIDs))
 	dm.Metadata = null.JSONFrom([]byte(command.Metadata))
 	dm.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 

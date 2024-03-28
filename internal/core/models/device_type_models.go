@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package models
 
 type GetDeviceTypeQueryResult struct {
@@ -13,8 +14,8 @@ type GetDeviceTypeAttributeQueryResult struct {
 	Description  string   `json:"description"`
 	Type         string   `json:"type"`
 	Required     bool     `json:"required"`
-	DefaultValue string   `json:"default_value"`
-	Option       []string `json:"options"`
+	DefaultValue string   `json:"default_value"` //nolint
+	Options      []string `json:"options"`
 }
 
 type CreateDeviceTypeAttribute struct {
@@ -23,8 +24,8 @@ type CreateDeviceTypeAttribute struct {
 	Description  string   `json:"description"`
 	Type         string   `json:"type"`
 	Required     bool     `json:"required"`
-	DefaultValue string   `json:"default_value"`
-	Option       []string `json:"options"`
+	DefaultValue string   `json:"default_value"` //nolint
+	Options      []string `json:"options"`
 }
 
 type UpdateDeviceTypeAttribute struct {

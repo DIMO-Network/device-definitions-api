@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package commands
 
 import (
@@ -37,7 +38,7 @@ type UpdateDeviceDefinitionCommand struct {
 	DeviceTypeID string `json:"device_type_id"`
 	// DeviceAttributes sets definition metadata eg. vehicle info. Allowed key/values are defined in device_types.properties
 	DeviceAttributes []*coremodels.UpdateDeviceTypeAttribute `json:"deviceAttributes"`
-	ExternalIds      []*coremodels.ExternalID                `json:"externalIds"`
+	ExternalIDs      []*coremodels.ExternalID                `json:"externalIds"`
 }
 
 type UpdateDeviceIntegrations struct {
@@ -162,22 +163,22 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		dd.ExternalID = null.StringFrom(command.ExternalID)
 	}
 
-	extIds := map[string]string{}
+	extIDs := map[string]string{}
 	if len(command.Source) > 0 {
 		dd.Source = null.StringFrom(command.Source)
 		dd.ExternalID = null.StringFrom(command.ExternalID)
-		extIds[command.Source] = command.ExternalID
+		extIDs[command.Source] = command.ExternalID
 	}
-	if len(command.ExternalIds) > 0 {
-		for _, ei := range command.ExternalIds {
-			extIds[ei.Vendor] = ei.ID
+	if len(command.ExternalIDs) > 0 {
+		for _, ei := range command.ExternalIDs {
+			extIDs[ei.Vendor] = ei.ID
 		}
 	}
-	extIdsJSON, err := json.Marshal(extIds)
+	extIDsJSON, err := json.Marshal(extIDs)
 	if err != nil {
 		return nil, err
 	}
-	dd.ExternalIds = null.JSONFrom(extIdsJSON)
+	dd.ExternalIds = null.JSONFrom(extIDsJSON)
 
 	// todo if the command has an image, let's determine how that should be handled, or remove it from the command
 

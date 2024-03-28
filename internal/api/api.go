@@ -43,6 +43,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
 	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
+	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS)
@@ -54,7 +55,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 
 	//cache services
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository)
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
@@ -92,7 +93,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		mediator.WithHandler(&queries.GetReviewsDynamicFilterQuery{}, queries.NewGetReviewsDynamicFilterQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetReviewsByDeviceDefinitionIDQuery{}, queries.NewGetReviewsByDeviceDefinitionIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetReviewsByIDQuery{}, queries.NewGetReviewsByIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionImagesByIdsQuery{}, queries.NewGetDeviceDefinitionImagesByIdsQueryHandler(pdb.DBS, &logger)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionImagesByIDsQuery{}, queries.NewGetDeviceDefinitionImagesByIDsQueryHandler(pdb.DBS, &logger)),
 		mediator.WithHandler(&commands.CreateReviewCommand{}, commands.NewCreateReviewCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateReviewCommand{}, commands.NewUpdateReviewCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteReviewCommand{}, commands.NewDeleteReviewCommandHandler(pdb.DBS)),
