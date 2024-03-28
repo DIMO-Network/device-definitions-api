@@ -373,7 +373,7 @@ func (s *GrpcDefinitionsService) CreateDeviceMake(ctx context.Context, in *p_grp
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
 		Name:               in.Name,
 		HardwareTemplateID: in.HardwareTemplateId,
-		ExternalIds:        "{}",
+		ExternalIDs:        "{}",
 		Metadata:           "{}",
 	})
 
@@ -405,7 +405,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 		Verified:           in.Verified,
 		DeviceMakeID:       in.DeviceMakeId,
 		DeviceTypeID:       in.DeviceTypeId,
-		ExternalIds:        common.ExternalIDsFromGRPC(in.ExternalIds),
+		ExternalIDs:        common.ExternalIDsFromGRPC(in.ExternalIds),
 		HardwareTemplateID: in.HardwareTemplateId,
 	}
 
@@ -631,7 +631,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceMake(ctx context.Context, in *p_grp
 		Name:               in.Name,
 		LogoURL:            null.StringFrom(in.LogoUrl),
 		OemPlatformName:    null.StringFrom(in.OemPlatformName),
-		ExternalIds:        json.RawMessage(in.ExternalIds),
+		ExternalIDs:        json.RawMessage(in.ExternalIds),
 		Metadata:           json.RawMessage(in.Metadata),
 		HardwareTemplateID: in.HardwareTemplateId,
 	}

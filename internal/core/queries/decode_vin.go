@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package queries
 
 import (
@@ -195,8 +196,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.DATGroupProvider, qry.Country)
-		localLog.Info().Msgf("error =======> ", err)
 		if err != nil {
+			localLog.Err(err).Msg("failed to GetVIN with DATGroupProvider")
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider, qry.Country)
 		}
 	} else {

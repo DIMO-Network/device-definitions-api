@@ -1,5 +1,4 @@
-//go:generate mockgen -source elastic_app_search_service.go -destination mocks/elastic_app_search_service_mock.go -package mocks
-
+//nolint:tagliatelle
 package elastic
 
 import (
@@ -14,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+//go:generate mockgen -source elastic_app_search_service.go -destination mocks/elastic_app_search_service_mock.go -package mocks
 type SearchService interface {
 	LoadDeviceDefinitions() error
 	GetEngines() (*GetEnginesResp, error)

@@ -3,10 +3,11 @@ package gateways
 import (
 	"bytes"
 	"encoding/xml"
-	"github.com/rs/zerolog"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 )
@@ -110,8 +111,11 @@ func soapCall(ws string, action string, payloadInterface interface{}, token stri
 		},
 	}
 	payload, err := xml.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return nil, err
+	}
 
-	timeout := time.Duration(30 * time.Second)
+	timeout := 30 * time.Second
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -134,7 +138,7 @@ func soapCall(ws string, action string, payloadInterface interface{}, token stri
 		return nil, err
 	}
 
-	bodyBytes, err := ioutil.ReadAll(response.Body)
+	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -222,12 +226,12 @@ type Dossier struct {
 	Name          string     `xml:"Name,omitempty" json:"Name,omitempty"`
 	Description   string     `xml:"Description,omitempty" json:"Description,omitempty"`
 	UUID          string     `xml:"UUID,omitempty" json:"UUID,omitempty"`
-	ExternalId    string     `xml:"ExternalId,omitempty" json:"ExternalId,omitempty"`
-	IdSDo         int64      `xml:"IdSDo,omitempty" json:"IdSDo,omitempty"`
-	IdSD3Local    int64      `xml:"IdSD3Local,omitempty" json:"IdSD3Local,omitempty"`
-	DossierId     int64      `xml:"DossierId,omitempty" json:"DossierId,omitempty"`
-	IdSD3Network  int64      `xml:"IdSD3Network,omitempty" json:"IdSD3Network,omitempty"`
-	IdExtern      string     `xml:"IdExtern,omitempty" json:"IdExtern,omitempty"`
+	ExternalID    string     `xml:"ExternalID,omitempty" json:"ExternalId,omitempty"`
+	IdSDo         int64      `xml:"IdSDo,omitempty" json:"IdSDo,omitempty"`               // nolint
+	IdSD3Local    int64      `xml:"IdSD3Local,omitempty" json:"IdSD3Local,omitempty"`     // nolint
+	DossierId     int64      `xml:"DossierId,omitempty" json:"DossierId,omitempty"`       // nolint
+	IdSD3Network  int64      `xml:"IdSD3Network,omitempty" json:"IdSD3Network,omitempty"` // nolint
+	IdExtern      string     `xml:"IdExtern,omitempty" json:"IdExtern,omitempty"`         // nolint
 	Country       string     `xml:"Country,omitempty" json:"Country,omitempty"`
 	DossierType   string     `xml:"DossierType,omitempty" json:"DossierType,omitempty"`
 	DossierOrigin string     `xml:"DossierOrigin,omitempty" json:"DossierOrigin,omitempty"`
@@ -281,7 +285,7 @@ type Image struct {
 	Height                      int64  `xml:"Height,omitempty" json:"Height,omitempty"`
 	Width                       int64  `xml:"Width,omitempty" json:"Width,omitempty"`
 	RealFilename                string `xml:"RealFilename,omitempty" json:"RealFilename,omitempty"`
-	ImageId                     string `xml:"ImageId,omitempty" json:"ImageId,omitempty"`
+	ImageId                     string `xml:"ImageId,omitempty" json:"ImageId,omitempty"` //nolint
 	RelativePath                string `xml:"RelativePath,omitempty" json:"RelativePath,omitempty"`
 }
 
@@ -613,7 +617,7 @@ type TechInfo struct {
 	Built                                 string             `xml:"Built,omitempty" json:"Built,omitempty"`
 	AllowedLoadCapacity                   int64              `xml:"AllowedLoadCapacity,omitempty" json:"AllowedLoadCapacity,omitempty"`
 	CabinStructureAltDescription          string             `xml:"CabinStructureAltDescription,omitempty" json:"CabinStructureAltDescription,omitempty"`
-	CushionColorId                        string             `xml:"CushionColorId,omitempty" json:"CushionColorId,omitempty"`
+	CushionColorId                        string             `xml:"CushionColorId,omitempty" json:"CushionColorId,omitempty"` //nolint
 	FuelmethodAbbr                        string             `xml:"FuelmethodAbbr,omitempty" json:"FuelmethodAbbr,omitempty"`
 	InsuranceTypeClassCascoCompleteNeu    string             `xml:"InsuranceTypeClassCascoCompleteNeu,omitempty" json:"InsuranceTypeClassCascoCompleteNeu,omitempty"`
 	InsuranceTypeClassCascoPartialNeu     string             `xml:"InsuranceTypeClassCascoPartialNeu,omitempty" json:"InsuranceTypeClassCascoPartialNeu,omitempty"`
@@ -905,7 +909,7 @@ type EquipmentPosition struct {
 	AgeInMonths                 int64    `xml:"AgeInMonths,omitempty" json:"AgeInMonths,omitempty"`
 	DatAgeInMonths              int64    `xml:"DatAgeInMonths,omitempty" json:"DatAgeInMonths,omitempty"`
 	Deselected                  *bool    `xml:"Deselected,omitempty" json:"Deselected,omitempty"`
-	DatEquipmentId              int64    `xml:"DatEquipmentId,omitempty" json:"DatEquipmentId,omitempty"`
+	DatEquipmentId              int64    `xml:"DatEquipmentId,omitempty" json:"DatEquipmentId,omitempty"` //nolint
 	ManufacturerEquipmentId     string   `xml:"ManufacturerEquipmentId,omitempty" json:"ManufacturerEquipmentId,omitempty"`
 	ManufacturerDescription     string   `xml:"ManufacturerDescription,omitempty" json:"ManufacturerDescription,omitempty"`
 	ValuationControlType        string   `xml:"ValuationControlType,omitempty" json:"ValuationControlType,omitempty"`
@@ -968,18 +972,18 @@ type Axle struct {
 	XMLName xml.Name `xml:"http://www.dat.de/vxs Axle"`
 
 	AxleNo                      int64    `xml:"AxleNo,omitempty" json:"AxleNo,omitempty"`
-	TireId                      int64    `xml:"TireId,omitempty" json:"TireId,omitempty"`
+	TireId                      int64    `xml:"TireId,omitempty" json:"TireId,omitempty"` //nolint
 	TireState                   string   `xml:"TireState,omitempty" json:"TireState,omitempty"`
 	NrOfTires                   int64    `xml:"NrOfTires,omitempty" json:"NrOfTires,omitempty"`
 	TireType                    string   `xml:"TireType,omitempty" json:"TireType,omitempty"`
-	TireTypeTextId              string   `xml:"TireTypeTextId,omitempty" json:"TireTypeTextId,omitempty"`
+	TireTypeTextId              string   `xml:"TireTypeTextId,omitempty" json:"TireTypeTextId,omitempty"` //nolint
 	TireOriginalPrice           *float32 `xml:"TireOriginalPrice,omitempty" json:"TireOriginalPrice,omitempty"`
 	TireSpeedIndex              string   `xml:"TireSpeedIndex,omitempty" json:"TireSpeedIndex,omitempty"`
 	TireSize                    string   `xml:"TireSize,omitempty" json:"TireSize,omitempty"`
 	TireSafetySystem            string   `xml:"TireSafetySystem,omitempty" json:"TireSafetySystem,omitempty"`
 	TireManufacturer            int64    `xml:"TireManufacturer,omitempty" json:"TireManufacturer,omitempty"`
 	TireManufacturerName        string   `xml:"TireManufacturerName,omitempty" json:"TireManufacturerName,omitempty"`
-	PrintLoadCapacityIdx        *bool    `xml:"PrintLoadCapacityIdx,omitempty" json:"PrintLoadCapacityIdx,omitempty"`
+	PrintLoadCapacityIdx        *bool    `xml:"PrintLoadCapacityIdx,omitempty" json:"PrintLoadCapacityIdx,omitempty"` //nolint
 	TireOriginalTreadDepth      int64    `xml:"TireOriginalTreadDepth,omitempty" json:"TireOriginalTreadDepth,omitempty"`
 	TireOriginalTreadDepthUser  int64    `xml:"TireOriginalTreadDepthUser,omitempty" json:"TireOriginalTreadDepthUser,omitempty"`
 	TireOriginalTreadDepthN     *float32 `xml:"TireOriginalTreadDepthN,omitempty" json:"TireOriginalTreadDepthN,omitempty"`
@@ -1004,9 +1008,9 @@ type Axle struct {
 	TireBrandPriceUser          *float32 `xml:"TireBrandPriceUser,omitempty" json:"TireBrandPriceUser,omitempty"`
 	TireManufacturerId          int64    `xml:"TireManufacturerId,omitempty" json:"TireManufacturerId,omitempty"`
 	TireManufacturerTextId      int64    `xml:"TireManufacturerTextId,omitempty" json:"TireManufacturerTextId,omitempty"`
-	TireBrandId                 int64    `xml:"TireBrandId,omitempty" json:"TireBrandId,omitempty"`
+	TireBrandId                 int64    `xml:"TireBrandId,omitempty" json:"TireBrandId,omitempty"` //nolint
 	TireBrandName               string   `xml:"TireBrandName,omitempty" json:"TireBrandName,omitempty"`
-	TireBrandTextId             int64    `xml:"TireBrandTextId,omitempty" json:"TireBrandTextId,omitempty"`
+	TireBrandTextId             int64    `xml:"TireBrandTextId,omitempty" json:"TireBrandTextId,omitempty"` //nolint
 	TireBrandEanCode            string   `xml:"TireBrandEanCode,omitempty" json:"TireBrandEanCode,omitempty"`
 	ProductCodeNumber           int64    `xml:"ProductCodeNumber,omitempty" json:"ProductCodeNumber,omitempty"`
 }

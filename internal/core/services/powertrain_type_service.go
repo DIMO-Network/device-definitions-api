@@ -141,7 +141,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		for _, item := range c.powerTrainRuleData.DrivlyList {
 			if len(item.Values) > 0 {
 				for _, value := range item.Values {
-					if value == drivlyModel.FuelType {
+					if value == drivlyModel.Fuel {
 						return item.Type, nil
 					}
 				}

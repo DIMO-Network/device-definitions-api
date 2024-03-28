@@ -304,11 +304,11 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		HardwareTemplateID: null.StringFromPtr(hardwareTemplateID),
 	}
 	// set external id's
-	extIds := []*coremodels.ExternalID{{
+	extIDs := []*coremodels.ExternalID{{
 		Vendor: source,
 		ID:     extID,
 	}}
-	_ = dd.ExternalIds.Marshal(extIds)
+	_ = dd.ExternalIds.Marshal(extIDs)
 
 	if metaData.Valid {
 		err = dd.Metadata.Marshal(metaData)

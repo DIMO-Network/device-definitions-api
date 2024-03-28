@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package models
 
 import (
@@ -37,6 +38,8 @@ type DeviceTypeAttribute struct {
 	Value       string   `json:"value"`
 	Option      []string `json:"options"`
 }
+
+// nolint:tagliatelle
 
 // VehicleInfo represents some standard vehicle specific properties stored in the metadata json field in DB
 type VehicleInfo struct {
