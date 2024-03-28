@@ -34,7 +34,6 @@ env:
   SERVICE_NAME: device-definitions-api
   JWT_KEY_SET_URL: https://auth.dev.dimo.zone/keys
   DEPLOYMENT_BASE_URL: https://device-definitions-api.dev.dimo.zone
-  TOR_PROXY_URL: socks5://tor.p2p:9050
   REDIS_USER: default
   REDIS_PORT: '6379'
   REDIS_TLS: true
@@ -49,6 +48,8 @@ env:
   FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
+  DATGROUP_WS_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
+  DATGROUP_WS_AUTH_URL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
 service:
   type: ClusterIP
   ports:
