@@ -49,7 +49,7 @@ func (ai *datGroupAPIService) GetVIN(vin, country string) (*GetVehicleIdentifica
 	}
 
 	var result GetVehicleIdentificationByVinResponse
-	err = soapCallHandleResponse(ai.Settings.DatGroupWSURL, "getVehicleIdentificationByVin", request, &result, token)
+	err = soapCallHandleResponse(ai.Settings.DatGroupURL, "getVehicleIdentificationByVin", request, &result, token)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (ai *datGroupAPIService) getToken() (string, error) {
 	}
 
 	var result GenerateTokenResponse
-	err := soapCallHandleResponse(ai.Settings.DatGroupWSAUTHURL, "generateToken", request, &result, "")
+	err := soapCallHandleResponse(ai.Settings.DatGroupAUTHURL, "generateToken", request, &result, "")
 	if err != nil {
 		return "", err
 	}

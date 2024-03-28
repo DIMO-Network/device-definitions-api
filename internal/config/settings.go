@@ -21,25 +21,25 @@ type Settings struct {
 	ElasticSearchDeviceStatusToken    string         `yaml:"ELASTIC_SEARCH_DEVICE_STATUS_TOKEN"`
 	IPFSNodeEndpoint                  string         `yaml:"IPFS_NODE_ENDPOINT"`
 	DrivlyAPIKey                      string         `yaml:"DRIVLY_API_KEY"`
-	DrivlyVINAPIURL                   string         `yaml:"DRIVLY_VIN_API_URL"`
-	DrivlyOfferAPIURL                 string         `yaml:"DRIVLY_OFFER_API_URL"`
+	DrivlyVINAPIURL                   string         `yaml:"DRIVLY_VIN_API_URL"`   //nolint
+	DrivlyOfferAPIURL                 string         `yaml:"DRIVLY_OFFER_API_URL"` //nolint
 	Redis                             redis.Settings `yaml:"REDIS"`
-	FuelAPIVehiclesEndpoint           string         `yaml:"FUEL_API_SEARCH_VEHICLES_ENDPOINT"`
-	FuelAPIImagesEndpoint             string         `yaml:"FUEL_API_SEARCH_IMAGES_ENDPOINT"`
+	FuelAPIVehiclesEndpoint           string         `yaml:"FUEL_API_VEHICLES_ENDPOINT"`
+	FuelAPIImagesEndpoint             string         `yaml:"FUEL_API_IMAGES_ENDPOINT"`
 	FuelAPIKey                        string         `yaml:"FUEL_API_KEY"`
 	NHTSARecallsFileURL               string         `yaml:"NHTSA_RECALLS_FILE_URL"`
-	VincarioAPIURL                    string         `yaml:"VINCARIO_API_URL"`
-	VincarioAPIKey                    string         `yaml:"VINCARIO_API_KEY"`
-	VincarioAPISecret                 string         `yaml:"VINCARIO_API_SECRET"`
+	VincarioAPIURL                    string         `yaml:"VINCARIO_API_URL"`    //nolint
+	VincarioAPIKey                    string         `yaml:"VINCARIO_API_KEY"`    //nolint
+	VincarioAPISecret                 string         `yaml:"VINCARIO_API_SECRET"` //nolint
 	AutoIsoAPIUid                     string         `yaml:"AUTO_ISO_API_UID"`
 	AutoIsoAPIKey                     string         `yaml:"AUTO_ISO_API_KEY"`
-	DatGroupWSURL                     string         `yaml:"DATGROUP_WS_URL"`
-	DatGroupWSAUTHURL                 string         `yaml:"DATGROUP_WS_AUTH_URL"`
-	DatGroupCustomerLogin             string         `yaml:"DATGROUP_WS_CUSTOMERLOGIN"`
-	DatGroupCustomerNumber            string         `yaml:"DATGROUP_WS_CUSTOMERNUMBER"`
-	DatGroupCustomerPassword          string         `yaml:"DATGROUP_WS_CUSTOMERPASSWORD"`
-	DatGroupInterfacePartnerNumber    string         `yaml:"DATGROUP_WS_INTERFACEPARTNERNUMBER"`
-	DatGroupInterfacePartnerSignature string         `yaml:"DATGROUP_WS_INTERFACEPARTNERSIGNATURE"`
+	DatGroupURL                       string         `yaml:"DAT_GROUP_URL"`
+	DatGroupAUTHURL                   string         `yaml:"DAT_GROUP_AUTHURL"`
+	DatGroupCustomerLogin             string         `yaml:"DAT_GROUP_CUSTOMER_LOGIN"`
+	DatGroupCustomerNumber            string         `yaml:"DAT_GROUP_CUSTOMER_NUMBER"`
+	DatGroupCustomerPassword          string         `yaml:"DAT_GROUP_CUSTOMER_PASSWORD"`
+	DatGroupInterfacePartnerNumber    string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_NUMBER"`
+	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
 }
 
 func (s *Settings) IsProd() bool {

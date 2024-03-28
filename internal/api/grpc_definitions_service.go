@@ -81,7 +81,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 	for _, deviceDefinition := range ddResult {
 		var ei map[string]string
 		var extIDs []*p_grpc.ExternalID
-		if err := deviceDefinition.ExternalIds.Unmarshal(&ei); err != nil {
+		if err := deviceDefinition.ExternalIDs.Unmarshal(&ei); err != nil {
 			for vendor, id := range ei {
 				extIDs = append(extIDs, &p_grpc.ExternalID{
 					Vendor: vendor,
@@ -680,7 +680,7 @@ func (s *GrpcDefinitionsService) GetDeviceTypesByID(ctx context.Context, in *p_g
 			Description:  prop.Description,
 			Required:     prop.Required,
 			DefaultValue: prop.DefaultValue,
-			Options:      prop.Option,
+			Options:      prop.Options,
 		})
 	}
 
@@ -707,7 +707,7 @@ func (s *GrpcDefinitionsService) GetDeviceTypes(ctx context.Context, _ *emptypb.
 				Description:  attr.Description,
 				Required:     attr.Required,
 				DefaultValue: attr.DefaultValue,
-				Options:      attr.Option,
+				Options:      attr.Options,
 			}
 		}
 
@@ -744,7 +744,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceType(ctx context.Context, in *p_grp
 				Type:         attr.Type,
 				Label:        attr.Label,
 				Description:  attr.Description,
-				Option:       attr.Options,
+				Options:      attr.Options,
 				Required:     attr.Required,
 				DefaultValue: attr.DefaultValue,
 			})
@@ -782,7 +782,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionHardwareTemplateByID(ctx con
 }
 
 func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIdsQuery{
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIDsQuery{
 		DeviceDefinitionID: in.Ids,
 	})
 

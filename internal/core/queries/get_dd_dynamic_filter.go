@@ -48,7 +48,7 @@ type DeviceDefinitionQueryResponse struct {
 	ExternalID   null.String `json:"external_id"`
 	DeviceMakeID string      `json:"device_make_id"`
 	Make         string      `json:"make"`
-	ExternalIds  null.JSON   `json:"external_ids"`
+	ExternalIDs  null.JSON   `json:"external_ids"`
 }
 
 func (*GetDeviceDefinitionByDynamicFilterQuery) Key() string {
@@ -150,6 +150,6 @@ func buildDeviceDefinitionQueryResponse(dd *models.DeviceDefinition) DeviceDefin
 		DeviceMakeID: dd.DeviceMakeID,
 		Make:         dd.R.DeviceMake.Name,
 		Metadata:     dd.Metadata,
-		ExternalIds:  dd.ExternalIds,
+		ExternalIDs:  dd.ExternalIds,
 	}
 }

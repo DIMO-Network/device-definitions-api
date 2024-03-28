@@ -44,12 +44,12 @@ env:
   IPFS_NODE_ENDPOINT: http://cluster-ipfs-cluster.web3.svc.cluster.local:9094
   DRIVLY_VIN_API_URL: https://vin.dev.driv.ly
   DRIVLY_OFFER_API_URL: https://offers.dev.driv.ly
-  FUEL_API_SEARCH_VEHICLES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicles
-  FUEL_API_SEARCH_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
+  FUEL_API_VEHICLES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicles
+  FUEL_API_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
-  DATGROUP_WS_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
-  DATGROUP_WS_AUTH_URL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
+  DAT_GROUP_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
+  DAT_GROUP_AUTHURL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
 service:
   type: ClusterIP
   ports:
