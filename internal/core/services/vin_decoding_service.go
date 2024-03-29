@@ -114,6 +114,8 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			datGroupInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
+			} else if datGroupInfo == nil {
+				localLog.Warn().Msg("datgroup returned nil object, but no error")
 			} else {
 				result, err = buildFromDATGroup(datGroupInfo)
 				if err != nil {

@@ -30,7 +30,9 @@ func NewDATGroupAPIService(settings *config.Settings, logger *zerolog.Logger) DA
 }
 
 func (ai *datGroupAPIService) GetVIN(vin, country string) (*GetVehicleIdentificationByVinResponse, error) {
-
+	if country == "" {
+		country = "USA"
+	}
 	token, err := ai.getToken()
 	if err != nil {
 		return nil, err

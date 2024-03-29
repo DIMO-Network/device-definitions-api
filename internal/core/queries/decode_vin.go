@@ -201,7 +201,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.VincarioProvider, qry.Country)
 		}
 	} else {
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first, then vincario
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in
