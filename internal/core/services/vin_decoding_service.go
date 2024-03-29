@@ -110,21 +110,19 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			result.MetaData = metadata
 		}
 		// if nothing from drivly, try DATGroup
-		if result.Source == "" {
+		if result == nil || result.Source == "" {
 			datGroupInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
-			} else if datGroupInfo == nil {
-				localLog.Warn().Msg("datgroup returned nil object, but no error")
 			} else {
 				result, err = buildFromDATGroup(datGroupInfo)
 				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from DATGroup data")
+					localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
 				}
 			}
 		}
-		// if nothing from drivly, try autoiso
-		if result.Source == "" {
+		// if nothing from datgroup, try autoiso
+		if result == nil || result.Source == "" {
 			autoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with autoiso")
@@ -136,7 +134,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			}
 		}
 		// if nothing from autoiso try vincario
-		if result.Source == "" {
+		if result == nil || result.Source == "" {
 			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
@@ -149,7 +147,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		}
 	}
 	// could not decode anything
-	if result.Source == "" {
+	if result == nil || result.Source == "" {
 		return nil, fmt.Errorf("could not decode from any provider for vin: %s", vin)
 	}
 	if result.Year == 0 {

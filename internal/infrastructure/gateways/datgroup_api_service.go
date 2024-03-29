@@ -3,6 +3,7 @@ package gateways
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -54,6 +55,10 @@ func (ai *datGroupAPIService) GetVIN(vin, country string) (*GetVehicleIdentifica
 	err = soapCallHandleResponse(ai.Settings.DatGroupURL, "getVehicleIdentificationByVin", request, &result, token)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(result.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier) == 0 {
+		return nil, fmt.Errorf("datgroup dosier response was empty")
 	}
 
 	return &result, nil
