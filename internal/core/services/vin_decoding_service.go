@@ -298,11 +298,14 @@ func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*m
 		return nil, fmt.Errorf("vin info was nil")
 	}
 
+	if len(info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier) == 0 {
+		return nil, fmt.Errorf("no dosier resp from datgroup: %s", string(raw))
+	}
+
 	dossier := info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier[0].Vehicle
 	v := &models.VINDecodingInfoData{
-		VIN:  dossier.VINResult.VINVehicle.VINumber.VinCode,
-		Year: int32(dossier.BuildYear),
-		//Year:       2022,
+		VIN:        dossier.VINResult.VINVehicle.VINumber.VinCode,
+		Year:       int32(dossier.BuildYear),
 		Make:       strings.TrimSpace(dossier.ManufacturerName),
 		Model:      strings.TrimSpace(dossier.BaseModelName),
 		Source:     models.DATGroupProvider,
