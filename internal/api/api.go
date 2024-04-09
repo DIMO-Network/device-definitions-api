@@ -56,6 +56,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
 	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
 	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
+	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
