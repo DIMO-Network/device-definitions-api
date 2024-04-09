@@ -4,11 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"

@@ -4,8 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"testing"
+
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -94,8 +95,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Exists
 	dm := setupDeviceMake(s.T(), s.pdb, mk)
 	_ = setupAutoPiIntegration(s.T(), s.pdb)
 
-	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trx_hash_hex, nil)
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
 	dd, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
 	s.NoError(err)
@@ -157,8 +158,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 	}
 	s.NoError(i.Insert(ctx, s.pdb.DBS().Writer, boil.Infer()))
 
-	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trx_hash_hex, nil)
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
 	dd, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
 	s.NoError(err)
@@ -212,8 +213,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_New
 	dd.R = dd.R.NewStruct()
 	dd.R.DeviceMake = &dm
 
-	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any()).Return(&trx_hash_hex, nil)
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{})
 
 	s.NoError(err)
@@ -237,8 +238,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Exi
 	dd.Year = int16(newYear)
 	dd.Source = null.StringFrom(newSource)
 
-	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trx_hash_hex, nil)
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, []*models.DeviceIntegration{})
 
 	s.NoError(err)
@@ -273,8 +274,8 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 		ExternalStyleID:    ksuid.New().String(),
 	})
 
-	trx_hash_hex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any()).Return(&trx_hash_hex, nil)
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
 	dd2, err := s.repository.CreateOrUpdate(ctx, dd, newStyles, []*models.DeviceIntegration{})
 

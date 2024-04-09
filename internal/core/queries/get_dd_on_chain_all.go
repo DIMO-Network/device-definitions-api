@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -16,12 +17,12 @@ import (
 )
 
 type GetAllDeviceDefinitionOnChainQuery struct {
-	MakeSlug           string `json:"make_slug"`
-	DeviceDefinitionID string `json:"device_definition_id"`
+	MakeSlug           string `json:"makeSlug"`
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	Year               int    `json:"year"`
 	Model              string `json:"model"`
-	PageIndex          int32  `json:"page_index"`
-	PageSize           int32  `json:"page_size"`
+	PageIndex          int32  `json:"pageIndex"`
+	PageSize           int32  `json:"pageSize"`
 }
 
 func (*GetAllDeviceDefinitionOnChainQuery) Key() string { return "GetAllDeviceDefinitionOnChainQuery" }
@@ -42,7 +43,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 
 	qry := query.(*GetAllDeviceDefinitionOnChainQuery)
 
-	make, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(qry.MakeSlug)).One(ctx, ch.DBS().Reader)
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(qry.MakeSlug)).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
@@ -55,7 +56,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 		}
 	}
 
-	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(ctx, make.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year, qry.PageIndex, qry.PageSize)
+	all, err := ch.DeviceDefinitionOnChainService.GetDeviceDefinitions(ctx, dm.TokenID, qry.DeviceDefinitionID, qry.Model, qry.Year, qry.PageIndex, qry.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 	for _, v := range all {
 
 		v.R = v.R.NewStruct()
-		v.R.DeviceMake = make
+		v.R.DeviceMake = dm
 		v.R.DeviceType = &models.DeviceType{
 			Metadatakey: common.VehicleMetadataKey,
 		}

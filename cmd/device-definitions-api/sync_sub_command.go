@@ -5,8 +5,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"os"
+
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/google/subcommands"

@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate modesl
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/gofiber/fiber/v2"
-	"strconv"
 )
 
 // GetDeviceDefinitionV2ByID godoc
@@ -23,8 +24,8 @@ import (
 func GetDeviceDefinitionV2ByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		make := c.Params("make")
-		query := &queries.GetDeviceDefinitionOnChainByIDQuery{DeviceDefinitionID: id, MakeSlug: make}
+		dm := c.Params("make")
+		query := &queries.GetDeviceDefinitionOnChainByIDQuery{DeviceDefinitionID: id, MakeSlug: dm}
 
 		result, _ := m.Send(c.UserContext(), query)
 
@@ -45,7 +46,7 @@ func GetDeviceDefinitionV2ByID(m mediator.Mediator) fiber.Handler {
 // @Router /v2/device-definitions/{make}/all [get]
 func GetDeviceDefinitionV2All(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		make := c.Params("make")
+		dm := c.Params("make")
 		model := c.Params("model")
 		yearStr := c.Params("year")
 		pageIndexStr := c.Params("pageIndex")
@@ -74,7 +75,7 @@ func GetDeviceDefinitionV2All(m mediator.Mediator) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).SendString("year must be a valid integer")
 		}
 
-		query := &queries.GetAllDeviceDefinitionOnChainQuery{MakeSlug: make,
+		query := &queries.GetAllDeviceDefinitionOnChainQuery{MakeSlug: dm,
 			Model:     model,
 			Year:      year,
 			PageIndex: pageIndex,

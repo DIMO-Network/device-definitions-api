@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/ethereum/go-ethereum/ethclient"
 

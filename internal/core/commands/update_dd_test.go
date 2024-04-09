@@ -3,8 +3,9 @@ package commands
 import (
 	"context"
 	_ "embed"
-	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"testing"
+
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"

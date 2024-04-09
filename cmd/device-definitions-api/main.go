@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
+	"os"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
-	"log"
-	"os"
 
 	"github.com/google/subcommands"
 
@@ -71,17 +72,17 @@ func createSender(ctx context.Context, settings *config.Settings, logger *zerolo
 		}
 		logger.Info().Str("address", send.Address().Hex()).Msg("Loaded private key account.")
 		return send, nil
-	} else {
-		awsconf, err := awsconfig.LoadDefaultConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		kmsc := kms.NewFromConfig(awsconf)
-		send, err := sender.FromKMS(ctx, kmsc, settings.KMSKeyID)
-		if err != nil {
-			return nil, err
-		}
-		logger.Info().Msgf("Loaded KMS key %s, address %s.", settings.KMSKeyID, send.Address().Hex())
-		return send, nil
 	}
+
+	awsconf, err := awsconfig.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	kmsc := kms.NewFromConfig(awsconf)
+	send, err := sender.FromKMS(ctx, kmsc, settings.KMSKeyID)
+	if err != nil {
+		return nil, err
+	}
+	logger.Info().Msgf("Loaded KMS key %s, address %s.", settings.KMSKeyID, send.Address().Hex())
+	return send, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -40,7 +41,7 @@ func (ch GetDeviceDefinitionOnChainByIDQueryHandler) Handle(ctx context.Context,
 
 	qry := query.(*GetDeviceDefinitionOnChainByIDQuery)
 
-	make, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(qry.MakeSlug)).One(ctx, ch.DBS().Reader)
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(qry.MakeSlug)).One(ctx, ch.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{
@@ -53,7 +54,7 @@ func (ch GetDeviceDefinitionOnChainByIDQueryHandler) Handle(ctx context.Context,
 		}
 	}
 
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID, services.UseOnChain(make))
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID, services.UseOnChain(dm))
 
 	if err != nil {
 		return nil, err
