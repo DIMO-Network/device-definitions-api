@@ -4,6 +4,8 @@ import (
 	"context"
 	_ "embed"
 
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -28,13 +30,14 @@ type CreateDeviceIntegrationCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                           *gomock.Controller
-	pdb                            db.Store
-	container                      testcontainers.Container
-	mockRepository                 *repositoryMock.MockDeviceIntegrationRepository
-	mockDeviceDefinitionRepository *repositoryMock.MockDeviceDefinitionRepository
-	mockDeviceDefinitionCache      *mockService.MockDeviceDefinitionCacheService
-	ctx                            context.Context
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	mockRepository                     *repositoryMock.MockDeviceIntegrationRepository
+	mockDeviceDefinitionRepository     *repositoryMock.MockDeviceDefinitionRepository
+	mockDeviceDefinitionCache          *mockService.MockDeviceDefinitionCacheService
+	ctx                                context.Context
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
 	queryHandler CreateDeviceIntegrationCommandHandler
 }
@@ -53,6 +56,7 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) SetupTest() {
 
 	s.mockDeviceDefinitionRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
 	s.mockRepository = repositoryMock.NewMockDeviceIntegrationRepository(s.ctrl)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.queryHandler = NewCreateDeviceIntegrationCommandHandler(s.mockRepository, s.pdb.DBS, s.mockDeviceDefinitionCache, s.mockDeviceDefinitionRepository)
 }
@@ -72,7 +76,7 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) TestCreateDeviceIntegration
 	mk := "Toyota"
 	year := 2020
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
-	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 	cmdHandler := NewCreateDeviceIntegrationCommandHandler(s.mockRepository, s.pdb.DBS, s.mockDeviceDefinitionCache, repo)
 
 	di := &models.DeviceIntegration{

@@ -10,6 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,12 +23,13 @@ type CacheDeviceDefinitionSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl       *gomock.Controller
-	pdb        db.Store
-	container  testcontainers.Container
-	repository repositories.DeviceDefinitionRepository
-	mockRedis  *mocks.MockRedisCacheService
-	ctx        context.Context
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	repository                         repositories.DeviceDefinitionRepository
+	mockRedis                          *mocks.MockRedisCacheService
+	ctx                                context.Context
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
 	cache DeviceDefinitionCacheService
 }
@@ -49,9 +51,10 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
 	s.mockRedis = mocks.NewMockRedisCacheService(s.ctrl)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
-	s.repository = repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
-	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository)
+	s.repository = repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
+	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository, s.mockDeviceDefinitionOnChainService)
 }
 
 func (s *CacheDeviceDefinitionSuite) TearDownTest() {

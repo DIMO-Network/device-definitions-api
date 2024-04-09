@@ -8,14 +8,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	repomodels "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/shared/redis"
 )
 
 type DeviceDefinitionCacheService interface {
-	GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error)
+	GetDeviceDefinitionByID(ctx context.Context, id string, options ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	DeleteDeviceDefinitionCacheByID(ctx context.Context, id string)
@@ -24,12 +28,13 @@ type DeviceDefinitionCacheService interface {
 }
 
 type deviceDefinitionCacheService struct {
-	Cache      redis.CacheService
-	Repository repositories.DeviceDefinitionRepository
+	Cache                          redis.CacheService
+	Repository                     repositories.DeviceDefinitionRepository
+	DeviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
-func NewDeviceDefinitionCacheService(cache redis.CacheService, repository repositories.DeviceDefinitionRepository) DeviceDefinitionCacheService {
-	return &deviceDefinitionCacheService{Cache: cache, Repository: repository}
+func NewDeviceDefinitionCacheService(cache redis.CacheService, repository repositories.DeviceDefinitionRepository, deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DeviceDefinitionCacheService {
+	return &deviceDefinitionCacheService{Cache: cache, Repository: repository, DeviceDefinitionOnChainService: deviceDefinitionOnChainService}
 }
 
 const (
@@ -39,7 +44,12 @@ const (
 	cacheDeviceDefinitionSlugKey = "device-definition-by-slug-"
 )
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string, opts ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error) {
+
+	params := defaultGetDeviceDefinitionCacheOptions
+	for _, opt := range opts {
+		opt(&params)
+	}
 
 	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionKey, id)
 	cacheData := c.Cache.Get(ctx, cache)
@@ -53,22 +63,49 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 			_ = json.Unmarshal(val, rp)
 			return rp, nil
 		}
-
 	}
 
-	dd, err := c.Repository.GetByID(ctx, id)
+	var dd *repomodels.DeviceDefinition
+	var err error
 
-	if err != nil {
-		return nil, err
+	if !params.UseOnChainData {
+		dd, err = c.Repository.GetByID(ctx, id)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if dd == nil {
+			return nil, nil
+		}
+
+		rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if dd == nil {
-		return nil, nil
-	}
+	if params.UseOnChainData {
+		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.Make.TokenID, id)
 
-	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		if dd == nil {
+			return nil, nil
+		}
+
+		dd.R = dd.R.NewStruct()
+		dd.R.DeviceMake = params.Make
+		dd.R.DeviceType = &repomodels.DeviceType{
+			Metadatakey: common.VehicleMetadataKey,
+		}
+		rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	rpJSON, _ := json.Marshal(rp)
@@ -162,4 +199,22 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int) {
 	cache := fmt.Sprintf("%s-%s-%d", cacheDeviceDefinitionSlugKey, slug, year)
 	c.Cache.Del(ctx, cache)
+}
+
+type GetDeviceDefinitionCacheOptions struct {
+	UseOnChainData bool
+	Make           *repomodels.DeviceMake
+}
+
+var defaultGetDeviceDefinitionCacheOptions = GetDeviceDefinitionCacheOptions{
+	UseOnChainData: false,
+}
+
+type GetDeviceDefinitionOption func(*GetDeviceDefinitionCacheOptions)
+
+func UseOnChain(deviceMake *repomodels.DeviceMake) GetDeviceDefinitionOption {
+	return func(opts *GetDeviceDefinitionCacheOptions) {
+		opts.UseOnChainData = true
+		opts.Make = deviceMake
+	}
 }

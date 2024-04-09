@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"testing"
 
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -26,13 +28,14 @@ type UpdateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions
 
-	ctrl                      *gomock.Controller
-	pdb                       db.Store
-	container                 testcontainers.Container
-	ctx                       context.Context
-	mockDeviceDefinitionCache *mockService.MockDeviceDefinitionCacheService
-	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
-	commandHandler            UpdateDeviceDefinitionCommandHandler
+	ctrl                               *gomock.Controller
+	pdb                                db.Store
+	container                          testcontainers.Container
+	ctx                                context.Context
+	mockDeviceDefinitionCache          *mockService.MockDeviceDefinitionCacheService
+	mockRepository                     *repositoryMock.MockDeviceDefinitionRepository
+	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
+	commandHandler                     UpdateDeviceDefinitionCommandHandler
 }
 
 func TestUpdateDeviceDefinitionCommandHandler(t *testing.T) {
@@ -50,6 +53,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 	s.Assertions = require.New(s.T())
 	s.ctrl = gomock.NewController(s.T())
 	s.mockDeviceDefinitionCache = mockService.NewMockDeviceDefinitionCacheService(s.ctrl)
+	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
@@ -69,9 +73,11 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	year := 2020
 	// using real DB for integration test
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
-	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS)
+	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
 	cmdHandler := NewUpdateDeviceDefinitionCommandHandler(repo, s.pdb.DBS, s.mockDeviceDefinitionCache)
 
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)

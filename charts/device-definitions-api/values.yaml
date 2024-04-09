@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 348f3e5
+  tag: 2992f9d
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -50,6 +50,11 @@ env:
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
   DAT_GROUP_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
   DAT_GROUP_AUTHURL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
+  PRIVATE_KEY_MODE: false
+  ETHEREUM_SEND_TRANSACTION: true
+  TABLELAND_API_GATEWAY: https://testnets.tableland.network/
+  ETHEREUM_REGISTRY_ADDRESS: 0x4De1bCf2B7E851E31216fC07989caA902A604784
+
 service:
   type: ClusterIP
   ports:

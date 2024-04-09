@@ -129,3 +129,11 @@ To check what cli version you have installed: `swag --version`.
 
 If you update all libraries, it will also update a decimal library that breaks sqlboiler.
 You want this version: `github.com/ericlagergren/decimal v0.0.0-20181231230500-73749d4874d5` - replace it in go.mod file
+
+## Go ABI
+
+To regenerate the Go bindings, you would run from [dimo-identity repository](https://github.com/DIMO-Network/dimo-identity)
+
+```sh
+abigen --abi abis/DimoRegistry.json --out registry.go --pkg contracts --type Registry
+```

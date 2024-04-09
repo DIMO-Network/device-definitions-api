@@ -121,7 +121,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	const makeID = "Test"
 	const country = "US"
 
-	vinInfoResp := &gateways.VincarioInfoResponse{
+	vincarioResp := &gateways.VincarioInfoResponse{
 		VIN:                vin,
 		ModelYear:          2021,
 		Make:               makeID,
@@ -137,8 +137,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	}
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockDATGroupAPIService.EXPECT().GetVIN(vin, country).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	// vincario is the last fallback
-	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vinInfoResp, nil)
+	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vincarioResp, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
