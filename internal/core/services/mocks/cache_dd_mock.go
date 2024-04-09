@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	services "github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -76,18 +77,23 @@ func (mr *MockDeviceDefinitionCacheServiceMockRecorder) DeleteDeviceDefinitionCa
 }
 
 // GetDeviceDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string) (*models.GetDeviceDefinitionQueryResult, error) {
+func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string, options ...services.GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitionByID", ctx, id)
+	varargs := []any{ctx, id}
+	for _, a := range options {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetDeviceDefinitionByID", varargs...)
 	ret0, _ := ret[0].(*models.GetDeviceDefinitionQueryResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDeviceDefinitionByID indicates an expected call of GetDeviceDefinitionByID.
-func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionByID(ctx, id any) *gomock.Call {
+func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionByID(ctx, id any, options ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionByID), ctx, id)
+	varargs := append([]any{ctx, id}, options...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionByID), varargs...)
 }
 
 // GetDeviceDefinitionByMakeModelAndYears mocks base method.

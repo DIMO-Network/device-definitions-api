@@ -54,7 +54,7 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.repository = repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
-	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository)
+	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository, s.mockDeviceDefinitionOnChainService)
 }
 
 func (s *CacheDeviceDefinitionSuite) TearDownTest() {
