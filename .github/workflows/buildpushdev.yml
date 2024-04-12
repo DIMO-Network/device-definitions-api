@@ -40,7 +40,7 @@ jobs:
           tags: dimozone/device-definitions-api:${{ steps.slug.outputs.BUILD_TAG }}, dimozone/device-definitions-api:latest
 
       - name: Update Image Version in the related HelmChart values.yaml
-        uses: fjogeleit/yaml-update-action@v0.14.0
+        uses: fjogeleit/yaml-update-action@v1
         with:
           valueFile: 'charts/device-definitions-api/values.yaml'
           propertyPath: 'image.tag'
