@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -107,7 +109,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			DeviceMakeID:       command.DeviceMakeID,
 			Model:              command.Model,
 			Year:               command.Year,
-			ModelSlug:          common.SlugString(command.Model),
+			ModelSlug:          shared.SlugString(command.Model),
 			HardwareTemplateID: null.StringFrom(command.HardwareTemplateID),
 		}
 	}

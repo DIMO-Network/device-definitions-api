@@ -7,7 +7,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/shared/db"
@@ -34,7 +35,7 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make str
 	if len(make) < 2 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid make name for GetOrCreate: %s", make)}
 	}
-	makeSlug := common.SlugString(make)
+	makeSlug := shared.SlugString(make)
 	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, r.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
