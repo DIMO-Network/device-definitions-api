@@ -3,7 +3,8 @@ package commands
 import (
 	"context"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -38,7 +39,7 @@ func (ch CreateDeviceTypeCommandHandler) Handle(ctx context.Context, query media
 	dt := models.DeviceType{}
 	dt.ID = command.ID
 	dt.Name = command.Name
-	dt.Metadatakey = common.SlugString(command.Name)
+	dt.Metadatakey = shared.SlugString(command.Name)
 
 	err := dt.Insert(ctx, ch.DBS().Writer, boil.Infer())
 

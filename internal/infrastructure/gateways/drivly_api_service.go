@@ -138,6 +138,6 @@ type DrivlyVINResponse struct {
 
 // GetExternalID builds something we can use as an external ID that is drivly specific, at the MMY level (not for style)
 func (vir *DrivlyVINResponse) GetExternalID() string {
-	// cant use common.SlugString due to import cycle
+	// cant use shared.SlugString due to import cycle
 	return strings.ReplaceAll(strings.ToLower(fmt.Sprintf("%s-%s-%s", vir.Make, vir.Model, vir.Year)), " ", "")
 }

@@ -238,7 +238,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// now match the model for the dd id
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
-		models.DeviceDefinitionWhere.ModelSlug.EQ(common.SlugString(vinInfo.Model))).
+		models.DeviceDefinitionWhere.ModelSlug.EQ(shared.SlugString(vinInfo.Model))).
 		One(ctx, dc.dbs().Reader)
 
 	ddExists := true
@@ -247,7 +247,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if errors.Is(err, sql.ErrNoRows) {
 			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
-				common.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
+				shared.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
 				dbWMI.DeviceMakeID,
 				vinInfo.Model,
 				int(resp.Year),
@@ -260,7 +260,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
 			}
 			ddExists = false
-			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", common.SlugString(vinInfo.Model))
+			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", shared.SlugString(vinInfo.Model))
 		} else {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 			return nil, err
@@ -294,7 +294,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
-		externalStyleID := common.SlugString(vinInfo.StyleName)
+		externalStyleID := shared.SlugString(vinInfo.StyleName)
 		// see if match existing style exists. First search is based on db device_definition_style_idx
 		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
 			models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
@@ -329,7 +329,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				localLog.Err(errStyle).Msgf("error creating style with values: %+v", style)
 				return nil, errStyle
 			}
-			localLog.Info().Msgf("creating new device_style as did not find one for: %s", common.SlugString(vinInfo.StyleName))
+			localLog.Info().Msgf("creating new device_style as did not find one for: %s", shared.SlugString(vinInfo.StyleName))
 			resp.DeviceStyleId = style.ID
 
 		} else if err == nil {

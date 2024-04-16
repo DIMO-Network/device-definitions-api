@@ -9,6 +9,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -148,7 +150,7 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 		Year:         int16(year),
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    common.SlugString(model),
+		ModelSlug:    shared.SlugString(model),
 	}
 	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -169,7 +171,7 @@ func SetupCreateDeviceDefinitionTeslaModel(t *testing.T, dm models.DeviceMake, m
 		Year:         int16(year),
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    common.SlugString(model),
+		ModelSlug:    shared.SlugString(model),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
@@ -204,7 +206,7 @@ func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMa
 		Year:         int16(year),
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    common.SlugString(model),
+		ModelSlug:    shared.SlugString(model),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
@@ -239,7 +241,7 @@ func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, d
 		Year:         int16(year),
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    common.SlugString(model),
+		ModelSlug:    shared.SlugString(model),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
@@ -282,7 +284,7 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	dm := models.DeviceMake{
 		ID:       ksuid.New().String(),
 		Name:     mk,
-		NameSlug: common.SlugString(mk),
+		NameSlug: shared.SlugString(mk),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")

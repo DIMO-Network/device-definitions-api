@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -15,11 +14,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 )
 
 func JSONOrDefault(j null.JSON) json.RawMessage {
@@ -76,20 +70,6 @@ func PrintMMY(definition *repoModel.DeviceDefinition, color string, includeSourc
 	}
 	return fmt.Sprintf("%s%d %s %s %s(source: %s)%s",
 		color, definition.Year, mk, definition.Model, Purple, definition.Source.String, Reset)
-}
-
-func SlugString(term string) string {
-
-	lowerCase := cases.Lower(language.English, cases.NoLower)
-	lowerTerm := lowerCase.String(term)
-
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	cleaned, _, _ := transform.String(t, lowerTerm)
-	cleaned = strings.ReplaceAll(cleaned, " ", "-")
-	cleaned = strings.ReplaceAll(cleaned, "_", "-")
-
-	return cleaned
-
 }
 
 func BuildExternalIDs(externalIDsJSON null.JSON) []*models.ExternalID {

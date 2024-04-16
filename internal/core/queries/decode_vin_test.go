@@ -162,7 +162,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
-	s.Assert().Equal(ds.ExternalStyleID, common.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(ds.ExternalStyleID, shared.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
 
 	// validate metadata was updated on DD
 	ddUpdated, err := models.DeviceDefinitions().One(s.ctx, s.pdb.DBS().Reader)
@@ -271,7 +271,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
-	s.Assert().Equal(ds.ExternalStyleID, common.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(ds.ExternalStyleID, shared.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
 	s.Assert().Equal(styleLevelPT, gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).Str)
 	// validate vin number was create
 	vn, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)

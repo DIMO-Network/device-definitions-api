@@ -7,7 +7,8 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -59,7 +60,7 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 	if dm == nil {
 		dm = &models.DeviceMake{
 			ID:       command.ID,
-			NameSlug: common.SlugString(command.Name),
+			NameSlug: shared.SlugString(command.Name),
 		}
 	}
 

@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/DIMO-Network/shared"
+
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -81,7 +83,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 	if !powerTrainExists {
-		powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, common.SlugString(command.Make), common.SlugString(command.Model), nil, null.JSON{}, null.JSON{})
+		powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, shared.SlugString(command.Make), shared.SlugString(command.Model), nil, null.JSON{}, null.JSON{})
 		if err != nil {
 			return nil, &exceptions.InternalError{
 				Err: fmt.Errorf("failed to get powertraintype"),

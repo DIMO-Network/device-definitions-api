@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/DIMO-Network/shared"
+
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -207,7 +209,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_New
 		Source:       null.StringFrom(source),
 		Year:         int16(year),
 		Verified:     false,
-		ModelSlug:    common.SlugString(model),
+		ModelSlug:    shared.SlugString(model),
 	}
 
 	dd.R = dd.R.NewStruct()
@@ -437,7 +439,7 @@ func Test_slugString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := common.SlugString(tt.term); got != tt.want {
+			if got := shared.SlugString(tt.term); got != tt.want {
 				t.Errorf("slugString() = %v, want %v", got, tt.want)
 			}
 		})

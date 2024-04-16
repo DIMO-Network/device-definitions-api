@@ -40,7 +40,7 @@ func BulkDecodeVIN(m mediator.Mediator) fiber.Handler {
 	}
 }
 
-// BulkDecodeVIN CSV godoc
+// BulkDecodeVINCsv godoc
 // @Summary gets a list of decoded vins in csv format.
 // @ID BulkDecodeVINCSV
 // @Description decodes a list of VINs

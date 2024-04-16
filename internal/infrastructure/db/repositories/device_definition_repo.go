@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DIMO-Network/shared"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -279,7 +281,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
 				Name:     makeOrID,
-				NameSlug: common.SlugString(makeOrID),
+				NameSlug: shared.SlugString(makeOrID),
 			}
 			err = m.Insert(ctx, tx, boil.Infer())
 			if err != nil {
@@ -301,7 +303,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		Year:               int16(year),
 		Source:             null.StringFrom(source),
 		Verified:           verified,
-		ModelSlug:          common.SlugString(model),
+		ModelSlug:          shared.SlugString(model),
 		DeviceTypeID:       null.StringFrom(deviceTypeID),
 		HardwareTemplateID: null.StringFromPtr(hardwareTemplateID),
 	}
