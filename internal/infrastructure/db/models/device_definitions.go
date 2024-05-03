@@ -39,6 +39,7 @@ type DeviceDefinition struct {
 	ExternalIds        null.JSON   `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
 	HardwareTemplateID null.String `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 	TRXHashHex         null.String `boil:"trx_hash_hex" json:"trx_hash_hex,omitempty" toml:"trx_hash_hex" yaml:"trx_hash_hex,omitempty"`
+	NameSlug           null.String `boil:"name_slug" json:"name_slug,omitempty" toml:"name_slug" yaml:"name_slug,omitempty"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -60,6 +61,7 @@ var DeviceDefinitionColumns = struct {
 	ExternalIds        string
 	HardwareTemplateID string
 	TRXHashHex         string
+	NameSlug           string
 }{
 	ID:                 "id",
 	Model:              "model",
@@ -76,6 +78,7 @@ var DeviceDefinitionColumns = struct {
 	ExternalIds:        "external_ids",
 	HardwareTemplateID: "hardware_template_id",
 	TRXHashHex:         "trx_hash_hex",
+	NameSlug:           "name_slug",
 }
 
 var DeviceDefinitionTableColumns = struct {
@@ -94,6 +97,7 @@ var DeviceDefinitionTableColumns = struct {
 	ExternalIds        string
 	HardwareTemplateID string
 	TRXHashHex         string
+	NameSlug           string
 }{
 	ID:                 "device_definitions.id",
 	Model:              "device_definitions.model",
@@ -110,6 +114,7 @@ var DeviceDefinitionTableColumns = struct {
 	ExternalIds:        "device_definitions.external_ids",
 	HardwareTemplateID: "device_definitions.hardware_template_id",
 	TRXHashHex:         "device_definitions.trx_hash_hex",
+	NameSlug:           "device_definitions.name_slug",
 }
 
 // Generated where
@@ -268,6 +273,7 @@ var DeviceDefinitionWhere = struct {
 	ExternalIds        whereHelpernull_JSON
 	HardwareTemplateID whereHelpernull_String
 	TRXHashHex         whereHelpernull_String
+	NameSlug           whereHelpernull_String
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:              whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
@@ -284,6 +290,7 @@ var DeviceDefinitionWhere = struct {
 	ExternalIds:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"external_ids\""},
 	HardwareTemplateID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"hardware_template_id\""},
 	TRXHashHex:         whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"trx_hash_hex\""},
+	NameSlug:           whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"name_slug\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
@@ -384,9 +391,9 @@ func (r *deviceDefinitionR) GetVinNumbers() VinNumberSlice {
 type deviceDefinitionL struct{}
 
 var (
-	deviceDefinitionAllColumns            = []string{"id", "model", "year", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex"}
+	deviceDefinitionAllColumns            = []string{"id", "model", "year", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex", "name_slug"}
 	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex"}
+	deviceDefinitionColumnsWithDefault    = []string{"metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex", "name_slug"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )

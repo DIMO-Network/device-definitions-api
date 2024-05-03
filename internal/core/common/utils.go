@@ -134,6 +134,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	}
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
+		NameSlug:           dd.NameSlug.String,
 		ExternalID:         dd.ExternalID.String,
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		Source:             dd.Source.String,
@@ -369,6 +370,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {
 	rp := &grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: dd.DeviceDefinitionID,
+		NameSlug:           dd.NameSlug,
 		ExternalId:         dd.ExternalID,
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,

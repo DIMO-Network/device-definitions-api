@@ -450,7 +450,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		}
 
 		// Create DD onchain
-		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
 			localLog.Err(err).Msg("")
 		}

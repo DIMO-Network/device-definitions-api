@@ -11,6 +11,7 @@ import (
 
 type GetDeviceDefinitionQueryResult struct {
 	DeviceDefinitionID string        `json:"deviceDefinitionId"`
+	NameSlug           string        `json:"nameSlug"`
 	ExternalID         string        `json:"external_id"`
 	Name               string        `json:"name"`
 	ImageURL           string        `json:"imageUrl"`

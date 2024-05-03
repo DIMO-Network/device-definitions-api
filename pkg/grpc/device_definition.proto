@@ -35,6 +35,7 @@ message GetDeviceDefinitionItemResponse {
   repeated DeviceTypeAttribute device_attributes = 12;
   repeated ExternalID external_ids = 13;
   string hardware_template_id = 14;
+  string name_slug = 15;
 }
 
 message GetDevicesMMYResponse {
@@ -47,6 +48,7 @@ message GetDevicesMMYItemResponse {
   int32 year = 3;
   string id = 4;
   string hardware_template_id = 5;
+  string name_slug = 6;
 }
 
 message ExternalID {
@@ -298,6 +300,7 @@ message FilterDeviceDefinitionsReponse {
   string device_make_id = 11;
   string make = 12;
   repeated ExternalID external_ids = 13;
+  string name_slug = 14;
 }
 
 message CreateDeviceStyleRequest {

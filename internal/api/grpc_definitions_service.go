@@ -91,6 +91,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 		}
 		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
 			Id:           deviceDefinition.ID,
+			NameSlug:     deviceDefinition.NameSlug,
 			Model:        deviceDefinition.Model,
 			Year:         int32(deviceDefinition.Year),
 			ImageUrl:     deviceDefinition.ImageURL.String,

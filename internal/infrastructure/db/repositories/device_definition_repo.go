@@ -296,6 +296,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		return nil, &exceptions.InternalError{Err: errors.Wrap(err, "failed to get autopi integration")}
 	}
 
+	modelSlug := shared.SlugString(model)
+	nameSlug := shared.SlugString(fmt.Sprintf("%s_%s_%d", m.NameSlug, modelSlug, year))
+
 	dd = &models.DeviceDefinition{
 		ID:                 ksuid.New().String(),
 		DeviceMakeID:       m.ID,
@@ -303,9 +306,10 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		Year:               int16(year),
 		Source:             null.StringFrom(source),
 		Verified:           verified,
-		ModelSlug:          shared.SlugString(model),
+		ModelSlug:          modelSlug,
 		DeviceTypeID:       null.StringFrom(deviceTypeID),
 		HardwareTemplateID: null.StringFromPtr(hardwareTemplateID),
+		NameSlug:           null.StringFrom(nameSlug),
 	}
 	// set external id's
 	extIDs := []*coremodels.ExternalID{{
@@ -355,7 +359,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		}
 
 		// Create DD onchain
-		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, m.TokenID, *dd)
+		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
 		if err == nil {
 			dd.TRXHashHex = null.StringFrom(*trx)
 			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
@@ -454,7 +458,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 	// Create onchain
 	if dd.R != nil && dd.R.DeviceMake != nil {
-		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, dd.R.DeviceMake.TokenID, *dd)
+		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err == nil {
 			dd.TRXHashHex = null.StringFrom(*trx)
 			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
