@@ -140,7 +140,7 @@ func buildDeviceDefinitionQueryResponse(dd *models.DeviceDefinition) DeviceDefin
 
 	return DeviceDefinitionQueryResponse{
 		ID:           dd.ID,
-		NameSlug:     dd.NameSlug.String,
+		NameSlug:     dd.NameSlug,
 		Model:        dd.Model,
 		Year:         int(dd.Year),
 		ImageURL:     null.StringFrom(common.GetDefaultImageURL(dd)),

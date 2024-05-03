@@ -844,3 +844,14 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context
 
 	return result, nil
 }
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugNameRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugNameQuery{
+		Slug: in.Slug,
+	})
+
+	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
+	result := common.BuildFromQueryResultToGRPC(dd)
+	return result, nil
+}

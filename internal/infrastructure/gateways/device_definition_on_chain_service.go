@@ -242,7 +242,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	}
 
 	deviceInputs := contracts.DeviceDefinitionInput{
-		Id:         dd.NameSlug.String,
+		Id:         dd.NameSlug,
 		Model:      dd.ModelSlug,
 		Year:       big.NewInt(int64(dd.Year)),
 		Metadata:   "",

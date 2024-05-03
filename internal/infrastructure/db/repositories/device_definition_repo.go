@@ -35,6 +35,7 @@ type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetByMakeModelAndYears(ctx context.Context, make string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetBySlugName(ctx context.Context, slug string, loadIntegrations bool) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetDevicesByMakeYearRange(ctx context.Context, makeID string, yearStart, yearEnd int32) ([]*models.DeviceDefinition, error)
 	GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error)
@@ -87,6 +88,33 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(slug),
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
+		qm.Load(models.DeviceDefinitionRels.Images),
+	}
+	if loadIntegrations {
+		qms = append(qms,
+			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
+			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
+	}
+
+	query := models.DeviceDefinitions(qms...)
+	dd, err := query.One(ctx, r.DBS().Reader)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.InternalError{Err: err}
+		}
+
+		return nil, nil
+	}
+
+	return dd, nil
+}
+
+func (r *deviceDefinitionRepository) GetBySlugName(ctx context.Context, slug string, loadIntegrations bool) (*models.DeviceDefinition, error) {
+	qms := []qm.QueryMod{
+		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
+		models.DeviceDefinitionWhere.NameSlug.EQ(slug),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.Images),
@@ -309,7 +337,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		ModelSlug:          modelSlug,
 		DeviceTypeID:       null.StringFrom(deviceTypeID),
 		HardwareTemplateID: null.StringFromPtr(hardwareTemplateID),
-		NameSlug:           null.StringFrom(nameSlug),
+		NameSlug:           nameSlug,
 	}
 	// set external id's
 	extIDs := []*coremodels.ExternalID{{

@@ -15,7 +15,9 @@ message GetDeviceDefinitionBySlugRequest {
   string slug = 1;
   int32 year = 2;
 }
-
+message GetDeviceDefinitionBySlugNameRequest {
+  string slug = 1;
+}
 message GetDeviceDefinitionResponse {
   repeated GetDeviceDefinitionItemResponse device_definitions = 1;
 }
@@ -507,4 +509,5 @@ service DeviceDefinitionService {
 
   rpc GetDeviceDefinitionOnChainByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionsOnChain(FilterDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
+  rpc GetDeviceDefinitionBySlugName(GetDeviceDefinitionBySlugNameRequest) returns (GetDeviceDefinitionItemResponse);
 }

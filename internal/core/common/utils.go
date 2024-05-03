@@ -134,7 +134,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	}
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
-		NameSlug:           dd.NameSlug.String,
+		NameSlug:           dd.NameSlug,
 		ExternalID:         dd.ExternalID.String,
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		Source:             dd.Source.String,
