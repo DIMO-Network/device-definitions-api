@@ -4,7 +4,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: a9e6d6c
+  tag: 8a4bf5f
 env:
   ENVIRONMENT: prod
   PORT: '8080'
