@@ -65,6 +65,7 @@ type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *GetDeviceDefinitionByMakeAndYearRangeRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionOnChainByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionsOnChain(ctx context.Context, in *FilterDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionBySlugName(ctx context.Context, in *GetDeviceDefinitionBySlugNameRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
 }
 
 type deviceDefinitionServiceClient struct {
@@ -476,6 +477,15 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionsOnChain(ctx context.
 	return out, nil
 }
 
+func (c *deviceDefinitionServiceClient) GetDeviceDefinitionBySlugName(ctx context.Context, in *GetDeviceDefinitionBySlugNameRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error) {
+	out := new(GetDeviceDefinitionItemResponse)
+	err := c.cc.Invoke(ctx, "/grpc.DeviceDefinitionService/GetDeviceDefinitionBySlugName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceDefinitionServiceServer is the server API for DeviceDefinitionService service.
 // All implementations must embed UnimplementedDeviceDefinitionServiceServer
 // for forward compatibility
@@ -522,6 +532,7 @@ type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionByMakeAndYearRange(context.Context, *GetDeviceDefinitionByMakeAndYearRangeRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionOnChainByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionsOnChain(context.Context, *FilterDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
+	GetDeviceDefinitionBySlugName(context.Context, *GetDeviceDefinitionBySlugNameRequest) (*GetDeviceDefinitionItemResponse, error)
 	mustEmbedUnimplementedDeviceDefinitionServiceServer()
 }
 
@@ -654,6 +665,9 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionOnChainByID
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionsOnChain(context.Context, *FilterDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionsOnChain not implemented")
+}
+func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionBySlugName(context.Context, *GetDeviceDefinitionBySlugNameRequest) (*GetDeviceDefinitionItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionBySlugName not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) mustEmbedUnimplementedDeviceDefinitionServiceServer() {
 }
@@ -1428,6 +1442,24 @@ func _DeviceDefinitionService_GetDeviceDefinitionsOnChain_Handler(srv interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceDefinitionService_GetDeviceDefinitionBySlugName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceDefinitionBySlugNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionBySlugName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.DeviceDefinitionService/GetDeviceDefinitionBySlugName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionBySlugName(ctx, req.(*GetDeviceDefinitionBySlugNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceDefinitionService_ServiceDesc is the grpc.ServiceDesc for DeviceDefinitionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1598,6 +1630,10 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceDefinitionsOnChain",
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionsOnChain_Handler,
+		},
+		{
+			MethodName: "GetDeviceDefinitionBySlugName",
+			Handler:    _DeviceDefinitionService_GetDeviceDefinitionBySlugName_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

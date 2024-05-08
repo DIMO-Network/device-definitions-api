@@ -25,6 +25,7 @@ type DeviceDefinitionCacheService interface {
 	DeleteDeviceDefinitionCacheByID(ctx context.Context, id string)
 	DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int)
 	DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int)
+	GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error)
 }
 
 type deviceDefinitionCacheService struct {
@@ -38,10 +39,11 @@ func NewDeviceDefinitionCacheService(cache redis.CacheService, repository reposi
 }
 
 const (
-	cacheLengthHours             = 48
-	cacheDeviceDefinitionKey     = "device-definition-by-id-"
-	cacheDeviceDefinitionMMYKey  = "device-definition-by-mmy-"
-	cacheDeviceDefinitionSlugKey = "device-definition-by-slug-"
+	cacheLengthHours                 = 48
+	cacheDeviceDefinitionKey         = "device-definition-by-id-"
+	cacheDeviceDefinitionMMYKey      = "device-definition-by-mmy-"
+	cacheDeviceDefinitionSlugKey     = "device-definition-by-slug-"
+	cacheDeviceDefinitionSlugNameKey = "device-definition-by-slug-name"
 )
 
 func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string, opts ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error) {
@@ -176,6 +178,42 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 	}
 
 	dd, err := c.Repository.GetBySlugAndYear(ctx, slug, year, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if dd == nil {
+		return nil, nil
+	}
+
+	rp, err = common.BuildFromDeviceDefinitionToQueryResult(dd)
+	if err != nil {
+		return nil, err
+	}
+
+	rpJSON, _ := json.Marshal(rp)
+	_ = c.Cache.Set(ctx, cache, rpJSON, cacheLengthHours*time.Hour)
+
+	return rp, nil
+}
+
+func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error) {
+
+	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionSlugNameKey, slug)
+	cacheData := c.Cache.Get(ctx, cache)
+
+	rp := &models.GetDeviceDefinitionQueryResult{}
+
+	if cacheData != nil {
+		val, _ := cacheData.Bytes()
+		if val != nil {
+			_ = json.Unmarshal(val, rp)
+			return rp, nil
+		}
+	}
+
+	dd, err := c.Repository.GetBySlugName(ctx, slug, true)
 
 	if err != nil {
 		return nil, err

@@ -91,6 +91,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 		}
 		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
 			Id:           deviceDefinition.ID,
+			NameSlug:     deviceDefinition.NameSlug,
 			Model:        deviceDefinition.Model,
 			Year:         int32(deviceDefinition.Year),
 			ImageUrl:     deviceDefinition.ImageURL.String,
@@ -841,5 +842,16 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugNameRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugNameQuery{
+		Slug: in.Slug,
+	})
+
+	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
+	result := common.BuildFromQueryResultToGRPC(dd)
 	return result, nil
 }

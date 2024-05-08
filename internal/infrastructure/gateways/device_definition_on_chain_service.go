@@ -29,7 +29,7 @@ import (
 type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
-	CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error)
+	CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -195,14 +195,10 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 	return nil
 }
 
-func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, manufacturerID types.NullDecimal, dd models.DeviceDefinition) (*string, error) {
+func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
 	if !e.Settings.EthereumSendTransaction {
 		return nil, nil
-	}
-
-	if manufacturerID.IsZero() {
-		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
 	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
@@ -228,15 +224,13 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, man
 	auth.GasPrice = gasPrice
 	auth.From = fromAddress
 
-	bigManufID := manufacturerID.Big.Int(new(big.Int))
-
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
 	}
 
 	// Validate if manufacturer exists
-	_, err = queryInstance.GetManufacturerNameById(&bind.CallOpts{Context: ctx, Pending: true}, bigManufID)
+	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, make.Name)
 	if err != nil {
 		e.Logger.Info().Msgf("%s", err)
 		return nil, fmt.Errorf("failed get GetManufacturerNameById: %w", err)
@@ -248,11 +242,16 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, man
 	}
 
 	deviceInputs := contracts.DeviceDefinitionInput{
-		Id:       fmt.Sprintf("%s_%d", dd.ModelSlug, dd.Year),
-		Model:    dd.ModelSlug,
-		Year:     big.NewInt(int64(dd.Year)),
-		Metadata: "",
-		Ksuid:    dd.ID,
+		Id:         dd.NameSlug,
+		Model:      dd.ModelSlug,
+		Year:       big.NewInt(int64(dd.Year)),
+		Metadata:   "",
+		Ksuid:      dd.ID,
+		DeviceType: "vehicle",
+	}
+
+	if make.LogoURL.Valid && len(make.LogoURL.String) > 0 {
+		deviceInputs.ImageURI = make.LogoURL.String
 	}
 
 	if dd.Metadata.Valid {

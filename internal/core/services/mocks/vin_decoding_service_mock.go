@@ -5,6 +5,7 @@
 //
 //	mockgen -source vin_decoding_service.go -destination mocks/vin_decoding_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

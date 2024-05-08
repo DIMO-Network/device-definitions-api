@@ -5,6 +5,7 @@
 //
 //	mockgen -source cache_dd.go -destination mocks/cache_dd_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -124,4 +125,19 @@ func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context
 func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionBySlug(ctx, slug, year any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionBySlug", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionBySlug), ctx, slug, year)
+}
+
+// GetDeviceDefinitionBySlugName mocks base method.
+func (m *MockDeviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeviceDefinitionBySlugName", ctx, slug)
+	ret0, _ := ret[0].(*models.GetDeviceDefinitionQueryResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeviceDefinitionBySlugName indicates an expected call of GetDeviceDefinitionBySlugName.
+func (mr *MockDeviceDefinitionCacheServiceMockRecorder) GetDeviceDefinitionBySlugName(ctx, slug any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionBySlugName", reflect.TypeOf((*MockDeviceDefinitionCacheService)(nil).GetDeviceDefinitionBySlugName), ctx, slug)
 }

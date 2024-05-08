@@ -312,6 +312,8 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 		Name:     "AutoPi",
 		NameSlug: "autopi",
 		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
+		//TokenID: types.NullDecimal{},
+		//TokenID: types.NewNullDecimal(decimal.New(int64(1), 0)),
 	}
 
 	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())

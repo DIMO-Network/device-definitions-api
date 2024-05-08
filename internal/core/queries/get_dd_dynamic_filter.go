@@ -37,6 +37,7 @@ type GetDeviceDefinitionByDynamicFilterQuery struct {
 
 type DeviceDefinitionQueryResponse struct {
 	ID           string      `json:"id"`
+	NameSlug     string      `json:"name_slug"`
 	Model        string      `json:"model"`
 	Year         int         `json:"year"`
 	ImageURL     null.String `json:"image_url,omitempty"`
@@ -139,6 +140,7 @@ func buildDeviceDefinitionQueryResponse(dd *models.DeviceDefinition) DeviceDefin
 
 	return DeviceDefinitionQueryResponse{
 		ID:           dd.ID,
+		NameSlug:     dd.NameSlug,
 		Model:        dd.Model,
 		Year:         int(dd.Year),
 		ImageURL:     null.StringFrom(common.GetDefaultImageURL(dd)),
