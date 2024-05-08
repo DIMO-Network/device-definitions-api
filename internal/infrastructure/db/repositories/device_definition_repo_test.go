@@ -445,3 +445,16 @@ func Test_slugString(t *testing.T) {
 		})
 	}
 }
+
+func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_With_Make_Empty_Error() {
+	ctx := context.Background()
+
+	model := "Corolla"
+	mk := ""
+	source := "source-01"
+	year := 2022
+	hardwareTemplateID := ksuid.New().String()
+
+	_, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
+	s.Error(err)
+}

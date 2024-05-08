@@ -305,6 +305,9 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 			if !allowCreate {
 				return nil, &exceptions.NotFoundError{Err: fmt.Errorf("could not find makeId: %s", makeOrID)}
 			}
+			if len(makeOrID) == 0 {
+				return nil, &exceptions.ValidationError{Err: fmt.Errorf("could not insert a blank mark")}
+			}
 			// create
 			m = &models.DeviceMake{
 				ID:       ksuid.New().String(),
