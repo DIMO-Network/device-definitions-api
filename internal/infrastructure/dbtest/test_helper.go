@@ -285,6 +285,19 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 		ID:       ksuid.New().String(),
 		Name:     mk,
 		NameSlug: shared.SlugString(mk),
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(100), 0)),
+	}
+	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	require.NoError(t, err, "no db error expected")
+	return dm
+}
+
+func SetupCreateMakeWithTokenID(t *testing.T, mk string, tokenID int64, pdb db.Store) models.DeviceMake {
+	dm := models.DeviceMake{
+		ID:       ksuid.New().String(),
+		Name:     mk,
+		NameSlug: shared.SlugString(mk),
+		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(tokenID), 0)),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")

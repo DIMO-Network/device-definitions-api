@@ -50,7 +50,9 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make str
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("make has not been minted yet or no tokenID set: %s", make)}
 	}
 
-	dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
+	//dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
+	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi), models.WmiWhere.DeviceMakeID.EQ(deviceMake.ID)).
+		One(ctx, r.DBS().Reader) // there can be WMI's for more than one Make
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, &exceptions.InternalError{
 			Err: err,

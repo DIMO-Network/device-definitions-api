@@ -257,7 +257,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 
 	i := setupIntegrationForSmartCarCompatibility(s.T(), s.pdb)
 	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "BMW2", s.pdb)
+	dm := dbtesthelper.SetupCreateMakeWithTokenID(s.T(), "BMW2", 200, s.pdb)
 
 	s.mockRepository.EXPECT().GetByID(gomock.Any(), dd.ID).Return(dd, nil).AnyTimes()
 	s.mockRepository.EXPECT().CreateOrUpdate(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(dd, nil).AnyTimes()

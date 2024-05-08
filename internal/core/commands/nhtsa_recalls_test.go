@@ -168,7 +168,7 @@ func setupDeviceDefinitionsForRecallsSync(t *testing.T, pdb db.Store, mmySet Tes
 			}
 		}
 		if mmySet[i].MakeDef == nil {
-			dm := dbtesthelper.SetupCreateMake(t, mmy.Make, pdb)
+			dm := dbtesthelper.SetupCreateMakeWithTokenID(t, mmy.Make, int64(i), pdb)
 			mmySet[i].MakeDef = &dm
 		}
 		mmySet[i].DeviceDef = dbtesthelper.SetupCreateDeviceDefinition(t, *mmySet[i].MakeDef, mmy.Model, mmy.Year, pdb)
