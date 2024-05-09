@@ -22,7 +22,7 @@ env:
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   ETHEREUM_SEND_TRANSACTION: false
   TABLELAND_API_GATEWAY: https://tableland.network/
-  ETHEREUM_REGISTRY_ADDRESS: 1.4303680941953029e+48
+  ETHEREUM_REGISTRY_ADDRESS: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
 ingress:
   enabled: true
   className: nginx
