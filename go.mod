@@ -3,7 +3,7 @@ module github.com/DIMO-Network/device-definitions-api
 go 1.21
 
 require (
-	github.com/DIMO-Network/shared v0.10.12
+	github.com/DIMO-Network/shared v0.10.13
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.7
 	github.com/docker/go-connections v0.4.0
@@ -75,7 +75,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/moby/patternmatcher v0.6.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
@@ -131,7 +130,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
@@ -156,7 +154,7 @@ require (
 	github.com/volatiletech/randomize v0.0.1 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
@@ -164,4 +162,5 @@ require (
 )
 
 replace github.com/crate-crypto/go-kzg-4844 v1.0.0 => github.com/crate-crypto/go-kzg-4844 v0.7.0
+
 replace github.com/ericlagergren/decimal => github.com/ericlagergren/decimal v0.0.0-20181231230500-73749d4874d5
