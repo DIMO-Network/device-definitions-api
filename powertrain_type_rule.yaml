@@ -49,7 +49,9 @@ types:
       - ford
       - bmw
       - volkswagen
+      - volkswagen
       - kia
+      - jaguar
     models:
       - lyriq
       - eqs
@@ -57,10 +59,17 @@ types:
       - eqb
       - eqe
       - mustang-mach-e
+      - mach-e
       - i3
       - id.3
       - id.4
       - niro-ev
+      - ioniq-electric
+      - ioniq-5
+      - ioniq-6
+      - ev6
+      - ev9
+      - i-pace
 
   - name: Rule FCEV
     type: FCEV
