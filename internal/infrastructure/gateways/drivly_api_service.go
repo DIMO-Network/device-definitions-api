@@ -27,7 +27,7 @@ func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
 		panic("Drivly configuration not set")
 	}
 	h := map[string]string{"x-api-key": settings.DrivlyAPIKey}
-	hcwv, _ := shared.NewHTTPClientWrapper(settings.DrivlyVINAPIURL, "", 10*time.Second, h, true)
+	hcwv, _ := shared.NewHTTPClientWrapper(settings.DrivlyVINAPIURL, "", 10*time.Second, h, true, shared.WithRetry(1))
 
 	return &drivlyAPIService{
 		Settings:      settings,
