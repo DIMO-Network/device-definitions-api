@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"math/big"
 	"net/http"
 	"net/url"
@@ -214,6 +213,11 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		return nil, fmt.Errorf("failed get SuggestGasPrice: %w", err)
 	}
 
+	bump := big.NewInt(20)
+	bumpedPrice := getGasPrice(gasPrice, bump)
+
+	fmt.Printf("GasPrice => %s Bumped Price=> %s", gasPrice, bumpedPrice)
+
 	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed get NewKeyedTransactorWithChainID: %w", err)
@@ -221,7 +225,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	//auth.Value = big.NewInt(0)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(300000)
-	auth.GasPrice = gasPrice
+	auth.GasPrice = bumpedPrice
 	auth.From = fromAddress
 
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
@@ -233,9 +237,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, make.Name)
 	if err != nil {
 		e.Logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed get GetManufacturerNameById: %w", err)
+		return nil, fmt.Errorf("failed get GetManufacturerNameById => %s: %w", make.Name, err)
 	}
-
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
@@ -266,6 +269,13 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		deviceInputs.Metadata = string(jsonData)
 	}
 
+	jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
+	if err != nil {
+		fmt.Println("Error converting to JSON => ", err)
+	}
+
+	fmt.Println("InsertDeviceDefinition => ", string(jsonBytes))
+
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
 
 	if err != nil {
@@ -276,6 +286,15 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	trx := tx.Hash().Hex()
 
 	return &trx, nil
+}
+
+func getGasPrice(price *big.Int, bump *big.Int) *big.Int {
+	// Calculating the bumped gas price
+	bumpAmount := new(big.Int).Mul(price, bump)
+	bumpAmount.Div(bumpAmount, big.NewInt(100))
+	bumpedPrice := new(big.Int).Add(bumpAmount, price)
+
+	return bumpedPrice
 }
 
 func NewKeyedTransactorWithChainID(context context.Context, send sender.Sender, chainID *big.Int) (*bind.TransactOpts, error) {
