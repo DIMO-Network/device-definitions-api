@@ -50,12 +50,17 @@ func (ai *datGroupAPIService) GetVIN(vin, country string) (*GetVehicleIdentifica
 			},
 		},
 	}
+	// temporary log for debugging
+	ai.log.Info().Msgf("datgroup vin request: %+v", request)
 
 	var result GetVehicleIdentificationByVinResponse
 	err = soapCallHandleResponse(ai.Settings.DatGroupURL, "getVehicleIdentificationByVin", request, &result, token)
 	if err != nil {
 		return nil, err
 	}
+
+	// temporary log for debugging
+	ai.log.Info().Msgf("datgroup vin response: %+v", result)
 
 	if len(result.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier) == 0 {
 		return nil, fmt.Errorf("datgroup dosier response was empty")
