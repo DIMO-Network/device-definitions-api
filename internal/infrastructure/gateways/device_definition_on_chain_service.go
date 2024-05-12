@@ -253,9 +253,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		DeviceType: "vehicle",
 	}
 
-	if make.LogoURL.Valid && len(make.LogoURL.String) > 0 {
-		deviceInputs.ImageURI = make.LogoURL.String
-	}
+	deviceInputs.ImageURI = GetDefaultImageURL(dd)
 
 	if dd.Metadata.Valid {
 		attributes := GetDeviceAttributesTyped(dd.Metadata, "vehicle_info")
@@ -329,6 +327,24 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 		}
 	}
 	return respAttrs
+}
+
+func GetDefaultImageURL(dd models.DeviceDefinition) string {
+	img := ""
+	if dd.R.Images != nil {
+		w := 0
+		for _, image := range dd.R.Images {
+			extra := 0
+			if !image.NotExactImage {
+				extra = 2000 // we want to give preference to exact images
+			}
+			if image.Width.Int+extra > w {
+				w = image.Width.Int + extra
+				img = image.SourceURL
+			}
+		}
+	}
+	return img
 }
 
 type DeviceTypeAttribute struct {

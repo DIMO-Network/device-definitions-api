@@ -61,6 +61,7 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
 	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+	s.mockFuelAPIService = mock_gateways.NewMockFuelAPIService(s.ctrl)
 
 	vinRepository := repositories.NewVINRepository(s.pdb.DBS)
 	ddRepository := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
@@ -140,7 +141,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("ICE")
-	// db setup
+
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -254,6 +265,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
 	result := qryResult.(*p_grpc.DecodeVinResponse)
@@ -290,6 +312,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	assert.Equal(s.T(), int64(vinInfoResp.MsrpBase), gjson.GetBytes(ddCreated.Metadata.JSON, "vehicle_info.base_msrp").Int())
 	assert.Equal(s.T(), int64(vinInfoResp.Mpg), gjson.GetBytes(ddCreated.Metadata.JSON, "vehicle_info.mpg").Int())
 	assert.Equal(s.T(), vinInfoResp.FuelTankCapacityGal, gjson.GetBytes(ddCreated.Metadata.JSON, "vehicle_info.fuel_tank_capacity_gal").Float())
+
+	// validate images was created
+	ddImages, err := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(ddCreated.ID)).All(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	s.Assert().NotEmpty(ddImages)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleAndMetadata() {
@@ -348,6 +375,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	// db setup
 	ds := dbtesthelper.SetupCreateStyle(s.T(), dd.ID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
+
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -426,6 +464,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("HEV")
 
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
 	result := qryResult.(*p_grpc.DecodeVinResponse)
@@ -503,6 +552,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	assert.NotNil(s.T(), qryResult)
 	assert.NoError(s.T(), err)
@@ -527,6 +587,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	assert.NotNil(s.T(), qryResult)
@@ -567,6 +638,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country,
 		KnownYear:  2022,
