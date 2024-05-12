@@ -318,10 +318,13 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 			if a, ok := ai[key]; ok && a != nil {
 				attributes := ai[key].(map[string]any)
 				for key, value := range attributes {
-					respAttrs = append(respAttrs, DeviceTypeAttribute{
-						Name:  key,
-						Value: fmt.Sprint(value),
-					})
+					v := fmt.Sprint(value)
+					if len(v) > 0 {
+						respAttrs = append(respAttrs, DeviceTypeAttribute{
+							Name:  key,
+							Value: v,
+						})
+					}
 				}
 			}
 		}
