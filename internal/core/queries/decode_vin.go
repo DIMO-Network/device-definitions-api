@@ -375,8 +375,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// resolve images
-	images, err := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
-	localLog.Info().Msgf("Current Images : %d", len(images))
+	images, _ := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
+	localLog.Debug().Msgf("Current Images : %d", len(images))
 
 	if len(images) == 0 {
 		err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
@@ -451,7 +451,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// Create DD onchain
 		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
-			localLog.Err(err).Msg("")
+			localLog.Err(err).Msg("failed to create or update DD on chain")
 		}
 		if err == nil {
 			dd.TRXHashHex = null.StringFrom(*trx)

@@ -330,7 +330,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 }
 
 func GetDefaultImageURL(dd models.DeviceDefinition) string {
-	img := ""
+	imgURI := ""
 	if dd.R.Images != nil {
 		w := 0
 		for _, image := range dd.R.Images {
@@ -340,11 +340,11 @@ func GetDefaultImageURL(dd models.DeviceDefinition) string {
 			}
 			if image.Width.Int+extra > w {
 				w = image.Width.Int + extra
-				img = image.SourceURL
+				imgURI = image.SourceURL
 			}
 		}
 	}
-	return img
+	return imgURI
 }
 
 type DeviceTypeAttribute struct {
