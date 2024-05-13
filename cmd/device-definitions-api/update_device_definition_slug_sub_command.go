@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
@@ -46,7 +46,7 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 	}
 
 	for _, dd := range all {
-		dd.NameSlug = shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
+		dd.NameSlug = common.DeviceDefinitionSlug(dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year)
 		if err = dd.Upsert(ctx, pdb.DBS().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 			p.logger.Error().Err(err).Send()
 		}

@@ -328,7 +328,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 	}
 
 	modelSlug := shared.SlugString(model)
-	nameSlug := shared.SlugString(fmt.Sprintf("%s_%s_%d", m.NameSlug, modelSlug, year))
+	nameSlug := common.DeviceDefinitionSlug(m.NameSlug, modelSlug, int16(year))
 
 	dd = &models.DeviceDefinition{
 		ID:                 ksuid.New().String(),

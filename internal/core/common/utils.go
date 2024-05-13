@@ -3,17 +3,16 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
+	"math/big"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 func JSONOrDefault(j null.JSON) json.RawMessage {
@@ -566,4 +565,8 @@ func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceInt
 	}
 
 	return results, nil
+}
+
+func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
+	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlug, year)
 }
