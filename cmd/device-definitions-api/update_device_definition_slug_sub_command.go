@@ -54,12 +54,12 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 	for _, dd := range all {
 		slugMMY := shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
 		if !strings.EqualFold(dd.NameSlug, slugMMY) {
+			fmt.Printf("DD => %s updating slug: %s => %s \n", dd.ID, dd.NameSlug, slugMMY)
 			dd.NameSlug = slugMMY
 			_, err = dd.Update(ctx, pdb.DBS().Writer, boil.Whitelist(models.DeviceDefinitionColumns.NameSlug))
 			if err != nil {
 				p.logger.Error().Err(err).Send()
 			}
-			fmt.Printf("DD => %s updated slug => %s \n", dd.ID, dd.NameSlug)
 			slugsUpdatedCounter++
 		}
 		if counter%100 == 0 {
