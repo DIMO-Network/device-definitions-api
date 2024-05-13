@@ -89,7 +89,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			return nil, err
 		}
 	case models.DATGroupProvider:
-		vinInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
+		vinInfo, err := c.DATGroupAPIService.GetVIN(vin, "TR") // try with Turkey
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
 		}
