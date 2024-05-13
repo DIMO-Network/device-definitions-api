@@ -36,7 +36,6 @@ type syncOpsCmd struct {
 	smartCarCompatibility bool
 	smartCarSync          bool
 	createTesla           bool
-	nhtsa                 bool
 	vinNumbers            bool
 }
 
@@ -54,7 +53,6 @@ func (p *syncOpsCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.smartCarCompatibility, "smartcar-compatibility", false, "smartcar compatibility")
 	f.BoolVar(&p.smartCarSync, "smartcar-sync", false, "smartcar sync")
 	f.BoolVar(&p.createTesla, "create-tesla-integrations", false, "create tesla integrations")
-	f.BoolVar(&p.nhtsa, "nhtsa-sync-recalls", false, "nhtsa sync recalls")
 	f.BoolVar(&p.vinNumbers, "vin-numbers-sync", false, "vin numbers sync data")
 }
 
@@ -70,9 +68,6 @@ func (p *syncOpsCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interfac
 	}
 	if p.createTesla {
 		teslaIntegrationSync(ctx, &p.settings, p.logger)
-	}
-	if p.nhtsa {
-		nhtsaSyncRecalls(ctx, &p.settings, p.logger)
 	}
 
 	if p.vinNumbers {
@@ -201,45 +196,6 @@ func teslaIntegrationSync(ctx context.Context, s *config.Settings, logger zerolo
 	)
 
 	_, _ = m.Send(ctx, &commands.SyncTeslaIntegrationCommand{})
-
-}
-
-func nhtsaSyncRecalls(ctx context.Context, s *config.Settings, logger zerolog.Logger) {
-
-	//db
-	pdb := db.NewDbConnectionFromSettings(ctx, &s.DB, true)
-	pdb.WaitForDB(logger)
-
-	send, err := createSender(ctx, s, &logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create sender.")
-	}
-
-	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(s, &logger, ethClient, chainID, send)
-
-	//repos
-	deviceNHTSARecallsRepository := repositories.NewDeviceNHTSARecallsRepository(pdb.DBS)
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
-
-	//commands
-	m, _ := mediator.New(
-		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, s)),
-		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, s)),
-		mediator.WithHandler(&commands.SyncNHTSARecallsCommand{}, commands.NewSyncNHTSARecallsCommandHandler(pdb.DBS, &logger, deviceNHTSARecallsRepository, deviceDefinitionRepository, &s.NHTSARecallsFileURL)),
-	)
-
-	_, _ = m.Send(ctx, &commands.SyncNHTSARecallsCommand{})
-
 }
 
 // vinNumbersSync reads in the passed in list of vins from the filename and calls third party to decode and insert into our vin_numbers db
