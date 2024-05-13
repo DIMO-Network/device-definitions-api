@@ -46,6 +46,7 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 		p.logger.Error().Err(err).Send()
 	}
 	counter := 1
+	slugsUpdatedCounter := 0
 	for _, dd := range all {
 		slugMMY := shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
 		if !strings.EqualFold(dd.NameSlug, slugMMY) {
@@ -55,6 +56,7 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 				p.logger.Error().Err(err).Send()
 			}
 			fmt.Printf("DD => %s updated slug => %s \n", dd.ID, dd.NameSlug)
+			slugsUpdatedCounter++
 		}
 		if counter%100 == 0 {
 			fmt.Printf("DD's processed: %d\n", counter)
@@ -62,6 +64,6 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 		counter++
 	}
 
-	fmt.Printf("success\n")
+	fmt.Printf("success. Updated %d slugs\n", slugsUpdatedCounter)
 	return subcommands.ExitSuccess
 }
