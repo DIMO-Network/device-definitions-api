@@ -32,9 +32,10 @@ func (p *updateDeviceDefinitionSlugCmd) SetFlags(_ *flag.FlagSet) {
 }
 
 func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
+
+	fmt.Printf("Starting processing definitions\n")
 
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
 		models.DeviceDefinitionWhere.Year.GTE(2012),
@@ -44,7 +45,10 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 
 	if err != nil {
 		p.logger.Error().Err(err).Send()
+		return subcommands.ExitFailure
 	}
+	fmt.Printf("Found %d device-definition(s) in all device-types\n", len(all))
+
 	counter := 1
 	slugsUpdatedCounter := 0
 	for _, dd := range all {
