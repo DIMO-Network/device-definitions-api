@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
@@ -52,7 +52,7 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 	counter := 1
 	slugsUpdatedCounter := 0
 	for _, dd := range all {
-		slugMMY := shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
+		slugMMY := common.DeviceDefinitionSlug(dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year)
 		if !strings.EqualFold(dd.NameSlug, slugMMY) {
 			fmt.Printf("DD => %s updating slug: %s => %s \n", dd.ID, dd.NameSlug, slugMMY)
 			dd.NameSlug = slugMMY
