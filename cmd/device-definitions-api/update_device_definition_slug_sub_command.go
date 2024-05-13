@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"strings"
 )
 
 type updateDeviceDefinitionSlugCmd struct {
@@ -44,15 +45,23 @@ func (p *updateDeviceDefinitionSlugCmd) Execute(ctx context.Context, _ *flag.Fla
 	if err != nil {
 		p.logger.Error().Err(err).Send()
 	}
-
+	counter := 1
 	for _, dd := range all {
-		dd.NameSlug = shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
-		if err = dd.Upsert(ctx, pdb.DBS().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
-			p.logger.Error().Err(err).Send()
+		slugMMY := shared.SlugString(fmt.Sprintf("%s_%s_%d", dd.R.DeviceMake.NameSlug, dd.ModelSlug, dd.Year))
+		if !strings.EqualFold(dd.NameSlug, slugMMY) {
+			dd.NameSlug = slugMMY
+			_, err = dd.Update(ctx, pdb.DBS().Writer, boil.Whitelist(models.DeviceDefinitionColumns.NameSlug))
+			if err != nil {
+				p.logger.Error().Err(err).Send()
+			}
+			fmt.Printf("DD => %s updated slug => %s \n", dd.ID, dd.NameSlug)
 		}
-		p.logger.Info().Msgf("DD => %s updated slug => %s", dd.ID, dd.NameSlug)
+		if counter%100 == 0 {
+			fmt.Printf("DD's processed: %d\n", counter)
+		}
+		counter++
 	}
 
-	fmt.Printf("success")
+	fmt.Printf("success\n")
 	return subcommands.ExitSuccess
 }
