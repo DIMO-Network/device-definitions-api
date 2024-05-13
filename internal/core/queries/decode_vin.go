@@ -272,24 +272,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	resp.DeviceDefinitionId = dd.ID
 
-	// resolve images
-	_, err = models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
-			if err != nil {
-				localLog.Err(err).Send()
-			}
-
-			err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
-			if err != nil {
-				localLog.Err(err).Send()
-			}
-		} else {
-			localLog.Err(err).Send()
-		}
-	}
-
 	// match style - only process style if name is longer than 1
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
@@ -392,11 +374,28 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 	}
 
+	// resolve images
+	images, _ := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
+	localLog.Debug().Msgf("Current Images : %d", len(images))
+
+	if len(images) == 0 {
+		err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
+		if err != nil {
+			localLog.Err(err).Send()
+		}
+
+		err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
+		if err != nil {
+			localLog.Err(err).Send()
+		}
+	}
+
 	if !ddExists {
 		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(dd.ID),
 			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
-			qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, dc.dbs().Reader)
+			qm.Load(models.DeviceDefinitionRels.DeviceMake),
+			qm.Load(models.DeviceDefinitionRels.Images)).One(ctx, dc.dbs().Reader)
 		if err != nil {
 			return nil, errors.Wrap(err, "error when get dd for update powertraintype")
 		}
@@ -452,7 +451,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// Create DD onchain
 		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
-			localLog.Err(err).Msg("")
+			localLog.Err(err).Msg("failed to create or update DD on chain")
 		}
 		if err == nil {
 			dd.TRXHashHex = null.StringFrom(*trx)
@@ -462,6 +461,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 			return nil, err
 		}
+
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
