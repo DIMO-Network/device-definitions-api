@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tidwall/sjson"
@@ -223,6 +224,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
 		return nil, err
+	}
+	// sometimes vincario returns multiple model names, which we do not care for. Seems like any model name with a , in it is bad
+	if strings.Contains(vinInfo.Model, ",") {
+		nameErr := fmt.Errorf("failed to decode vin due to invalid model name: %s", vinInfo.Model)
+		localLog.Err(nameErr).Send()
+		return nil, nameErr
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
