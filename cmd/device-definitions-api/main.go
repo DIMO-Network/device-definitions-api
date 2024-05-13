@@ -47,6 +47,7 @@ func main() {
 	subcommands.Register(&syncDeviceFeatureCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&powerTrainTypeCmd{logger: logger, settings: settings}, "")
+	subcommands.Register(&updateDeviceDefinitionSlugCmd{logger: logger, settings: settings}, "")
 
 	sender, err := createSender(ctx, &settings, &logger)
 	if err != nil {
