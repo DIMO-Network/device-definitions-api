@@ -101,7 +101,7 @@ var (
 	wmiAllColumns            = []string{"wmi", "device_make_id", "created_at", "updated_at"}
 	wmiColumnsWithoutDefault = []string{"wmi", "device_make_id"}
 	wmiColumnsWithDefault    = []string{"created_at", "updated_at"}
-	wmiPrimaryKeyColumns     = []string{"wmi"}
+	wmiPrimaryKeyColumns     = []string{"wmi", "device_make_id"}
 	wmiGeneratedColumns      = []string{}
 )
 
@@ -557,7 +557,7 @@ func (o *Wmi) SetDeviceMake(ctx context.Context, exec boil.ContextExecutor, inse
 		strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
 		strmangle.WhereClause("\"", "\"", 2, wmiPrimaryKeyColumns),
 	)
-	values := []interface{}{related.ID, o.Wmi}
+	values := []interface{}{related.ID, o.Wmi, o.DeviceMakeID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -601,7 +601,7 @@ func Wmis(mods ...qm.QueryMod) wmiQuery {
 
 // FindWmi retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, selectCols ...string) (*Wmi, error) {
+func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, deviceMakeID string, selectCols ...string) (*Wmi, error) {
 	wmiObj := &Wmi{}
 
 	sel := "*"
@@ -609,10 +609,10 @@ func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, selectC
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1", sel,
+		"select %s from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"device_make_id\"=$2", sel,
 	)
 
-	q := queries.Raw(query, wmi)
+	q := queries.Raw(query, wmi, deviceMakeID)
 
 	err := q.Bind(ctx, exec, wmiObj)
 	if err != nil {
@@ -994,7 +994,7 @@ func (o *Wmi) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, err
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), wmiPrimaryKeyMapping)
-	sql := "DELETE FROM \"device_definitions_api\".\"wmis\" WHERE \"wmi\"=$1"
+	sql := "DELETE FROM \"device_definitions_api\".\"wmis\" WHERE \"wmi\"=$1 AND \"device_make_id\"=$2"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1091,7 +1091,7 @@ func (o WmiSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Wmi) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindWmi(ctx, exec, o.Wmi)
+	ret, err := FindWmi(ctx, exec, o.Wmi, o.DeviceMakeID)
 	if err != nil {
 		return err
 	}
@@ -1130,16 +1130,16 @@ func (o *WmiSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) err
 }
 
 // WmiExists checks if the Wmi row exists.
-func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string) (bool, error) {
+func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string, deviceMakeID string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"device_make_id\"=$2 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, wmi)
+		fmt.Fprintln(writer, wmi, deviceMakeID)
 	}
-	row := exec.QueryRowContext(ctx, sql, wmi)
+	row := exec.QueryRowContext(ctx, sql, wmi, deviceMakeID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1151,5 +1151,5 @@ func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string) (bool
 
 // Exists checks if the Wmi row exists.
 func (o *Wmi) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return WmiExists(ctx, exec, o.Wmi)
+	return WmiExists(ctx, exec, o.Wmi, o.DeviceMakeID)
 }

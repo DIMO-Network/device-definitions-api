@@ -48,14 +48,13 @@ func main() {
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&powerTrainTypeCmd{logger: logger, settings: settings}, "")
 
-	sender, err := createSender(ctx, &settings, &logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create sender.")
-	}
-
-	// Run API
 	if len(os.Args) == 1 {
-		api.Run(ctx, logger, &settings, sender)
+		// Run API & everythying else
+		sigSender, err := createSender(ctx, &settings, &logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create sender.")
+		}
+		api.Run(ctx, logger, &settings, sigSender)
 	} else {
 		flag.Parse()
 		os.Exit(int(subcommands.Execute(ctx)))
