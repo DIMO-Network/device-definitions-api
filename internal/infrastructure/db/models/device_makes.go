@@ -1276,7 +1276,7 @@ func (o *DeviceMake) AddWmis(ctx context.Context, exec boil.ContextExecutor, ins
 				strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
 				strmangle.WhereClause("\"", "\"", 2, wmiPrimaryKeyColumns),
 			)
-			values := []interface{}{o.ID, rel.Wmi}
+			values := []interface{}{o.ID, rel.Wmi, rel.DeviceMakeID}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)

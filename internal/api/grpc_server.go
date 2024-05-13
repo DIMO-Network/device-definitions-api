@@ -25,8 +25,6 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 	}
 
 	deviceDefinitionService := NewGrpcService(m, &logger)
-	recallsService := NewGrpcRecallsService(m, &logger)
-	reviewsService := NewGrpcReviewsService(m, &logger)
 	integrationService := NewGrpcIntegrationService(m, &logger)
 	decodeService := NewGrpcVinDecoderService(m, &logger)
 
@@ -44,8 +42,6 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 	)
 
 	pkggrpc.RegisterDeviceDefinitionServiceServer(server, deviceDefinitionService)
-	pkggrpc.RegisterRecallsServiceServer(server, recallsService)
-	pkggrpc.RegisterReviewsServiceServer(server, reviewsService)
 	pkggrpc.RegisterIntegrationServiceServer(server, integrationService)
 	pkggrpc.RegisterVinDecoderServiceServer(server, decodeService)
 
