@@ -131,3 +131,36 @@ func TestBuildDeviceTypeAttributes_noJSONIfNil(t *testing.T) {
 	assert.Equal(t, false, got.Valid)
 	assert.Equal(t, "", string(got.JSON)) // pending to see what this gives
 }
+
+func TestDeviceDefinitionSlug(t *testing.T) {
+	tests := []struct {
+		makeSlug  string
+		modelSlug string
+		year      int16
+		want      string
+	}{
+		{
+			makeSlug:  "audi",
+			modelSlug: "tt,-tts",
+			year:      2010,
+			want:      "audi_tt-tts_2010",
+		},
+		{
+			makeSlug:  "mercedes-benz",
+			modelSlug: "v,-v-class",
+			year:      2023,
+			want:      "mercedes-benz_v-v-class_2023",
+		},
+		{
+			makeSlug:  "mercedes-benz",
+			modelSlug: "v-class,-vito,-vito-tourer",
+			year:      2023,
+			want:      "mercedes-benz_v-class-vito-vito-tourer_2023",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.makeSlug+""+tt.modelSlug, func(t *testing.T) {
+			assert.Equalf(t, tt.want, DeviceDefinitionSlug(tt.makeSlug, tt.modelSlug, tt.year), "SlugString(%v)", tt.makeSlug)
+		})
+	}
+}
