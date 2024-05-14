@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/tidwall/sjson"
@@ -220,16 +219,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog = localLog.With().Str("decode_source", string(vinInfo.Source)).Logger()
 	}
 
-	if err != nil {
+	if err != nil || vinInfo == nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		if err == nil {
+			err = errors.New("failed to decode, vinInfo is nil")
+		}
 		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
 		return nil, err
-	}
-	// sometimes vincario returns multiple model names, which we do not care for. Seems like any model name with a , in it is bad
-	if strings.Contains(vinInfo.Model, ",") {
-		nameErr := fmt.Errorf("failed to decode vin due to invalid model name: %s", vinInfo.Model)
-		localLog.Err(nameErr).Send()
-		return nil, nameErr
 	}
 
 	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
@@ -368,7 +364,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str("wmi", wmi).
 		Str("vds", vin.VDS()).
 		Str("vis", vin.VIS()).
-		Str("check_digit", vin.CheckDigit()).Msg("decoded vin ok")
+		Str("check_digit", vin.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
 	// note we use a transaction here all throughout and commit at the end
 	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 		localLog.Err(err).
