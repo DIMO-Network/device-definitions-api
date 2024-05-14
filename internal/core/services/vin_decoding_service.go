@@ -128,6 +128,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
 			} else {
 				result, err = buildFromDATGroup(datGroupInfo)
+				localLog.Info().Msgf("datgroup result: %+v", result) // temporary for debugging
 				if err != nil {
 					localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
 				}
