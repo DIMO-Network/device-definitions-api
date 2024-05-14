@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"strings"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -12,7 +14,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"strings"
 )
 
 type updateDeviceDefinitionSlugCmd struct {
