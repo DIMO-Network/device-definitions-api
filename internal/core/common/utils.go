@@ -569,5 +569,6 @@ func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceInt
 }
 
 func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
-	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlug, year)
+	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
+	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
 }
