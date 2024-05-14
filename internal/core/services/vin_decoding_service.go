@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
@@ -69,7 +70,10 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 		}
-		result = buildFromDrivly(vinDrivlyInfo)
+		result, err = buildFromDrivly(vinDrivlyInfo)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
+		}
 	case models.VincarioProvider:
 		vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 		if err != nil {
@@ -102,12 +106,16 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			localLog.Warn().Err(err).Msg("AllProviders decode - unable decode vin with drivly")
 		} else {
-			result = buildFromDrivly(vinDrivlyInfo)
-			metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
+			result, err = buildFromDrivly(vinDrivlyInfo)
 			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
+				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with drivly")
+			} else {
+				metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
+				if err != nil {
+					localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
+				}
+				result.MetaData = metadata
 			}
-			result.MetaData = metadata
 		}
 		// if nothing from drivly, try DATGroup
 		if result == nil || result.Source == "" {
@@ -222,7 +230,9 @@ func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInf
 		Raw:        raw,
 		FuelType:   info.FunctionResponse.Data.Decoder.FuelType.Value,
 	}
-
+	if err = validateVinDecoding(v); err != nil {
+		return nil, err
+	}
 	return v, nil
 }
 
@@ -246,10 +256,13 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecoding
 	}
 	v.MetaData = m
 
+	if err = validateVinDecoding(v); err != nil {
+		return nil, err
+	}
 	return v, nil
 }
 
-func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoData {
+func buildFromDrivly(info *gateways.DrivlyVINResponse) (*models.VINDecodingInfoData, error) {
 	raw, _ := json.Marshal(info)
 	yrInt, _ := strconv.Atoi(info.Year)
 
@@ -264,7 +277,10 @@ func buildFromDrivly(info *gateways.DrivlyVINResponse) *models.VINDecodingInfoDa
 		Raw:        raw,
 		FuelType:   info.Fuel,
 	}
-	return v
+	if err := validateVinDecoding(v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 
 func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
@@ -317,6 +333,24 @@ func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*m
 	if dossier.TechInfo != nil {
 		v.FuelType = dossier.TechInfo.FuelMethodType
 	}
+	if err := validateVinDecoding(v); err != nil {
+		return nil, err
+	}
 
 	return v, nil
+}
+
+// validateVinDecoding returns an error if year, model name, make, etc seem like bad data
+func validateVinDecoding(vdi *models.VINDecodingInfoData) error {
+	if vdi == nil {
+		return fmt.Errorf("vin info was nil")
+	}
+	if vdi.Year == 0 || vdi.Year > int32(time.Now().Year()+1) {
+		return fmt.Errorf("vin year invalid: %d", vdi.Year)
+	}
+	if strings.Contains(vdi.Model, ",") || strings.Contains(vdi.Model, "/") {
+		return fmt.Errorf("model contains invalid characters: %s", vdi.Model)
+	}
+
+	return nil
 }
