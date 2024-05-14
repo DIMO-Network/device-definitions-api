@@ -157,6 +157,18 @@ func TestDeviceDefinitionSlug(t *testing.T) {
 			year:      2023,
 			want:      "mercedes-benz_v-class-vito-vito-tourer_2023",
 		},
+		{
+			makeSlug:  "chrysler",
+			modelSlug: "pacifica/voyager",
+			year:      2018,
+			want:      "chrysler_pacifica-voyager_2018",
+		},
+		{
+			makeSlug:  "volkswagen",
+			modelSlug: "id.4,-id.5",
+			year:      2023,
+			want:      "volkswagen_id-4-id-5_2023",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.makeSlug+""+tt.modelSlug, func(t *testing.T) {
