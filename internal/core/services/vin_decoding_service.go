@@ -349,6 +349,9 @@ func validateVinDecoding(vdi *models.VINDecodingInfoData) error {
 	if vdi.Year == 0 || vdi.Year > int32(time.Now().Year()+1) {
 		return fmt.Errorf("vin year invalid: %d", vdi.Year)
 	}
+	if len(vdi.Model) == 0 {
+		return fmt.Errorf("vin model is empty")
+	}
 	if strings.Contains(vdi.Model, ",") || strings.Contains(vdi.Model, "/") {
 		return fmt.Errorf("model contains invalid characters: %s", vdi.Model)
 	}
