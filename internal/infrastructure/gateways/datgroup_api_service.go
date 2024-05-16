@@ -36,7 +36,7 @@ func (ai *datGroupAPIService) GetVIN(vin, userCountryISO2 string) (*GetVehicleId
 		return nil, err
 	}
 	if userCountryISO2 == "" || len(userCountryISO2) != 2 {
-		userCountryISO2 = "DE"
+		userCountryISO2 = "US"
 	}
 
 	request := GenerateVehicleIdentificationByVinRequest{
