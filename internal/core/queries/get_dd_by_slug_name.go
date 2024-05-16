@@ -13,7 +13,7 @@ type GetDeviceDefinitionBySlugNameQuery struct {
 	Slug string `json:"slug"`
 }
 
-func (*GetDeviceDefinitionBySlugNameQuery) Key() string { return "GetDeviceDefinitionBySlugQuery" }
+func (*GetDeviceDefinitionBySlugNameQuery) Key() string { return "GetDeviceDefinitionBySlugNameQuery" }
 
 type GetDeviceDefinitionBySlugNameQueryHandler struct {
 	DDCache services.DeviceDefinitionCacheService
