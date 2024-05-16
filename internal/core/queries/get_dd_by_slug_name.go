@@ -27,7 +27,7 @@ func NewGetDeviceDefinitionBySlugNameQueryHandler(cache services.DeviceDefinitio
 
 func (ch GetDeviceDefinitionBySlugNameQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
-	qry := query.(*GetDeviceDefinitionBySlugQuery)
+	qry := query.(*GetDeviceDefinitionBySlugNameQuery)
 
 	dd, err := ch.DDCache.GetDeviceDefinitionBySlugName(ctx, qry.Slug)
 
