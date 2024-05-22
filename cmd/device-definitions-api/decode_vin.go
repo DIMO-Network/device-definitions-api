@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -50,8 +51,8 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 	}
 	if p.datGroup {
 		// use the dat group service to decode
-		datApi := gateways.NewDATGroupAPIService(p.settings, p.logger)
-		vinResponse, err := datApi.GetVIN(vin, country)
+		datAPI := gateways.NewDATGroupAPIService(p.settings, p.logger)
+		vinResponse, err := datAPI.GetVIN(vin, country)
 		if err != nil {
 			fmt.Println(err.Error())
 			return subcommands.ExitFailure
@@ -59,6 +60,12 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 		fmt.Printf("VIN: %s\n", vin)
 		fmt.Printf("Country: %s\n", country)
 		fmt.Printf("VIN Response: %+v\n", vinResponse)
+	}
+	if p.drivly {
+		// todo
+	}
+	if p.vincario {
+		// todo
 	}
 
 	fmt.Println()
