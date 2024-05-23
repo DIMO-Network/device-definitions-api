@@ -49,23 +49,39 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 	if len(f.Args()) == 2 {
 		country = f.Args()[1]
 	}
+	fmt.Printf("VIN: %s\n", vin)
+	fmt.Printf("Country: %s\n", country)
+
 	if p.datGroup {
 		// use the dat group service to decode
 		datAPI := gateways.NewDATGroupAPIService(p.settings, p.logger)
-		vinResponse, err := datAPI.GetVIN(vin, country)
+		vinInfo, err := datAPI.GetVIN(vin, country)
 		if err != nil {
 			fmt.Println(err.Error())
 			return subcommands.ExitFailure
 		}
-		fmt.Printf("VIN: %s\n", vin)
-		fmt.Printf("Country: %s\n", country)
-		fmt.Printf("VIN Response: %+v\n", vinResponse)
+
+		fmt.Printf("VIN Response: %+v\n", vinInfo)
 	}
 	if p.drivly {
-		// todo
+		drivlyAPI := gateways.NewDrivlyAPIService(p.settings)
+		vinInfo, err := drivlyAPI.GetVINInfo(vin)
+		if err != nil {
+			fmt.Println(err.Error())
+			return subcommands.ExitFailure
+		}
+
+		fmt.Printf("VIN Response: %+v\n", vinInfo)
 	}
 	if p.vincario {
-		// todo
+		vincarioAPI := gateways.NewVincarioAPIService(p.settings, p.logger)
+		vinInfo, err := vincarioAPI.DecodeVIN(vin)
+		if err != nil {
+			fmt.Println(err.Error())
+			return subcommands.ExitFailure
+		}
+
+		fmt.Printf("VIN Response: %+v\n", vinInfo)
 	}
 
 	fmt.Println()
