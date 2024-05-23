@@ -16,6 +16,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
+// can delete this whole file soon
 type updateDeviceDefinitionSlugCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
