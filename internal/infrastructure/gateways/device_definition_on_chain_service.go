@@ -298,7 +298,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 
 		if err != nil {
-			e.Logger.Err(err).Msgf("Error occurred update device definition %s on-chain.", deviceInputs.Id)
+			e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred update device definition %s on-chain.", deviceInputs.Id))
 			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
 		}
 
