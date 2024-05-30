@@ -275,7 +275,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
 
 	if err != nil {
-		e.Logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
+		e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred get device definition %s from tableland.", deviceInputs.Id))
 		return nil, err
 	}
 
@@ -310,7 +310,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
 
 	if err != nil {
-		e.Logger.Err(err).Msgf("Error occurred inserft device definition %s on-chain.", deviceInputs.Id)
+		e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred inserft device definition %s on-chain.", deviceInputs.Id))
 		return nil, fmt.Errorf("failed insert InsertDeviceDefinition: %w", err)
 	}
 
