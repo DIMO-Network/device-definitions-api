@@ -279,7 +279,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		return nil, err
 	}
 
-	e.Logger.Info().RawJSON("DeviceDefinition", jsonBytes)
+	e.Logger.Info().RawJSON("DeviceDefinition", jsonBytes).Send()
 
 	if currentDeviceDefinition != nil {
 		// validate if attributes was changed
