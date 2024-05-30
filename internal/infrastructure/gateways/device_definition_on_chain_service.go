@@ -216,7 +216,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	bump := big.NewInt(20)
 	bumpedPrice := getGasPrice(gasPrice, bump)
 
-	fmt.Printf("GasPrice => %s Bumped Price=> %s", gasPrice, bumpedPrice)
+	//fmt.Printf("GasPrice => %s Bumped Price=> %s", gasPrice, bumpedPrice)
 
 	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	if err != nil {
@@ -275,18 +275,17 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
 
 	if err != nil {
-		e.Logger.Info().Msgf("%s", err)
+		e.Logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
 		return nil, err
 	}
+
+	e.Logger.Info().RawJSON("DeviceDefinition", jsonBytes)
 
 	if currentDeviceDefinition != nil {
 		// validate if attributes was changed
 		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, "vehicle_info")
 		newAttributes := GetDeviceAttributesTyped(dd.Metadata, "vehicle_info")
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
-
-		fmt.Println("newOrModified => ", len(newOrModified))
-		fmt.Println("removed => ", len(removed))
 
 		if len(newOrModified) == 0 {
 			return nil, nil
@@ -296,11 +295,10 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 			return nil, nil
 		}
 
-		fmt.Println("UpdateDeviceDefinition => ", string(jsonBytes))
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 
 		if err != nil {
-			e.Logger.Info().Msgf("%s", err)
+			e.Logger.Err(err).Msgf("Error occurred update device definition %s on-chain.", deviceInputs.Id)
 			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
 		}
 
@@ -309,12 +307,10 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		return &trx, nil
 	}
 
-	fmt.Println("InsertDeviceDefinition => ", string(jsonBytes))
-
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
 
 	if err != nil {
-		e.Logger.Info().Msgf("%s", err)
+		e.Logger.Err(err).Msgf("Error occurred inserft device definition %s on-chain.", deviceInputs.Id)
 		return nil, fmt.Errorf("failed insert InsertDeviceDefinition: %w", err)
 	}
 
