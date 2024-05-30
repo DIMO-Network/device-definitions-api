@@ -280,6 +280,22 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	}
 
 	if currentDeviceDefinition != nil {
+		// validate if attributes was changed
+		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, "vehicle_info")
+		newAttributes := GetDeviceAttributesTyped(dd.Metadata, "vehicle_info")
+		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
+
+		fmt.Println("newOrModified => ", len(newOrModified))
+		fmt.Println("removed => ", len(removed))
+
+		if len(newOrModified) == 0 {
+			return nil, nil
+		}
+
+		if len(removed) == 0 {
+			return nil, nil
+		}
+
 		fmt.Println("UpdateDeviceDefinition => ", string(jsonBytes))
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 
@@ -305,6 +321,44 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	trx := tx.Hash().Hex()
 
 	return &trx, nil
+}
+
+func validateAttributes(current, new []DeviceTypeAttribute) ([]DeviceTypeAttribute, []DeviceTypeAttribute) {
+	currentMap := attributesToMap(current)
+	newMap := attributesToMap(new)
+
+	var newOrModifiedAttributes []DeviceTypeAttribute
+	var removedAttributes []DeviceTypeAttribute
+
+	// Find new or changed attributes
+	for name, newValue := range newMap {
+		if currentValue, exists := currentMap[name]; !exists || currentValue != newValue {
+			newOrModifiedAttributes = append(newOrModifiedAttributes, DeviceTypeAttribute{
+				Name:  name,
+				Value: newValue,
+			})
+		}
+	}
+
+	// Find deleted attributes
+	for name, currentValue := range currentMap {
+		if _, exists := newMap[name]; !exists {
+			removedAttributes = append(removedAttributes, DeviceTypeAttribute{
+				Name:  name,
+				Value: currentValue,
+			})
+		}
+	}
+
+	return newOrModifiedAttributes, removedAttributes
+}
+
+func attributesToMap(attributes []DeviceTypeAttribute) map[string]string {
+	attrMap := make(map[string]string)
+	for _, attr := range attributes {
+		attrMap[attr.Name] = attr.Value
+	}
+	return attrMap
 }
 
 func getGasPrice(price *big.Int, bump *big.Int) *big.Int {
