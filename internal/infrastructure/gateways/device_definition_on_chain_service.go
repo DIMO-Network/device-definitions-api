@@ -272,13 +272,34 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		fmt.Println("Error converting to JSON => ", err)
 	}
 
+	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
+
+	if err != nil {
+		e.Logger.Info().Msgf("%s", err)
+		return nil, err
+	}
+
+	if currentDeviceDefinition != nil {
+		fmt.Println("UpdateDeviceDefinition => ", string(jsonBytes))
+		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
+
+		if err != nil {
+			e.Logger.Info().Msgf("%s", err)
+			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
+		}
+
+		trx := tx.Hash().Hex()
+
+		return &trx, nil
+	}
+
 	fmt.Println("InsertDeviceDefinition => ", string(jsonBytes))
 
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
 
 	if err != nil {
 		e.Logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed insert InsertDeviceDefinitionBatch: %w", err)
+		return nil, fmt.Errorf("failed insert InsertDeviceDefinition: %w", err)
 	}
 
 	trx := tx.Hash().Hex()
