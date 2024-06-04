@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"time"
@@ -16,6 +17,7 @@ import (
 //go:generate mockgen -source datgroup_api_service.go -destination mocks/datgroup_api_service_mock.go -package mocks
 type DATGroupAPIService interface {
 	GetVIN(vin, country string) (*GetVehicleIdentificationByVinResponse, error)
+	GetVINv2(vin string, country string) (*string, error)
 }
 
 type datGroupAPIService struct {
@@ -28,6 +30,73 @@ func NewDATGroupAPIService(settings *config.Settings, logger *zerolog.Logger) DA
 		Settings: settings,
 		log:      logger,
 	}
+}
+
+func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*string, error) {
+	if userCountryISO2 == "" || len(userCountryISO2) != 2 {
+		userCountryISO2 = "US"
+	}
+	customerLogin := "digitalinfr"
+	customerNumber := "3800548"
+	customerSignature := "A9F47D476963F2E97F0F9CF7A24E49E4E3EA9138BA5244F4AFCAA02B00D8B2C7"
+	interfacePartnerSignature := "279D47BD03621145AF977A993881514D05F8AC800DA8EBDBAC4FF99C372195DA"
+
+	soapReq := `
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:veh="http://sphinx.dat.de/services/VehicleIdentificationService">
+<soapenv:Header>
+<customerLogin>%s</customerLogin>
+<customerNumber>%s</customerNumber>
+<interfacePartnerNumber>%s</interfacePartnerNumber>
+<customerSignature>%s</customerSignature>
+<interfacePartnerSignature>%s</interfacePartnerSignature>
+</soapenv:Header>
+<soapenv:Body>
+<veh:getVehicleIdentificationByVin>
+<!-- Optional: -->
+<request>
+<locale country="%s" datCountryIndicator="TR" language="EN"/>
+<!-- Optional: -->
+<!-- Zero or more repetitions: -->
+<coverage>ALL</coverage>
+<restriction>ALL</restriction>
+<vin>%s</vin>
+</request>
+<templateId>157011</templateId>
+</veh:getVehicleIdentificationByVin>
+</soapenv:Body>
+</soapenv:Envelope>
+`
+	withParams := fmt.Sprintf(soapReq, customerLogin, customerNumber, customerNumber, customerSignature, interfacePartnerSignature,
+		userCountryISO2, vin)
+
+	timeout := 30 * time.Second
+	client := http.Client{
+		Timeout: timeout,
+	}
+
+	req, err := http.NewRequest("POST", ai.Settings.DatGroupURL, bytes.NewBuffer([]byte(withParams)))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create request")
+	}
+
+	req.Header.Set("Accept", "text/xml, multipart/related")
+	req.Header.Set("SOAPAction", "getVehicleIdentificationByVin")
+	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
+
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to send request")
+	}
+
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	bb := string(bodyBytes)
+	ai.log.Info().Msgf("response status code: %d", response.StatusCode)
+
+	return &bb, nil
 }
 
 func (ai *datGroupAPIService) GetVIN(vin, userCountryISO2 string) (*GetVehicleIdentificationByVinResponse, error) {
