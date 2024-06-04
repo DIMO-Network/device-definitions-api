@@ -69,17 +69,17 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 </soapenv:Body>
 </soapenv:Envelope>
 `
-	withParams := fmt.Sprintf(soapReq, customerLogin, customerNumber, customerNumber, customerSignature, interfacePartnerSignature,
+	soapReqWParams := fmt.Sprintf(soapReq, customerLogin, customerNumber, customerNumber, customerSignature, interfacePartnerSignature,
 		userCountryISO2, vin)
 
-	ai.log.Info().Msg(withParams)
+	ai.log.Debug().Msg(soapReqWParams)
 
 	timeout := 30 * time.Second
 	client := http.Client{
 		Timeout: timeout,
 	}
 
-	req, err := http.NewRequest("POST", ai.Settings.DatGroupURL, bytes.NewBuffer([]byte(withParams)))
+	req, err := http.NewRequest("POST", ai.Settings.DatGroupURL, bytes.NewBuffer([]byte(soapReqWParams)))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create request")
 	}
@@ -98,11 +98,15 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	ai.log.Debug().Msg(string(bodyBytes))
+
 	if response.StatusCode != http.StatusOK {
-		ai.log.Error().Str("vin", vin).Msgf("error response status code: %d. request: %s. response: %s",
-			response.StatusCode, withParams, string(bodyBytes))
+		ai.log.Error().Str("vin", vin).Msgf("error response status code: %d. request: %s",
+			response.StatusCode, soapReqWParams)
 		return nil, fmt.Errorf("error response status code: %d", response.StatusCode)
 	}
+
 	infoResponse, err := parseXML(ai.log, string(bodyBytes), vin)
 	if err != nil {
 		return nil, err
