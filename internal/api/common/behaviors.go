@@ -14,11 +14,11 @@ package common
 //)
 //
 //type LoggingBehavior struct {
-//	log      *zerolog.Logger
-//	settings *config.Settings
+//	log      *zerolog.logger
+//	settings *config.settings
 //}
 //
-//func NewLoggingBehavior(log *zerolog.Logger, settings *config.Settings) LoggingBehavior {
+//func NewLoggingBehavior(log *zerolog.logger, settings *config.settings) LoggingBehavior {
 //	return LoggingBehavior{log: log, settings: settings}
 //}
 //
@@ -29,11 +29,11 @@ package common
 //}
 //
 //type ValidationBehavior struct {
-//	log      *zerolog.Logger
-//	settings *config.Settings
+//	log      *zerolog.logger
+//	settings *config.settings
 //}
 //
-//func NewValidationBehavior(log *zerolog.Logger, settings *config.Settings) ValidationBehavior {
+//func NewValidationBehavior(log *zerolog.logger, settings *config.settings) ValidationBehavior {
 //	return ValidationBehavior{log: log, settings: settings}
 //}
 //
@@ -52,11 +52,11 @@ package common
 //}
 //
 //type ErrorHandlingBehavior struct {
-//	log      *zerolog.Logger
-//	settings *config.Settings
+//	log      *zerolog.logger
+//	settings *config.settings
 //}
 //
-//func NewErrorHandlingBehavior(log *zerolog.Logger, settings *config.Settings) ErrorHandlingBehavior {
+//func NewErrorHandlingBehavior(log *zerolog.logger, settings *config.settings) ErrorHandlingBehavior {
 //	return ErrorHandlingBehavior{log: log, settings: settings}
 //}
 //
