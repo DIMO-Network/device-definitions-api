@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	common2 "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"math/big"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	common2 "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
@@ -265,12 +266,6 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		jsonData, _ := json.Marshal(deviceAttributesStruct)
 		deviceInputs.Metadata = string(jsonData)
 	}
-	// log what we are sending to the chain
-	jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
-	if err != nil {
-		e.logger.Err(err).Msg("error marshalling device definition inputs")
-	}
-	e.logger.Info().RawJSON("DeviceDefinition to CreateOrUpdate", jsonBytes).Send()
 
 	// check if any pertinent information changed
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
@@ -292,6 +287,12 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		if len(removed) == 0 {
 			return nil, nil
 		}
+		// log what we are sending to the chain
+		jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
+		if err != nil {
+			e.logger.Err(err).Msg("error marshalling device definition inputs")
+		}
+		e.logger.Info().RawJSON("device_definition", jsonBytes).Msg("dd payload sending to chain for CreateOrUpdate")
 
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 		if err != nil {
