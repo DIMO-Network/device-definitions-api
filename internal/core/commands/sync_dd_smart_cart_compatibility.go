@@ -61,7 +61,7 @@ func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, _
 			continue
 		}
 
-		//regionLogger := logger.With().Str("region", region).Logger()
+		//regionLogger := logger.With().Str("region", region).logger()
 		sunsetSkipCount := 0
 
 		for _, datum := range data {
@@ -73,7 +73,7 @@ func (ch SyncSmartCartCompatibilityCommandHandler) Handle(ctx context.Context, _
 						continue
 					}
 
-					//mkLogger := regionLogger.With().Str("make", *mkName).Logger()
+					//mkLogger := regionLogger.With().Str("make", *mkName).logger()
 					rangeStr := row[0].Subtext
 					if rangeStr == nil || *rangeStr == "" {
 						//mkLogger.Error().Msg("Empty year range string, skipping manufacturer")

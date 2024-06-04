@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	common2 "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -32,8 +33,8 @@ type DeviceDefinitionOnChainService interface {
 }
 
 type deviceDefinitionOnChainService struct {
-	Settings *config.Settings
-	Logger   *zerolog.Logger
+	settings *config.Settings
+	logger   *zerolog.Logger
 	client   *ethclient.Client
 	sender   sender.Sender
 	chainID  *big.Int
@@ -41,8 +42,8 @@ type deviceDefinitionOnChainService struct {
 
 func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client, chainID *big.Int, sender sender.Sender) DeviceDefinitionOnChainService {
 	return &deviceDefinitionOnChainService{
-		Settings: settings,
-		Logger:   logger,
+		settings: settings,
+		logger:   logger,
 		client:   client,
 		chainID:  chainID,
 		sender:   sender,
@@ -54,7 +55,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
+	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
@@ -63,7 +64,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	bigManufID := manufacturerID.Big.Int(new(big.Int))
 	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, bigManufID)
 	if err != nil {
-		e.Logger.Info().Msgf("%s", err)
+		e.logger.Info().Msgf("%s", err)
 		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
 	}
 
@@ -114,7 +115,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
+	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
 	fromAddress := e.sender.Address()
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
@@ -124,7 +125,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	bigManufID := manufacturerID.Big.Int(new(big.Int))
 	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true, From: fromAddress}, bigManufID)
 	if err != nil {
-		e.Logger.Info().Msgf("%s", err)
+		e.logger.Info().Msgf("%s", err)
 		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
 	}
 
@@ -164,7 +165,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 }
 
 func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]string, result interface{}) error {
-	fullURL, err := url.Parse(e.Settings.TablelandAPIGateway)
+	fullURL, err := url.Parse(e.settings.TablelandAPIGateway)
 	if err != nil {
 		return err
 	}
@@ -196,11 +197,11 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
-	if !e.Settings.EthereumSendTransaction {
+	if !e.settings.EthereumSendTransaction {
 		return nil, nil
 	}
 
-	contractAddress := common.HexToAddress(e.Settings.EthereumRegistryAddress)
+	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
 	fromAddress := e.sender.Address()
 
 	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)
@@ -216,7 +217,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	bump := big.NewInt(20)
 	bumpedPrice := getGasPrice(gasPrice, bump)
 
-	//fmt.Printf("GasPrice => %s Bumped Price=> %s", gasPrice, bumpedPrice)
+	e.logger.Debug().Msgf("bumped gas price: %d", bumpedPrice)
 
 	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	if err != nil {
@@ -236,8 +237,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	// Validate if manufacturer exists
 	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, make.Name)
 	if err != nil {
-		e.Logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed get GetManufacturerNameById => %s: %w", make.Name, err)
+		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", make.Name, err)
 	}
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
@@ -248,7 +248,6 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		Id:         dd.NameSlug,
 		Model:      dd.ModelSlug,
 		Year:       big.NewInt(int64(dd.Year)),
-		Metadata:   "",
 		Ksuid:      dd.ID,
 		DeviceType: "vehicle",
 	}
@@ -256,7 +255,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	deviceInputs.ImageURI = GetDefaultImageURL(dd)
 
 	if dd.Metadata.Valid {
-		attributes := GetDeviceAttributesTyped(dd.Metadata, "vehicle_info")
+		attributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
 		type deviceAttributes struct {
 			DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
 		}
@@ -266,25 +265,24 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		jsonData, _ := json.Marshal(deviceAttributesStruct)
 		deviceInputs.Metadata = string(jsonData)
 	}
-
+	// log what we are sending to the chain
 	jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
 	if err != nil {
-		fmt.Println("Error converting to JSON => ", err)
+		e.logger.Err(err).Msg("error marshalling device definition inputs")
 	}
+	e.logger.Info().RawJSON("DeviceDefinition to CreateOrUpdate", jsonBytes).Send()
 
+	// check if any pertinent information changed
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
-
 	if err != nil {
-		e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred get device definition %s from tableland.", deviceInputs.Id))
+		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
 		return nil, err
 	}
 
-	e.Logger.Info().RawJSON("DeviceDefinition", jsonBytes).Send()
-
 	if currentDeviceDefinition != nil {
 		// validate if attributes was changed
-		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, "vehicle_info")
-		newAttributes := GetDeviceAttributesTyped(dd.Metadata, "vehicle_info")
+		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, common2.VehicleMetadataKey)
+		newAttributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
 
 		if len(newOrModified) == 0 {
@@ -296,9 +294,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		}
 
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
-
 		if err != nil {
-			e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred update device definition %s on-chain.", deviceInputs.Id))
+			e.logger.Err(err).Msgf("failed UpdateDeviceDefinition %s on-chain.", deviceInputs.Id)
 			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
 		}
 
@@ -308,9 +305,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	}
 
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
-
 	if err != nil {
-		e.Logger.Err(err).Msg(fmt.Sprintf("Error occurred inserft device definition %s on-chain.", deviceInputs.Id))
+		e.logger.Err(err).Msgf("failed InsertDeviceDefinition %s on-chain", deviceInputs.Id)
 		return nil, fmt.Errorf("failed insert InsertDeviceDefinition: %w", err)
 	}
 
