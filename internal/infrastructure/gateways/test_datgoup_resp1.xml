@@ -1,0 +1,1316 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+    <S:Body>
+        <ns9:getVehicleIdentificationByVinResponse xmlns:ns9="http://sphinx.dat.de/services/VehicleIdentificationService">
+            <VXS>
+                <ns1:Dossier xmlns:ns1="http://www.dat.de/vxs">
+                    <ns1:Country>TR</ns1:Country>
+                    <ns1:Language>en_US</ns1:Language>
+                    <ns1:Vehicle>
+                        <ns1:DatECode>019051530110001</ns1:DatECode>
+                        <ns1:Container>TR001</ns1:Container>
+                        <ns1:ConstructionTime>6412</ns1:ConstructionTime>
+                        <ns1:ConstructionTimeFrom>6070</ns1:ConstructionTimeFrom>
+                        <ns1:ConstructionTimeTo>6489</ns1:ConstructionTimeTo>
+                        <ns1:ConstructionTimePriceList>6350</ns1:ConstructionTimePriceList>
+                        <ns1:SalesDescription>ID.3 Pro Performance</ns1:SalesDescription>
+                        <ns1:VehicleTypeName>Passenger car, SUV, small van</ns1:VehicleTypeName>
+                        <ns1:VehicleTypeNameN origin="dat">Passenger car, SUV, small van</ns1:VehicleTypeNameN>
+                        <ns1:ManufacturerName origin="dat">Volkswagen</ns1:ManufacturerName>
+                        <ns1:BaseModelName origin="dat">ID.3 (E11)(06.2020-&gt;2023)</ns1:BaseModelName>
+                        <ns1:SubModelName origin="dat">Pro Performance 150 kW</ns1:SubModelName>
+                        <ns1:ContainerName>TR - Kapı:5 Pro Performance, 2020 - 2023</ns1:ContainerName>
+                        <ns1:ContainerNameN origin="dat">TR - Kapı:5 Pro Performance, 2020 - 2023</ns1:ContainerNameN>
+                        <ns1:MainTypeGroupName>ID.3</ns1:MainTypeGroupName>
+                        <ns1:VehicleType>1</ns1:VehicleType>
+                        <ns1:Manufacturer>905</ns1:Manufacturer>
+                        <ns1:BaseModel>153</ns1:BaseModel>
+                        <ns1:SubModel>11</ns1:SubModel>
+                        <ns1:MainTypeGroup>ID3</ns1:MainTypeGroup>
+                        <ns1:IdentificationSource>IDENTIFICATIONSOURCE_VIN</ns1:IdentificationSource>
+                        <ns1:VinAccuracy>0</ns1:VinAccuracy>
+                        <ns1:ReleaseIndicator>ALL</ns1:ReleaseIndicator>
+                        <ns1:PaintTypes>
+                            <ns1:PaintType>05</ns1:PaintType>
+                            <ns1:PaintType>09</ns1:PaintType>
+                        </ns1:PaintTypes>
+                        <ns1:SubModelVariant>1</ns1:SubModelVariant>
+                        <ns1:Equipment>
+                            <ns1:SeriesEquipment>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>38937</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>GM1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Electronic engine sound</ns1:ManufacturerDescription>
+                                    <ns1:Description>acoustic pedestrian protection, external sound (e-sound)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>28920</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>KC0</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Air conditioning system Climatronic with enhanced air filter with activated carbon and stationary air conditioning</ns1:ManufacturerDescription>
+                                    <ns1:Description>air conditioning Climatronic 1 zone</ns1:Description>
+                                    <ns1:EquipmentGroup>KLI2</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26816</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4UF</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Driver and front passenger airbag with front passenger airbag deactivation</ns1:ManufacturerDescription>
+                                    <ns1:Description>airbag driver side/passenger side, passenger-side airbag deactivatable</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR1</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37114</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>9P4</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Warning signal and warning light for front and rear seat belts not fastened</ns1:ManufacturerDescription>
+                                    <ns1:Description>alarm system for seat belts front and rear</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37580</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>QQ8</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>10-color ambient lighting</ns1:ManufacturerDescription>
+                                    <ns1:Description>ambient lighting (10 colours)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>14805</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8ZQ</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Diversity antenna for FM reception</ns1:ManufacturerDescription>
+                                    <ns1:Description>antenna diversity</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40000</ns1:DatEquipmentId>
+                                    <ns1:Description>antilock braking system (ABS)</ns1:Description>
+                                    <ns1:EquipmentGroup>ABS</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>33406</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4S1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Armrest for front seats</ns1:ManufacturerDescription>
+                                    <ns1:Description>armrests for driver and passenger seat</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24253</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8AS</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Radio "Ready 2 Discover"</ns1:ManufacturerDescription>
+                                    <ns1:Description>audio system Ready 2 Discover (incl. Streaming &amp; Internet, Touchscreen, Bluetooth)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25841</ns1:DatEquipmentId>
+                                    <ns1:Description>Audio system: preparation for later activation navigation function Discover Media</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>39003</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3D1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Center console with 2 beverage holders in front</ns1:ManufacturerDescription>
+                                    <ns1:Description>beverage holder front</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>10005</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>K8G</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Hatchback</ns1:ManufacturerDescription>
+                                    <ns1:Description>body: 5-door</ns1:Description>
+                                    <ns1:EquipmentClass>2</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40801</ns1:DatEquipmentId>
+                                    <ns1:Description>brake assistant</ns1:Description>
+                                    <ns1:EquipmentGroup>FA01</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>73223</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>76C</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Charging cable mode 3 type 2, 16 A</ns1:ManufacturerDescription>
+                                    <ns1:Description>charging cable with type-2 connector (mode 3, 16 A)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>73180</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>LH2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Maximum DC charging power (direct current) depending on the high-voltage battery pack</ns1:ManufacturerDescription>
+                                    <ns1:Description>charging capacity HV battery 100 kW (direct current DC)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70517</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>2H5</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Driving Mode Selection</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: driving-profile selection</ns1:Description>
+                                    <ns1:EquipmentGroup>FA22</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>42926</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>EM1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Driver alert system</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: fatigue detection</ns1:Description>
+                                    <ns1:EquipmentGroup>FA41</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>42907</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>6I1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Lane keeping system Lane Assist</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: lane assist (Lane Assist)</ns1:Description>
+                                    <ns1:EquipmentGroup>FA49</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40957</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8J3</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Auto. Emergency Braking Front Assist with Pedestrian and Cyclist Monitoring</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: periphery observation system (Front assist) with City emergency braking function</ns1:Description>
+                                    <ns1:EquipmentGroup>FA05</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18680</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>QR9</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Dynamic Road Sign Display</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: traffic sign detection</ns1:Description>
+                                    <ns1:EquipmentGroup>FA28</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>40912</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4G3</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Oncoming vehicle braking when turning and swerve support</ns1:ManufacturerDescription>
+                                    <ns1:Description>driver assistance system: turning brake function and avoidance support</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>97194</ns1:DatEquipmentId>
+                                    <ns1:Description>electric motor 150 kW (cont. 70 kW)</ns1:Description>
+                                    <ns1:EquipmentClass>1</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70311</ns1:DatEquipmentId>
+                                    <ns1:Description>Electronic Stability Control (ESP) brake assistant, ASR/ABS, EDS</ns1:Description>
+                                    <ns1:EquipmentGroup>ESP</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70318</ns1:DatEquipmentId>
+                                    <ns1:Description>Electronic Stability Control (ESP) with brake booster electromechanical</ns1:Description>
+                                    <ns1:EquipmentGroup>ESP</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24902</ns1:DatEquipmentId>
+                                    <ns1:Description>emergency call system</ns1:Description>
+                                    <ns1:EquipmentGroup>FA10</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>2430</ns1:DatEquipmentId>
+                                    <ns1:Description>equipment base</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>15804</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>5JA</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Exterior mirrors: aspherical on driver side, convex on front passenger side</ns1:ManufacturerDescription>
+                                    <ns1:Description>exterior mirror aspherical, left</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>15702</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>5JA</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Exterior mirrors: aspherical on driver side, convex on front passenger side</ns1:ManufacturerDescription>
+                                    <ns1:Description>exterior mirror convex, right</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>15200</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>6XN</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Exterior mirrors power-adjustable and heated</ns1:ManufacturerDescription>
+                                    <ns1:Description>exterior mirror electrically adjustable and heated</ns1:Description>
+                                    <ns1:EquipmentGroup>AUSP</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>39531</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>1T9</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>First aid kit, warning triangle and safety vest</ns1:ManufacturerDescription>
+                                    <ns1:Description>first-aid kit and warning triangle</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>34807</ns1:DatEquipmentId>
+                                    <ns1:Description>head rests rear (3-fold)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18588</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8IR</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>LED headlamps with automatic headlight control</ns1:ManufacturerDescription>
+                                    <ns1:Description>headlight LED incl. automatic headlight control</ns1:Description>
+                                    <ns1:EquipmentGroup>LED</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>22310</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4KC</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Green heat-insulating glass windows on sides and in rear</ns1:ManufacturerDescription>
+                                    <ns1:Description>heat protection glazing green-tinted (sideways / rear)</ns1:Description>
+                                    <ns1:EquipmentGroup>WDG</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>72704</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>J9C</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>High-voltage battery 62 kWh (gross)</ns1:ManufacturerDescription>
+                                    <ns1:Description>HV battery 62 kWh ? / 58 kWh ?</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>38106</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>7AA</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Electronic immobilizer</ns1:ManufacturerDescription>
+                                    <ns1:Description>immobilizer (electronic)</ns1:Description>
+                                    <ns1:EquipmentGroup>WFS</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>39180</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>QW5</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Bezel for infotainment display and central controls in Black</ns1:ManufacturerDescription>
+                                    <ns1:Description>interior equipment control elements and surround instruments black</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>29112</ns1:DatEquipmentId>
+                                    <ns1:Description>Interior filter: active combination filter</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37900</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4L2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Dimming interior rearview mirror</ns1:ManufacturerDescription>
+                                    <ns1:Description>interior mirror dimming</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>39313</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3A2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>ISOFIX anchors for child seats on outer rear bench seats and on front passenger seat, compatible for i-Size</ns1:ManufacturerDescription>
+                                    <ns1:Description>Isofix mounts for child seat at passenger seat and rear seat (incl. i-Size child seats)</ns1:Description>
+                                    <ns1:EquipmentGroup>KISI</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>35511</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>4I7</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Keyless Start without SAFELOCK</ns1:ManufacturerDescription>
+                                    <ns1:Description>Keyless-Start</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24772</ns1:DatEquipmentId>
+                                    <ns1:Description>mobile phone interface Comfort wireless charging</ns1:Description>
+                                    <ns1:EquipmentGroup>TEL3</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25141</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>U9G</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>2 USB-C ports in the front, charging capacity up to 45 W</ns1:ManufacturerDescription>
+                                    <ns1:Description>multi-media interface 2 x USB (type C, 45 W) front</ns1:Description>
+                                    <ns1:EquipmentGroup>MP3A</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25800</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>7X2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Park Distance Control - warning signals for obstacles in the front and rear</ns1:ManufacturerDescription>
+                                    <ns1:Description>parking aid front and rear</ns1:Description>
+                                    <ns1:EquipmentGroup>PDC3</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>79639</ns1:DatEquipmentId>
+                                    <ns1:Description>Performance Upgrade</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69827</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>1N3</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Electromechanical speed-sensitive power steering</ns1:ManufacturerDescription>
+                                    <ns1:Description>power steering electromechanical and vehicle-speed-sensitive</ns1:Description>
+                                    <ns1:EquipmentGroup>SL</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>73198</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>ES7</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>CCS vehicle inlet</ns1:ManufacturerDescription>
+                                    <ns1:Description>quick-charging system (CCS charging socket)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24052</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>QV3</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Digital radio reception DAB+</ns1:ManufacturerDescription>
+                                    <ns1:Description>radio reception digital (DAB+)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>18802</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8VG</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>LED rear combination lamps</ns1:ManufacturerDescription>
+                                    <ns1:Description>rear lights LED</ns1:Description>
+                                    <ns1:EquipmentGroup>LEDH</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>33502</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3NZ</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>3 rear seats, asymmetric split folding rear seat backrest</ns1:ManufacturerDescription>
+                                    <ns1:Description>rear seat backrest split</ns1:Description>
+                                    <ns1:EquipmentGroup>SITH</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>11408</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>C2A1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Moonstone Gray/Black</ns1:ManufacturerDescription>
+                                    <ns1:Description>roof in contrasting colour</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>16218</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>6H0</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Roof trim strip in Matte Black, air intake and sill in Matte Black</ns1:ManufacturerDescription>
+                                    <ns1:Description>roof trim strip, air intakes front and side skirt black matte</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37301</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3QE</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>3-point seat belts in front with seat belt pretensioners</ns1:ManufacturerDescription>
+                                    <ns1:Description>seat belts front with seat belt tensioner</ns1:Description>
+                                    <ns1:EquipmentGroup>GUST</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>30496</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>N0U</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Inserts of front seats and outer rear seats in fabric "Fragment"</ns1:ManufacturerDescription>
+                                    <ns1:Description>seat covers/upholstery: cloth Fragment</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>34106</ns1:DatEquipmentId>
+                                    <ns1:Description>seat equipment: 5-seater</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>32704</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3L1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Driver seat with height adjustment</ns1:ManufacturerDescription>
+                                    <ns1:Description>seat front left height-adjustable</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25888</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>GW2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Car2X</ns1:ManufacturerDescription>
+                                    <ns1:Description>Service system: Intelligent vehicle networking (Car2X)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25866</ns1:DatEquipmentId>
+                                    <ns1:Description>Service system: Online update</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26611</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>6C2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Curtain airbags in front and rear, side airbags in front, center airbag</ns1:ManufacturerDescription>
+                                    <ns1:Description>sidebag front with Center airbag and head airbag unit</ns1:Description>
+                                    <ns1:EquipmentGroup>AIR3</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24594</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8RS</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>4+1 speakers</ns1:ManufacturerDescription>
+                                    <ns1:Description>speaker(s) (5)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69502</ns1:DatEquipmentId>
+                                    <ns1:Description>steering column (steering wheel) mechanic. adjustable, height/longitudinal adjustment</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>69000</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>2FB</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Multi-function steering wheel with touch control</ns1:ManufacturerDescription>
+                                    <ns1:Description>steering wheel with multiple function</ns1:Description>
+                                    <ns1:EquipmentGroup>LEN5</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>37905</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>5XJ</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Illuminated vanity mirrors in sun visors</ns1:ManufacturerDescription>
+                                    <ns1:Description>sun visors with mirror (illuminated)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>25906</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>7K1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Tire Pressure Monitoring System</ns1:ManufacturerDescription>
+                                    <ns1:Description>tire pressure indicator</ns1:Description>
+                                    <ns1:EquipmentGroup>RDK</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>76400</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>G1Z</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Transmission for electric drive (1-speed)</ns1:ManufacturerDescription>
+                                    <ns1:Description>transmission for electric vehicle</ns1:Description>
+                                    <ns1:EquipmentGroup>AG1</ns1:EquipmentGroup>
+                                    <ns1:EquipmentClass>11</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>70601</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>1X2</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Rear-wheel drive</ns1:ManufacturerDescription>
+                                    <ns1:Description>Type of drive: rear-wheel drive</ns1:Description>
+                                    <ns1:EquipmentGroup>HIAN</ns1:EquipmentGroup>
+                                    <ns1:EquipmentClass>4</ns1:EquipmentClass>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>26739</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>3V7</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Speed limiter in combination with online services</ns1:ManufacturerDescription>
+                                    <ns1:Description>vehicle speed limiter in conjunction with online services</ns1:Description>
+                                    <ns1:EquipmentGroup>LIMI</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>24709</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>QH1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Voice control</ns1:ManufacturerDescription>
+                                    <ns1:Description>voice control system</ns1:Description>
+                                    <ns1:EquipmentGroup>TEL4</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>22508</ns1:DatEquipmentId>
+                                    <ns1:Description>windshield laminated glass tinted</ns1:Description>
+                                    <ns1:EquipmentGroup>WDG</ns1:EquipmentGroup>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>19103</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>8N5</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Windshield wiper intermittent control</ns1:ManufacturerDescription>
+                                    <ns1:Description>windshield wiper with interval mode</ns1:Description>
+                                </ns1:EquipmentPosition>
+                            </ns1:SeriesEquipment>
+                            <ns1:SpecialEquipment>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>11166</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>C2A1</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Moonstone Gray/Black</ns1:ManufacturerDescription>
+                                    <ns1:Description>custom paintwork Moonstone grey single-tone</ns1:Description>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>29299</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>WPU</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Energy-efficient heat pump</ns1:ManufacturerDescription>
+                                    <ns1:Description>heating/air-conditioning: heat pump</ns1:Description>
+                                    <ns1:OriginalPrice>29086.72</ns1:OriginalPrice>
+                                </ns1:EquipmentPosition>
+                                <ns1:EquipmentPosition>
+                                    <ns1:DatEquipmentId>68802</ns1:DatEquipmentId>
+                                    <ns1:ManufacturerEquipmentId>1S3</ns1:ManufacturerEquipmentId>
+                                    <ns1:ManufacturerDescription>Tool kit and Tire Mobility Set: 12-volt compressor and tire sealant</ns1:ManufacturerDescription>
+                                    <ns1:Description>tire repair kit (Tire Mobility Set)</ns1:Description>
+                                </ns1:EquipmentPosition>
+                            </ns1:SpecialEquipment>
+                        </ns1:Equipment>
+                        <ns1:DATECodeEquipment>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>97194</ns1:DatEquipmentId>
+                                <ns1:Description>electric motor 150 kW (cont. 70 kW)</ns1:Description>
+                                <ns1:EquipmentClass>1</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>10005</ns1:DatEquipmentId>
+                                <ns1:Description>body: 5-door</ns1:Description>
+                                <ns1:EquipmentClass>2</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                            <ns1:EquipmentPosition>
+                                <ns1:DatEquipmentId>76400</ns1:DatEquipmentId>
+                                <ns1:Description>transmission for electric vehicle</ns1:Description>
+                                <ns1:EquipmentClass>11</ns1:EquipmentClass>
+                            </ns1:EquipmentPosition>
+                        </ns1:DATECodeEquipment>
+                        <ns1:VINResult>
+                            <ns1:VinInterfaceVersion>2.5</ns1:VinInterfaceVersion>
+                            <ns1:VINECodes>
+                                <ns1:VINECode>
+                                    <ns1:Sign>0</ns1:Sign>
+                                    <ns1:Country>TR</ns1:Country>
+                                    <ns1:VehicleTypeKey>1</ns1:VehicleTypeKey>
+                                    <ns1:ManufacturerKey>905</ns1:ManufacturerKey>
+                                    <ns1:VehicleMainTypeKey>153</ns1:VehicleMainTypeKey>
+                                    <ns1:VehicleSubTypeKey>11</ns1:VehicleSubTypeKey>
+                                    <ns1:VehicleSubTypeVariantKey>1</ns1:VehicleSubTypeVariantKey>
+                                    <ns1:ConstructionTimeMin>6410</ns1:ConstructionTimeMin>
+                                    <ns1:ConstructionTime>6412</ns1:ConstructionTime>
+                                    <ns1:ConstructionTimeEdge>6070</ns1:ConstructionTimeEdge>
+                                    <ns1:ConstructionTimeProd>6412</ns1:ConstructionTimeProd>
+                                    <ns1:ConstructionTimePriceList>6350</ns1:ConstructionTimePriceList>
+                                    <ns1:VINContainers>
+                                        <ns1:VINContainer>
+                                            <ns1:Container>001</ns1:Container>
+                                            <ns1:VehicleTypeKey>5</ns1:VehicleTypeKey>
+                                            <ns1:ManufacturerKey>905</ns1:ManufacturerKey>
+                                            <ns1:VehicleMainTypeKey>8000</ns1:VehicleMainTypeKey>
+                                            <ns1:VehicleSubTypeKey>4</ns1:VehicleSubTypeKey>
+                                            <ns1:VehicleConstructionTime>6412</ns1:VehicleConstructionTime>
+                                        </ns1:VINContainer>
+                                    </ns1:VINContainers>
+                                </ns1:VINECode>
+                            </ns1:VINECodes>
+                            <ns1:VINEquipments>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0FY</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Dresden manufacturing sequence</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0GA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without specific emission standard</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0NB</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Elimination of nameplate for engine designation on luggage compartment lid</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0RH</ns1:ManufacturerCode>
+                                    <ns1:ShortName>With special requirements on the steering column lock</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0TA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without floor mats</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0VC</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Manual in German (Germany)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>0YE</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Weight range 5 installation control only, no requirement forecast</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1CV</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Vehicle class differentiation -10A-</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1D0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without trailer hitch</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1EX</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Special identification label for EC for M1 passenger vehicles</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1J0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without surround lighting/welcome light (mirror)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1JA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Rear shock absorption, basic version 1</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>1PA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard wheel bolts</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>2F0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without locking and starting systems</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>2JB</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard bumpers</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>2WA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without additional tires</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>31K</ns1:ManufacturerCode>
+                                    <ns1:ShortName>License plate carrier in front and rear (ECE)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>3FA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without roof insert (standard roof)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>3GA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Luggage compartment floor</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>4E0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Tailgate/trunk lid unlocking from outside</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>4N0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard dashboard</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>5C0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without special body measures</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>5F1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>UWB-capable country and carrier frequency, 433.92 to 434.42 MHz</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>5K7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Transport protection film (minimum protection) with additional transport protection measures</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>5LC</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Gear ratio 11.530</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>6F0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without decorative films/emblems</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>7G0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without preparation for VTS (vehicle tracking system)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>7P0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without lumbar support in seat backrests</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>7PA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Platform group class 1</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>7W0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without extended safety system</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>8GJ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>DC-DC converter 3.0 kW</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>8Y0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Single-tone horn</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>9T0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without heated washer nozzles</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>AY0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without Fast Lane model</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>B0A</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Part set without country-specific prescriptive standard</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>C12</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Operating permit, alteration</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>COUNTRY:DE</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>E0A</ns1:ManufacturerCode>
+                                    <ns1:ShortName>No special edition</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>ER1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Regional code " ECE " for radio</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>EV0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without charging cable</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>EXT.ENG:M</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>EXT.GEAR:J</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>F0A</ns1:ManufacturerCode>
+                                    <ns1:ShortName>No special purpose vehicle, standard equipment</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>FT0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without parking assistance/garage parking assist</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>G01</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Shock absorption in front</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>G9E</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Torque 310 Nm Base motor is N06/N07/N10</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>GP3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Vehicles with special upgrade measures</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>IG0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard curb weight range</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>IN0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Rear axle weight, standard</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>JX0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without front cross traffic assist</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>KA0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without camera systems/accident sensors</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>KS0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without head-up display</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>L02</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Suspension range 02 installation control only, no requirement forecast</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>L1F</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electric motor, system output 150 kW base motor is N06/N07/TB7</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>N06</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electric motor unit 0EH.A</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>NI0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without UN-ECE cybersecurity &amp; software update</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>PLANTCODE:029</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Volkswagen Sachsen GmbH, Dresden</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>UD0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without exterior ambient lighting</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>V6K</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Software network, version 11</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>VF0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard pedal cluster</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>VIN10:P</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>VIN11:8</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>WHC:WVW</ns1:ManufacturerCode>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>XX</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Platinum Gray-Soul Black/Soul Black- Dusty Gray Dark/Black/Black</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:ManufacturerCode>YCA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Environment bonus</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>11</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>AV1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Driving on the right</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>11</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>L0L</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Left-hand drive</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>27</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>B01</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Type approval country Germany</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>503</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>VI6</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Service indicator 2 years (fix) without km, electric vehicle</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>504</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>VI6</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Service indicator 2 years (fix) without km, electric vehicle</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>574</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8G0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without light control</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>771</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4A0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without seat heater</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>808</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7Y0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Without lane change assist</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>2460</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>A8C</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Pro</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>10005</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>K8G</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Hatchback</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>11166</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>C2A1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Moonstone Gray/Black</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>11408</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>C2A1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Moonstone Gray/Black</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>14805</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8ZQ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Diversity antenna for FM reception</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15200</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>6XN</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Exterior mirrors power-adjustable and heated</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15702</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>5JA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Exterior mirrors: aspherical on driver side, convex on front passenger side</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15798</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>5JA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Exterior mirrors: aspherical on driver side, convex on front passenger side</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15804</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>5JA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Exterior mirrors: aspherical on driver side, convex on front passenger side</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>15825</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>6FG</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Exterior mirror housings</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>16218</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>6H0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Roof trim strip in Matte Black, air intake and sill in Matte Black</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18588</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8IR</ns1:ManufacturerCode>
+                                    <ns1:ShortName>LED headlamps with automatic headlight control</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18680</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>QR9</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Dynamic Road Sign Display</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>18802</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8VG</ns1:ManufacturerCode>
+                                    <ns1:ShortName>LED rear combination lamps</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>19103</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8N5</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Windshield wiper intermittent control</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22310</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4KC</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Green heat-insulating glass windows on sides and in rear</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22508</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4GS</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Laminated safety glass windshield, heat- and sound-insulating</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>22714</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4GS</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Laminated safety glass windshield, heat- and sound-insulating</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24052</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>QV3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Digital radio reception DAB+</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24253</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8AS</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Radio "Ready 2 Discover"</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24594</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8RS</ns1:ManufacturerCode>
+                                    <ns1:ShortName>4+1 speakers</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24709</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>QH1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Voice control</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>24902</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>NZ4</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Emergency call service; no registration required, service is activated upon delivery</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25039</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>9ZX</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Mobile phone interface</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25074</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>9WJ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>App-Connect incl. App-Connect Wireless for Apple CarPlay and Android Auto</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25141</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>U9G</ns1:ManufacturerCode>
+                                    <ns1:ShortName>2 USB-C ports in the front, charging capacity up to 45 W</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25800</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7X2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Park Distance Control - warning signals for obstacles in the front and rear</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25841</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7UJ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Preparation for subsequent activation: Navigation feature "Discover Pro"</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25862</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>EL5</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Ability for online updates starting with ID. software version 2.1</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25888</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>GW2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Car2X</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>25906</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7K1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Tire Pressure Monitoring System</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26611</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>6C2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Curtain airbags in front and rear, side airbags in front, center airbag</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26739</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3V7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Speed limiter in combination with online services</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>26816</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4UF</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Driver and front passenger airbag with front passenger airbag deactivation</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>28920</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>KC0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Air conditioning system Climatronic with enhanced air filter with activated carbon and stationary air conditioning</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>29098</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>KK2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Refrigerant R744</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>29299</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>9M3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Energy-efficient heat pump</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>29299</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>WPU</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Energy-efficient heat pump</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>29404</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7E7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electric auxiliary air heater</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>30496</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>N0U</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Inserts of front seats and outer rear seats in fabric "Fragment"</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>32704</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3L1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Driver seat with height adjustment</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33406</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4S1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Armrest for front seats</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>33502</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3NZ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>3 rear seats, asymmetric split folding rear seat backrest</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>34106</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3NZ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>3 rear seats, asymmetric split folding rear seat backrest</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35511</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4I7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Keyless Start without SAFELOCK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>35580</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4I7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Keyless Start without SAFELOCK</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>36805</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4AF</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Door and side trim panel in foam film and woven fabric</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>36827</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4AF</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Door and side trim panel in foam film and woven fabric</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37114</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>9P4</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Warning signal and warning light for front and rear seat belts not fastened</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37301</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3QE</ns1:ManufacturerCode>
+                                    <ns1:ShortName>3-point seat belts in front with seat belt pretensioners</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37580</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>QQ8</ns1:ManufacturerCode>
+                                    <ns1:ShortName>10-color ambient lighting</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37900</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4L2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Dimming interior rearview mirror</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>37905</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>5XJ</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Illuminated vanity mirrors in sun visors</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>38106</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>7AA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electronic immobilizer</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>38937</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>GM1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electronic engine sound</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>39003</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3D1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Center console with 2 beverage holders in front</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>39007</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>9Z0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Operating voltage 12 V</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>39180</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>QW5</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Bezel for infotainment display and central controls in Black</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>39313</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>3A2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>ISOFIX anchors for child seats on outer rear bench seats and on front passenger seat, compatible for i-Size</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>39531</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1T9</ns1:ManufacturerCode>
+                                    <ns1:ShortName>First aid kit, warning triangle and safety vest</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>40606</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1KA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Drum brakes in rear</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>40847</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1LA</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Disc brakes in front</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>40912</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>4G3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Oncoming vehicle braking when turning and swerve support</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>40957</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>8J3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Auto. Emergency Braking Front Assist with Pedestrian and Cyclist Monitoring</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>42700</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>0AE</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Front stabilizer bar</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>42701</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>0BE</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Rear stabilizer bar</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>42907</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>6I1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Lane keeping system Lane Assist</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>42926</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>EM1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Driver alert system</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>44219</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>F74</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Steel wheels 7.5J x 18</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>50908</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1NC</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Wheel trims</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>62927</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>J49</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Tires 215/55 R18</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>68802</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1S3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Tool kit and Tire Mobility Set: 12-volt compressor and tire sealant</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69000</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>2FB</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Multi-function steering wheel with touch control</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>69827</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1N3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Electromechanical speed-sensitive power steering</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>70517</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>2H5</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Driving Mode Selection</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>70601</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>1X2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Rear-wheel drive</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>72119</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>J1H</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Battery 320 A (49 Ah)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>72675</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>LX0</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Cell module A</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>72704</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>J9C</ns1:ManufacturerCode>
+                                    <ns1:ShortName>High-voltage battery 62 kWh (gross)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>73160</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>KB3</ns1:ManufacturerCode>
+                                    <ns1:ShortName>11 kW AC charging power (alternating current)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>73180</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>LH2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Maximum DC charging power (direct current) depending on the high-voltage battery pack</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>73184</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>LH2</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Maximum DC charging power (direct current) depending on the high-voltage battery pack</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>73198</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>ES7</ns1:ManufacturerCode>
+                                    <ns1:ShortName>CCS vehicle inlet</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>73223</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>76C</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Charging cable mode 3 type 2, 16 A</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>76400</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>G1Z</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Transmission for electric drive (1-speed)</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>78065</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>0Y1</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Standard climatic zones</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>79721</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>EBJC&amp;L1F</ns1:ManufacturerCode>
+                                    <ns1:ShortName>EBJC</ns1:ShortName>
+                                </ns1:VINEquipment>
+                                <ns1:VINEquipment>
+                                    <ns1:AvNumberDat>99954</ns1:AvNumberDat>
+                                    <ns1:ManufacturerCode>B01</ns1:ManufacturerCode>
+                                    <ns1:ShortName>Type approval country Germany</ns1:ShortName>
+                                </ns1:VINEquipment>
+                            </ns1:VINEquipments>
+                            <ns1:VINColors>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>A1</ns1:ColorID>
+                                    <ns1:Code>C2</ns1:Code>
+                                    <ns1:Description>Moonstone Gray</ns1:Description>
+                                    <ns1:StandardColor>7</ns1:StandardColor>
+                                    <ns1:PaintType>05|09</ns1:PaintType>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>A2</ns1:ColorID>
+                                    <ns1:Code>A1</ns1:Code>
+                                    <ns1:Description>Black</ns1:Description>
+                                    <ns1:StandardColor>9</ns1:StandardColor>
+                                    <ns1:PaintType>05|09</ns1:PaintType>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>L1</ns1:ColorID>
+                                    <ns1:Code>LA7C</ns1:Code>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>L2</ns1:ColorID>
+                                    <ns1:Code>L041</ns1:Code>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>I1</ns1:ColorID>
+                                    <ns1:Code>XX</ns1:Code>
+                                    <ns1:Description>Platinum Gray-Soul Black/Soul Black- Dusty Gray Dark/Black/Black</ns1:Description>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>PF</ns1:ColorID>
+                                    <ns1:Code/>
+                                    <ns1:Description>Platinum Gray-Soul Black</ns1:Description>
+                                </ns1:VINColor>
+                                <ns1:VINColor>
+                                    <ns1:ColorID>PM</ns1:ColorID>
+                                    <ns1:Code>N0U</ns1:Code>
+                                    <ns1:Description>Inserts of front seats and outer rear seats in fabric "Fragment"</ns1:Description>
+                                </ns1:VINColor>
+                            </ns1:VINColors>
+                            <ns1:VINVehicle>
+                                <ns1:VINumber>
+                                    <ns1:VinCode>WVWZZZE1ZP8005474</ns1:VinCode>
+                                </ns1:VINumber>
+                                <ns1:ManufacturerCarCode>E113MJ</ns1:ManufacturerCarCode>
+                                <ns1:ManufacturerEngineCode>EBJC</ns1:ManufacturerEngineCode>
+                                <ns1:ManufacturerTransmissionCode>UYY</ns1:ManufacturerTransmissionCode>
+                            </ns1:VINVehicle>
+                        </ns1:VINResult>
+                        <ns1:TokenOfVinResult>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkYXQiLCJ0aW1lc3RhbXAiOjE3MTc1MDYwNjg2ODAsImN1c3RvbWVyIjoiMzgwMDU0OCIsImludGVyZmFjZVBhcnRuZXIiOiIzODAwNTQ4IiwidmluUmVzdWx0SGFzaCI6Imhhc2gwMV8tMTQ5NzIwODgyNiJ9.Db1dqaWLUCQcNa96KFQN2pe76Y6BW35klgFHaUu6HfY</ns1:TokenOfVinResult>
+                    </ns1:Vehicle>
+                </ns1:Dossier>
+            </VXS>
+        </ns9:getVehicleIdentificationByVinResponse>
+    </S:Body>
+</S:Envelope>

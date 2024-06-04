@@ -61,7 +61,7 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 			return subcommands.ExitFailure
 		}
 
-		fmt.Printf("VIN Response: %s\n", *vinInfo)
+		fmt.Printf("VIN Response: %+v\n", *vinInfo)
 	}
 	if p.drivly {
 		drivlyAPI := gateways.NewDrivlyAPIService(p.settings)
