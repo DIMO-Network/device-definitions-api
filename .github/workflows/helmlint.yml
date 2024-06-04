@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: helm-check
-        uses: igabaydulin/helm-check-action@0.2.0
+        uses: igabaydulin/helm-check-action@0.2.1
         env:
           CHART_LOCATION: ./charts/device-definitions-api
           CHART_VALUES: ./charts/device-definitions-api/values-prod.yaml
