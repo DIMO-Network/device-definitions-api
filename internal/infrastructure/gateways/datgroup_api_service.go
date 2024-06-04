@@ -39,10 +39,10 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 	if userCountryISO2 == "" || len(userCountryISO2) != 2 {
 		userCountryISO2 = "US"
 	}
-	customerLogin := "digitalinfr"
-	customerNumber := "3800548"
-	customerSignature := "A9F47D476963F2E97F0F9CF7A24E49E4E3EA9138BA5244F4AFCAA02B00D8B2C7"
-	interfacePartnerSignature := "279D47BD03621145AF977A993881514D05F8AC800DA8EBDBAC4FF99C372195DA"
+	customerLogin := ai.Settings.DatGroupCustomerLogin
+	customerNumber := ai.Settings.DatGroupCustomerNumber
+	customerSignature := ai.Settings.DatGroupCustomerSignature
+	interfacePartnerSignature := ai.Settings.DatGroupInterfacePartnerSignature
 
 	soapReq := `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:veh="http://sphinx.dat.de/services/VehicleIdentificationService">

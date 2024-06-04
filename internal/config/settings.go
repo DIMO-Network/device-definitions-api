@@ -48,6 +48,7 @@ type Settings struct {
 	DatGroupCustomerPassword          string         `yaml:"DAT_GROUP_CUSTOMER_PASSWORD"`
 	DatGroupInterfacePartnerNumber    string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_NUMBER"`
 	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
+	DatGroupCustomerSignature         string         `yaml:"DAT_GROUP_CUSTOMER_SIGNATURE"`
 }
 
 func (s *Settings) IsProd() bool {

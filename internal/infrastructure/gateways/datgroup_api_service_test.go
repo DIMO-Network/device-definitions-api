@@ -2,8 +2,9 @@ package gateways
 
 import (
 	_ "embed"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"testing"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 
 	"github.com/stretchr/testify/assert"
 )
