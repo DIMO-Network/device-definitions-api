@@ -3,14 +3,15 @@ package gateways
 import (
 	"bytes"
 	"fmt"
-	"github.com/DIMO-Network/shared"
-	"github.com/antchfx/xmlquery"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/shared"
+	"github.com/antchfx/xmlquery"
+	"github.com/pkg/errors"
 
 	"github.com/rs/zerolog"
 
@@ -102,7 +103,7 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 			response.StatusCode, withParams, string(bodyBytes))
 		return nil, fmt.Errorf("error response status code: %d", response.StatusCode)
 	}
-	infoResponse, err := parseXML(string(bodyBytes), vin)
+	infoResponse, err := parseXML(ai.log, string(bodyBytes), vin)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 	return infoResponse, err
 }
 
-func parseXML(datgroupRespXML, vin string) (*DATGroupInfoResponse, error) {
+func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInfoResponse, error) {
 	doc, err := xmlquery.Parse(strings.NewReader(datgroupRespXML))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse response XML")
@@ -132,18 +133,64 @@ func parseXML(datgroupRespXML, vin string) (*DATGroupInfoResponse, error) {
 	}
 	response.VinAccuracy, _ = strconv.Atoi(getXMLValue(vehicle, "//ns1:MainTypeGroupName"))
 	yearLow, yearHigh, err := extractYears(getXMLValue(vehicle, "//ns1:ContainerName"))
+	if err != nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to extract year low/year for datgroup vin decode")
+	}
 	if yearLow > 2000 {
 		response.YearLow = yearLow
 	}
 	if yearHigh > 2000 {
 		response.YearHigh = yearHigh
 	}
-
 	yr := shared.VIN(response.VIN).Year()
 	if yr >= response.YearLow && yr <= response.YearHigh {
 		response.Year = yr
 	} else {
 		response.Year = response.YearHigh
+	}
+	// series equipment
+	seriesEquipment := xmlquery.FindOne(vehicle, "//ns1:SeriesEquipment")
+	seNodes := xmlquery.Find(seriesEquipment, "//ns1:EquipmentPosition")
+	for _, seNode := range seNodes {
+		equipment := DATGroupEquipment{
+			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
+			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerEquipmentId"),
+			ManufacturerDescription: getXMLValue(seNode, "//ns1:ManufacturerDescription"),
+			Description:             getXMLValue(seNode, "//ns1:Description"),
+		}
+		response.SeriesEquipment = append(response.SeriesEquipment, equipment)
+	}
+	// special equipment
+	specialEquipment := xmlquery.FindOne(vehicle, "//ns1:SpecialEquipment")
+	spNodes := xmlquery.Find(specialEquipment, "//ns1:EquipmentPosition")
+	for _, seNode := range spNodes {
+		equipment := DATGroupEquipment{
+			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
+			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerEquipmentId"),
+			ManufacturerDescription: getXMLValue(seNode, "//ns1:ManufacturerDescription"),
+			Description:             getXMLValue(seNode, "//ns1:Description"),
+		}
+		response.SpecialEquipment = append(response.SpecialEquipment, equipment)
+	}
+	// DATECode Equipment
+	datECodeEquipment := xmlquery.FindOne(vehicle, "//ns1:DATECodeEquipment")
+	decNodes := xmlquery.Find(datECodeEquipment, "//ns1:EquipmentPosition")
+	for _, seNode := range decNodes {
+		equipment := DATGroupEquipment{
+			DatEquipmentId: getXMLValue(seNode, "//ns1:DatEquipmentId"),
+			Description:    getXMLValue(seNode, "//ns1:Description"),
+		}
+		response.DATECodeEquipment = append(response.DATECodeEquipment, equipment)
+	}
+	// VIN Equipment
+	vinEquipment := xmlquery.FindOne(vehicle, "//ns1:VINEquipments")
+	vinNodes := xmlquery.Find(vinEquipment, "//ns1:VINEquipment")
+	for _, seNode := range vinNodes {
+		equipment := DATGroupEquipment{
+			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerCode"),
+			ManufacturerDescription: getXMLValue(seNode, "//ns1:ShortName"),
+		}
+		response.VINEquipment = append(response.VINEquipment, equipment)
 	}
 
 	return response, nil
@@ -199,12 +246,13 @@ type DATGroupInfoResponse struct {
 	SeriesEquipment   []DATGroupEquipment `json:"seriesEquipment"`
 	SpecialEquipment  []DATGroupEquipment `json:"specialEquipment"`
 	DATECodeEquipment []DATGroupEquipment `json:"datECodeEquipment"`
-	VINEquipments     []DATGroupEquipment `json:"vinEquipments"`
+	VINEquipment      []DATGroupEquipment `json:"vinEquipments"`
 }
 
 type DATGroupEquipment struct {
 	DatEquipmentId          string `json:"datEquipmentId"`
 	ManufacturerEquipmentId string `json:"manufacturerEquipmentId"`
+	// if Vin Equipment, this comes from ShortName
 	ManufacturerDescription string `json:"manufacturerDescription"`
 	Description             string `json:"description"`
 }
