@@ -42,11 +42,8 @@ type Settings struct {
 	EthereumRegistryAddress           string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
 	TablelandAPIGateway               string         `yaml:"TABLELAND_API_GATEWAY"`
 	DatGroupURL                       string         `yaml:"DAT_GROUP_URL"`
-	DatGroupAUTHURL                   string         `yaml:"DAT_GROUP_AUTHURL"`
 	DatGroupCustomerLogin             string         `yaml:"DAT_GROUP_CUSTOMER_LOGIN"`
 	DatGroupCustomerNumber            string         `yaml:"DAT_GROUP_CUSTOMER_NUMBER"`
-	DatGroupCustomerPassword          string         `yaml:"DAT_GROUP_CUSTOMER_PASSWORD"`
-	DatGroupInterfacePartnerNumber    string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_NUMBER"`
 	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
 	DatGroupCustomerSignature         string         `yaml:"DAT_GROUP_CUSTOMER_SIGNATURE"`
 }

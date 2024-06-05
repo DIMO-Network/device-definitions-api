@@ -48,8 +48,7 @@ env:
   FUEL_API_IMAGES_ENDPOINT: https://api.fuelapi.com/v1/json/vehicle
   NHTSA_RECALLS_FILE_URL: https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL.zip
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
-  DAT_GROUP_URL: https://www.datgroup.com/DATECodeSelection/services/VehicleIdentificationService
-  DAT_GROUP_AUTHURL: https://www.datgroup.com/myClaim/soap/v2/MyClaimExternalAuthenticationService
+  DAT_GROUP_URL: https://www.datgroup.com/myClaim/soap/v2/VehicleIdentificationService
   PRIVATE_KEY_MODE: false
   ETHEREUM_SEND_TRANSACTION: true
   TABLELAND_API_GATEWAY: https://testnets.tableland.network/
