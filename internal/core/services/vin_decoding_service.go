@@ -308,7 +308,6 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 }
 
 func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecodingInfoData, error) {
-
 	v := &models.VINDecodingInfoData{
 		VIN:        info.VIN,
 		Year:       int32(info.Year),
@@ -316,12 +315,14 @@ func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecoding
 		Model:      strings.TrimSpace(info.MainTypeGroupName),
 		Source:     models.DATGroupProvider,
 		ExternalID: info.DatECode,
-		StyleName:  info.SubModelName,
+		StyleName:  info.BaseModelName,
+		SubModel:   info.SubModelName,
 	}
 	raw, err := json.Marshal(info)
 	if err == nil {
 		v.Raw = raw
 	}
+
 	// todo need some more introspection from more examples
 	//if strings.Contains(string(raw), "High-voltage battery") {
 	//	v.FuelType = models.BEV.String()
