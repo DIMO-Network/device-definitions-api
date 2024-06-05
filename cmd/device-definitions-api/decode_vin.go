@@ -55,13 +55,13 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 	if p.datGroup {
 		// use the dat group service to decode
 		datAPI := gateways.NewDATGroupAPIService(p.settings, p.logger)
-		vinInfo, err := datAPI.GetVIN(vin, country)
+		vinInfo, err := datAPI.GetVINv2(vin, country)
 		if err != nil {
 			fmt.Println(err.Error())
 			return subcommands.ExitFailure
 		}
 
-		fmt.Printf("VIN Response: %+v\n", vinInfo)
+		fmt.Printf("\n\nVIN Response: %+v\n", *vinInfo)
 	}
 	if p.drivly {
 		drivlyAPI := gateways.NewDrivlyAPIService(p.settings)

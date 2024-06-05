@@ -41,6 +41,8 @@ require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/antchfx/xmlquery v1.4.0 // indirect
+	github.com/antchfx/xpath v1.3.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
@@ -69,6 +71,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20231016141302-07b5767bb0ed // indirect

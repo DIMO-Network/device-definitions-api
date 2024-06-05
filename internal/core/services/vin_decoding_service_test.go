@@ -137,7 +137,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	}
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockDATGroupAPIService.EXPECT().GetVIN(vin, country).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	// vincario is the last fallback
 	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vincarioResp, nil)
 
@@ -162,7 +162,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
 
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockDATGroupAPIService.EXPECT().GetVIN(vin, "US").Return(nil, fmt.Errorf("unable to decode"))
+	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, "US").Return(nil, fmt.Errorf("unable to decode"))
 	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
@@ -199,10 +199,10 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 	const vin = "ZFADEXTESTSTUB001"
 	const country = "TR"
 
-	vinInfoResp := &gateways.GetVehicleIdentificationByVinResponse{}
+	vinInfoResp := &gateways.DATGroupInfoResponse{}
 	_ = xml.Unmarshal(testDATGroupXML, vinInfoResp)
 
-	s.mockDATGroupAPIService.EXPECT().GetVIN(vin, country).Times(1).Return(vinInfoResp, nil)
+	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(vinInfoResp, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 

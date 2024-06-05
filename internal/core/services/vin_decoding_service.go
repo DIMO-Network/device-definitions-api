@@ -5,7 +5,6 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -94,7 +93,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		}
 	case models.DATGroupProvider:
 		// todo lookup country for two letter equiv
-		vinInfo, err := c.DATGroupAPIService.GetVIN(vin, country) // try with Turkey
+		vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
 		}
@@ -120,7 +119,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		}
 		// if nothing from drivly, try DATGroup
 		if result == nil || result.Source == "" {
-			datGroupInfo, err := c.DATGroupAPIService.GetVIN(vin, country)
+			datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
 			} else {
@@ -308,32 +307,27 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 	return v
 }
 
-func buildFromDATGroup(info *gateways.GetVehicleIdentificationByVinResponse) (*models.VINDecodingInfoData, error) {
-	raw, _ := xml.Marshal(info)
-	if info == nil {
-		return nil, fmt.Errorf("vin info was nil")
-	}
-
-	if len(info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier) == 0 {
-		return nil, fmt.Errorf("no dosier resp from datgroup: %s", string(raw))
-	}
-
-	dossier := info.Body.GetDataVehicleIdentificationByVinResponse.VXS.Dossier[0].Vehicle
+func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecodingInfoData, error) {
 	v := &models.VINDecodingInfoData{
-		VIN:        dossier.VINResult.VINVehicle.VINumber.VinCode,
-		Year:       int32(dossier.BuildYear),
-		Make:       strings.TrimSpace(dossier.ManufacturerName),
-		Model:      strings.TrimSpace(dossier.BaseModelName),
+		VIN:        info.VIN,
+		Year:       int32(info.Year),
+		Make:       strings.TrimSpace(info.ManufacturerName),
+		Model:      strings.TrimSpace(info.MainTypeGroupName),
 		Source:     models.DATGroupProvider,
-		ExternalID: dossier.VINResult.VINVehicle.VINumber.VinCode,
-		StyleName:  dossier.SubModelName,
-		//SubModel:   info.GetSubModel(),
-		Raw: raw,
+		ExternalID: info.DatECode,
+		StyleName:  info.BaseModelName,
+		SubModel:   info.SubModelName,
+	}
+	raw, err := json.Marshal(info)
+	if err == nil {
+		v.Raw = raw
 	}
 
-	if dossier.TechInfo != nil {
-		v.FuelType = dossier.TechInfo.FuelMethodType
-	}
+	// todo need some more introspection from more examples
+	//if strings.Contains(string(raw), "High-voltage battery") {
+	//	v.FuelType = models.BEV.String()
+	//}
+
 	if err := validateVinDecoding(v); err != nil {
 		return nil, err
 	}
