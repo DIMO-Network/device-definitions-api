@@ -503,7 +503,7 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 
 	img, err := dc.fuelAPIService.FetchDeviceImages(make, model, year, prodID, prodFormat)
 	if err != nil {
-		dc.logger.Warn().Msgf("unable to fetch device image for: %d %s %s", year, make, model)
+		dc.logger.Warn().Err(err).Msgf("unable to fetch device image for: %d %s %s", year, make, model)
 		return nil
 	}
 
