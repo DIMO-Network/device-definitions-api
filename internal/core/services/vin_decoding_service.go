@@ -315,8 +315,8 @@ func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecoding
 		Model:      strings.TrimSpace(info.MainTypeGroupName),
 		Source:     models.DATGroupProvider,
 		ExternalID: info.DatECode,
-		StyleName:  info.BaseModelName,
-		SubModel:   info.SubModelName,
+		StyleName:  info.SubModelName,
+		SubModel:   info.BaseModelName,
 	}
 	raw, err := json.Marshal(info)
 	if err == nil {
