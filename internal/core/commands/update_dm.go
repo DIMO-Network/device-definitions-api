@@ -60,12 +60,9 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 	if dm == nil {
 		dm = &models.DeviceMake{
 			ID:       command.ID,
+			Name:     command.Name,
 			NameSlug: shared.SlugString(command.Name),
 		}
-	}
-
-	if len(command.Name) > 0 {
-		dm.Name = command.Name
 	}
 
 	if command.LogoURL.Valid {
