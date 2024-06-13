@@ -199,7 +199,14 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 	const vin = "ZFADEXTESTSTUB001"
 	const country = "TR"
 
-	vinInfoResp := &gateways.DATGroupInfoResponse{}
+	vinInfoResp := &gateways.DATGroupInfoResponse{
+		VIN:               vin,
+		Year:              2010,
+		BaseModelName:     "model test",
+		ManufacturerName:  "make test",
+		MainTypeGroupName: "model test",
+	}
+
 	_ = xml.Unmarshal(testDATGroupXML, vinInfoResp)
 
 	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(vinInfoResp, nil)
