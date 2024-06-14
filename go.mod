@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/DIMO-Network/shared v0.10.13
+	github.com/antchfx/xmlquery v1.4.0
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.7
 	github.com/docker/go-connections v0.4.0
@@ -41,7 +42,6 @@ require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/antchfx/xmlquery v1.4.0 // indirect
 	github.com/antchfx/xpath v1.3.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.3 // indirect

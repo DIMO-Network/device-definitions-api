@@ -140,21 +140,37 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 	if err != nil {
 		logger.Err(err).Str("vin", vin).Msgf("failed to extract year low/year for datgroup vin decode")
 	}
+
 	if yearLow > 2000 {
 		response.YearLow = yearLow
 	}
+
 	if yearHigh > 2000 {
 		response.YearHigh = yearHigh
 	}
+
 	yr := shared.VIN(response.VIN).Year()
 	if yr >= response.YearLow && yr <= response.YearHigh {
 		response.Year = yr
 	} else {
 		response.Year = response.YearHigh
 	}
+
 	// series equipment
 	seriesEquipment := xmlquery.FindOne(vehicle, "//ns1:SeriesEquipment")
+
+	if seriesEquipment == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find series equipment node")
+		return response, nil
+	}
+
 	seNodes := xmlquery.Find(seriesEquipment, "//ns1:EquipmentPosition")
+
+	if seNodes == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find series equipment nodes")
+		return response, nil
+	}
+
 	for _, seNode := range seNodes {
 		equipment := DATGroupEquipment{
 			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
@@ -164,9 +180,22 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 		}
 		response.SeriesEquipment = append(response.SeriesEquipment, equipment)
 	}
+
 	// special equipment
 	specialEquipment := xmlquery.FindOne(vehicle, "//ns1:SpecialEquipment")
+
+	if specialEquipment == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find special equipment node")
+		return response, nil
+	}
+
 	spNodes := xmlquery.Find(specialEquipment, "//ns1:EquipmentPosition")
+
+	if spNodes == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find special equipment nodes")
+		return response, nil
+	}
+
 	for _, seNode := range spNodes {
 		equipment := DATGroupEquipment{
 			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
@@ -176,9 +205,22 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 		}
 		response.SpecialEquipment = append(response.SpecialEquipment, equipment)
 	}
+
 	// DATECode Equipment
 	datECodeEquipment := xmlquery.FindOne(vehicle, "//ns1:DATECodeEquipment")
+
+	if datECodeEquipment == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find datECode equipment node")
+		return response, nil
+	}
+
 	decNodes := xmlquery.Find(datECodeEquipment, "//ns1:EquipmentPosition")
+
+	if decNodes == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find datECode equipment nodes")
+		return response, nil
+	}
+
 	for _, seNode := range decNodes {
 		equipment := DATGroupEquipment{
 			DatEquipmentId: getXMLValue(seNode, "//ns1:DatEquipmentId"),
@@ -186,9 +228,22 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 		}
 		response.DATECodeEquipment = append(response.DATECodeEquipment, equipment)
 	}
+
 	// VIN Equipment
 	vinEquipment := xmlquery.FindOne(vehicle, "//ns1:VINEquipments")
+
+	if vinEquipment == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find vin equipment node")
+		return response, nil
+	}
+
 	vinNodes := xmlquery.Find(vinEquipment, "//ns1:VINEquipment")
+
+	if vinNodes == nil {
+		logger.Err(err).Str("vin", vin).Msgf("failed to find vin equipment nodes")
+		return response, nil
+	}
+
 	for _, seNode := range vinNodes {
 		equipment := DATGroupEquipment{
 			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerCode"),
