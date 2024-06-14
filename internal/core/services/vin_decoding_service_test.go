@@ -162,7 +162,6 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
 
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, "US").Return(nil, fmt.Errorf("unable to decode"))
 	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
@@ -199,7 +198,11 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 	const vin = "ZFADEXTESTSTUB001"
 	const country = "TR"
 
-	vinInfoResp := &gateways.DATGroupInfoResponse{}
+	vinInfoResp := &gateways.DATGroupInfoResponse{
+		VIN:               vin,
+		MainTypeGroupName: "Test",
+		Year:              2023,
+	}
 	_ = xml.Unmarshal(testDATGroupXML, vinInfoResp)
 
 	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(vinInfoResp, nil)
