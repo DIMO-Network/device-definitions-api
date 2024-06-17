@@ -270,6 +270,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	}
 
 	// check if any pertinent information changed
+	e.logger.Info().Msgf("Validating if device definition %s with tokenID %s exists in tableland", deviceInputs.Id, make.TokenID)
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
 	if err != nil {
 		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
