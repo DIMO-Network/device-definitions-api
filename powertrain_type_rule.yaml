@@ -56,7 +56,13 @@ types:
       - lyriq
       - eqs
       - eqa
+      - eqa-250
+      - eqa-300
+      - eqa-350
       - eqb
+      - eqb-250
+      - eqb-300
+      - eqb-350
       - eqe
       - mustang-mach-e
       - mach-e
