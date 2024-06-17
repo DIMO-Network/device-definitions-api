@@ -311,6 +311,9 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 }
 
 func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecodingInfoData, error) {
+	if info == nil {
+		return nil, fmt.Errorf("nil dat group info")
+	}
 	v := &models.VINDecodingInfoData{
 		VIN:        info.VIN,
 		Year:       int32(info.Year),
