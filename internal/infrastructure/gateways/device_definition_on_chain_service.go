@@ -75,6 +75,8 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	}
 	var modelTableland []DeviceDefinitionTablelandModel
 
+	e.logger.Info().Msgf("Tableland query: %s", statement)
+
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
