@@ -23,7 +23,7 @@ package common
 //}
 //
 //func (p LoggingBehavior) Process(ctx context.Context, msg mediator.Message, next mediator.Next) (interface{}, error) {
-//	p.log.Debug().Msg(fmt.Sprintf("%s request logging : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
+//	p.log.Debug().Msg(fmt.Sprintf("%s request logging : %v - %+v", p.settings.ServiceName, msg.key(), msg))
 //
 //	return next(ctx)
 //}
@@ -42,10 +42,10 @@ package common
 //	valErrors := Validate(msg)
 //	if valErrors != nil {
 //		// consider if reduce to Warn()
-//		p.log.Error().Msg(fmt.Sprintf("%s validation error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
+//		p.log.Error().Msg(fmt.Sprintf("%s validation error : %v - %+v", p.settings.ServiceName, msg.key(), msg))
 //		err := exceptions.ValidationError{Err: fmt.Errorf("The field %s is required", valErrors[0].Field)}
 //
-//		metrics.BadRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+//		metrics.BadRequestError.With(prometheus.Labels{"method": msg.key()}).Inc()
 //		panic(&err)
 //	}
 //	return next(ctx)
@@ -65,28 +65,28 @@ package common
 //	r, err := next(ctx)
 //	if err != nil {
 //
-//		// msg.Key contains the property names, and msg contains the property values that were passed into the function to execute.
+//		// msg.key contains the property names, and msg contains the property values that were passed into the function to execute.
 //		// this automatically logs any incoming properties for easy debugging. An improvement here could be to use reflection to map out the properties to the log context.
 //		p.log.Error().
 //			Err(err).
-//			Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.Key(), msg))
+//			Msg(fmt.Sprintf("%s request error : %v - %+v", p.settings.ServiceName, msg.key(), msg))
 //
 //		// if just return error does not cut mediator pipeline and will continue normal execution, must panic for mediator to stop pipeline and go to error path
 //		// increment error metric
 //		if _, ok := err.(*exceptions.ConflictError); ok {
-//			metrics.ConflictRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+//			metrics.ConflictRequestError.With(prometheus.Labels{"method": msg.key()}).Inc()
 //		}
 //
 //		if _, ok := err.(*exceptions.NotFoundError); ok {
-//			metrics.NotFoundRequestError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+//			metrics.NotFoundRequestError.With(prometheus.Labels{"method": msg.key()}).Inc()
 //		}
 //
-//		metrics.InternalError.With(prometheus.Labels{"method": msg.Key()}).Inc()
+//		metrics.InternalError.With(prometheus.Labels{"method": msg.key()}).Inc()
 //		panic(err)
 //	}
 //	//reflect.TypeOf(next).Name() to get name of the method
 //	// if no error, increment overall success metric
-//	metrics.Success.With(prometheus.Labels{"method": msg.Key()}).Inc()
+//	metrics.Success.With(prometheus.Labels{"method": msg.key()}).Inc()
 //
 //	return r, nil
 //}

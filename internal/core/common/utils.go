@@ -323,7 +323,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 //		}
 //	}
 //	// trying pulling most recent images, pick the biggest one and where not exact image = false
-//	rp.ImageURL = GetDefaultImageURL(dd)
+//	rp.imageURL = GetDefaultImageURL(dd)
 //
 //	return rp, nil
 //}
