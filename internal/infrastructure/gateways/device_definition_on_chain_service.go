@@ -198,6 +198,8 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
+	e.logger.Info().Msgf("Start CreateOrUpdate for device definition %s", dd.ID)
+
 	if !e.settings.EthereumSendTransaction {
 		return nil, nil
 	}
@@ -279,6 +281,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, common2.VehicleMetadataKey)
 		newAttributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
+
+		e.logger.Info().Msgf("newOrModified => %d and removed %d", len(newOrModified), len(removed))
 
 		if len(newOrModified) == 0 {
 			return nil, nil

@@ -391,6 +391,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 
 		// Create DD onchain
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
+
 		if err == nil && trx != nil {
 			dd.TRXHashHex = null.StringFrom(*trx)
 			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
