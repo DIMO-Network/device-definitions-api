@@ -19,20 +19,29 @@ type FuelAPIService interface {
 
 // fuelAPIService client
 type fuelAPIService struct {
-	VehicleURL string
-	ImageURL   string
-	Key        string
+	vehicleURL string
+	imageURL   string
+	key        string
 	log        *zerolog.Logger
 }
 
 func NewFuelAPIService(settings *config.Settings, logger *zerolog.Logger) FuelAPIService {
-
-	return &fuelAPIService{
-		VehicleURL: settings.FuelAPIVehiclesEndpoint,
-		ImageURL:   settings.FuelAPIImagesEndpoint,
-		Key:        settings.FuelAPIKey,
+	fa := &fuelAPIService{
+		vehicleURL: settings.FuelAPIVehiclesEndpoint,
+		imageURL:   settings.FuelAPIImagesEndpoint,
+		key:        settings.FuelAPIKey,
 		log:        logger,
 	}
+	if fa.vehicleURL == "" {
+		logger.Fatal().Msgf("fuel api vehicle url is empty")
+	}
+	if fa.imageURL == "" {
+		logger.Fatal().Msgf("fuel api image url is empty")
+	}
+	if fa.key == "" {
+		logger.Fatal().Msgf("fuel api key is empty")
+	}
+	return fa
 }
 
 func (fs *fuelAPIService) FetchDeviceImages(mk, mdl string, yr int, prodID int, prodFormat int) (FuelDeviceImages, error) {
@@ -73,8 +82,8 @@ func (fs *fuelAPIService) FetchDeviceImages(mk, mdl string, yr int, prodID int, 
 }
 
 func (fs *fuelAPIService) imageRequest(mk, mdl string, yr int, prodID int, prodFormat int) (FuelDeviceImages, error) {
-	vehicleReqURL := fmt.Sprintf("?year=%d&make=%s&model=%s&api_key=%s", yr, mk, mdl, fs.Key)
-	vehicleResp, err := http.Get(fs.VehicleURL + vehicleReqURL)
+	vehicleReqURL := fmt.Sprintf("?year=%d&make=%s&model=%s&api_key=%s", yr, mk, mdl, fs.key)
+	vehicleResp, err := http.Get(fs.vehicleURL + vehicleReqURL)
 	if err != nil {
 		return FuelDeviceImages{}, err
 	}
@@ -88,8 +97,8 @@ func (fs *fuelAPIService) imageRequest(mk, mdl string, yr int, prodID int, prodF
 		return FuelDeviceImages{}, err
 	}
 	vehicleID := gjson.Get(string(vehicleData), "0.id").Str
-	imageReqURL := fmt.Sprintf("/%s?api_key=%s&productID=%d&productFormatIDs=%d", vehicleID, fs.Key, prodID, prodFormat)
-	imageResp, err := http.Get(fs.ImageURL + imageReqURL)
+	imageReqURL := fmt.Sprintf("/%s?api_key=%s&productID=%d&productFormatIDs=%d", vehicleID, fs.key, prodID, prodFormat)
+	imageResp, err := http.Get(fs.imageURL + imageReqURL)
 	if err != nil {
 		return FuelDeviceImages{}, err
 	}
