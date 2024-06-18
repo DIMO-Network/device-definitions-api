@@ -285,8 +285,6 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		newAttributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
 
-		e.logger.Info().Msgf("newOrModified => %d and removed %d", len(newOrModified), len(removed))
-
 		requiereUpdate := false
 		if len(newOrModified) > 0 {
 			requiereUpdate = true
@@ -295,6 +293,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		if len(removed) > 0 {
 			requiereUpdate = true
 		}
+
+		e.logger.Info().Msgf("newOrModified => %d and removed %d. Update %t", len(newOrModified), len(removed), requiereUpdate)
 
 		if !requiereUpdate {
 			return nil, nil
