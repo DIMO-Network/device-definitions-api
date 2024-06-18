@@ -307,7 +307,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		//}
 		//e.logger.Info().RawJSON("device_definition", jsonBytes).Msg("dd payload sending to chain for CreateOrUpdate")
 
-		e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s", deviceInputs.Id)
+		e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s with manufacturer ID %s", deviceInputs.Id, bigManufID)
 
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 		if err != nil {
