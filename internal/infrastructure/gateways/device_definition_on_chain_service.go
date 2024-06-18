@@ -317,7 +317,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 		trx := tx.Hash().Hex()
 
-		e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx", trx)
+		e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s", deviceInputs.Id, trx)
 
 		return &trx, nil
 	}
