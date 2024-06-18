@@ -287,13 +287,19 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 		e.logger.Info().Msgf("newOrModified => %d and removed %d", len(newOrModified), len(removed))
 
-		if len(newOrModified) == 0 {
+		requiereUpdate := false
+		if len(newOrModified) > 0 {
+			requiereUpdate = true
+		}
+
+		if len(removed) > 0 {
+			requiereUpdate = true
+		}
+
+		if !requiereUpdate {
 			return nil, nil
 		}
 
-		if len(removed) == 0 {
-			return nil, nil
-		}
 		// log what we are sending to the chain
 		jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
 		if err != nil {
