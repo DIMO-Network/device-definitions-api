@@ -301,11 +301,13 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		}
 
 		// log what we are sending to the chain
-		jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
-		if err != nil {
-			e.logger.Err(err).Msg("error marshalling device definition inputs")
-		}
-		e.logger.Info().RawJSON("device_definition", jsonBytes).Msg("dd payload sending to chain for CreateOrUpdate")
+		//jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
+		//if err != nil {
+		//	e.logger.Err(err).Msg("error marshalling device definition inputs")
+		//}
+		//e.logger.Info().RawJSON("device_definition", jsonBytes).Msg("dd payload sending to chain for CreateOrUpdate")
+
+		e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s", deviceInputs.Id)
 
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 		if err != nil {
@@ -314,6 +316,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		}
 
 		trx := tx.Hash().Hex()
+
+		e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx", trx)
 
 		return &trx, nil
 	}
