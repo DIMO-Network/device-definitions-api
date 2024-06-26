@@ -109,7 +109,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	vinDecodeNumber, err := models.VinNumbers(
 		models.VinNumberWhere.Vin.EQ(vin.String()),
 		qm.Load(models.VinNumberRels.DeviceDefinition)).
-		One(ctx, dc.dbs().Reader)
+		One(ctx, txVinNumbers)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
