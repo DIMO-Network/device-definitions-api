@@ -106,8 +106,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, errors.Wrap(err, "error when beginning transaction")
 	}
 	defer txVinNumbers.Rollback() //nolint
-
-	vinDecodeNumber, err := models.FindVinNumber(ctx, txVinNumbers, vin.String())
+	vinDecodeNumber, err := models.VinNumbers(
+		models.VinNumberWhere.Vin.EQ(vin.String()),
+		qm.Load(models.VinNumberRels.DeviceDefinition)).
+		One(ctx, txVinNumbers)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
@@ -118,6 +120,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
+		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug
+
 		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		if err != nil {
 			pt = coremodels.ICE.String()
@@ -181,6 +185,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			pt = coremodels.ICE.String()
 		}
 		resp.Powertrain = pt
+		resp.NameSlug = dd.NameSlug
 
 		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
 
@@ -274,6 +279,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, errors.New("could not get or create device_definition")
 	}
 	resp.DeviceDefinitionId = dd.ID
+	resp.NameSlug = dd.NameSlug
 
 	// match style - only process style if name is longer than 1
 	if len(vinInfo.StyleName) < 2 {

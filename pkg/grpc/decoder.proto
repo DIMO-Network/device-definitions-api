@@ -19,6 +19,7 @@ message DecodeVinResponse {
   int32 year = 4;
   string source = 5;
   string powertrain = 6;
+  string name_slug = 7;
 }
 
 service VinDecoderService {
