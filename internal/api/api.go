@@ -197,7 +197,7 @@ func startMonitoringServer(logger zerolog.Logger) {
 
 	go func() {
 		// 8888 is our standard port for exposing metrics in DIMO infra
-		if err := monApp.Listen(":8888"); err != nil {
+		if err := monApp.Listen(":8887"); err != nil {
 			logger.Fatal().Err(err).Str("port", "8888").Msg("Failed to start monitoring web server.")
 		}
 	}()
