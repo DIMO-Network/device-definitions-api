@@ -237,7 +237,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	bump := big.NewInt(20)
 	bumpedPrice := getGasPrice(gasPrice, bump)
 
-	e.logger.Debug().Msgf("bumped gas price: %d", bumpedPrice)
+	e.logger.Info().Msgf("bumped gas price: %d", bumpedPrice)
 
 	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	if err != nil {
