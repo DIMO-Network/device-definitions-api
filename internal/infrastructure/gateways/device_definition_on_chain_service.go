@@ -276,7 +276,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		DeviceType: "vehicle",
 	}
 
-	deviceInputs.ImageURI = GetDefaultImageURL(dd)
+	//deviceInputs.ImageURI = GetDefaultImageURL(dd)
+	deviceInputs.ImageURI = ""
 
 	if dd.Metadata.Valid {
 		attributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
