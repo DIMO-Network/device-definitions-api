@@ -359,6 +359,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	metrics.Success.With(prometheus.Labels{"method": TablelandCreated}).Inc()
 
 	trx := tx.Hash().Hex()
+	e.logger.Info().Msgf("Executed InsertDeviceDefinition %s with Trx %s in ManufacturerID %s", deviceInputs.Id, trx, bigManufID)
 
 	return &trx, nil
 }
