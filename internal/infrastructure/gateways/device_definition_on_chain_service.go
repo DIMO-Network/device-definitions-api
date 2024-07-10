@@ -213,7 +213,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
-	e.logger.Info().Msgf("Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t", dd.ID, e.settings.EthereumSendTransaction)
+	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t", dd.ID, e.settings.EthereumSendTransaction)
 
 	if !e.settings.EthereumSendTransaction {
 		return nil, nil
@@ -224,12 +224,14 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed get PendingNonceAt: %w", err)
 	}
 
 	gasPrice, err := e.client.SuggestGasPrice(ctx)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed get SuggestGasPrice: %w", err)
 	}
@@ -241,6 +243,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed get NewKeyedTransactorWithChainID: %w", err)
 	}
@@ -252,6 +255,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
 	}
@@ -259,11 +263,13 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	// Validate if manufacturer exists
 	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, make.Name)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", make.Name, err)
 	}
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
 	}
@@ -295,6 +301,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
 	e.logger.Info().Msgf("DD %s found.", currentDeviceDefinition.ID)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
 		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
 		return nil, err
@@ -335,8 +342,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
 		if err != nil {
+			e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 			metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-			e.logger.Err(err).Msgf("failed UpdateDeviceDefinition %s on-chain.", deviceInputs.Id)
 			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
 		}
 
@@ -351,8 +358,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
 	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		e.logger.Err(err).Msgf("failed InsertDeviceDefinition %s on-chain", deviceInputs.Id)
 		return nil, fmt.Errorf("failed insert InsertDeviceDefinition: %w", err)
 	}
 
