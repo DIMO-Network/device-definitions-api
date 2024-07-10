@@ -276,7 +276,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	deviceInputs := contracts.DeviceDefinitionInput{
 		Id:         dd.NameSlug,
-		Model:      dd.ModelSlug,
+		Model:      dd.Model,
 		Year:       big.NewInt(int64(dd.Year)),
 		Ksuid:      dd.ID,
 		DeviceType: "vehicle",
