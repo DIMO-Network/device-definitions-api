@@ -192,7 +192,7 @@ func (r *deviceDefinitionRepository) GetDevicesMMY(ctx context.Context) ([]*Devi
 	result := make([]*DeviceMMYJoinQueryOutput, 0)
 
 	err := models.NewQuery(
-		qm.Select("name_slug", "model_slug", "year"),
+		qm.Select("device_definitions.name_slug", "model_slug", "year", "device_makes.name_slug"),
 		qm.From(models.TableNames.DeviceDefinitions),
 		qm.InnerJoin("device_makes on device_makes.id = device_definitions.device_make_id"),
 	).Bind(ctx, r.DBS().Reader, &result)
