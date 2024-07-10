@@ -299,7 +299,9 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	// check if any pertinent information changed
 	e.logger.Info().Msgf("Validating if device definition %s with tokenID %s exists in tableland", deviceInputs.Id, make.TokenID)
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
-	e.logger.Info().Msgf("DD %s found.", currentDeviceDefinition.ID)
+	if currentDeviceDefinition != nil {
+		e.logger.Info().Msgf("DD %s found.", currentDeviceDefinition.ID)
+	}
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
@@ -457,7 +459,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 
 func GetDefaultImageURL(dd models.DeviceDefinition) string {
 	imgURI := ""
-	if dd.R.Images != nil {
+	if dd.R != nil && dd.R.Images != nil {
 		w := 0
 		for _, image := range dd.R.Images {
 			extra := 0
