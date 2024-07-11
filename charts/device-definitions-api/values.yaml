@@ -26,6 +26,7 @@ cronJob:
 env:
   ENVIRONMENT: dev
   PORT: '8080'
+  MONITORING_PORT: '8888'
   LOG_LEVEL: info
   DB_PORT: '5432'
   DB_NAME: device_definitions_api

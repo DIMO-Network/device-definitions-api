@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	"math/big"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 
 	common2 "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 
