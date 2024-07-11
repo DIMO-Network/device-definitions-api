@@ -212,7 +212,7 @@ message BaseResponse {
 
 message CreateDeviceDefinitionResponse {
   string id = 1;
-  string slug = 2;
+  string name_slug = 2;
 }
 
 message UpdateDeviceDefinitionRequest {
