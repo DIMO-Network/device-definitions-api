@@ -103,6 +103,10 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
+	if len(command.HardwareTemplateID) == 0 {
+		command.HardwareTemplateID = "130"
+	}
+
 	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, command.Verified, &command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
