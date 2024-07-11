@@ -38,6 +38,7 @@ message GetDeviceDefinitionItemResponse {
   repeated ExternalID external_ids = 13;
   string hardware_template_id = 14;
   string name_slug = 15;
+  repeated string transactions = 16;
 }
 
 message GetDevicesMMYResponse {

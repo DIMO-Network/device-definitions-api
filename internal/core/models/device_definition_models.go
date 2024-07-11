@@ -28,6 +28,7 @@ type GetDeviceDefinitionQueryResult struct {
 	CompatibleIntegrations []DeviceIntegration   `json:"compatibleIntegrations"`
 	DeviceStyles           []DeviceStyle         `json:"deviceStyles"`
 	DeviceAttributes       []DeviceTypeAttribute `json:"deviceAttributes"`
+	Transactions           []string              `json:"transactions"`
 }
 
 type DeviceTypeAttribute struct {

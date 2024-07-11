@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tidwall/sjson"
@@ -463,8 +464,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			localLog.Err(err).Msg("failed to create or update DD on chain")
 		}
 		if err == nil {
-			dd.TRXHashHex = null.StringFrom(*trx)
-			fmt.Println(dd.TRXHashHex)
+			trxArray := strings.Split(*trx, ",")
+			if dd.TRXHashHex != nil {
+				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
+			} else {
+				dd.TRXHashHex = trxArray
+			}
 		}
 
 		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {

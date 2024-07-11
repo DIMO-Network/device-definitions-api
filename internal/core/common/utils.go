@@ -229,6 +229,10 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	// trying pulling most recent images, pick the biggest one and where not exact image = false
 	rp.ImageURL = GetDefaultImageURL(dd)
 
+	if dd.TRXHashHex != nil {
+		rp.Transactions = dd.TRXHashHex
+	}
+
 	return rp, nil
 }
 
