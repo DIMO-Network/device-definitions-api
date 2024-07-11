@@ -228,7 +228,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Cont
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
 
 	command := &commands.CreateDeviceDefinitionCommand{
 		Source:             in.Source,
@@ -252,7 +252,7 @@ func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in 
 	commandResult, _ := s.Mediator.Send(ctx, command)
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID, NameSlug: result.NameSlug}, nil
 }
 
 func (s *GrpcDefinitionsService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
