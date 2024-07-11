@@ -210,6 +210,11 @@ message BaseResponse {
   string id = 1;
 }
 
+message CreateDeviceDefinitionResponse {
+  string id = 1;
+  string name_slug = 2;
+}
+
 message UpdateDeviceDefinitionRequest {
   string device_definition_id = 1;
   string source = 3 [deprecated = true];
@@ -483,7 +488,7 @@ service DeviceDefinitionService {
   rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
   rpc GetDeviceDefinitionIntegration(GetDeviceDefinitionIntegrationRequest) returns (GetDeviceDefinitionIntegrationResponse);
   rpc GetDeviceImagesByIDs(GetDeviceDefinitionRequest) returns (GetDeviceImagesResponse);
-  rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (BaseResponse);
+  rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
   rpc CreateDeviceIntegration(CreateDeviceIntegrationRequest) returns (BaseResponse);
   rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
   rpc CreateDeviceMake(CreateDeviceMakeRequest) returns (BaseResponse);

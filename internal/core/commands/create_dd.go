@@ -37,7 +37,8 @@ type CreateDeviceDefinitionCommand struct {
 }
 
 type CreateDeviceDefinitionCommandResult struct {
-	ID string `json:"id"`
+	ID       string `json:"id"`
+	NameSlug string `json:"name_slug"`
 }
 
 func (*CreateDeviceDefinitionCommand) Key() string { return "CreateDeviceDefinitionCommand" }
@@ -102,10 +103,14 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		return nil, err
 	}
 
+	if len(command.HardwareTemplateID) == 0 {
+		command.HardwareTemplateID = "130"
+	}
+
 	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, command.Verified, &command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
 	}
 
-	return CreateDeviceDefinitionCommandResult{ID: dd.ID}, nil
+	return CreateDeviceDefinitionCommandResult{ID: dd.ID, NameSlug: dd.NameSlug}, nil
 }
