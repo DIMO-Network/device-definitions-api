@@ -178,7 +178,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 			logger.Fatal().Err(err).Send()
 		}
 	}()
-	startMonitoringServer(logger)
+	startMonitoringServer(logger, settings)
 	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent with length of 1
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
 	<-c                                             // This blocks the main thread until an interrupt is received
@@ -190,7 +190,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 }
 
 // startMonitoringServer start server for monitoring endpoints. Could likely be moved to shared lib.
-func startMonitoringServer(logger zerolog.Logger, settings config.Settings) {
+func startMonitoringServer(logger zerolog.Logger, settings *config.Settings) {
 	monApp := fiber.New(fiber.Config{DisableStartupMessage: true})
 
 	monApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
