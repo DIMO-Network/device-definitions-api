@@ -10,6 +10,7 @@ import (
 type Settings struct {
 	Environment                       string         `yaml:"ENVIRONMENT"`
 	Port                              string         `yaml:"PORT"`
+	MonitoringPort                    string         `yaml:"MONITORING_PORT"`
 	LogLevel                          string         `yaml:"LOG_LEVEL"`
 	DB                                db.Settings    `yaml:"DB"`
 	ServiceName                       string         `yaml:"SERVICE_NAME"`
