@@ -393,7 +393,13 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
 
 		if err == nil && trx != nil {
-			dd.TRXHashHex = null.StringFrom(*trx)
+			trxArray := strings.Split(*trx, ",")
+			if dd.TRXHashHex != nil {
+				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
+			} else {
+				dd.TRXHashHex = trxArray
+			}
+
 			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
 				return nil, &exceptions.InternalError{
 					Err: err,
@@ -492,7 +498,12 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 	if dd.R != nil && dd.R.DeviceMake != nil {
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err == nil && trx != nil {
-			dd.TRXHashHex = null.StringFrom(*trx)
+			trxArray := strings.Split(*trx, ",")
+			if dd.TRXHashHex != nil {
+				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
+			} else {
+				dd.TRXHashHex = trxArray
+			}
 			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
 				return nil, &exceptions.InternalError{
 					Err: err,
