@@ -396,8 +396,9 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			MakeSlug:  dd.Type.MakeSlug,
 			ModelSlug: dd.Type.ModelSlug,
 		},
-		Verified:    dd.Verified,
-		ExternalIds: ExternalIDsToGRPC(dd.ExternalIDs),
+		Verified:     dd.Verified,
+		ExternalIds:  ExternalIDsToGRPC(dd.ExternalIDs),
+		Transactions: dd.Transactions,
 	}
 
 	if dd.DeviceMake.TokenID != nil {
