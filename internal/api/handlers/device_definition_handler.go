@@ -78,3 +78,23 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
+
+// GetDeviceDefinitionSearch godoc
+// @Summary gets device definitions by search filter
+// @ID GetDeviceDefinitionSearch
+// @Description gets a device definition
+// @Tags device-definitions
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 500
+// @Router /device-definitions/search [get]
+func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		query := &queries.GetAllDeviceDefinitionQuery{}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}

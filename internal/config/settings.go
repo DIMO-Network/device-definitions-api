@@ -47,6 +47,9 @@ type Settings struct {
 	DatGroupCustomerNumber            string         `yaml:"DAT_GROUP_CUSTOMER_NUMBER"`
 	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
 	DatGroupCustomerSignature         string         `yaml:"DAT_GROUP_CUSTOMER_SIGNATURE"`
+	SearchServiceAPIURL               string         `yaml:"SEARCH_SERVICE_API_URL"`
+	SearchServiceAPIKey               string         `yaml:"SEARCH_SERVICE_API_KEY"`
+	SearchServiceIndexName            string         `yaml:"SEARCH_SERVICE_DEVICE_DEFINITION_INDEX"`
 }
 
 func (s *Settings) IsProd() bool {

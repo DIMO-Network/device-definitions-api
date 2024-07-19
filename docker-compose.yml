@@ -35,6 +35,18 @@ services:
     volumes:
       - redis:/data:delegated
 
+  typesense:
+    image: typesense/typesense:26.0
+    container_name: typesense-device-definitions-api
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense:/data:delegated
+    command: [
+      "--data-dir", "/data",
+      "--api-key=xyz"
+    ]
+
 
 #  zookeeper:
 #    image: 'bitnami/zookeeper:latest'
@@ -60,6 +72,8 @@ volumes:
   postgresdb:
     driver: local
   redis:
+    driver: local
+  typesense:
     driver: local
 
 networks:
