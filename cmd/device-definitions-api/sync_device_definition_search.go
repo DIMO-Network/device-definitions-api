@@ -44,11 +44,14 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		typesense.WithServer(p.settings.SearchServiceAPIURL),
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
-	collectionName := "device_definitions"
+	collectionName := p.settings.SearchServiceIndexName
 
 	if p.createIndex {
 
-		client.Collection(collectionName).Delete(context.Background())
+		_, err := client.Collection(collectionName).Delete(context.Background())
+		if err != nil {
+			p.logger.Error().Err(err).Send()
+		}
 
 		hasFacet := true
 		schema := &api.CollectionSchema{
@@ -102,7 +105,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			},
 			DefaultSortingField: pointer.String("score"),
 		}
-		_, err := client.Collections().Create(context.Background(), schema)
+		_, err = client.Collections().Create(context.Background(), schema)
 		if err != nil {
 			p.logger.Error().Err(err).Send()
 			return subcommands.ExitFailure
@@ -150,7 +153,10 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			Score:              1,
 		}
 
-		client.Collection(collectionName).Documents().Upsert(context.Background(), newDocument)
+		_, err = client.Collection(collectionName).Documents().Upsert(context.Background(), newDocument)
+		if err != nil {
+			p.logger.Error().Err(err).Send()
+		}
 
 		fmt.Printf("Document Updated => %s \n", newDocument.Name)
 	}

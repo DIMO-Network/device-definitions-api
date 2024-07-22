@@ -39,7 +39,7 @@ type GetAllDeviceDefinitionFacet struct {
 
 type GetAllDeviceDefinitionPagination struct {
 	Page       int `json:"page"`
-	PageSize   int `json:"page_size"`
+	PageSize   int `json:"pageSize"`
 	TotalItems int `json:"total_items"`
 	TotalPages int `json:"total_pages"`
 }
@@ -66,7 +66,7 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 		return nil, err
 	}
 
-	var deviceDefinitions []GetAllDeviceDefinitionItem
+	deviceDefinitions := make([]GetAllDeviceDefinitionItem, 0, len(*result.Hits))
 	for _, hit := range *result.Hits {
 		var doc map[string]interface{}
 		if err := mapstructure.Decode(hit.Document, &doc); err != nil {

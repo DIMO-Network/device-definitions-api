@@ -12,7 +12,7 @@ type GetAllDeviceDefinitionByAutocompleteQuery struct {
 }
 
 type GetAllDeviceDefinitionByAutocompleteQueryResult struct {
-	DeviceDefinitions []GetAllDeviceDefinitionAutocompleteItem `json:"device_definitions"`
+	DeviceDefinitions []GetAllDeviceDefinitionAutocompleteItem `json:"items"`
 }
 
 type GetAllDeviceDefinitionAutocompleteItem struct {
@@ -42,7 +42,7 @@ func (ch GetAllDeviceDefinitionByAutocompleteQueryHandler) Handle(ctx context.Co
 		return nil, err
 	}
 
-	var deviceDefinitions []GetAllDeviceDefinitionAutocompleteItem
+	deviceDefinitions := make([]GetAllDeviceDefinitionAutocompleteItem, 0, len(*result.Hits))
 	for _, hit := range *result.Hits {
 		var doc map[string]interface{}
 		if err := mapstructure.Decode(hit.Document, &doc); err != nil {
