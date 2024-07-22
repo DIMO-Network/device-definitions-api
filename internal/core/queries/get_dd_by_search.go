@@ -29,7 +29,7 @@ type GetAllDeviceDefinitionItem struct {
 	Make               string `json:"make"`
 	Model              string `json:"model"`
 	Year               int    `json:"year"`
-	ImageURL           string `json:"imageURL"`
+	ImageURL           string `json:"imageUrl"`
 }
 
 type GetAllDeviceDefinitionFacet struct {
