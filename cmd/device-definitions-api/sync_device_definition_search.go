@@ -36,6 +36,7 @@ func (p *syncDeviceDefinitionSearchCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.createIndex, "create-index", false, "create or recreate index")
 }
 
+// nolint
 func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
@@ -131,14 +132,14 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	for _, dd := range all {
 		newDocument := struct {
 			ID                 string `json:"id"`
-			DeviceDefinitionID string `json:"device_definition_id"`
+			DeviceDefinitionID string `json:"device_definition_id"` //nolint
 			Name               string `json:"name"`
 			Make               string `json:"make"`
-			MakeSlug           string `json:"make_slug"`
+			MakeSlug           string `json:"make_slug"` //nolint
 			Model              string `json:"model"`
-			ModelSlug          string `json:"model_slug"`
+			ModelSlug          string `json:"model_slug"` //nolint
 			Year               int    `json:"year"`
-			ImageURL           string `json:"image_url"`
+			ImageURL           string `json:"image_url"` //nolint
 			Score              int    `json:"score"`
 		}{
 			ID:                 dd.NameSlug,
