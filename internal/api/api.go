@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -71,6 +72,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, deviceDefinitionOnChainService)
 	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
+	searchService := search.NewTypesenseAPIService(settings, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
@@ -146,7 +148,8 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, deviceDefinitionOnChainService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionOnChainByIDQuery{}, queries.NewGetDeviceDefinitionOnChainByIDQueryHandler(ddCacheService, pdb.DBS)),
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionBySearchQuery{}, queries.NewGetAllDeviceDefinitionBySearchQueryHandler(deviceDefinitionRepository)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionBySearchQuery{}, queries.NewGetAllDeviceDefinitionBySearchQueryHandler(searchService)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionByAutocompleteQuery{}, queries.NewGetAllDeviceDefinitionByAutocompleteQueryHandler(searchService)),
 	)
 
 	//fiber

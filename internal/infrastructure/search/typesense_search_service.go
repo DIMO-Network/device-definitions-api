@@ -2,17 +2,22 @@ package search
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
+
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/typesense/typesense-go/typesense"
 )
 
+//go:generate mockgen -source typesense_search_service.go -destination mocks/typesense_search_service_mock.go -package mocks
 type TypesenseAPIService interface {
-	GetDeviceDefinitions(ctx context.Context, search string) error
+	GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error)
+	Autocomplete(ctx context.Context, search string) (*api.SearchResult, error)
 }
 
 type typesenseAPIService struct {
@@ -37,23 +42,58 @@ func NewTypesenseAPIService(settings *config.Settings, log *zerolog.Logger) Type
 	}
 }
 
-func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search string) error {
+func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error) {
+
+	var filters strings.Builder
+	if make != "" {
+		filters.WriteString(fmt.Sprintf("make_slug:=%s", make))
+	}
+	if model != "" {
+		if filters.Len() > 0 {
+			filters.WriteString(" && ")
+		}
+		filters.WriteString(fmt.Sprintf("model_slug:=%s", model))
+	}
+	if year != 0 {
+		if filters.Len() > 0 {
+			filters.WriteString(" && ")
+		}
+		filters.WriteString(fmt.Sprintf("year:=%d", year))
+	}
 
 	searchParameters := &api.SearchCollectionParams{
-		Q:       search,
-		QueryBy: "name",
-		FacetBy: pointer.String("make,model,year"),
+		Q:        search,
+		QueryBy:  "name",
+		FacetBy:  pointer.String("make,model,year"),
+		Page:     pointer.Int(page),
+		PerPage:  pointer.Int(pageSize),
+		FilterBy: pointer.String(filters.String()),
 	}
 
 	result, err := t.client.Collection(t.settings.SearchServiceIndexName).Documents().Search(ctx, searchParameters)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if result.FacetCounts != nil {
+	return result, nil
+}
 
+func (t typesenseAPIService) Autocomplete(ctx context.Context, search string) (*api.SearchResult, error) {
+
+	searchParameters := &api.SearchCollectionParams{
+		Q:                       search,
+		QueryBy:                 "name",
+		Limit:                   pointer.Int(10),
+		HighlightFullFields:     pointer.String("name"),
+		HighlightAffixNumTokens: pointer.Int(2),
 	}
 
-	return nil
+	result, err := t.client.Collection(t.settings.SearchServiceIndexName).Documents().Search(ctx, searchParameters)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

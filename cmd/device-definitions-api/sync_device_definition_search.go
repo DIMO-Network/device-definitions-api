@@ -72,7 +72,17 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Facet: &hasFacet,
 				},
 				{
+					Name:  "make_slug",
+					Type:  "string",
+					Facet: &hasFacet,
+				},
+				{
 					Name:  "model",
+					Type:  "string",
+					Facet: &hasFacet,
+				},
+				{
+					Name:  "model_slug",
 					Type:  "string",
 					Facet: &hasFacet,
 				},
@@ -121,7 +131,9 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			DeviceDefinitionID string `json:"device_definition_id"`
 			Name               string `json:"name"`
 			Make               string `json:"make"`
+			MakeSlug           string `json:"make_slug"`
 			Model              string `json:"model"`
+			ModelSlug          string `json:"model_slug"`
 			Year               int    `json:"year"`
 			ImageURL           string `json:"image_url"`
 			Score              int    `json:"score"`
@@ -130,7 +142,9 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			DeviceDefinitionID: dd.ID,
 			Name:               common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 			Make:               dd.R.DeviceMake.Name,
+			MakeSlug:           dd.R.DeviceMake.NameSlug,
 			Model:              dd.Model,
+			ModelSlug:          dd.ModelSlug,
 			Year:               int(dd.Year),
 			ImageURL:           ResolveImageURL(dd),
 			Score:              1,

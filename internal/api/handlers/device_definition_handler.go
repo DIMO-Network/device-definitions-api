@@ -82,7 +82,7 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 // GetDeviceDefinitionSearch godoc
 // @Summary gets device definitions by search filter
 // @ID GetDeviceDefinitionSearch
-// @Description gets a device definition
+// @Description gets a device definition by search filter
 // @Tags device-definitions
 // @Accept json
 // @Produce json
@@ -91,7 +91,46 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 // @Router /device-definitions/search [get]
 func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		query := &queries.GetAllDeviceDefinitionQuery{}
+
+		q := c.Query("query")
+		mk := c.Query("makeSlug")
+		model := c.Query("modelSlug")
+		year := c.Query("year")
+		yrInt, _ := strconv.Atoi(year)
+
+		defaultPage := 1
+		defaultPageSize := 20
+
+		page := c.Query("page", strconv.Itoa(defaultPage))
+		pageSize := c.Query("pageSize", strconv.Itoa(defaultPageSize))
+
+		pageInt, _ := strconv.Atoi(page)
+		pageSizeInt, _ := strconv.Atoi(pageSize)
+
+		query := &queries.GetAllDeviceDefinitionBySearchQuery{Query: q, Make: mk, Model: model, Year: yrInt, PageSize: pageSizeInt, Page: pageInt}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}
+
+// GetDeviceDefinitionAutocomplete godoc
+// @Summary gets device definitions autocomplete
+// @ID GetDeviceDefinitionSearch
+// @Description gets a device definition Autcomplete
+// @Tags device-definitions
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 500
+// @Router /device-definitions/autocomplete [get]
+func GetDeviceDefinitionAutocomplete(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		q := c.Query("query")
+
+		query := &queries.GetAllDeviceDefinitionByAutocompleteQuery{Query: q}
 
 		result, _ := m.Send(c.UserContext(), query)
 
