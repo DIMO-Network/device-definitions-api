@@ -13,23 +13,23 @@ type GetAllDeviceDefinitionBySearchQuery struct {
 	Model    string `json:"model"`
 	Year     int    `json:"year"`
 	Page     int    `json:"page"`
-	PageSize int    `json:"page_size"`
+	PageSize int    `json:"pageSize"`
 }
 
 type GetAllDeviceDefinitionBySearchQueryResult struct {
-	DeviceDefinitions []GetAllDeviceDefinitionItem     `json:"device_definitions"`
+	DeviceDefinitions []GetAllDeviceDefinitionItem     `json:"deviceDefinitions"`
 	Facets            []GetAllDeviceDefinitionFacet    `json:"facets"`
 	Pagination        GetAllDeviceDefinitionPagination `json:"pagination"`
 }
 
 type GetAllDeviceDefinitionItem struct {
 	ID                 string `json:"id"`
-	DeviceDefinitionID string `json:"legacy_ksuid"`
+	DeviceDefinitionID string `json:"legacy_ksuid"` //nolint
 	Name               string `json:"name"`
 	Make               string `json:"make"`
 	Model              string `json:"model"`
 	Year               int    `json:"year"`
-	ImageURL           string `json:"image_url"`
+	ImageURL           string `json:"imageURL"`
 }
 
 type GetAllDeviceDefinitionFacet struct {
@@ -40,8 +40,8 @@ type GetAllDeviceDefinitionFacet struct {
 type GetAllDeviceDefinitionPagination struct {
 	Page       int `json:"page"`
 	PageSize   int `json:"pageSize"`
-	TotalItems int `json:"total_items"`
-	TotalPages int `json:"total_pages"`
+	TotalItems int `json:"totalItems"`
+	TotalPages int `json:"totalPages"`
 }
 
 func (*GetAllDeviceDefinitionBySearchQuery) Key() string {
