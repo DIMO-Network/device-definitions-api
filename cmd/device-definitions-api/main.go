@@ -49,6 +49,7 @@ func main() {
 	subcommands.Register(&powerTrainTypeCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&updateDeviceDefinitionSlugCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
+	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings}, "")
 
 	if len(os.Args) == 1 {
 		// Run API & everythying else

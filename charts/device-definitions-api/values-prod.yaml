@@ -23,6 +23,7 @@ env:
   ETHEREUM_SEND_TRANSACTION: true
   TABLELAND_API_GATEWAY: https://tableland.network/
   ETHEREUM_REGISTRY_ADDRESS: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
+  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: 'definitions_prod'
 ingress:
   enabled: true
   className: nginx
