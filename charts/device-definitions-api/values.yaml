@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 444f738
+  tag: f30c187
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -54,7 +54,7 @@ env:
   ETHEREUM_SEND_TRANSACTION: true
   TABLELAND_API_GATEWAY: https://testnets.tableland.network/
   ETHEREUM_REGISTRY_ADDRESS: '0x5eAA326fB2fc97fAcCe6A79A304876daD0F2e96c'
-  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: 'definitions_dev'
+  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_dev
 service:
   type: ClusterIP
   ports:
