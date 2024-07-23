@@ -30,7 +30,7 @@ func GetDeviceTypesByID(m mediator.Mediator) fiber.Handler {
 
 // GetDeviceTypes godoc
 // @Summary gets a device type.
-// @ID GetDeviceTypesByID
+// @ID GetDeviceTypes
 // @Description gets a devices type
 // @Tags device-definitions
 // @Produce json

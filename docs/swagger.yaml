@@ -27,6 +27,8 @@ definitions:
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake:
     properties:
+      created_at:
+        type: string
       external_ids:
         items:
           type: integer
@@ -55,6 +57,8 @@ definitions:
         $ref: '#/definitions/null.String'
       tokenId:
         $ref: '#/definitions/big.Int'
+      updated_at:
+        type: string
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMakeMetadata:
     properties:
@@ -71,6 +75,10 @@ definitions:
         type: string
       id:
         type: string
+      metadata:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute'
+        type: array
       name:
         type: string
       source:
@@ -158,11 +166,20 @@ definitions:
         type: string
       make:
         $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake'
-      metadata: {}
+      metadata:
+        items:
+          type: integer
+        type: array
       name:
+        type: string
+      nameSlug:
         type: string
       source:
         type: string
+      transactions:
+        items:
+          type: string
+        type: array
       type:
         $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType'
       vehicleData:
@@ -194,10 +211,75 @@ definitions:
         description: VehicleType PASSENGER CAR, from NHTSA
         type: string
     type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionAutocompleteItem:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionByAutocompleteQueryResult:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionAutocompleteItem'
+        type: array
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionBySearchQueryResult:
+    properties:
+      deviceDefinitions:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionItem'
+        type: array
+      facets:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination'
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet:
+    properties:
+      count:
+        type: integer
+      name:
+        type: string
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionItem:
+    properties:
+      id:
+        type: string
+      imageUrl:
+        type: string
+      legacy_ksuid:
+        description: nolint
+        type: string
+      make:
+        type: string
+      model:
+        type: string
+      name:
+        type: string
+      year:
+        type: integer
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination:
+    properties:
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalItems:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
   github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake:
     properties:
+      created_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
       external_ids:
-        description: 'Deprecated: Do not use.'
+        description: 'Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.'
         type: string
       external_ids_typed:
         items:
@@ -219,6 +301,8 @@ definitions:
         type: string
       token_id:
         type: integer
+      updated_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
     type: object
   github_com_DIMO-Network_device-definitions-api_pkg_grpc.ExternalID:
     properties:
@@ -245,6 +329,22 @@ definitions:
         type: string
       valid:
         type: boolean
+    type: object
+  timestamppb.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
     type: object
 info:
   contact: {}
@@ -400,6 +500,74 @@ paths:
       summary: gets all device definitions by Makes, models, and years
       tags:
       - device-definitions
+  /device-definitions/autocomplete:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition Autocomplete
+      operationId: GetDeviceDefinitionAutocomplete
+      parameters:
+      - description: query filter
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionByAutocompleteQueryResult'
+        "500":
+          description: Internal Server Error
+      summary: gets device definitions autocomplete
+      tags:
+      - device-definitions
+  /device-definitions/search:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition by search filter
+      operationId: GetDeviceDefinitionSearch
+      parameters:
+      - description: query filter
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: make Slug
+        in: query
+        name: makeSlug
+        type: string
+      - description: model Slug
+        in: query
+        name: modelSlug
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: number
+      - description: page
+        in: query
+        name: page
+        type: number
+      - description: pageSize
+        in: query
+        name: pageSize
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionBySearchQueryResult'
+        "500":
+          description: Internal Server Error
+      summary: gets device definitions by search filter
+      tags:
+      - device-definitions
   /device-makes:
     get:
       description: gets all device makes
@@ -414,6 +582,20 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets all device makes
+      tags:
+      - device-definitions
+  /device-types:
+    get:
+      description: gets a devices type
+      operationId: GetDeviceTypes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: gets a device type.
       tags:
       - device-definitions
   /device-types/{id}:
@@ -470,6 +652,57 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets integration by id.
+      tags:
+      - device-definitions
+  /v2/device-definitions/{make}/{id}:
+    get:
+      description: gets a device definition
+      operationId: GetDeviceDefinitionV2ByID
+      parameters:
+      - description: device make name
+        in: path
+        name: make
+        required: true
+        type: string
+      - description: device definition id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult'
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a device definition
+      tags:
+      - device-definitions
+  /v2/device-definitions/{make}/all:
+    get:
+      consumes:
+      - application/json
+      description: gets a device definition
+      operationId: GetDeviceDefinitionV2All
+      parameters:
+      - description: device make name
+        in: path
+        name: make
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: gets all device definitions by Makes, models, and years
       tags:
       - device-definitions
 swagger: "2.0"

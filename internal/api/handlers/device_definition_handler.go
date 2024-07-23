@@ -84,9 +84,15 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 // @ID GetDeviceDefinitionSearch
 // @Description gets a device definition by search filter
 // @Tags device-definitions
+// @Param  query query string true "query filter"
+// @Param  makeSlug query string false "make Slug"
+// @Param  modelSlug query string false "model Slug"
+// @Param  year query number false "year"
+// @Param  page query number false "page"
+// @Param  pageSize query number false "pageSize"
 // @Accept json
 // @Produce json
-// @Success 200
+// @Success 200 {object} queries.GetAllDeviceDefinitionBySearchQueryResult
 // @Failure 500
 // @Router /device-definitions/search [get]
 func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
@@ -117,12 +123,13 @@ func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
 
 // GetDeviceDefinitionAutocomplete godoc
 // @Summary gets device definitions autocomplete
-// @ID GetDeviceDefinitionSearch
-// @Description gets a device definition Autcomplete
+// @ID GetDeviceDefinitionAutocomplete
+// @Description gets a device definition Autocomplete
 // @Tags device-definitions
+// @Param  query query string true "query filter"
 // @Accept json
 // @Produce json
-// @Success 200
+// @Success 200 {object} queries.GetAllDeviceDefinitionByAutocompleteQueryResult
 // @Failure 500
 // @Router /device-definitions/autocomplete [get]
 func GetDeviceDefinitionAutocomplete(m mediator.Mediator) fiber.Handler {

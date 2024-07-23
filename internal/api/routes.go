@@ -8,7 +8,7 @@ import (
 
 func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/device-definitions/search", handlers.GetDeviceDefinitionSearch(m)).Name("device-definitions-search")
-	app.Get("/device-definitions/autocomplete", handlers.GetDeviceDefinitionAutocomplete(m)).Name("device-definitions-autcomplete")
+	app.Get("/device-definitions/autocomplete", handlers.GetDeviceDefinitionAutocomplete(m)).Name("device-definitions-autocomplete")
 	app.Get("/device-definitions/all", handlers.GetDeviceDefinitionAll(m)).Name("device-definitions-all")
 	app.Get("/device-definitions/:id", handlers.GetDeviceDefinitionByID(m)).Name("device-definitions-by-id")
 	app.Get("/device-definitions/:id/integrations", handlers.GetDeviceIntegrationsByID(m)).Name("device-definitions-with-integrations")
