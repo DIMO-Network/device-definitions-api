@@ -18,7 +18,7 @@ type GetAllDeviceDefinitionBySearchQuery struct {
 
 type GetAllDeviceDefinitionBySearchQueryResult struct {
 	DeviceDefinitions []GetAllDeviceDefinitionItem     `json:"deviceDefinitions"`
-	Facets            []GetAllDeviceDefinitionFacet    `json:"facets"`
+	Facets            GetAllDeviceDefinitionFacet      `json:"facets"`
 	Pagination        GetAllDeviceDefinitionPagination `json:"pagination"`
 }
 
@@ -33,6 +33,12 @@ type GetAllDeviceDefinitionItem struct {
 }
 
 type GetAllDeviceDefinitionFacet struct {
+	Makes  []GetAllDeviceDefinitionFacetItem `json:"makes"`
+	Models []GetAllDeviceDefinitionFacetItem `json:"models"`
+	Years  []GetAllDeviceDefinitionFacetItem `json:"years"`
+}
+
+type GetAllDeviceDefinitionFacetItem struct {
 	Name  string `json:"name"`
 	Count int    `json:"count"`
 }
@@ -84,14 +90,37 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 		deviceDefinitions = append(deviceDefinitions, item)
 	}
 
-	var facets []GetAllDeviceDefinitionFacet
+	var makes []GetAllDeviceDefinitionFacetItem
+	var models []GetAllDeviceDefinitionFacetItem
+	var years []GetAllDeviceDefinitionFacetItem
+
 	for _, facet := range *result.FacetCounts {
 		for _, count := range *facet.Counts {
-			facets = append(facets, GetAllDeviceDefinitionFacet{
-				Name:  *count.Value,
-				Count: *count.Count,
-			})
+			if *facet.FieldName == "make" {
+				makes = append(makes, GetAllDeviceDefinitionFacetItem{
+					Name:  *count.Value,
+					Count: *count.Count,
+				})
+			}
+			if *facet.FieldName == "model" {
+				models = append(models, GetAllDeviceDefinitionFacetItem{
+					Name:  *count.Value,
+					Count: *count.Count,
+				})
+			}
+			if *facet.FieldName == "year" {
+				years = append(years, GetAllDeviceDefinitionFacetItem{
+					Name:  *count.Value,
+					Count: *count.Count,
+				})
+			}
 		}
+	}
+
+	facets := GetAllDeviceDefinitionFacet{
+		Makes:  makes,
+		Models: models,
+		Years:  years,
 	}
 
 	pagination := GetAllDeviceDefinitionPagination{
@@ -110,8 +139,14 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 	if response.DeviceDefinitions == nil {
 		response.DeviceDefinitions = []GetAllDeviceDefinitionItem{}
 	}
-	if response.Facets == nil {
-		response.Facets = []GetAllDeviceDefinitionFacet{}
+	if response.Facets.Makes == nil {
+		response.Facets.Makes = []GetAllDeviceDefinitionFacetItem{}
+	}
+	if response.Facets.Models == nil {
+		response.Facets.Models = []GetAllDeviceDefinitionFacetItem{}
+	}
+	if response.Facets.Years == nil {
+		response.Facets.Years = []GetAllDeviceDefinitionFacetItem{}
 	}
 
 	return response, nil
