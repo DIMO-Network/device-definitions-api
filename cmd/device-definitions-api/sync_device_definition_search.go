@@ -2,19 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
 	"github.com/typesense/typesense-go/typesense"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type syncDeviceDefinitionSearchCmd struct {
@@ -117,69 +117,106 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 	fmt.Printf("Starting processing definitions\n")
 
-	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
-		models.DeviceDefinitionWhere.Year.GTE(2012),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
-		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, pdb.DBS().Reader)
+	url := "https://device-definitions-api.dimo.zone/device-definitions/all"
 
+	resp, err := http.Get(url)
 	if err != nil {
 		p.logger.Error().Err(err).Send()
 		return subcommands.ExitFailure
 	}
-	fmt.Printf("Found %d device-definition(s) in all device-definitions", len(all))
+	defer resp.Body.Close()
 
-	for _, dd := range all {
-		newDocument := struct {
-			ID                 string `json:"id"`
-			DeviceDefinitionID string `json:"device_definition_id"` //nolint
-			Name               string `json:"name"`
-			Make               string `json:"make"`
-			MakeSlug           string `json:"make_slug"` //nolint
-			Model              string `json:"model"`
-			ModelSlug          string `json:"model_slug"` //nolint
-			Year               int    `json:"year"`
-			ImageURL           string `json:"image_url"` //nolint
-			Score              int    `json:"score"`
-		}{
-			ID:                 dd.NameSlug,
-			DeviceDefinitionID: dd.ID,
-			Name:               common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
-			Make:               dd.R.DeviceMake.Name,
-			MakeSlug:           dd.R.DeviceMake.NameSlug,
-			Model:              dd.Model,
-			ModelSlug:          dd.ModelSlug,
-			Year:               int(dd.Year),
-			ImageURL:           ResolveImageURL(dd),
-			Score:              1,
+	if resp.StatusCode != http.StatusOK {
+		p.logger.Error().Err(err).Send()
+		return subcommands.ExitFailure
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		p.logger.Error().Err(err).Send()
+		return subcommands.ExitFailure
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		p.logger.Error().Err(err).Send()
+		return subcommands.ExitFailure
+	}
+
+	var documents []interface{}
+
+	if deviceDefinitions, ok := result["device_definitions"].([]interface{}); ok {
+		for _, dd := range deviceDefinitions {
+			if deviceMap, ok := dd.(map[string]interface{}); ok {
+				id := deviceMap["name_slug"].(string)
+				deviceDefinitionID := deviceMap["device_definition_id"].(string)
+				name := deviceMap["name"].(string)
+
+				typeMap := deviceMap["type"].(map[string]interface{})
+				modelName := typeMap["model"].(string)
+				modelSlug := typeMap["model_slug"].(string)
+
+				var year int
+				if yearFloat, ok := typeMap["year"].(float64); ok {
+					year = int(yearFloat)
+				} else {
+					continue
+				}
+
+				makeMap := deviceMap["make"].(map[string]interface{})
+				makeName := makeMap["name"].(string)
+				makeSlug := makeMap["name_slug"].(string)
+
+				newDocument := struct {
+					ID                 string `json:"id"`
+					DeviceDefinitionID string `json:"device_definition_id"` //nolint
+					Name               string `json:"name"`
+					Make               string `json:"make"`
+					MakeSlug           string `json:"make_slug"` //nolint
+					Model              string `json:"model"`
+					ModelSlug          string `json:"model_slug"` //nolint
+					Year               int    `json:"year"`
+					ImageURL           string `json:"image_url"` //nolint
+					Score              int    `json:"score"`
+				}{
+					ID:                 id,
+					DeviceDefinitionID: deviceDefinitionID,
+					Name:               name,
+					Make:               makeName,
+					MakeSlug:           makeSlug,
+					Model:              modelName,
+					ModelSlug:          modelSlug,
+					Year:               year,
+					ImageURL:           "",
+					Score:              1,
+				}
+
+				documents = append(documents, newDocument)
+			}
+		}
+	}
+
+	batchSize := 100
+	for i := 0; i < len(documents); i += batchSize {
+		end := i + batchSize
+		if end > len(documents) {
+			end = len(documents)
 		}
 
-		_, err = client.Collection(collectionName).Documents().Upsert(context.Background(), newDocument)
+		batch := documents[i:end]
+		_, err = client.Collection(collectionName).
+			Documents().
+			Import(context.Background(), batch, &api.ImportDocumentsParams{})
+
 		if err != nil {
 			p.logger.Error().Err(err).Send()
+			return subcommands.ExitFailure
+		} else {
+			fmt.Printf("Documents imported successfully: %d - %d\n", i, end)
 		}
-
-		fmt.Printf("Document Updated => %s \n", newDocument.Name)
 	}
 
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
-}
-
-func ResolveImageURL(dd *models.DeviceDefinition) string {
-	img := ""
-	if dd.R.Images != nil {
-		w := 0
-		for _, image := range dd.R.Images {
-			extra := 0
-			if !image.NotExactImage {
-				extra = 2000 // we want to give preference to exact images
-			}
-			if image.Width.Int+extra > w {
-				w = image.Width.Int + extra
-				img = image.SourceURL
-			}
-		}
-	}
-	return img
 }
