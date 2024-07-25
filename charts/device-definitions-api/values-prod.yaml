@@ -62,7 +62,7 @@ jobs:
     schedule: 0 0 * * 1
     args:
       - '-c'
-      - /device-definitions-api sync -search-sync-dds; CODE=$?; echo "weekly elastic mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+      - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
   - name: feat-compat-updte
     schedule: 0 0 * * 0
     args:
