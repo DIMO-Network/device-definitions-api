@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"

@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
@@ -131,7 +132,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		return subcommands.ExitFailure
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		p.logger.Error().Err(err).Send()
 		return subcommands.ExitFailure
