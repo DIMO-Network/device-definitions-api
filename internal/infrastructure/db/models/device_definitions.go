@@ -40,7 +40,7 @@ type DeviceDefinition struct {
 	ExternalIds        null.JSON         `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
 	HardwareTemplateID null.String       `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 	TRXHashHex         types.StringArray `boil:"trx_hash_hex" json:"trx_hash_hex,omitempty" toml:"trx_hash_hex" yaml:"trx_hash_hex,omitempty"`
-	NameSlug           null.String       `boil:"name_slug" json:"name_slug,omitempty" toml:"name_slug" yaml:"name_slug,omitempty"`
+	NameSlug           string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
 
 	R *deviceDefinitionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceDefinitionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -316,7 +316,7 @@ var DeviceDefinitionWhere = struct {
 	ExternalIds        whereHelpernull_JSON
 	HardwareTemplateID whereHelpernull_String
 	TRXHashHex         whereHelpertypes_StringArray
-	NameSlug           whereHelpernull_String
+	NameSlug           whereHelperstring
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"id\""},
 	Model:              whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"model\""},
@@ -333,7 +333,7 @@ var DeviceDefinitionWhere = struct {
 	ExternalIds:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_definitions\".\"external_ids\""},
 	HardwareTemplateID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"hardware_template_id\""},
 	TRXHashHex:         whereHelpertypes_StringArray{field: "\"device_definitions_api\".\"device_definitions\".\"trx_hash_hex\""},
-	NameSlug:           whereHelpernull_String{field: "\"device_definitions_api\".\"device_definitions\".\"name_slug\""},
+	NameSlug:           whereHelperstring{field: "\"device_definitions_api\".\"device_definitions\".\"name_slug\""},
 }
 
 // DeviceDefinitionRels is where relationship names are stored.
@@ -415,8 +415,8 @@ type deviceDefinitionL struct{}
 
 var (
 	deviceDefinitionAllColumns            = []string{"id", "model", "year", "metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_make_id", "model_slug", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex", "name_slug"}
-	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug"}
-	deviceDefinitionColumnsWithDefault    = []string{"metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex", "name_slug"}
+	deviceDefinitionColumnsWithoutDefault = []string{"id", "model", "year", "device_make_id", "model_slug", "name_slug"}
+	deviceDefinitionColumnsWithDefault    = []string{"metadata", "created_at", "updated_at", "source", "verified", "external_id", "device_type_id", "external_ids", "hardware_template_id", "trx_hash_hex"}
 	deviceDefinitionPrimaryKeyColumns     = []string{"id"}
 	deviceDefinitionGeneratedColumns      = []string{}
 )

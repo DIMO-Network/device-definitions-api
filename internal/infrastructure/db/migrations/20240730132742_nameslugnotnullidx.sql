@@ -3,8 +3,6 @@
 SELECT 'up SQL query';
 SET search_path = device_definitions_api, public;
 alter table device_definitions
-    alter column name_slug drop not null;
-alter table device_definitions
     add constraint device_definitions_name_slug_uniq
         unique (name_slug);
 -- +goose StatementEnd
