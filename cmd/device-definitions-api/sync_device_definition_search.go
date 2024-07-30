@@ -150,10 +150,14 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	if deviceDefinitions, ok := result["device_definitions"].([]interface{}); ok {
 		for _, dd := range deviceDefinitions {
 			if deviceMap, ok := dd.(map[string]interface{}); ok {
+
 				id := deviceMap["name_slug"].(string)
 				deviceDefinitionID := deviceMap["device_definition_id"].(string)
 				name := deviceMap["name"].(string)
-
+				var imageUrl string
+				if imageUrlString, ok := deviceMap["image_url"].(string); ok {
+					imageUrl = imageUrlString
+				}
 				typeMap := deviceMap["type"].(map[string]interface{})
 				modelName := typeMap["model"].(string)
 				modelSlug := typeMap["model_slug"].(string)
@@ -189,7 +193,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Model:              modelName,
 					ModelSlug:          modelSlug,
 					Year:               year,
-					ImageURL:           "",
+					ImageURL:           imageUrl,
 					Score:              1,
 				}
 
