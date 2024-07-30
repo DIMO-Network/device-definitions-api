@@ -28,6 +28,7 @@ type GetAllDeviceDefinitionItem struct {
 	DeviceDefinitionID string `json:"legacy_ksuid"` //nolint
 	Name               string `json:"name"`
 	Make               string `json:"make"`
+	MakeTokenID        int    `json:"token_id"` //nolint
 	Model              string `json:"model"`
 	Year               int    `json:"year"`
 	ImageURL           string `json:"imageUrl"`
@@ -84,6 +85,7 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 			DeviceDefinitionID: doc["device_definition_id"].(string),
 			Name:               doc["name"].(string),
 			Make:               doc["make"].(string),
+			MakeTokenID:        int(doc["make_token_id"].(float64)),
 			Model:              doc["model"].(string),
 			Year:               int(doc["year"].(float64)),
 			ImageURL:           doc["image_url"].(string),
@@ -149,6 +151,8 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 	if response.Facets.Years == nil {
 		response.Facets.Years = []GetAllDeviceDefinitionFacetItem{}
 	}
+
+	// Resolve tokenid
 
 	return response, nil
 }

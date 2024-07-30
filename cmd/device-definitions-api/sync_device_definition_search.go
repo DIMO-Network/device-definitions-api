@@ -82,6 +82,11 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Facet: &hasFacet,
 				},
 				{
+					Name:  "make_token_id",
+					Type:  "int32",
+					Facet: &hasFacet,
+				},
+				{
 					Name:  "model",
 					Type:  "string",
 					Facet: &hasFacet,
@@ -172,13 +177,18 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 				makeMap := deviceMap["make"].(map[string]interface{})
 				makeName := makeMap["name"].(string)
 				makeSlug := makeMap["name_slug"].(string)
+				var makeTokenID int
+				if makeTokenIDFloat, ok := makeMap["token_id"].(float64); ok {
+					makeTokenID = int(makeTokenIDFloat)
+				}
 
 				newDocument := struct {
 					ID                 string `json:"id"`
 					DeviceDefinitionID string `json:"device_definition_id"` //nolint
 					Name               string `json:"name"`
 					Make               string `json:"make"`
-					MakeSlug           string `json:"make_slug"` //nolint
+					MakeSlug           string `json:"make_slug"`     //nolint
+					MakeTokenID        int    `json:"make_token_id"` //nolint
 					Model              string `json:"model"`
 					ModelSlug          string `json:"model_slug"` //nolint
 					Year               int    `json:"year"`
@@ -190,6 +200,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Name:               name,
 					Make:               makeName,
 					MakeSlug:           makeSlug,
+					MakeTokenID:        makeTokenID,
 					Model:              modelName,
 					ModelSlug:          modelSlug,
 					Year:               year,
