@@ -151,6 +151,7 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
 		ModelSlug:    shared.SlugString(model),
+		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
 	}
 	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
@@ -172,6 +173,7 @@ func SetupCreateDeviceDefinitionTeslaModel(t *testing.T, dm models.DeviceMake, m
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
 		ModelSlug:    shared.SlugString(model),
+		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
@@ -207,6 +209,7 @@ func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMa
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
 		ModelSlug:    shared.SlugString(model),
+		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
@@ -242,6 +245,7 @@ func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, d
 		Verified:     true,
 		DeviceTypeID: null.StringFrom(dt.ID),
 		ModelSlug:    shared.SlugString(model),
+		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
 	}
 
 	deviceTypeInfo := make(map[string]interface{})
