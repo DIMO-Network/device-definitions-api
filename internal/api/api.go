@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
 
@@ -155,7 +156,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	//fiber
 	app := fiber.New(common.FiberConfig(settings.Environment != "local"))
-
+	app.Use(cors.New())
 	app.Use(metrics.HTTPMetricsPrometheusMiddleware)
 	app.Use(recover.New())
 
