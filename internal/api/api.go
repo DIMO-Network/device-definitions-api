@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"

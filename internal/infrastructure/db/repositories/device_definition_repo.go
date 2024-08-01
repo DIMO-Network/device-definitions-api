@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/volatiletech/sqlboiler/v4/queries"
+
 	"github.com/DIMO-Network/shared"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -184,22 +186,25 @@ func (r *deviceDefinitionRepository) GetDevicesByMakeYearRange(ctx context.Conte
 }
 
 type DeviceMMYJoinQueryOutput struct {
-	DeviceDefinitions models.DeviceDefinition `boil:"DeviceDefinitions,bind"`
-	DeviceMakes       models.DeviceMake       `boil:"DeviceMakes,bind"`
+	DefinitionNameSlug string `boil:"definition_name_slug"`
+	ModelSlug          string `boil:"model_slug"`
+	Year               int16  `boil:"year"`
+	MakeSlug           string `boil:"make_name_slug"`
 }
 
 func (r *deviceDefinitionRepository) GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error) {
 	// loads only certain properties of devices: make_slug, model_slug and year
 	result := make([]*DeviceMMYJoinQueryOutput, 0)
 
-	err := models.NewQuery(
-		qm.Select("device_definitions.name_slug", "model_slug", "year", "device_makes.name_slug"),
-		qm.From(models.TableNames.DeviceDefinitions),
-		qm.InnerJoin("device_makes on device_makes.id = device_definitions.device_make_id"),
-	).Bind(ctx, r.DBS().Reader, &result)
-	if err != nil {
-		return nil, &exceptions.InternalError{Err: err}
-	}
+	err := queries.Raw(
+		`SELECT 	dd.name_slug as definition_name_slug, 
+       					dd.model_slug, 
+       					dd.year, 
+       					dm.name_slug as make_name_slug 
+				FROM device_definitions_api.device_definitions dd
+    			INNER JOIN device_definitions_api.device_makes dm 
+        		ON dm.id = dd.device_make_id`).
+		Bind(ctx, r.DBS().Reader, &result)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

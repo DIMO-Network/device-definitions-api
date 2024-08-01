@@ -38,9 +38,9 @@ func (ch GetDevicesMMYQueryHandler) Handle(ctx context.Context, _ mediator.Messa
 	result := &grpc.GetDevicesMMYResponse{}
 	for _, v := range all {
 		result.Device = append(result.Device, &grpc.GetDevicesMMYItemResponse{
-			Make:  v.DeviceMakes.NameSlug,
-			Model: v.DeviceDefinitions.ModelSlug,
-			Year:  int32(v.DeviceDefinitions.Year),
+			Make:  v.MakeSlug,
+			Model: v.ModelSlug,
+			Year:  int32(v.Year),
 		})
 
 	}
