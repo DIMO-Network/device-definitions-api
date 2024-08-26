@@ -229,7 +229,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Cont
 }
 
 func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
-
+	// todo we could call the command directly, but maintain testability, what about the update, could it share logic
 	command := &commands.CreateDeviceDefinitionCommand{
 		Source:             in.Source,
 		Make:               in.Make,

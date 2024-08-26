@@ -64,15 +64,15 @@ func (pr *GrpcConfig) GrpcConfig(p any) (err error) {
 	fmt.Printf("error executing request %+v \n", err)
 
 	if e, ok := p.(*exceptions.ValidationError); ok {
-		return status.Errorf(codes.InvalidArgument, e.Error())
+		return status.Error(codes.InvalidArgument, e.Error())
 	}
 
 	if e, ok := p.(*exceptions.NotFoundError); ok {
-		return status.Errorf(codes.NotFound, e.Error())
+		return status.Error(codes.NotFound, e.Error())
 	}
 
 	if e, ok := p.(*exceptions.ConflictError); ok {
-		return status.Errorf(codes.Aborted, e.Error())
+		return status.Error(codes.Aborted, e.Error())
 	}
 
 	metrics.GRPCPanicsCount.Inc()

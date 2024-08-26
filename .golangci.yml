@@ -17,18 +17,19 @@ linters:
 
 issues:
   fix: true
+  exclude-dirs:
+    - pkg/grpc
   exclude-rules:
     - path: 'internal/infrastructure/gateways/datgroup_api_service.go'
       linters:
         - tagliatelle
         - revive
 
+output:
+  print-issued-lines: true
+
 linters-settings:
-  exclude-rules:
-    - dir: pkg/grpc
   gci:
-    # DEPRECATED: use `sections` and `prefix(github.com/org/project)` instead.
-    local-prefixes: github.com/dimo-network/device-definitions-api
     # Section configuration to compare against.
     # Section names are case-insensitive and may contain parameters in ().
     # The default order of sections is `standard > default > custom > blank > dot`,

@@ -98,7 +98,7 @@ func transformToDefinition(item DeviceDefinitionTablelandModel) *models.DeviceDe
 		Model: item.Model,
 	}
 
-	if item.Metadata.DeviceAttributes != nil && len(item.Metadata.DeviceAttributes) > 0 {
+	if len(item.Metadata.DeviceAttributes) > 0 {
 		deviceTypeInfo := make(map[string]interface{})
 		metaData := make(map[string]interface{})
 
