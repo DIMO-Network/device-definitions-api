@@ -111,7 +111,7 @@ func smartCarCompatibility(ctx context.Context, s *config.Settings, logger zerol
 		logger.Fatal().Err(err).Msg("Failed to create sender.")
 	}
 
-	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL.String())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}
@@ -151,7 +151,7 @@ func smartCarSync(ctx context.Context, s *config.Settings, logger zerolog.Logger
 		logger.Fatal().Err(err).Msg("Failed to create sender.")
 	}
 
-	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL.String())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}
@@ -210,7 +210,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		logger.Fatal().Err(err).Msg("Failed to create sender.")
 	}
 
-	ethClient, err := ethclient.Dial(s.EthereumRPCURL)
+	ethClient, err := ethclient.Dial(s.EthereumRPCURL.String())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}

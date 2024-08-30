@@ -23,11 +23,11 @@ type drivlyAPIService struct {
 }
 
 func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
-	if settings.DrivlyVINAPIURL == "" || settings.DrivlyAPIKey == "" {
+	if settings.DrivlyAPIKey == "" {
 		panic("Drivly configuration not set")
 	}
 	h := map[string]string{"x-api-key": settings.DrivlyAPIKey}
-	hcwv, _ := shared.NewHTTPClientWrapper(settings.DrivlyVINAPIURL, "", 10*time.Second, h, true, shared.WithRetry(1))
+	hcwv, _ := shared.NewHTTPClientWrapper(settings.DrivlyVINAPIURL.String(), "", 10*time.Second, h, true, shared.WithRetry(1))
 
 	return &drivlyAPIService{
 		Settings:      settings,

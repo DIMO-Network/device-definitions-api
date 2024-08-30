@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -19,8 +20,8 @@ type FuelAPIService interface {
 
 // fuelAPIService client
 type fuelAPIService struct {
-	vehicleURL string
-	imageURL   string
+	vehicleURL url.URL
+	imageURL   url.URL
 	key        string
 	log        *zerolog.Logger
 }
@@ -32,10 +33,10 @@ func NewFuelAPIService(settings *config.Settings, logger *zerolog.Logger) FuelAP
 		key:        settings.FuelAPIKey,
 		log:        logger,
 	}
-	if fa.vehicleURL == "" {
+	if fa.vehicleURL.String() == "" {
 		logger.Fatal().Msgf("fuel api vehicle url is empty")
 	}
-	if fa.imageURL == "" {
+	if fa.imageURL.String() == "" {
 		logger.Fatal().Msgf("fuel api image url is empty")
 	}
 	if fa.key == "" {
@@ -83,7 +84,7 @@ func (fs *fuelAPIService) FetchDeviceImages(mk, mdl string, yr int, prodID int, 
 
 func (fs *fuelAPIService) imageRequest(mk, mdl string, yr int, prodID int, prodFormat int) (FuelDeviceImages, error) {
 	vehicleReqURL := fmt.Sprintf("?year=%d&make=%s&model=%s&api_key=%s", yr, mk, mdl, fs.key)
-	vehicleResp, err := http.Get(fs.vehicleURL + vehicleReqURL)
+	vehicleResp, err := http.Get(fs.vehicleURL.String() + vehicleReqURL)
 	if err != nil {
 		return FuelDeviceImages{}, err
 	}
@@ -98,7 +99,7 @@ func (fs *fuelAPIService) imageRequest(mk, mdl string, yr int, prodID int, prodF
 	}
 	vehicleID := gjson.Get(string(vehicleData), "0.id").Str
 	imageReqURL := fmt.Sprintf("/%s?api_key=%s&productID=%d&productFormatIDs=%d", vehicleID, fs.key, prodID, prodFormat)
-	imageResp, err := http.Get(fs.imageURL + imageReqURL)
+	imageResp, err := http.Get(fs.imageURL.String() + imageReqURL)
 	if err != nil {
 		return FuelDeviceImages{}, err
 	}

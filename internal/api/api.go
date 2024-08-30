@@ -44,7 +44,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	// redis
 	redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
 
-	ethClient, err := ethclient.Dial(settings.EthereumRPCURL)
+	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}

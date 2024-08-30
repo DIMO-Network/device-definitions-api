@@ -2,7 +2,10 @@
 package config
 
 import (
+	"net/url"
+
 	"github.com/DIMO-Network/shared/db"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/shared/redis"
 )
@@ -23,31 +26,30 @@ type Settings struct {
 	ElasticSearchDeviceStatusToken    string         `yaml:"ELASTIC_SEARCH_DEVICE_STATUS_TOKEN"`
 	IPFSNodeEndpoint                  string         `yaml:"IPFS_NODE_ENDPOINT"`
 	DrivlyAPIKey                      string         `yaml:"DRIVLY_API_KEY"`
-	DrivlyVINAPIURL                   string         `yaml:"DRIVLY_VIN_API_URL"`
-	DrivlyOfferAPIURL                 string         `yaml:"DRIVLY_OFFER_API_URL"`
+	DrivlyVINAPIURL                   url.URL        `yaml:"DRIVLY_VIN_API_URL"`
+	DrivlyOfferAPIURL                 url.URL        `yaml:"DRIVLY_OFFER_API_URL"`
 	Redis                             redis.Settings `yaml:"REDIS"`
-	FuelAPIVehiclesEndpoint           string         `yaml:"FUEL_API_VEHICLES_ENDPOINT"`
-	FuelAPIImagesEndpoint             string         `yaml:"FUEL_API_IMAGES_ENDPOINT"`
+	FuelAPIVehiclesEndpoint           url.URL        `yaml:"FUEL_API_VEHICLES_ENDPOINT"`
+	FuelAPIImagesEndpoint             url.URL        `yaml:"FUEL_API_IMAGES_ENDPOINT"`
 	FuelAPIKey                        string         `yaml:"FUEL_API_KEY"`
-	NHTSARecallsFileURL               string         `yaml:"NHTSA_RECALLS_FILE_URL"`
-	VincarioAPIURL                    string         `yaml:"VINCARIO_API_URL"`
+	VincarioAPIURL                    url.URL        `yaml:"VINCARIO_API_URL"`
 	VincarioAPIKey                    string         `yaml:"VINCARIO_API_KEY"`
 	VincarioAPISecret                 string         `yaml:"VINCARIO_API_SECRET"`
 	AutoIsoAPIUid                     string         `yaml:"AUTO_ISO_API_UID"`
 	AutoIsoAPIKey                     string         `yaml:"AUTO_ISO_API_KEY"`
-	EthereumRPCURL                    string         `yaml:"ETHEREUM_RPC_URL"`
+	EthereumRPCURL                    url.URL        `yaml:"ETHEREUM_RPC_URL"`
 	PrivateKeyMode                    bool           `yaml:"PRIVATE_KEY_MODE"`
 	SenderPrivateKey                  string         `yaml:"SENDER_PRIVATE_KEY"`
 	KMSKeyID                          string         `yaml:"KMS_KEY_ID"`
 	EthereumSendTransaction           bool           `yaml:"ETHEREUM_SEND_TRANSACTION"`
-	EthereumRegistryAddress           string         `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
+	EthereumRegistryAddress           common.Address `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
 	TablelandAPIGateway               string         `yaml:"TABLELAND_API_GATEWAY"`
-	DatGroupURL                       string         `yaml:"DAT_GROUP_URL"`
+	DatGroupURL                       url.URL        `yaml:"DAT_GROUP_URL"`
 	DatGroupCustomerLogin             string         `yaml:"DAT_GROUP_CUSTOMER_LOGIN"`
 	DatGroupCustomerNumber            string         `yaml:"DAT_GROUP_CUSTOMER_NUMBER"`
 	DatGroupInterfacePartnerSignature string         `yaml:"DAT_GROUP_INTERFACE_PARTNER_SIGNATURE"`
 	DatGroupCustomerSignature         string         `yaml:"DAT_GROUP_CUSTOMER_SIGNATURE"`
-	SearchServiceAPIURL               string         `yaml:"SEARCH_SERVICE_API_URL"`
+	SearchServiceAPIURL               url.URL        `yaml:"SEARCH_SERVICE_API_URL"`
 	SearchServiceAPIKey               string         `yaml:"SEARCH_SERVICE_API_KEY"`
 	SearchServiceIndexName            string         `yaml:"SEARCH_SERVICE_DEVICE_DEFINITION_INDEX"`
 }
