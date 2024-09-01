@@ -28,10 +28,10 @@ type vincarioAPIService struct {
 }
 
 func NewVincarioAPIService(settings *config.Settings, log *zerolog.Logger) VincarioAPIService {
-	if settings.VincarioAPIURL == "" || settings.VincarioAPISecret == "" {
+	if settings.VincarioAPISecret == "" {
 		panic("Vincario configuration not set")
 	}
-	hcwv, _ := shared.NewHTTPClientWrapper(settings.VincarioAPIURL, "", 10*time.Second, nil, false)
+	hcwv, _ := shared.NewHTTPClientWrapper(settings.VincarioAPIURL.String(), "", 10*time.Second, nil, false)
 
 	return &vincarioAPIService{
 		settings:      settings,

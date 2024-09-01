@@ -28,7 +28,7 @@ type typesenseAPIService struct {
 
 func NewTypesenseAPIService(settings *config.Settings, log *zerolog.Logger) TypesenseAPIService {
 	client := typesense.NewClient(
-		typesense.WithServer(settings.SearchServiceAPIURL),
+		typesense.WithServer(settings.SearchServiceAPIURL.String()),
 		typesense.WithAPIKey(settings.SearchServiceAPIKey),
 		typesense.WithConnectionTimeout(5*time.Second),
 		typesense.WithCircuitBreakerMaxRequests(50),

@@ -59,7 +59,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
+	contractAddress := e.settings.EthereumRegistryAddress
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
@@ -121,7 +121,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
-	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
+	contractAddress := e.settings.EthereumRegistryAddress
 	fromAddress := e.sender.Address()
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
@@ -220,7 +220,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		return nil, nil
 	}
 
-	contractAddress := common.HexToAddress(e.settings.EthereumRegistryAddress)
+	contractAddress := e.settings.EthereumRegistryAddress
 	fromAddress := e.sender.Address()
 
 	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)

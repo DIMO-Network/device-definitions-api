@@ -1,0 +1,247 @@
+[
+  {
+    "name": "Acura",
+    "logo": "acura-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Audi",
+    "logo": "audi-logo.png",
+    "appName": "Audi Connect",
+    "isPopular": false
+  },
+  {
+    "name": "BMW",
+    "logo": "bmw-logo.png",
+    "appName": "ConnectedDrive",
+    "isPopular": true
+  },
+  {
+    "name": "Buick",
+    "logo": "buick-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Cadillac",
+    "logo": "cadillac-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Chevrolet",
+    "logo": "chevrolet-logo.png",
+    "appName": "OnStar",
+    "isPopular": false
+  },
+  {
+    "name": "Chrysler",
+    "logo": "chrysler-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Citroen",
+    "logo": "citroen-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Cupra",
+    "logo": "cupra-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Dodge",
+    "logo": "dodge-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "DS",
+    "logo": "ds-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Ford",
+    "logo": "ford-logo.png",
+    "appName": "Ford Pass",
+    "isPopular": true,
+    "disabled": true
+  },
+  {
+    "name": "GMC",
+    "logo": "gmc-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Honda",
+    "logo": "honda-logo.png",
+    "appName": "",
+    "isPopular": false,
+    "disabled": true
+  },
+  {
+    "name": "Hyundai",
+    "logo": "hyundai-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Infiniti",
+    "logo": "infiniti-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Jaguar",
+    "logo": "jaguar-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Jeep",
+    "logo": "jeep-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Kia",
+    "logo": "kia-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Land Rover",
+    "logo": "land-rover-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Lexus",
+    "logo": "lexus-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Lincoln",
+    "logo": "lincoln-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Mazda",
+    "logo": "mazda-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Mercedes Benz",
+    "logo": "mercedes-benz-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Mini",
+    "logo": "mini-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Nissan",
+    "logo": "nissan-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Opel",
+    "logo": "opel-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Peugeot",
+    "logo": "peugot-logo.png",
+    "appName": "MyPeugeot",
+    "isPopular": false
+  },
+  {
+    "name": "RAM",
+    "logo": "ram-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Renault",
+    "logo": "renault-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Rivian",
+    "logo": "rivian-gold-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Skoda",
+    "logo": "skoda-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Subaru",
+    "logo": "subaru-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Tesla",
+    "logo": "tesla-logo.png",
+    "appName": "Tesla App",
+    "isPopular": true,
+    "sort": 0
+  },
+  {
+    "name": "Toyota",
+    "logo": "toyota-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Vauxhall",
+    "logo": "vauxhall-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Volkswagen",
+    "logo": "volkswagen-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Volvo",
+    "logo": "volvo-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
+    "name": "Dacia",
+    "logo": "dacia-logo.png",
+    "appName": "",
+    "isPopular": false,
+    "disabled": true
+  },
+  {
+    "name": "Porsche",
+    "logo": "porsche-logo.png",
+    "appName": "",
+    "isPopular": false,
+    "disabled": true
+  }
+]

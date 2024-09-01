@@ -3,6 +3,7 @@ package gateways
 import (
 	_ "embed" // import the embed package
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -18,8 +19,9 @@ var testVincarioVINResp []byte
 func Test_vincarioAPIService_DecodeVIN(t *testing.T) {
 	const testVIN = "WAUZZZ4M0KD018683"
 	const baseURL = "http://local"
+	u, _ := url.Parse(baseURL)
 
-	vincarioSvc := NewVincarioAPIService(&config.Settings{VincarioAPIKey: "xxx", VincarioAPISecret: "XXX", VincarioAPIURL: baseURL}, dbtest.Logger())
+	vincarioSvc := NewVincarioAPIService(&config.Settings{VincarioAPIKey: "xxx", VincarioAPISecret: "XXX", VincarioAPIURL: *u}, dbtest.Logger())
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -53,8 +55,9 @@ func Test_vincarioAPIService_DecodeVIN(t *testing.T) {
 func Test_vincarioAPIService_DecodeVIN_MissingProperties(t *testing.T) {
 	const testVIN = "WAUZZZ4M0KD018683"
 	const baseURL = "http://local"
+	u, _ := url.Parse(baseURL)
 
-	vincarioSvc := NewVincarioAPIService(&config.Settings{VincarioAPIKey: "xxx", VincarioAPISecret: "XXX", VincarioAPIURL: baseURL}, dbtest.Logger())
+	vincarioSvc := NewVincarioAPIService(&config.Settings{VincarioAPIKey: "xxx", VincarioAPISecret: "XXX", VincarioAPIURL: *u}, dbtest.Logger())
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 

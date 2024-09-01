@@ -79,7 +79,7 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 		Timeout: timeout,
 	}
 
-	req, err := http.NewRequest("POST", ai.Settings.DatGroupURL, bytes.NewBuffer([]byte(soapReqWParams)))
+	req, err := http.NewRequest("POST", ai.Settings.DatGroupURL.String(), bytes.NewBuffer([]byte(soapReqWParams)))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create request")
 	}
