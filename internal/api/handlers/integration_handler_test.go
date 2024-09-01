@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetSmartcarManufacturers(t *testing.T) {

@@ -43,7 +43,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	pdb.WaitForDB(p.logger)
 
 	client := typesense.NewClient(
-		typesense.WithServer(p.settings.SearchServiceAPIURL),
+		typesense.WithServer(p.settings.SearchServiceAPIURL.String()),
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
 	collectionName := p.settings.SearchServiceIndexName
