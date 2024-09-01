@@ -91,15 +91,16 @@ func GetSmartcarManufacturers() fiber.Handler {
 	const explorer = "https://explorer.dimo.zone/images/oem-logos/"
 
 	return func(c *fiber.Ctx) error {
-		var jsonContent map[string]interface{}
+		var jsonContent []map[string]interface{}
 		if err := json.Unmarshal(smartcarOems, &jsonContent); err != nil {
 			// If there's an error parsing the JSON, return a 400 status
 			return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Invalid JSON format: %v", err))
 		}
-
-		// Prepend the url path that has the logos
-		if logo, ok := jsonContent["logo"].(string); ok {
-			jsonContent["logo"] = explorer + logo
+		// Prepend the url path to each "logo" field in the array
+		for _, item := range jsonContent {
+			if logo, ok := item["logo"].(string); ok {
+				item["logo"] = explorer + logo
+			}
 		}
 
 		return c.JSON(jsonContent)
