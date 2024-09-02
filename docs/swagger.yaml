@@ -232,13 +232,26 @@ definitions:
           $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionItem'
         type: array
       facets:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet'
-        type: array
+        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet'
       pagination:
         $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination'
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet:
+    properties:
+      makes:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem'
+        type: array
+      models:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem'
+        type: array
+      years:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem'
+        type: array
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem:
     properties:
       count:
         type: integer
@@ -257,6 +270,7 @@ definitions:
       make:
         type: string
       model:
+        description: ManufacturerTokenID int    `json:"manufacturerTokenId"` // todo
         type: string
       name:
         type: string
@@ -652,6 +666,20 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets integration by id.
+      tags:
+      - device-definitions
+  /manufacturers/integrations/smartcar:
+    get:
+      description: gets manufacturers supported by smartcar
+      operationId: GetSmartcarManufacturers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: gets all supported manufacturers for the smartcar external integration
       tags:
       - device-definitions
   /v2/device-definitions/{make}/{id}:

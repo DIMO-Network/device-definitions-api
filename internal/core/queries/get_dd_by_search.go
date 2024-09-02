@@ -24,14 +24,14 @@ type GetAllDeviceDefinitionBySearchQueryResult struct {
 }
 
 type GetAllDeviceDefinitionItem struct {
-	ID                  string `json:"id"`
-	DeviceDefinitionID  string `json:"legacy_ksuid"` //nolint
-	Name                string `json:"name"`
-	Make                string `json:"make"`
-	ManufacturerTokenID int    `json:"manufacturerTokenId"`
-	Model               string `json:"model"`
-	Year                int    `json:"year"`
-	ImageURL            string `json:"imageUrl"`
+	ID                 string `json:"id"`
+	DeviceDefinitionID string `json:"legacy_ksuid"` //nolint
+	Name               string `json:"name"`
+	Make               string `json:"make"`
+	// ManufacturerTokenID int    `json:"manufacturerTokenId"` // todo
+	Model    string `json:"model"`
+	Year     int    `json:"year"`
+	ImageURL string `json:"imageUrl"`
 }
 
 type GetAllDeviceDefinitionFacet struct {
@@ -81,14 +81,14 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 			continue
 		}
 		item := GetAllDeviceDefinitionItem{
-			ID:                  doc["id"].(string),
-			DeviceDefinitionID:  doc["device_definition_id"].(string),
-			Name:                doc["name"].(string),
-			Make:                doc["make"].(string),
-			ManufacturerTokenID: int(doc["manufacturer_token_id"].(float64)),
-			Model:               doc["model"].(string),
-			Year:                int(doc["year"].(float64)),
-			ImageURL:            doc["image_url"].(string),
+			ID:                 doc["id"].(string),
+			DeviceDefinitionID: doc["device_definition_id"].(string),
+			Name:               doc["name"].(string),
+			Make:               doc["make"].(string),
+			//ManufacturerTokenID: int(doc["manufacturer_token_id"].(float64)),
+			Model:    doc["model"].(string),
+			Year:     int(doc["year"].(float64)),
+			ImageURL: doc["image_url"].(string),
 		}
 		deviceDefinitions = append(deviceDefinitions, item)
 	}

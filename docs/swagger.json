@@ -460,6 +460,27 @@
                 }
             }
         },
+        "/manufacturers/integrations/smartcar": {
+            "get": {
+                "description": "gets manufacturers supported by smartcar",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets all supported manufacturers for the smartcar external integration",
+                "operationId": "GetSmartcarManufacturers",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/v2/device-definitions/{make}/all": {
             "get": {
                 "description": "gets a device definition",
@@ -890,10 +911,7 @@
                     }
                 },
                 "facets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet"
-                    }
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet"
                 },
                 "pagination": {
                     "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination"
@@ -901,6 +919,29 @@
             }
         },
         "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacet": {
+            "type": "object",
+            "properties": {
+                "makes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem"
+                    }
+                },
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem"
+                    }
+                },
+                "years": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem"
+                    }
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionFacetItem": {
             "type": "object",
             "properties": {
                 "count": {
@@ -928,6 +969,7 @@
                     "type": "string"
                 },
                 "model": {
+                    "description": "ManufacturerTokenID int    `json:\"manufacturerTokenId\"` // todo",
                     "type": "string"
                 },
                 "name": {
