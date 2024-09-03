@@ -69,7 +69,7 @@
     "name": "Ford",
     "logo": "ford-logo.png",
     "appName": "Ford Pass",
-    "isPopular": true,
+    "isPopular": false,
     "disabled": true
   },
   {
