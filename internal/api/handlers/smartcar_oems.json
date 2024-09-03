@@ -66,13 +66,6 @@
     "isPopular": false
   },
   {
-    "name": "Ford",
-    "logo": "ford-logo.png",
-    "appName": "Ford Pass",
-    "isPopular": true,
-    "disabled": true
-  },
-  {
     "name": "GMC",
     "logo": "gmc-logo.png",
     "appName": "",
@@ -237,13 +230,13 @@
     "logo": "dacia-logo.png",
     "appName": "",
     "isPopular": false,
-    "disabled": true
+    "disabled": false
   },
   {
     "name": "Porsche",
     "logo": "porsche-logo.png",
     "appName": "",
     "isPopular": false,
-    "disabled": true
+    "disabled": false
   }
 ]
