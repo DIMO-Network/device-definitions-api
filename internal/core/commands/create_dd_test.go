@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+
 	"go.uber.org/mock/gomock"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -13,7 +15,6 @@ import (
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/segmentio/ksuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -37,7 +38,7 @@ type CreateDeviceDefinitionCommandHandlerSuite struct {
 	ctrl                      *gomock.Controller
 	pdb                       db.Store
 	container                 testcontainers.Container
-	mockRepository            *repositoryMock.MockDeviceDefinitionRepository
+	mockDeviceDefRepo         *repositoryMock.MockDeviceDefinitionRepository
 	mockPowerTrainTypeService *mock_services.MockPowerTrainTypeService
 	ctx                       context.Context
 
@@ -55,9 +56,9 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) SetupTest() {
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.mockRepository = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
+	s.mockDeviceDefRepo = repositoryMock.NewMockDeviceDefinitionRepository(s.ctrl)
 	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
-	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockRepository, s.pdb.DBS, s.mockPowerTrainTypeService)
+	s.queryHandler = NewCreateDeviceDefinitionCommandHandler(s.mockDeviceDefRepo, s.pdb.DBS, s.mockPowerTrainTypeService)
 }
 
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownTest() {
@@ -75,7 +76,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TearDownSuite() {
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCommand_Success() {
 	ctx := context.Background()
 
-	deviceType := setupCreateDeviceType(s.T(), s.pdb)
+	deviceType := setupCreateDeviceType(s.T(), s.pdb, common.DefaultDeviceType, "Vehicle Information", "vehicle_info")
 
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	deviceMakeID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
@@ -95,7 +96,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 
 	iceValue := "ICE"
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), nil, null.JSON{}, null.JSON{}).Return(iceValue, nil)
-	s.mockRepository.EXPECT().GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
+	s.mockDeviceDefRepo.EXPECT().GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(dd, nil).Times(1)
 
 	var deviceAttributes []*coremodels.UpdateDeviceTypeAttribute
 
@@ -106,7 +107,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 		Year:         year,
 		DeviceTypeID: deviceType.ID,
 		DeviceAttributes: append(deviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-			Name:  "MPG",
+			Name:  "mpg",
 			Value: "12",
 		}),
 	})
@@ -119,7 +120,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCommand_Exception() {
 	ctx := context.Background()
 
-	deviceType := setupCreateDeviceType(s.T(), s.pdb)
+	deviceType := setupCreateDeviceType(s.T(), s.pdb, common.DefaultDeviceType, "Vehicle Information", "vehicle_info")
 
 	model := "Hummer"
 	mk := "Toyota"
@@ -128,7 +129,7 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 
 	iceValue := "ICE"
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), nil, null.JSON{}, null.JSON{}).Return(iceValue, nil)
-	s.mockRepository.EXPECT().
+	s.mockDeviceDefRepo.EXPECT().
 		GetOrCreate(gomock.Any(), nil, source, "", mk, model, year, gomock.Any(), gomock.Any(), false, gomock.Any()).Return(nil, errors.New("Error")).Times(1)
 
 	commandResult, err := s.queryHandler.Handle(ctx, &CreateDeviceDefinitionCommand{
@@ -143,11 +144,17 @@ func (s *CreateDeviceDefinitionCommandHandlerSuite) TestCreateDeviceDefinitionCo
 	s.Error(err)
 }
 
-func setupCreateDeviceType(t *testing.T, pdb db.Store) models.DeviceType {
+func setupCreateDeviceType(t *testing.T, pdb db.Store, id, name, mdKey string) models.DeviceType {
+	// Upsert won't update the properties field, delete and re-create, start clean
+	dt, _ := models.FindDeviceType(context.Background(), pdb.DBS().Writer, id)
+	if dt != nil {
+		_, _ = dt.Delete(context.Background(), pdb.DBS().Writer)
+	}
+	// create dt with properties from a file
 	deviceType := models.DeviceType{
-		ID:          ksuid.New().String(),
-		Name:        "vehicle",
-		Metadatakey: "vehicle_info",
+		ID:          id,
+		Name:        name,
+		Metadatakey: mdKey,
 		Properties:  null.JSONFrom(deviceTypeVehiclePropertyDataSample),
 	}
 	err := deviceType.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())

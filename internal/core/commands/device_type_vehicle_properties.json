@@ -55,7 +55,7 @@
       "options": []
     },
     {
-      "name": "MPG_highway",
+      "name": "mpg_highway",
       "label": "MPG Highway",
       "description": "",
       "type": "number",
@@ -64,7 +64,7 @@
       "options": []
     },
     {
-      "name": "MPG_city",
+      "name": "mpg_city",
       "label": "MPG City",
       "description": "",
       "type": "number",
@@ -82,7 +82,7 @@
       "options": []
     },
     {
-      "name": "MPG",
+      "name": "mpg",
       "label": "MPG",
       "description": "",
       "type": "number",
