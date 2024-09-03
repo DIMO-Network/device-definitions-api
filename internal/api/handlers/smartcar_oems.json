@@ -66,13 +66,6 @@
     "isPopular": false
   },
   {
-    "name": "Ford",
-    "logo": "ford-logo.png",
-    "appName": "Ford Pass",
-    "isPopular": false,
-    "disabled": true
-  },
-  {
     "name": "GMC",
     "logo": "gmc-logo.png",
     "appName": "",
