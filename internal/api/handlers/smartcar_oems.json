@@ -113,7 +113,8 @@
     "name": "Kia",
     "logo": "kia-logo.png",
     "appName": "",
-    "isPopular": false
+    "isPopular": false,
+    "disabled": true
   },
   {
     "name": "Land Rover",
@@ -131,7 +132,8 @@
     "name": "Lincoln",
     "logo": "lincoln-logo.png",
     "appName": "",
-    "isPopular": false
+    "isPopular": false,
+    "disabled": true
   },
   {
     "name": "Mazda",
