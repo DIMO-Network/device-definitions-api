@@ -112,7 +112,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, command.Verified, &command.HardwareTemplateID)
 	if err != nil {
 		return nil, err
-	}
+	} // todo does mediator eat this error?
 
 	return CreateDeviceDefinitionCommandResult{ID: dd.ID, NameSlug: dd.NameSlug}, nil
 }

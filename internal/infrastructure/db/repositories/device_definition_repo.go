@@ -397,8 +397,11 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 
 		// Create DD onchain
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
+		if err != nil {
+			return nil, &exceptions.InternalError{Err: err}
+		}
 
-		if err == nil && trx != nil {
+		if trx != nil {
 			trxArray := strings.Split(*trx, ",")
 			if dd.TRXHashHex != nil {
 				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
