@@ -237,13 +237,13 @@
     "logo": "dacia-logo.png",
     "appName": "",
     "isPopular": false,
-    "disabled": true
+    "disabled": false
   },
   {
     "name": "Porsche",
     "logo": "porsche-logo.png",
     "appName": "",
     "isPopular": false,
-    "disabled": true
+    "disabled": false
   }
 ]
