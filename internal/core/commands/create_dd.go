@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/shared"
-
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -55,9 +54,9 @@ func NewCreateDeviceDefinitionCommandHandler(repository repositories.DeviceDefin
 
 func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	command := query.(*CreateDeviceDefinitionCommand)
-
+	// DeviceTypeID is either vehicle or aftermarket_device, or as read from device_types db.
 	if len(command.DeviceTypeID) == 0 {
-		command.DeviceTypeID = common.DefaultDeviceType
+		command.DeviceTypeID = common.DefaultDeviceType // the default is the "vehicle" name not the KSUID
 	}
 
 	// Resolve attributes by device types
@@ -73,30 +72,33 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	// Validate if powertraintype exists
-	powerTrainExists := false
-	if len(command.DeviceAttributes) > 0 {
-		for _, item := range command.DeviceAttributes {
-			if item.Name == common.PowerTrainType && len(item.Value) > 0 {
-				powerTrainExists = true
-				break
+	// Validate if powertraintype exists, but only if vehicle device type
+	if command.DeviceTypeID == common.DefaultDeviceType {
+		powerTrainExists := false
+		if len(command.DeviceAttributes) > 0 {
+			for _, item := range command.DeviceAttributes {
+				if item.Name == common.PowerTrainType && len(item.Value) > 0 {
+					powerTrainExists = true
+					break
+				}
+			}
+		}
+		if !powerTrainExists {
+			powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, shared.SlugString(command.Make), shared.SlugString(command.Model), nil, null.JSON{}, null.JSON{})
+			if err != nil {
+				return nil, &exceptions.InternalError{
+					Err: fmt.Errorf("failed to get powertraintype"),
+				}
+			}
+			if powerTrainTypeValue != "" {
+				command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
+					Name:  common.PowerTrainType,
+					Value: powerTrainTypeValue,
+				})
 			}
 		}
 	}
-	if !powerTrainExists {
-		powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, shared.SlugString(command.Make), shared.SlugString(command.Model), nil, null.JSON{}, null.JSON{})
-		if err != nil {
-			return nil, &exceptions.InternalError{
-				Err: fmt.Errorf("failed to get powertraintype"),
-			}
-		}
-		if powerTrainTypeValue != "" {
-			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-				Name:  common.PowerTrainType,
-				Value: powerTrainTypeValue,
-			})
-		}
-	}
+
 	// attribute info
 	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
 	if err != nil {
