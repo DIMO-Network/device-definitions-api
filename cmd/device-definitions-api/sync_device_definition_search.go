@@ -151,7 +151,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	}
 
 	var documents []interface{}
-
+	// todo this should come from tableland - problem is the images.
 	if deviceDefinitions, ok := result["device_definitions"].([]interface{}); ok {
 		for _, dd := range deviceDefinitions {
 			if deviceMap, ok := dd.(map[string]interface{}); ok {
@@ -172,6 +172,9 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					year = int(yearFloat)
 				} else {
 					continue
+				}
+				if year < 2005 {
+					continue // do not sync old cars into search
 				}
 
 				makeMap := deviceMap["make"].(map[string]interface{})
