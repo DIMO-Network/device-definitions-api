@@ -390,17 +390,12 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 	}
 
 	if commitTx {
-		err = tx.Commit()
-		if err != nil {
-			return nil, &exceptions.InternalError{Err: err}
-		}
-
 		// Create DD onchain
 		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
 		if err != nil {
 			return nil, &exceptions.InternalError{Err: err}
 		}
-
+		// add transaction info to db
 		if trx != nil {
 			trxArray := strings.Split(*trx, ",")
 			if dd.TRXHashHex != nil {
@@ -408,12 +403,11 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 			} else {
 				dd.TRXHashHex = trxArray
 			}
+		}
 
-			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
-				return nil, &exceptions.InternalError{
-					Err: err,
-				}
-			}
+		err = tx.Commit()
+		if err != nil {
+			return nil, &exceptions.InternalError{Err: err}
 		}
 	}
 
