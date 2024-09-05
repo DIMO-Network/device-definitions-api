@@ -91,22 +91,28 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	return nil, nil
 }
 
-func transformToDefinition(item DeviceDefinitionTablelandModel) *models.DeviceDefinition {
+func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceDefinition {
 	data := &models.DeviceDefinition{
-		ID:    item.ID,
-		Year:  item.Year,
-		Model: item.Model,
+		ID:           tblDD.ID,
+		Year:         tblDD.Year,
+		Model:        tblDD.Model,
+		DeviceTypeID: null.StringFrom(tblDD.DeviceType),
 	}
 
-	if len(item.Metadata.DeviceAttributes) > 0 {
+	if len(tblDD.Metadata.DeviceAttributes) > 0 {
 		deviceTypeInfo := make(map[string]interface{})
 		metaData := make(map[string]interface{})
 
-		for _, attr := range item.Metadata.DeviceAttributes {
+		for _, attr := range tblDD.Metadata.DeviceAttributes {
 			metaData[attr.Name] = attr.Value
 		}
 
-		deviceTypeInfo["vehicle_info"] = metaData
+		jsonKey := common2.VehicleMetadataKey
+		if tblDD.DeviceType == "aftermarket_device" {
+			jsonKey = common2.AftermarketMetadataKey
+		}
+
+		deviceTypeInfo[jsonKey] = metaData
 		j, err := json.Marshal(deviceTypeInfo)
 		if err == nil {
 			data.Metadata = null.JSONFrom(j)
@@ -275,18 +281,26 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
 	}
 
+	if dd.DeviceTypeID.String == "" {
+		return nil, fmt.Errorf("dd DeviceTypeId is required")
+	}
+
 	deviceInputs := contracts.DeviceDefinitionInput{
 		Id:         dd.NameSlug,
 		Model:      dd.Model,
 		Year:       big.NewInt(int64(dd.Year)),
 		Ksuid:      dd.ID,
-		DeviceType: "vehicle",
+		DeviceType: dd.DeviceTypeID.String,
+		ImageURI:   GetDefaultImageURL(dd),
 	}
 
-	deviceInputs.ImageURI = GetDefaultImageURL(dd)
+	mdKey := common2.VehicleMetadataKey
+	if dd.DeviceTypeID.String == "aftermarket_device" {
+		mdKey = common2.AftermarketMetadataKey
+	}
 
 	if dd.Metadata.Valid {
-		attributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
+		attributes := GetDeviceAttributesTyped(dd.Metadata, mdKey)
 		type deviceAttributes struct {
 			DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
 		}
@@ -314,8 +328,8 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	if currentDeviceDefinition != nil {
 		metrics.Success.With(prometheus.Labels{"method": TablelandExists}).Inc()
 		// validate if attributes was changed
-		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, common2.VehicleMetadataKey)
-		newAttributes := GetDeviceAttributesTyped(dd.Metadata, common2.VehicleMetadataKey)
+		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, mdKey)
+		newAttributes := GetDeviceAttributesTyped(dd.Metadata, mdKey)
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
 
 		requiereUpdate := false
@@ -482,11 +496,12 @@ type DeviceTypeAttribute struct {
 }
 
 type DeviceDefinitionTablelandModel struct {
-	ID       string `json:"id"`
-	KSUID    string `json:"ksuid"`
-	Model    string `json:"model"`
-	Year     int16  `json:"year"`
-	Metadata struct {
+	ID         string `json:"id"`
+	KSUID      string `json:"ksuid"`
+	Model      string `json:"model"`
+	Year       int16  `json:"year"`
+	DeviceType string `yaml:"deviceType"`
+	Metadata   struct {
 		DeviceAttributes []struct {
 			Name  string `json:"name"`
 			Value string `json:"value,omitempty"`
