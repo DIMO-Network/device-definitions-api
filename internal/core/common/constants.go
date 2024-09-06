@@ -24,7 +24,8 @@ const (
 )
 
 const (
-	DefaultDeviceType = "vehicle"
+	DefaultDeviceType     = "vehicle"
+	DefautlAutoPiTemplate = "130"
 )
 
 func (r RegionEnum) String() string {

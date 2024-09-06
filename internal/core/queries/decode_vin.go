@@ -458,6 +458,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, err
 		}
 
+		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
+
 		// Create DD onchain
 		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
