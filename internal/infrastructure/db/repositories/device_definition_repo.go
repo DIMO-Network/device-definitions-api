@@ -293,9 +293,13 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 			return nil, &exceptions.InternalError{Err: err}
 		}
 	}
-
 	if dd != nil {
 		return dd, nil
+	}
+
+	if hardwareTemplateID == nil {
+		h := common.DefautlAutoPiTemplate
+		hardwareTemplateID = &h
 	}
 
 	// Create device Make
@@ -419,6 +423,10 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error) {
 	tx, _ := r.DBS().Writer.BeginTx(ctx, nil)
 	defer tx.Rollback() //nolint
+
+	if dd.HardwareTemplateID.String == "" {
+		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
+	}
 
 	if err := dd.Upsert(ctx, tx, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
