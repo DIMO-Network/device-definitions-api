@@ -332,18 +332,22 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		newAttributes := GetDeviceAttributesTyped(dd.Metadata, mdKey)
 		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
 
-		requiereUpdate := false
+		// did any attrs change?
+		requierUpdate := false
 		if len(newOrModified) > 0 {
-			requiereUpdate = true
+			requierUpdate = true
 		}
-
 		if len(removed) > 0 {
-			requiereUpdate = true
+			requierUpdate = true
+		}
+		// is image set?
+		if deviceInputs.ImageURI != "" {
+			requierUpdate = true
 		}
 
-		e.logger.Info().Msgf("newOrModified => %d and removed %d. Update %t", len(newOrModified), len(removed), requiereUpdate)
+		e.logger.Info().Msgf("newOrModified => %d and removed %d. Update %t", len(newOrModified), len(removed), requierUpdate)
 
-		if !requiereUpdate {
+		if !requierUpdate {
 			metrics.Success.With(prometheus.Labels{"method": TablelandNoUpdated}).Inc()
 			return nil, nil
 		}
