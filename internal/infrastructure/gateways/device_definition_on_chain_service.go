@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"math/big"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -101,7 +102,7 @@ func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceD
 		DeviceTypeID: null.StringFrom(tblDD.DeviceType),
 	}
 
-	if len(tblDD.Metadata.DeviceAttributes) > 0 {
+	if tblDD.Metadata != nil && len(tblDD.Metadata.DeviceAttributes) > 0 {
 		deviceTypeInfo := make(map[string]interface{})
 		metaData := make(map[string]interface{})
 
