@@ -225,7 +225,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
-	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t", dd.ID, e.settings.EthereumSendTransaction)
+	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
 
 	if !e.settings.EthereumSendTransaction {
 		return nil, nil

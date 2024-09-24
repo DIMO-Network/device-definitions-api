@@ -25,6 +25,8 @@ func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.D
 	return &GrpcDefinitionsService{Mediator: mediator, logger: logger}
 }
 
+//** Device Definitions
+
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDsQuery{
@@ -134,100 +136,6 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionWithoutImages(ctx context.Co
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
-
-	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
-	result := &p_grpc.GetIntegrationResponse{}
-
-	for _, item := range integrations {
-		intg := &p_grpc.Integration{
-			Id:                      item.ID,
-			Type:                    item.Type,
-			Style:                   item.Style,
-			Vendor:                  item.Vendor,
-			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
-			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
-			TokenId:                 uint64(item.TokenID),
-			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
-				BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
-				HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
-				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
-				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
-			},
-			Points:              int64(item.Points),
-			ManufacturerTokenId: uint64(item.ManufacturerTokenID),
-		}
-
-		result.Integrations = append(result.Integrations, intg)
-	}
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
-	return &p_grpc.Integration{
-		Id:                      integration.ID,
-		Type:                    integration.Type,
-		Style:                   integration.Style,
-		Vendor:                  integration.Vendor,
-		AutoPiDefaultTemplateId: int32(integration.AutoPiDefaultTemplateID),
-		RefreshLimitSecs:        int32(integration.RefreshLimitSecs),
-		TokenId:                 uint64(integration.TokenID),
-		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
-			BEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.BEV]),
-			HEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.HEV]),
-			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
-			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
-		},
-		Points:              int64(integration.Points),
-		ManufacturerTokenId: uint64(integration.ManufacturerTokenID),
-	}, nil
-}
-
-func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByIDQuery{IntegrationID: in.Id})
-
-	item := qryResult.(coremodels.GetIntegrationQueryResult)
-	return s.prepareIntegrationResponse(item)
-}
-
-func (s *GrpcDefinitionsService) GetIntegrationByTokenID(ctx context.Context, in *p_grpc.GetIntegrationByTokenIDRequest) (*p_grpc.Integration, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByTokenIDQuery{
-		TokenID: int(in.TokenId),
-	})
-
-	item := qryResult.(coremodels.GetIntegrationQueryResult)
-	return s.prepareIntegrationResponse(item)
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_grpc.GetDeviceDefinitionIntegrationRequest) (*p_grpc.GetDeviceDefinitionIntegrationResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithRelsQuery{
-		DeviceDefinitionID: in.Id,
-	})
-
-	queryResult := qryResult.([]queries.GetDeviceDefinitionWithRelsQueryResult)
-
-	result := &p_grpc.GetDeviceDefinitionIntegrationResponse{}
-
-	for _, queryResult := range queryResult {
-		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
-			Integration: &p_grpc.Integration{
-				Id:     queryResult.ID,
-				Type:   queryResult.Type,
-				Style:  queryResult.Style,
-				Vendor: queryResult.Vendor,
-			},
-			Region: queryResult.Region,
-		})
-	}
-
-	return result, nil
-}
-
 func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
 	// todo we could call the command directly, but maintain testability, what about the update, could it share logic
 	command := &commands.CreateDeviceDefinitionCommand{
@@ -255,146 +163,51 @@ func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in 
 	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID, NameSlug: result.NameSlug}, nil
 }
 
-func (s *GrpcDefinitionsService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
+func (s *GrpcDefinitionsService) GetDeviceDefinitionAll(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
 
-	command := &commands.CreateDeviceIntegrationCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		IntegrationID:      in.IntegrationId,
-		Region:             in.Region,
-	}
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionGroupQuery{})
 
-	if len(in.Features) > 0 {
-		for _, feature := range in.Features {
-			command.Features = append(command.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
-				FeatureKey:   feature.FeatureKey,
-				SupportLevel: int16(feature.SupportLevel),
-			})
+	result := &p_grpc.GetDeviceDefinitionAllResponse{}
+
+	allDevices := qryResult.([]queries.GetAllDeviceDefinitionGroupQueryResult)
+
+	for _, device := range allDevices {
+		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
+
+		for _, model := range device.Models {
+			itemModel := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModels{
+				Model: model.Model,
+			}
+
+			for _, modelYear := range model.Years {
+				itemYear := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModelYears{
+					Year:               int32(modelYear.Year),
+					DeviceDefinitionID: modelYear.DeviceDefinitionID,
+				}
+				itemModel.Years = append(itemModel.Years, itemYear)
+			}
+
+			item.Models = append(item.Models, itemModel)
 		}
-	}
 
-	commandResult, _ := s.Mediator.Send(ctx, command)
-
-	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
-func (s *GrpcDefinitionsService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Name:               in.Name,
-		ExternalStyleID:    in.ExternalStyleId,
-		Source:             in.Source,
-		SubModel:           in.SubModel,
-		HardwareTemplateID: in.HardwareTemplateId,
-	})
-
-	result := commandResult.(commands.CreateDeviceStyleCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{
-		Name: in.Name,
-	})
-
-	deviceMake := qryResult.(coremodels.DeviceMake)
-
-	result := &p_grpc.DeviceMake{
-		Id:               deviceMake.ID,
-		Name:             deviceMake.Name,
-		NameSlug:         deviceMake.NameSlug,
-		LogoUrl:          deviceMake.LogoURL.String,
-		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIDs),
-		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
-	}
-
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	if deviceMake.HardwareTemplateID.Valid {
-		result.HardwareTemplateId = deviceMake.HardwareTemplateID.String
+		result.Items = append(result.Items, item)
 	}
 
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDeviceMakeBySlugRequest) (*p_grpc.DeviceMake, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeBySlugQuery{
-		Slug: in.Slug,
-	})
+func (s *GrpcDefinitionsService) GetDeviceDefinitions(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
 
-	deviceMake := qryResult.(coremodels.DeviceMake)
-
-	result := &p_grpc.DeviceMake{
-		Id:               deviceMake.ID,
-		Name:             deviceMake.Name,
-		NameSlug:         deviceMake.NameSlug,
-		LogoUrl:          deviceMake.LogoURL.String,
-		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIDs),
-		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
-	}
-
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
-	}
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceMakeByTokenID(ctx context.Context, in *p_grpc.GetDeviceMakeByTokenIdRequest) (*p_grpc.DeviceMake, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByTokenIDQuery{
-		TokenID: in.TokenId,
-	})
-
-	deviceMakes := qryResult.(*p_grpc.DeviceMake)
-
-	return deviceMakes, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceMakes(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceMakeQuery{})
-
-	deviceMakes := qryResult.(*p_grpc.GetDeviceMakeResponse)
-
-	return deviceMakes, nil
-}
-
-func (s *GrpcDefinitionsService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
-		Name:               in.Name,
-		HardwareTemplateID: in.HardwareTemplateId,
-		ExternalIDs:        "{}",
-		Metadata:           "{}",
-	})
-
-	result := commandResult.(commands.CreateDeviceMakeCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
-func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
-		Vendor:  in.Vendor,
-		Style:   in.Style,
-		Type:    in.Type,
-		TokenID: int(in.TokenId),
-	})
-
-	result := commandResult.(commands.CreateIntegrationCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDevicesMMYQuery{})
+	result := qryResult.(*p_grpc.GetDevicesMMYResponse)
+	return result, nil
 }
 
 func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
@@ -473,51 +286,211 @@ func (s *GrpcDefinitionsService) SetDeviceDefinitionImage(ctx context.Context, i
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitionAll(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
+func (s *GrpcDefinitionsService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionHardwareTemplateByIDRequest) (*p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionHardwareTemplateByIDQuery{
+		DeviceDefinitionID: in.Id,
+		IntegrationID:      in.IntegrationId,
+	})
 
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionGroupQuery{})
+	result := qryResult.(coremodels.GetDeviceDefinitionHardwareTemplateQueryResult)
 
-	result := &p_grpc.GetDeviceDefinitionAllResponse{}
+	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{HardwareTemplateId: result.TemplateID}, nil
+}
 
-	allDevices := qryResult.([]queries.GetAllDeviceDefinitionGroupQueryResult)
+func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIDsQuery{
+		DeviceDefinitionID: in.Ids,
+	})
 
-	for _, device := range allDevices {
-		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
+	return qryResult.(*p_grpc.GetDeviceImagesResponse), nil
+}
 
-		for _, model := range device.Models {
-			itemModel := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModels{
-				Model: model.Model,
-			}
+func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDefinitionsWithHWTemplateQuery{})
 
-			for _, modelYear := range model.Years {
-				itemYear := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModelYears{
-					Year:               int32(modelYear.Year),
-					DeviceDefinitionID: modelYear.DeviceDefinitionID,
-				}
-				itemModel.Years = append(itemModel.Years, itemYear)
-			}
+	return qryResult.(*p_grpc.GetDevicesMMYResponse), nil
+}
 
-			item.Models = append(item.Models, itemModel)
+//** Integrations
+
+func (s *GrpcDefinitionsService) GetIntegrations(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetIntegrationResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllIntegrationQuery{})
+
+	integrations := qryResult.([]coremodels.GetIntegrationQueryResult)
+	result := &p_grpc.GetIntegrationResponse{}
+
+	for _, item := range integrations {
+		intg := &p_grpc.Integration{
+			Id:                      item.ID,
+			Type:                    item.Type,
+			Style:                   item.Style,
+			Vendor:                  item.Vendor,
+			AutoPiDefaultTemplateId: int32(item.AutoPiDefaultTemplateID),
+			RefreshLimitSecs:        int32(item.RefreshLimitSecs),
+			TokenId:                 uint64(item.TokenID),
+			AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
+				BEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+				HEV:  int32(item.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+				ICE:  int32(item.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+				PHEV: int32(item.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
+			},
+			Points:              int64(item.Points),
+			ManufacturerTokenId: uint64(item.ManufacturerTokenID),
 		}
 
-		result.Items = append(result.Items, item)
+		result.Integrations = append(result.Integrations, intg)
 	}
 
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitions(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
+func (s *GrpcDefinitionsService) GetIntegrationByID(ctx context.Context, in *p_grpc.GetIntegrationRequest) (*p_grpc.Integration, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByIDQuery{IntegrationID: in.Id})
+
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	return s.prepareIntegrationResponse(item)
+}
+
+func (s *GrpcDefinitionsService) GetIntegrationByTokenID(ctx context.Context, in *p_grpc.GetIntegrationByTokenIDRequest) (*p_grpc.Integration, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetIntegrationByTokenIDQuery{
+		TokenID: int(in.TokenId),
+	})
+
+	item := qryResult.(coremodels.GetIntegrationQueryResult)
+	return s.prepareIntegrationResponse(item)
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_grpc.GetDeviceDefinitionIntegrationRequest) (*p_grpc.GetDeviceDefinitionIntegrationResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithRelsQuery{
+		DeviceDefinitionID: in.Id,
+	})
+
+	queryResult := qryResult.([]queries.GetDeviceDefinitionWithRelsQueryResult)
+
+	result := &p_grpc.GetDeviceDefinitionIntegrationResponse{}
+
+	for _, queryResult := range queryResult {
+		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
+			Integration: &p_grpc.Integration{
+				Id:     queryResult.ID,
+				Type:   queryResult.Type,
+				Style:  queryResult.Style,
+				Vendor: queryResult.Vendor,
+			},
+			Region: queryResult.Region,
+		})
+	}
+
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
+		Vendor:  in.Vendor,
+		Style:   in.Style,
+		Type:    in.Type,
+		TokenID: int(in.TokenId),
+	})
+
+	result := commandResult.(commands.CreateIntegrationCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcDefinitionsService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
+
+	command := &commands.CreateDeviceIntegrationCommand{
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		IntegrationID:      in.IntegrationId,
+		Region:             in.Region,
+	}
+
+	if len(in.Features) > 0 {
+		for _, feature := range in.Features {
+			command.Features = append(command.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
+				FeatureKey:   feature.FeatureKey,
+				SupportLevel: int16(feature.SupportLevel),
+			})
+		}
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
+		Make:      in.Make,
+		StartYear: in.StartYear,
+		EndYear:   in.EndYear,
+	})
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDevicesMMYQuery{})
-	result := qryResult.(*p_grpc.GetDevicesMMYResponse)
+func (s *GrpcDefinitionsService) GetDeviceDefinitionOnChainByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionOnChainByIDQuery{
+		DeviceDefinitionID: in.Ids[0],
+		MakeSlug:           in.MakeSlug,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
 	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionOnChainQuery{
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		Year:               int(in.Year),
+		Model:              in.Model,
+		MakeSlug:           in.MakeSlug,
+		PageSize:           in.PageSize,
+		PageIndex:          in.PageIndex,
+	})
+
+	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
+
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugNameRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
+
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugNameQuery{
+		Slug: in.Slug,
+	})
+
+	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
+	result := common.BuildFromQueryResultToGRPC(dd)
+	return result, nil
+}
+
+//** Device Styles / Trims
+
+func (s *GrpcDefinitionsService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		Name:               in.Name,
+		ExternalStyleID:    in.ExternalStyleId,
+		Source:             in.Source,
+		SubModel:           in.SubModel,
+		HardwareTemplateID: in.HardwareTemplateId,
+	})
+
+	result := commandResult.(commands.CreateDeviceStyleCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
 func (s *GrpcDefinitionsService) GetDeviceStyleByID(ctx context.Context, in *p_grpc.GetDeviceStyleByIDRequest) (*p_grpc.DeviceStyle, error) {
@@ -625,6 +598,115 @@ func (s *GrpcDefinitionsService) GetDeviceStyleByExternalID(ctx context.Context,
 	return result, nil
 }
 
+func (s *GrpcDefinitionsService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
+
+	command := &commands.UpdateDeviceStyleCommand{
+		ID:                 in.Id,
+		Name:               in.Name,
+		ExternalStyleID:    in.ExternalStyleId,
+		DeviceDefinitionID: in.DeviceDefinitionId,
+		Source:             in.Source,
+		SubModel:           in.SubModel,
+		HardwareTemplateID: in.HardwareTemplateId,
+	}
+
+	commandResult, _ := s.Mediator.Send(ctx, command)
+
+	result := commandResult.(commands.UpdateDeviceStyleCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
+//** Makes / Manufacturers
+
+func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{
+		Name: in.Name,
+	})
+
+	deviceMake := qryResult.(coremodels.DeviceMake)
+
+	result := &p_grpc.DeviceMake{
+		Id:               deviceMake.ID,
+		Name:             deviceMake.Name,
+		NameSlug:         deviceMake.NameSlug,
+		LogoUrl:          deviceMake.LogoURL.String,
+		OemPlatformName:  deviceMake.OemPlatformName.String,
+		ExternalIds:      string(deviceMake.ExternalIDs),
+		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
+	}
+
+	if deviceMake.HardwareTemplateID.Valid {
+		result.HardwareTemplateId = deviceMake.HardwareTemplateID.String
+	}
+
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDeviceMakeBySlugRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeBySlugQuery{
+		Slug: in.Slug,
+	})
+
+	deviceMake := qryResult.(coremodels.DeviceMake)
+
+	result := &p_grpc.DeviceMake{
+		Id:               deviceMake.ID,
+		Name:             deviceMake.Name,
+		NameSlug:         deviceMake.NameSlug,
+		LogoUrl:          deviceMake.LogoURL.String,
+		OemPlatformName:  deviceMake.OemPlatformName.String,
+		ExternalIds:      string(deviceMake.ExternalIDs),
+		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
+	}
+
+	if deviceMake.TokenID != nil {
+		result.TokenId = deviceMake.TokenID.Uint64()
+	}
+
+	return result, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceMakeByTokenID(ctx context.Context, in *p_grpc.GetDeviceMakeByTokenIdRequest) (*p_grpc.DeviceMake, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByTokenIDQuery{
+		TokenID: in.TokenId,
+	})
+
+	deviceMakes := qryResult.(*p_grpc.DeviceMake)
+
+	return deviceMakes, nil
+}
+
+func (s *GrpcDefinitionsService) GetDeviceMakes(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceMakeResponse, error) {
+	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceMakeQuery{})
+
+	deviceMakes := qryResult.(*p_grpc.GetDeviceMakeResponse)
+
+	return deviceMakes, nil
+}
+
+func (s *GrpcDefinitionsService) CreateDeviceMake(ctx context.Context, in *p_grpc.CreateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
+
+	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceMakeCommand{
+		Name:               in.Name,
+		HardwareTemplateID: in.HardwareTemplateId,
+		ExternalIDs:        "{}",
+		Metadata:           "{}",
+	})
+
+	result := commandResult.(commands.CreateDeviceMakeCommandResult)
+
+	return &p_grpc.BaseResponse{Id: result.ID}, nil
+}
+
 func (s *GrpcDefinitionsService) UpdateDeviceMake(ctx context.Context, in *p_grpc.UpdateDeviceMakeRequest) (*p_grpc.BaseResponse, error) {
 
 	command := &commands.UpdateDeviceMakeCommand{
@@ -644,24 +726,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceMake(ctx context.Context, in *p_grp
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcDefinitionsService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
-
-	command := &commands.UpdateDeviceStyleCommand{
-		ID:                 in.Id,
-		Name:               in.Name,
-		ExternalStyleID:    in.ExternalStyleId,
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Source:             in.Source,
-		SubModel:           in.SubModel,
-		HardwareTemplateID: in.HardwareTemplateId,
-	}
-
-	commandResult, _ := s.Mediator.Send(ctx, command)
-
-	result := commandResult.(commands.UpdateDeviceStyleCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
+//** Device Types / Attributes
 
 func (s *GrpcDefinitionsService) GetDeviceTypesByID(ctx context.Context, in *p_grpc.GetDeviceTypeByIDRequest) (*p_grpc.GetDeviceTypeResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceTypeByIDQuery{
@@ -771,87 +836,22 @@ func (s *GrpcDefinitionsService) DeleteDeviceType(ctx context.Context, in *p_grp
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionHardwareTemplateByIDRequest) (*p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionHardwareTemplateByIDQuery{
-		DeviceDefinitionID: in.Id,
-		IntegrationID:      in.IntegrationId,
-	})
-
-	result := qryResult.(coremodels.GetDeviceDefinitionHardwareTemplateQueryResult)
-
-	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{HardwareTemplateId: result.TemplateID}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIDsQuery{
-		DeviceDefinitionID: in.Ids,
-	})
-
-	return qryResult.(*p_grpc.GetDeviceImagesResponse), nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDefinitionsWithHWTemplateQuery{})
-
-	return qryResult.(*p_grpc.GetDevicesMMYResponse), nil
-}
-
-func (s *GrpcDefinitionsService) SyncDeviceDefinitionsWithElasticSearch(_ context.Context, _ *emptypb.Empty) (*p_grpc.SyncStatusResult, error) {
-	command := &commands.SyncSearchDataCommand{}
-
-	go func() {
-		_, _ = s.Mediator.Send(context.Background(), command)
-	}()
-
-	return &p_grpc.SyncStatusResult{Status: true}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
-		Make:      in.Make,
-		StartYear: in.StartYear,
-		EndYear:   in.EndYear,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionOnChainByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionOnChainByIDQuery{
-		DeviceDefinitionID: in.Ids[0],
-		MakeSlug:           in.MakeSlug,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionOnChainQuery{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Year:               int(in.Year),
-		Model:              in.Model,
-		MakeSlug:           in.MakeSlug,
-		PageSize:           in.PageSize,
-		PageIndex:          in.PageIndex,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugNameRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugNameQuery{
-		Slug: in.Slug,
-	})
-
-	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
-	result := common.BuildFromQueryResultToGRPC(dd)
-	return result, nil
+func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremodels.GetIntegrationQueryResult) (*p_grpc.Integration, error) {
+	return &p_grpc.Integration{
+		Id:                      integration.ID,
+		Type:                    integration.Type,
+		Style:                   integration.Style,
+		Vendor:                  integration.Vendor,
+		AutoPiDefaultTemplateId: int32(integration.AutoPiDefaultTemplateID),
+		RefreshLimitSecs:        int32(integration.RefreshLimitSecs),
+		TokenId:                 uint64(integration.TokenID),
+		AutoPiPowertrainTemplate: &p_grpc.Integration_AutoPiPowertrainTemplate{
+			BEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.BEV]),
+			HEV:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.HEV]),
+			ICE:  int32(integration.AutoPiPowertrainToTemplateID[coremodels.ICE]),
+			PHEV: int32(integration.AutoPiPowertrainToTemplateID[coremodels.PHEV]),
+		},
+		Points:              int64(integration.Points),
+		ManufacturerTokenId: uint64(integration.ManufacturerTokenID),
+	}, nil
 }
