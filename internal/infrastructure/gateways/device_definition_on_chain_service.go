@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"io"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -198,10 +200,14 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 	}
 	defer resp.Body.Close()
 
-	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return err
 	}
 
+	if err := json.Unmarshal(body, result); err != nil {
+		return errors.Wrapf(err, "resp body: %s", string(body))
+	}
 	return nil
 }
 
