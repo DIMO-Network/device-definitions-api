@@ -94,7 +94,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceDefinition {
 	data := &models.DeviceDefinition{
 		ID:           tblDD.ID,
-		Year:         tblDD.Year,
+		Year:         int16(tblDD.Year),
 		Model:        tblDD.Model,
 		DeviceTypeID: null.StringFrom(tblDD.DeviceType),
 	}
@@ -197,8 +197,6 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 		return err
 	}
 	defer resp.Body.Close()
-
-	fmt.Print(resp.Body)
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return err
@@ -494,21 +492,49 @@ func GetDefaultImageURL(dd models.DeviceDefinition) string {
 	return imgURI
 }
 
+// note: below code is duplicated in identity-api
+
 type DeviceTypeAttribute struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
 type DeviceDefinitionTablelandModel struct {
-	ID         string `json:"id"`
-	KSUID      string `json:"ksuid"`
-	Model      string `json:"model"`
-	Year       int16  `json:"year"`
-	DeviceType string `yaml:"deviceType"`
-	Metadata   struct {
-		DeviceAttributes []struct {
-			Name  string `json:"name"`
-			Value string `json:"value,omitempty"`
-		} `json:"device_attributes"`
-	} `json:"metadata"`
+	ID         string                    `json:"id"`
+	KSUID      string                    `json:"ksuid"`
+	Model      string                    `json:"model"`
+	Year       int                       `json:"year"`
+	DeviceType string                    `json:"devicetype"`
+	ImageURI   string                    `json:"imageuri"`
+	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
+}
+
+type DeviceDefinitionMetadata struct {
+	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
+}
+
+// UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
+func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
+	type Alias DeviceDefinitionTablelandModel // Create an alias to avoid recursion
+
+	aux := &struct {
+		Metadata json.RawMessage `json:"metadata"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if len(aux.Metadata) > 0 && string(aux.Metadata) != `""` {
+		metadata := new(DeviceDefinitionMetadata)
+		if err := json.Unmarshal(aux.Metadata, metadata); err != nil {
+			return err
+		}
+		d.Metadata = metadata
+	}
+
+	return nil
 }
