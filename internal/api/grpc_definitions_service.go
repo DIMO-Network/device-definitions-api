@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/friendsofgo/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -19,10 +22,11 @@ type GrpcDefinitionsService struct {
 	p_grpc.DeviceDefinitionServiceServer
 	Mediator mediator.Mediator
 	logger   *zerolog.Logger
+	dbs      *db.ReaderWriter
 }
 
-func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcDefinitionsService{Mediator: mediator, logger: logger}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs()}
 }
 
 //** Device Definitions
@@ -210,7 +214,25 @@ func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.E
 	return result, nil
 }
 
+// UpdateDeviceDefinition is used by admin tool to update tableland properties of a dd, and a couple augmented properties
 func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
+	// sometimes we're just updating the template id, or adding some styles
+	//todo: update hardware tmpl id in db, model name, year, verified, device type, image url
+	// if verified = true, get from tableland, compare for changes make on-chain update if necessary
+
+	dbDD, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(in.DeviceDefinitionId)).One(ctx, s.dbs.Reader)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find device definition")
+	}
+	// on chain portion of update
+	if dbDD.Verified {
+
+	}
+	// database portion of update
+	dbDD.Verified = in.Verified
+	dbDD.HardwareTemplateID = null.StringFrom(in.HardwareTemplateId)
+	// add transaction hashes after
+
 	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
 	command := &commands.UpdateDeviceDefinitionCommand{
 		DeviceDefinitionID: in.DeviceDefinitionId,
