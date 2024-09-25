@@ -177,7 +177,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, deviceDefinitionOnChainService)
 
 	// Start Server from a different go routine
 	go func() {

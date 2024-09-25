@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/tidwall/gjson"
 	"io"
 	"math/big"
@@ -493,6 +494,9 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 		return nil, fmt.Errorf("device definition %s not found in tableland to update", input.Id)
 	}
 	metrics.Success.With(prometheus.Labels{"method": TablelandExists}).Inc()
+	// todo - change GetDeviceDefinition above to return just the tableland object, and compare with our input for any changes.
+	// if no changes just return nil trx hash. do not allow changing model or year since it changes the slug id - need to look into these cases better
+	// as they have vehicle NFT implications.
 
 	e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s with manufacturer ID %s", input.Id, bigManufID)
 
@@ -658,4 +662,21 @@ func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// BuildDeviceTypeAttributesTbland converts a list of DeviceTypeAttributeRequest to a JSON string for the given device type ID.
+// It works the same as BuildDeviceTypeAttributes but the metadatakey is always "device_attributes" and does no attribute name validation
+func BuildDeviceTypeAttributesTbland(attributes []*grpc.DeviceTypeAttributeRequest) string {
+	if attributes == nil {
+		return "{}"
+	}
+	deviceTypeInfo := DeviceDefinitionMetadata{}
+	metaData := make([]DeviceTypeAttribute, len(attributes))
+	for i, prop := range attributes {
+		metaData[i].Name = prop.Name
+		metaData[i].Value = prop.Value
+	}
+	deviceTypeInfo.DeviceAttributes = metaData
+	j, _ := json.Marshal(deviceTypeInfo)
+	return string(j)
 }

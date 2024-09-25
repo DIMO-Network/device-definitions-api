@@ -3,9 +3,13 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -20,13 +24,14 @@ import (
 
 type GrpcDefinitionsService struct {
 	p_grpc.DeviceDefinitionServiceServer
-	Mediator mediator.Mediator
-	logger   *zerolog.Logger
-	dbs      *db.ReaderWriter
+	Mediator          mediator.Mediator
+	logger            *zerolog.Logger
+	dbs               *db.ReaderWriter
+	onChainDeviceDefs gateways.DeviceDefinitionOnChainService
 }
 
-func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs()}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter, onChainDefs gateways.DeviceDefinitionOnChainService) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs(), onChainDeviceDefs: onChainDefs}
 }
 
 //** Device Definitions
@@ -216,84 +221,43 @@ func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.E
 
 // UpdateDeviceDefinition is used by admin tool to update tableland properties of a dd, and a couple augmented properties
 func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
-	// sometimes we're just updating the template id, or adding some styles
-	//todo: update hardware tmpl id in db, model name, year, verified, device type, image url
-	// if verified = true, get from tableland, compare for changes make on-chain update if necessary
+	// if verified = true, send update request to tableland
 
 	dbDD, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(in.DeviceDefinitionId)).One(ctx, s.dbs.Reader)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find device definition")
 	}
-	// on chain portion of update
-	if dbDD.Verified {
-
+	dm, err := models.FindDeviceMake(ctx, s.dbs.Reader, dbDD.DeviceMakeID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find device make")
 	}
-	// database portion of update
+	// on chain portion of update
+	trxHash := new(string)
+	if dbDD.Verified {
+		trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionInput{
+			Id:         in.DeviceDefinitionId, // name slug
+			Model:      in.Model,
+			Year:       int32ToBigInt(in.Year),
+			Metadata:   gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes),
+			Ksuid:      dbDD.ID,
+			DeviceType: in.DeviceTypeId,
+			ImageURI:   in.ImageUrl,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to update device definition on chain")
+		}
+	}
+	// database portion of update, note we only update properties that are not on-chain as we intend to deprecate duplicate fields
 	dbDD.Verified = in.Verified
 	dbDD.HardwareTemplateID = null.StringFrom(in.HardwareTemplateId)
-	// add transaction hashes after
-
-	// not sure i love doing these projections if we already have all that we need in p_grpc.UpdateDeviceDefinitionRequest
-	command := &commands.UpdateDeviceDefinitionCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Year:               int16(in.Year),
-		Model:              in.Model,
-		Verified:           in.Verified,
-		DeviceMakeID:       in.DeviceMakeId,
-		DeviceTypeID:       in.DeviceTypeId,
-		ExternalIDs:        common.ExternalIDsFromGRPC(in.ExternalIds),
-		HardwareTemplateID: in.HardwareTemplateId,
+	if trxHash != nil {
+		dbDD.TRXHashHex = append(dbDD.TRXHashHex, *trxHash)
 	}
-
-	if len(in.DeviceAttributes) > 0 {
-		command.DeviceAttributes = make([]*coremodels.UpdateDeviceTypeAttribute, len(in.DeviceAttributes))
-		for i, attribute := range in.DeviceAttributes {
-			command.DeviceAttributes[i] = &coremodels.UpdateDeviceTypeAttribute{
-				Name:  attribute.Name,
-				Value: attribute.Value,
-			}
-		}
+	_, err = dbDD.Update(ctx, s.dbs.Writer, boil.Infer())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to update device definition")
 	}
-
-	if len(in.DeviceStyles) > 0 {
-		command.DeviceStyles = make([]*commands.UpdateDeviceStyles, len(in.DeviceStyles))
-		for i, style := range in.DeviceStyles {
-			command.DeviceStyles[i] = &commands.UpdateDeviceStyles{
-				ID:                 style.Id,
-				ExternalStyleID:    style.ExternalStyleId,
-				Name:               style.Name,
-				Source:             style.Source,
-				SubModel:           style.SubModel,
-				HardwareTemplateID: style.HardwareTemplateId,
-			}
-		}
-	}
-
-	if len(in.DeviceIntegrations) > 0 {
-		for _, integration := range in.DeviceIntegrations {
-			deviceIntegration := commands.UpdateDeviceIntegrations{
-				IntegrationID: integration.IntegrationId,
-				Region:        integration.Region,
-			}
-
-			if len(integration.Features) > 0 {
-				for _, feature := range integration.Features {
-					deviceIntegration.Features = append(deviceIntegration.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
-						FeatureKey:   feature.FeatureKey,
-						SupportLevel: int16(feature.SupportLevel),
-					})
-				}
-			}
-
-			command.DeviceIntegrations = append(command.DeviceIntegrations, &deviceIntegration)
-		}
-	}
-
-	commandResult, _ := s.Mediator.Send(ctx, command)
-
-	result := commandResult.(commands.UpdateDeviceDefinitionCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
+	return &p_grpc.BaseResponse{Id: dbDD.NameSlug}, nil
 }
 
 func (s *GrpcDefinitionsService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionImageRequest) (*p_grpc.BaseResponse, error) {
@@ -876,4 +840,10 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 		Points:              int64(integration.Points),
 		ManufacturerTokenId: uint64(integration.ManufacturerTokenID),
 	}, nil
+}
+
+func int32ToBigInt(n int32) *big.Int {
+	bigInt := new(big.Int)
+	bigInt.SetInt64(int64(n))
+	return bigInt
 }
