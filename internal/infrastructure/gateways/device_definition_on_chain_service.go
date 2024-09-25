@@ -12,6 +12,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/tidwall/gjson"
+
 	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -34,9 +37,11 @@ import (
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
-	GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
+	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -57,8 +62,9 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 	}
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID types.NullDecimal, ID string) (*models.DeviceDefinition, error) {
-	if manufacturerID.IsZero() {
+// GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
+	if manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
@@ -68,8 +74,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
 	}
 
-	bigManufID := manufacturerID.Big.Int(new(big.Int))
-	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, bigManufID)
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
 	if err != nil {
 		e.logger.Info().Msgf("%s", err)
 		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
@@ -92,6 +97,40 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	}
 
 	return nil, nil
+}
+
+// GetDeviceDefinitionTableland gets dd from tableland with a select statement and returns tbl object
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
+	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
+		return nil, fmt.Errorf("manufacturerID cannot be 0")
+	}
+
+	contractAddress := e.settings.EthereumRegistryAddress
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
+	if err != nil {
+		e.logger.Info().Msgf("%s", err)
+		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+	}
+
+	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, ID)
+	queryParams := map[string]string{
+		"statement": statement,
+	}
+
+	var modelTableland []DeviceDefinitionTablelandModel
+	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
+		return nil, err
+	}
+	if len(modelTableland) == 0 {
+		return nil, nil
+	}
+
+	return &modelTableland[0], nil
 }
 
 func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceDefinition {
@@ -212,20 +251,21 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 	return nil
 }
 
+const (
+	TablelandRequests  = "Tableland_All_Request"
+	TablelandFindByID  = "Tableland_FindByID_Request"
+	TablelandCreated   = "Tableland_Created_Request"
+	TablelandUpdated   = "Tableland_Updated_Request"
+	TablelandNoUpdated = "Tableland_NoUpdated_Request"
+	TablelandExists    = "Tableland_Exists_Request"
+	TablelandErrors    = "Tableland_Error_Request"
+)
+
+// CreateOrUpdate does a create or update on-chain for tableland with a bunch of extra logic and validations that should be simplified
 func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
-	const (
-		TablelandRequests  = "Tableland_All_Request"
-		TablelandFindByID  = "Tableland_FindByID_Request"
-		TablelandCreated   = "Tableland_Created_Request"
-		TablelandUpdated   = "Tableland_Updated_Request"
-		TablelandNoUpdated = "Tableland_NoUpdated_Request"
-		TablelandExists    = "Tableland_Exists_Request"
-		TablelandErrors    = "Tableland_Error_Request"
-	)
-
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
-	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t", dd.ID, e.settings.EthereumSendTransaction)
+	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
 
 	if !e.settings.EthereumSendTransaction {
 		return nil, nil
@@ -318,7 +358,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	// check if any pertinent information changed
 	e.logger.Info().Msgf("Validating if device definition %s with tokenID %s exists in tableland", deviceInputs.Id, make.TokenID)
-	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, make.TokenID, deviceInputs.Id)
+	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, bigManufID, deviceInputs.Id)
 	if currentDeviceDefinition != nil {
 		e.logger.Info().Msgf("DD %s found.", currentDeviceDefinition.ID)
 	}
@@ -393,6 +433,120 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 
 	trx := tx.Hash().Hex()
 	e.logger.Info().Msgf("Executed InsertDeviceDefinition %s with Trx %s in ManufacturerID %s", deviceInputs.Id, trx, bigManufID)
+
+	return &trx, nil
+}
+
+// Update on-chain device definition, only has basic validation that some fields be present. Requires existing tableland record to exist to update
+func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error) {
+
+	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
+	e.logger.Info().Msgf("OnChain Start Update for device definition %s. EthereumSendTransaction %t. payload: %+v", input.Id, e.settings.EthereumSendTransaction, input)
+
+	if !e.settings.EthereumSendTransaction {
+		return nil, nil
+	}
+
+	// validations
+	if input.DeviceType == "" {
+		return nil, fmt.Errorf("dd DeviceType is required")
+	}
+	if input.Metadata != "" {
+		if !gjson.Get(input.Metadata, "device_attributes").Exists() {
+			return nil, fmt.Errorf("device_attributes node is required in metadata if field is set")
+		}
+	}
+
+	contractAddress := e.settings.EthereumRegistryAddress
+	fromAddress := e.sender.Address()
+
+	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get PendingNonceAt: %w", err)
+	}
+
+	gasPrice, err := e.client.SuggestGasPrice(ctx)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get SuggestGasPrice: %w", err)
+	}
+
+	bump := big.NewInt(20)
+	bumpedPrice := getGasPrice(gasPrice, bump)
+
+	e.logger.Info().Msgf("bumped gas price: %d", bumpedPrice)
+
+	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get NewKeyedTransactorWithChainID: %w", err)
+	}
+	//auth.Value = big.NewInt(0)
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.GasLimit = uint64(300000)
+	auth.GasPrice = bumpedPrice
+	auth.From = fromAddress
+
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	// Validate if manufacturer exists
+	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerName)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", manufacturerName, err)
+	}
+	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
+	}
+
+	// check if any field changed
+	e.logger.Info().Msgf("Validating if device definition %s with tokenID %s exists in tableland", input.Id, bigManufID)
+	existingTblDD, err := e.GetDeviceDefinitionByID(ctx, bigManufID, input.Id)
+	if existingTblDD != nil {
+		e.logger.Info().Msgf("DD %s found.", existingTblDD.ID)
+	}
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", input.Id)
+		return nil, err
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandFindByID}).Inc()
+	// change this up if want this method to do update and or create
+	if existingTblDD == nil {
+		return nil, fmt.Errorf("device definition %s not found in tableland to update", input.Id)
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandExists}).Inc()
+	// todo - change GetDeviceDefinition above to return just the tableland object, and compare with our input for any changes.
+	// if no changes just return nil trx hash. do not allow changing model or year since it changes the slug id - need to look into these cases better
+	// as they have vehicle NFT implications.
+
+	e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s with manufacturer ID %s", input.Id, bigManufID)
+
+	tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, input)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", input.Id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandUpdated}).Inc()
+
+	trx := tx.Hash().Hex()
+
+	e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s in ManufacturerID %s", input.Id, trx, bigManufID)
 
 	return &trx, nil
 }
@@ -501,11 +655,6 @@ func GetDefaultImageURL(dd models.DeviceDefinition) string {
 
 // note: below code is duplicated in identity-api
 
-type DeviceTypeAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
 type DeviceDefinitionTablelandModel struct {
 	ID         string                    `json:"id"`
 	KSUID      string                    `json:"ksuid"`
@@ -518,6 +667,11 @@ type DeviceDefinitionTablelandModel struct {
 
 type DeviceDefinitionMetadata struct {
 	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
+}
+
+type DeviceTypeAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
@@ -544,4 +698,21 @@ func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// BuildDeviceTypeAttributesTbland converts a list of DeviceTypeAttributeRequest to a JSON string for the given device type ID.
+// It works the same as BuildDeviceTypeAttributes but the metadatakey is always "device_attributes" and does no attribute name validation
+func BuildDeviceTypeAttributesTbland(attributes []*grpc.DeviceTypeAttributeRequest) string {
+	if attributes == nil {
+		return "{}"
+	}
+	deviceTypeInfo := DeviceDefinitionMetadata{}
+	metaData := make([]DeviceTypeAttribute, len(attributes))
+	for i, prop := range attributes {
+		metaData[i].Name = prop.Name
+		metaData[i].Value = prop.Value
+	}
+	deviceTypeInfo.DeviceAttributes = metaData
+	j, _ := json.Marshal(deviceTypeInfo)
+	return string(j)
 }

@@ -217,19 +217,20 @@ message CreateDeviceDefinitionResponse {
 }
 
 message UpdateDeviceDefinitionRequest {
+  // this is the name slug id now
   string device_definition_id = 1;
   string source = 3 [deprecated = true];
-  string image_url = 4 [deprecated = true];
+  string image_url = 4;
   bool verified = 5;
   string model = 6;
   int32 year = 7;
   string device_make_id = 8;
   repeated DeviceStyles device_styles = 9;
-  repeated DeviceIntegrations device_integrations = 10;
+  repeated DeviceIntegrations device_integrations = 10 [deprecated = true];
   string external_id = 11 [deprecated = true];
   string device_type_id = 12;
   repeated DeviceTypeAttributeRequest device_attributes = 13;
-  repeated ExternalID external_ids = 14;
+  repeated ExternalID external_ids = 14 [deprecated = true];
   string hardware_template_id = 15;
 
   message DeviceStyles {
