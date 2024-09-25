@@ -451,9 +451,9 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 	if input.DeviceType == "" {
 		return nil, fmt.Errorf("dd DeviceType is required")
 	}
-	if input.Metadata != "" {
+	if len(input.Metadata) > 4 {
 		if !gjson.Get(input.Metadata, "device_attributes").Exists() {
-			return nil, fmt.Errorf("device_attributes node is required in metadata if field is set")
+			return nil, fmt.Errorf("device_attributes node is required in metadata if field is set: %s", input.Metadata)
 		}
 	}
 
