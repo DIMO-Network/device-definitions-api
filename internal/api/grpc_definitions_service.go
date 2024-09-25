@@ -234,17 +234,30 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 	// on chain portion of update
 	trxHash := new(string)
 	if dbDD.Verified {
-		trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionInput{
-			Id:         in.DeviceDefinitionId, // name slug
-			Model:      in.Model,
-			Year:       int32ToBigInt(in.Year),
-			Metadata:   gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes),
-			Ksuid:      dbDD.ID,
-			DeviceType: in.DeviceTypeId,
-			ImageURI:   in.ImageUrl,
-		})
+		// check for any changes
+		ddTbland, err := s.onChainDeviceDefs.GetDeviceDefinitionTableland(ctx, dm.TokenID.Int(new(big.Int)), in.DeviceDefinitionId)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to update device definition on chain")
+			return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
+		}
+		shouldUpdate := false
+		metadata := gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes)
+		tblMetadata, err := json.Marshal(ddTbland.Metadata)
+		if string(tblMetadata) != metadata || ddTbland.DeviceType != in.DeviceTypeId || ddTbland.KSUID != dbDD.ID || ddTbland.ImageURI != in.ImageUrl {
+			shouldUpdate = true
+		}
+		if shouldUpdate {
+			trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionInput{
+				Id:         in.DeviceDefinitionId, // name slug
+				Model:      in.Model,
+				Year:       int32ToBigInt(in.Year),
+				Metadata:   metadata,
+				Ksuid:      dbDD.ID,
+				DeviceType: in.DeviceTypeId,
+				ImageURI:   in.ImageUrl,
+			})
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to update device definition on chain")
+			}
 		}
 	}
 	// database portion of update, note we only update properties that are not on-chain as we intend to deprecate duplicate fields

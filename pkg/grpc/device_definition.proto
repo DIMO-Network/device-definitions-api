@@ -217,6 +217,7 @@ message CreateDeviceDefinitionResponse {
 }
 
 message UpdateDeviceDefinitionRequest {
+  // this is the name slug id now
   string device_definition_id = 1;
   string source = 3 [deprecated = true];
   string image_url = 4;

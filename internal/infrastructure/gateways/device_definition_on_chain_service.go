@@ -37,6 +37,7 @@ import (
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error)
@@ -60,7 +61,7 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 	}
 }
 
-// GetDeviceDefinitionByID gets dd from tableland with a select statement
+// GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
 func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
 	if manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("manufacturerID has not value")
@@ -95,6 +96,40 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	}
 
 	return nil, nil
+}
+
+// GetDeviceDefinitionTableland gets dd from tableland with a select statement and returns tbl object
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
+	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
+		return nil, fmt.Errorf("manufacturerID cannot be 0")
+	}
+
+	contractAddress := e.settings.EthereumRegistryAddress
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
+	if err != nil {
+		e.logger.Info().Msgf("%s", err)
+		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+	}
+
+	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, ID)
+	queryParams := map[string]string{
+		"statement": statement,
+	}
+
+	var modelTableland []DeviceDefinitionTablelandModel
+	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
+		return nil, err
+	}
+	if len(modelTableland) == 0 {
+		return nil, nil
+	}
+
+	return &modelTableland[0], nil
 }
 
 func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceDefinition {
@@ -619,11 +654,6 @@ func GetDefaultImageURL(dd models.DeviceDefinition) string {
 
 // note: below code is duplicated in identity-api
 
-type DeviceTypeAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
 type DeviceDefinitionTablelandModel struct {
 	ID         string                    `json:"id"`
 	KSUID      string                    `json:"ksuid"`
@@ -636,6 +666,11 @@ type DeviceDefinitionTablelandModel struct {
 
 type DeviceDefinitionMetadata struct {
 	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
+}
+
+type DeviceTypeAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.

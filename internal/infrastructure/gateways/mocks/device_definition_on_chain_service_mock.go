@@ -15,6 +15,7 @@ import (
 
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	types "github.com/volatiletech/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -70,6 +71,21 @@ func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context
 func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionByID(ctx, manufacturerID, ID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitionByID), ctx, manufacturerID, ID)
+}
+
+// GetDeviceDefinitionTableland mocks base method.
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*gateways.DeviceDefinitionTablelandModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeviceDefinitionTableland", ctx, manufacturerID, ID)
+	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeviceDefinitionTableland indicates an expected call of GetDeviceDefinitionTableland.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionTableland(ctx, manufacturerID, ID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionTableland", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitionTableland), ctx, manufacturerID, ID)
 }
 
 // GetDeviceDefinitions mocks base method.
