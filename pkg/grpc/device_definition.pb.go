@@ -2098,6 +2098,7 @@ type UpdateDeviceDefinitionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// this is the name slug id now
 	DeviceDefinitionId string `protobuf:"bytes,1,opt,name=device_definition_id,json=deviceDefinitionId,proto3" json:"device_definition_id,omitempty"`
 	// Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.
 	Source       string                                        `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`

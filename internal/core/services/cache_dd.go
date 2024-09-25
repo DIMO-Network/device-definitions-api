@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -88,7 +89,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 	}
 
 	if params.UseOnChainData {
-		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.Make.TokenID, id)
+		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.Make.TokenID.Int(new(big.Int)), id)
 
 		if err != nil {
 			return nil, err

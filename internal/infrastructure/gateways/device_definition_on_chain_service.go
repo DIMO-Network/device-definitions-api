@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/tidwall/gjson"
 	"io"
 	"math/big"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/tidwall/gjson"
 
 	"github.com/pkg/errors"
 

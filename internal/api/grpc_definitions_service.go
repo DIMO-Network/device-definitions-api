@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"math/big"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/friendsofgo/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"math/big"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -242,6 +243,9 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 		shouldUpdate := false
 		metadata := gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes)
 		tblMetadata, err := json.Marshal(ddTbland.Metadata)
+		if err != nil {
+			s.logger.Err(err).Msgf("failed to unmarshall metadata for: %s", in.DeviceDefinitionId)
+		}
 		if string(tblMetadata) != metadata || ddTbland.DeviceType != in.DeviceTypeId || ddTbland.KSUID != dbDD.ID || ddTbland.ImageURI != in.ImageUrl {
 			shouldUpdate = true
 		}
