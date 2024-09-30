@@ -395,7 +395,7 @@ func (r *deviceDefinitionRepository) GetOrCreate(ctx context.Context, tx *sql.Tx
 
 	if commitTx {
 		// Create DD onchain
-		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *m, *dd)
+		trx, err := r.deviceDefinitionOnChainService.Create(ctx, *m, *dd)
 		if err != nil {
 			return nil, &exceptions.InternalError{Err: err}
 		}
@@ -507,7 +507,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 	// Create onchain
 	if dd.R != nil && dd.R.DeviceMake != nil {
-		trx, err := r.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
+		trx, err := r.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
 		if err == nil && trx != nil {
 			trxArray := strings.Split(*trx, ",")
 			if dd.TRXHashHex != nil {

@@ -33,8 +33,3 @@ func RegisterDeviceTypeRoutes(app fiber.Router, m mediator.Mediator) {
 func RegisterDeviceMakesRoutes(app fiber.Router, m mediator.Mediator) {
 	app.Get("/device-makes", handlers.GetDeviceMakes(m)).Name("device-makes")
 }
-
-func RegisterVINRoutes(app fiber.Router, m mediator.Mediator) {
-	app.Post("/bulk-decode", handlers.BulkDecodeVIN(m)).Name("bulk-decode")
-	app.Post("/bulk-decode/csv", handlers.BulkDecodeVINCsv(m)).Name("bulk-decode-csv")
-}

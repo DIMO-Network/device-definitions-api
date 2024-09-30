@@ -137,3 +137,6 @@ To regenerate the Go bindings, you would run from [dimo-identity repository](htt
 ```sh
 abigen --abi abis/DimoRegistry.json --out registry.go --pkg contracts --type Registry
 ```
+
+This file should usually be updated as part of work that changes the contract. Final step is to just copy the file from dimo-identity
+repo to this repo under `internal/contracts/registry.go` overwriting the existing file.

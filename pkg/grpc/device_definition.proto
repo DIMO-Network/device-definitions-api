@@ -255,11 +255,6 @@ message UpdateDeviceDefinitionRequest {
 
 }
 
-message UpdateDeviceDefinitionImageRequest {
-  string device_definition_id = 1;
-  string image_url = 2;
-}
-
 message GetDeviceDefinitionAllResponse {
   repeated GetDeviceDefinitionAllItemResponse items = 1;
 }
@@ -496,7 +491,6 @@ service DeviceDefinitionService {
   rpc CreateDeviceMake(CreateDeviceMakeRequest) returns (BaseResponse);
   rpc CreateIntegration(CreateIntegrationRequest) returns (BaseResponse);
   rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
-  rpc SetDeviceDefinitionImage(UpdateDeviceDefinitionImageRequest) returns (BaseResponse);
   rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
   rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);

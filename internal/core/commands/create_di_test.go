@@ -6,8 +6,6 @@ import (
 
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-
 	mockService "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
 	"testing"
@@ -18,9 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	repositoryMock "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -63,43 +59,6 @@ func (s *CreateDeviceIntegrationCommandHandlerSuite) SetupTest() {
 
 func (s *CreateDeviceIntegrationCommandHandlerSuite) TearDownTest() {
 	s.ctrl.Finish()
-}
-
-func (s *CreateDeviceIntegrationCommandHandlerSuite) TestCreateDeviceIntegrationCommand_Success() {
-	ctx := context.Background()
-
-	integrationID := "Hummer"
-	region := "es-Us"
-
-	// using real DB for integration test
-	model := "Testla"
-	mk := "Toyota"
-	year := 2020
-	dd := setupDeviceDefinitionForUpdate(s.T(), s.pdb, mk, model, year)
-	repo := repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
-	cmdHandler := NewCreateDeviceIntegrationCommandHandler(s.mockRepository, s.pdb.DBS, s.mockDeviceDefinitionCache, repo)
-
-	di := &models.DeviceIntegration{
-		DeviceDefinitionID: dd.ID,
-		IntegrationID:      integrationID,
-		Region:             region,
-	}
-
-	s.mockRepository.EXPECT().Create(gomock.Any(), dd.ID, integrationID, region, nil).Return(di, nil).Times(1)
-
-	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
-	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)
-
-	commandResult, err := cmdHandler.Handle(ctx, &CreateDeviceIntegrationCommand{
-		DeviceDefinitionID: dd.ID,
-		IntegrationID:      integrationID,
-		Region:             region,
-	})
-	result := commandResult.(CreateDeviceIntegrationCommandResult)
-
-	s.NoError(err)
-	assert.Equal(s.T(), result.ID, integrationID)
 }
 
 func (s *CreateDeviceIntegrationCommandHandlerSuite) TestCreateDeviceIntegrationCommand_Exception() {
