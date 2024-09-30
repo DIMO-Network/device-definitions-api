@@ -114,8 +114,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository, ddCacheService)),
 		mediator.WithHandler(&commands.CreateIntegrationCommand{}, commands.NewCreateIntegrationCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.CreateDeviceMakeCommand{}, commands.NewCreateDeviceMakeCommandHandler(deviceMakeRepository)),
-		mediator.WithHandler(&commands.UpdateDeviceDefinitionCommand{}, commands.NewUpdateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS, ddCacheService)),
-		mediator.WithHandler(&commands.UpdateDeviceDefinitionImageCommand{}, commands.NewUpdateDeviceDefinitionImageCommandHandler(pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&queries.GetCompatibilitiesByMakeQuery{}, queries.NewGetDeviceCompatibilityQueryHandler(pdb.DBS, deviceDefinitionRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceMakeCommand{}, commands.NewUpdateDeviceMakeCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateDeviceStyleCommand{}, commands.NewUpdateDeviceStyleCommandHandler(pdb.DBS)),
@@ -173,7 +171,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
 	RegisterDeviceMakesRoutes(app, *m)
-	RegisterVINRoutes(app, *m)
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 

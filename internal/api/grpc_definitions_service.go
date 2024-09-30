@@ -275,18 +275,6 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 	return &p_grpc.BaseResponse{Id: dbDD.NameSlug}, nil
 }
 
-func (s *GrpcDefinitionsService) SetDeviceDefinitionImage(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionImageRequest) (*p_grpc.BaseResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.UpdateDeviceDefinitionImageCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		ImageURL:           in.ImageUrl,
-	})
-
-	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
 func (s *GrpcDefinitionsService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionHardwareTemplateByIDRequest) (*p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionHardwareTemplateByIDQuery{
 		DeviceDefinitionID: in.Id,
