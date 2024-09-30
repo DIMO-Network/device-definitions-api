@@ -46,7 +46,7 @@ func (m *MockDeviceDefinitionRepository) EXPECT() *MockDeviceDefinitionRepositor
 // CreateOrUpdate mocks base method.
 func (m *MockDeviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrUpdate", ctx, dd, deviceStyles, deviceIntegrations)
+	ret := m.ctrl.Call(m, "Create", ctx, dd, deviceStyles, deviceIntegrations)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -55,7 +55,7 @@ func (m *MockDeviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd 
 // CreateOrUpdate indicates an expected call of CreateOrUpdate.
 func (mr *MockDeviceDefinitionRepositoryMockRecorder) CreateOrUpdate(ctx, dd, deviceStyles, deviceIntegrations any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations)
 }
 
 // FetchDeviceCompatibility mocks base method.

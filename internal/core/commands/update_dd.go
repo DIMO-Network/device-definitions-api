@@ -92,7 +92,7 @@ func (ch UpdateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			Err: errors.Wrap(err, "failed model validation"),
 		}
 	}
-	// future: either rename method to be CreateOrUpdate, and remove Create method, or only allow Updating in this method
+	// future: either rename method to be Create, and remove Create method, or only allow Updating in this method
 	dd, err := ch.Repository.GetByID(ctx, command.DeviceDefinitionID)
 	if err != nil {
 		// if dd is not found, we'll try to create it

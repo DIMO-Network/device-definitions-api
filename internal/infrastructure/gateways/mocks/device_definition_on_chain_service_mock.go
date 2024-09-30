@@ -43,19 +43,19 @@ func (m *MockDeviceDefinitionOnChainService) EXPECT() *MockDeviceDefinitionOnCha
 	return m.recorder
 }
 
-// CreateOrUpdate mocks base method.
-func (m *MockDeviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
+// Create mocks base method.
+func (m *MockDeviceDefinitionOnChainService) Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrUpdate", ctx, make, dd)
+	ret := m.ctrl.Call(m, "Create", ctx, make, dd)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateOrUpdate indicates an expected call of CreateOrUpdate.
-func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) CreateOrUpdate(ctx, make, dd any) *gomock.Call {
+// Create indicates an expected call of Create.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Create(ctx, make, dd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).CreateOrUpdate), ctx, make, dd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Create), ctx, make, dd)
 }
 
 // GetDeviceDefinitionByID mocks base method.
@@ -104,7 +104,7 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitions(c
 }
 
 // Update mocks base method.
-func (m *MockDeviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error) {
+func (m *MockDeviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, manufacturerName, input)
 	ret0, _ := ret[0].(*string)

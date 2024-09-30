@@ -40,8 +40,8 @@ type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
 	GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
-	CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
-	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error)
+	Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
+	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -252,20 +252,19 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 }
 
 const (
-	TablelandRequests  = "Tableland_All_Request"
-	TablelandFindByID  = "Tableland_FindByID_Request"
-	TablelandCreated   = "Tableland_Created_Request"
-	TablelandUpdated   = "Tableland_Updated_Request"
-	TablelandNoUpdated = "Tableland_NoUpdated_Request"
-	TablelandExists    = "Tableland_Exists_Request"
-	TablelandErrors    = "Tableland_Error_Request"
+	TablelandRequests = "Tableland_All_Request"
+	TablelandFindByID = "Tableland_FindByID_Request"
+	TablelandCreated  = "Tableland_Created_Request"
+	TablelandUpdated  = "Tableland_Updated_Request"
+	TablelandExists   = "Tableland_Exists_Request"
+	TablelandErrors   = "Tableland_Error_Request"
 )
 
-// CreateOrUpdate does a create or update on-chain for tableland with a bunch of extra logic and validations that should be simplified
-func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
+// Create does a create for tableland, on-chain operation - checks if already exists
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
-	e.logger.Info().Msgf("OnChain Start CreateOrUpdate for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
+	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
 
 	if !e.settings.EthereumSendTransaction {
 		return nil, nil
@@ -356,70 +355,15 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 		deviceInputs.Metadata = string(jsonData)
 	}
 
-	// check if any pertinent information changed
-	e.logger.Info().Msgf("Validating if device definition %s with tokenID %s exists in tableland", deviceInputs.Id, make.TokenID)
+	// check for duplicate create
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, bigManufID, deviceInputs.Id)
-	if currentDeviceDefinition != nil {
-		e.logger.Info().Msgf("DD %s found.", currentDeviceDefinition.ID)
-	}
 	if err != nil {
-		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland.", deviceInputs.Id)
+		e.logger.Err(err).Msgf("error occurred get device definition %s from tableland when checking for existence.", deviceInputs.Id)
 		return nil, err
 	}
-	metrics.Success.With(prometheus.Labels{"method": TablelandFindByID}).Inc()
-
 	if currentDeviceDefinition != nil {
-		metrics.Success.With(prometheus.Labels{"method": TablelandExists}).Inc()
-		// validate if attributes was changed
-		currentAttributes := GetDeviceAttributesTyped(currentDeviceDefinition.Metadata, mdKey)
-		newAttributes := GetDeviceAttributesTyped(dd.Metadata, mdKey)
-		newOrModified, removed := validateAttributes(currentAttributes, newAttributes)
-
-		// did any attrs change?
-		requierUpdate := false
-		if len(newOrModified) > 0 {
-			requierUpdate = true
-		}
-		if len(removed) > 0 {
-			requierUpdate = true
-		}
-		// is image set?
-		if deviceInputs.ImageURI != "" {
-			requierUpdate = true
-		}
-
-		e.logger.Info().Msgf("newOrModified => %d and removed %d. Update %t", len(newOrModified), len(removed), requierUpdate)
-
-		if !requierUpdate {
-			metrics.Success.With(prometheus.Labels{"method": TablelandNoUpdated}).Inc()
-			return nil, nil
-		}
-
-		// log what we are sending to the chain
-		//jsonBytes, err := json.MarshalIndent(deviceInputs, "", "    ")
-		//if err != nil {
-		//	e.logger.Err(err).Msg("error marshalling device definition inputs")
-		//}
-		//e.logger.Info().RawJSON("device_definition", jsonBytes).Msg("dd payload sending to chain for CreateOrUpdate")
-
-		e.logger.Info().Msgf("Executing UpdateDeviceDefinition %s with manufacturer ID %s", deviceInputs.Id, bigManufID)
-
-		tx, err := instance.UpdateDeviceDefinition(auth, bigManufID, deviceInputs)
-		if err != nil {
-			e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
-			metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-			return nil, fmt.Errorf("failed update UpdateDeviceDefinition: %w", err)
-		}
-
-		metrics.Success.With(prometheus.Labels{"method": TablelandUpdated}).Inc()
-
-		trx := tx.Hash().Hex()
-
-		e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s in ManufacturerID %s", deviceInputs.Id, trx, bigManufID)
-
-		return &trx, nil
+		return nil, fmt.Errorf("cannot create device definition, already exists: %s", deviceInputs.Id)
 	}
 
 	tx, err := instance.InsertDeviceDefinition(auth, bigManufID, deviceInputs)
@@ -438,7 +382,7 @@ func (e *deviceDefinitionOnChainService) CreateOrUpdate(ctx context.Context, mak
 }
 
 // Update on-chain device definition, only has basic validation that some fields be present. Requires existing tableland record to exist to update
-func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionInput) (*string, error) {
+func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Update for device definition %s. EthereumSendTransaction %t. payload: %+v", input.Id, e.settings.EthereumSendTransaction, input)
@@ -704,7 +648,7 @@ func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
 // It works the same as BuildDeviceTypeAttributes but the metadatakey is always "device_attributes" and does no attribute name validation
 func BuildDeviceTypeAttributesTbland(attributes []*grpc.DeviceTypeAttributeRequest) string {
 	if attributes == nil {
-		return "{}"
+		return ""
 	}
 	deviceTypeInfo := DeviceDefinitionMetadata{}
 	metaData := make([]DeviceTypeAttribute, len(attributes))
