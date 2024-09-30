@@ -77,7 +77,7 @@ func (s *UpdateDeviceDefinitionCommandHandlerSuite) TestUpdateDeviceDefinitionCo
 	cmdHandler := NewUpdateDeviceDefinitionCommandHandler(repo, s.pdb.DBS, s.mockDeviceDefinitionCache)
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().CreateOrUpdate(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().Update(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByID(ctx, gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 	s.mockDeviceDefinitionCache.EXPECT().DeleteDeviceDefinitionCacheBySlug(ctx, gomock.Any(), gomock.Any()).Times(1)

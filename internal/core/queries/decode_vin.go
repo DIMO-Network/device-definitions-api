@@ -461,7 +461,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
 
 		// Create DD onchain
-		trx, err := dc.deviceDefinitionOnChainService.CreateOrUpdate(ctx, *dd.R.DeviceMake, *dd)
+		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
 			localLog.Err(err).Msg("failed to create or update DD on chain")
 		}

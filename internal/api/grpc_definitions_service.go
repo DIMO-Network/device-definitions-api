@@ -250,10 +250,8 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 			shouldUpdate = true
 		}
 		if shouldUpdate {
-			trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionInput{
+			trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionUpdateInput{
 				Id:         in.DeviceDefinitionId, // name slug
-				Model:      in.Model,
-				Year:       int32ToBigInt(in.Year),
 				Metadata:   metadata,
 				Ksuid:      dbDD.ID,
 				DeviceType: in.DeviceTypeId,
@@ -857,10 +855,4 @@ func (s *GrpcDefinitionsService) prepareIntegrationResponse(integration coremode
 		Points:              int64(integration.Points),
 		ManufacturerTokenId: uint64(integration.ManufacturerTokenID),
 	}, nil
-}
-
-func int32ToBigInt(n int32) *big.Int {
-	bigInt := new(big.Int)
-	bigInt.SetInt64(int64(n))
-	return bigInt
 }
