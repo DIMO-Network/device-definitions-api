@@ -353,6 +353,11 @@ definitions:
       legacyId:
         description: old ksuid based device def id
         type: string
+      newTransactionHash:
+        description: if a new device definition was created, the tableland transaction
+          hash from the insert statement. Check this has completed before querying
+          the ID
+        type: string
     type: object
   null.String:
     properties:
@@ -379,6 +384,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: DIMO Device Definitions API
+  version: "1.0"
 paths:
   /device-definitions:
     get:
@@ -526,6 +533,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - BearerAuth: []
       summary: returns device definition id corresponding to a given vin
       tags:
       - device-definitions
@@ -724,4 +733,9 @@ paths:
       summary: gets all device definitions by Makes, models, and years
       tags:
       - device-definitions
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

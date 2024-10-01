@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
+func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator, auth fiber.Handler) {
 	app.Get("/device-definitions/search", handlers.GetDeviceDefinitionSearch(m)).Name("device-definitions-search")
 	app.Get("/device-definitions/autocomplete", handlers.GetDeviceDefinitionAutocomplete(m)).Name("device-definitions-autocomplete")
 	app.Get("/device-definitions/all", handlers.GetDeviceDefinitionAll(m)).Name("device-definitions-all")
@@ -19,7 +19,7 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
 	// oems by external integration, used by mobile app
 	app.Get("/manufacturers/integrations/smartcar", handlers.GetSmartcarManufacturers()).Name("device-definitions-smartcar")
 
-	app.Post("/device-definitions/decode-vin", handlers.DecodeVIN(m)).Name("device-definitions-decode-vin")
+	app.Post("/device-definitions/decode-vin", auth, handlers.DecodeVIN(m)).Name("device-definitions-decode-vin")
 }
 
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {

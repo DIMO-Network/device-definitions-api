@@ -12,9 +12,9 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/ethereum/go-ethereum v1.14.7
 	github.com/friendsofgo/errors v0.9.2
-	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/gofiber/adaptor/v2 v2.2.1
+	github.com/gofiber/contrib/jwt v1.0.10
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/subcommands v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -45,6 +45,7 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/DIMO-Network/yaml v0.1.0 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
+	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/hcsshim v0.12.5 // indirect
 	github.com/antchfx/xpath v1.3.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
@@ -76,6 +77,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/holiman/uint256 v1.3.1 // indirect

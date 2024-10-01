@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
@@ -166,8 +167,12 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Send([]byte("device definitions api running!"))
 	})
+	// Traditional tokens
+	jwtAuth := jwtware.New(jwtware.Config{
+		JWKSetURLs: []string{settings.JwtKeySetURL},
+	})
 
-	RegisterDeviceDefinitionsRoutes(app, *m)
+	RegisterDeviceDefinitionsRoutes(app, *m, jwtAuth)
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
 	RegisterDeviceMakesRoutes(app, *m)

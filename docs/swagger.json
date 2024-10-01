@@ -1,7 +1,9 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "title": "DIMO Device Definitions API",
+        "contact": {},
+        "version": "1.0"
     },
     "paths": {
         "/device-definitions": {
@@ -116,6 +118,11 @@
         },
         "/device-definitions/decode-vin": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "decode a vin",
                 "consumes": [
                     "application/json"
@@ -1053,6 +1060,10 @@
                 "legacyId": {
                     "description": "old ksuid based device def id",
                     "type": "string"
+                },
+                "newTransactionHash": {
+                    "description": "if a new device definition was created, the tableland transaction hash from the insert statement. Check this has completed before querying the ID",
+                    "type": "string"
                 }
             }
         },
@@ -1079,6 +1090,13 @@
                     "type": "integer"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }
