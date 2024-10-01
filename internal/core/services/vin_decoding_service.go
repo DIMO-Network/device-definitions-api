@@ -131,7 +131,20 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			}
 		}
 
-		// if nothing from autoiso, try DATGroup
+		// if nothing,try vincario
+		if result == nil || result.Source == "" {
+			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
+			if err != nil {
+				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
+			} else {
+				result, err = buildFromVincario(vinVincarioInfo)
+				if err != nil {
+					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from vincario data")
+				}
+			}
+		}
+
+		// if nothing from vincario, try DATGroup
 		if result == nil || result.Source == "" {
 			datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
 			if err != nil {
@@ -141,19 +154,6 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 				localLog.Info().Msgf("datgroup result: %+v", result) // temporary for debugging
 				if err != nil {
 					localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
-				}
-			}
-		}
-
-		// if nothing from DATGroup try vincario
-		if result == nil || result.Source == "" {
-			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
-			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
-			} else {
-				result, err = buildFromVincario(vinVincarioInfo)
-				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from vincario data")
 				}
 			}
 		}
