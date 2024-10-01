@@ -3,11 +3,60 @@ package handlers
 import (
 	"strconv"
 
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate modesl
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/gofiber/fiber/v2"
 )
+
+// DecodeVIN godoc
+// @Summary gets a device definition
+// @ID DecodeVIN
+// @Description gets a device definition
+// @Tags device-definitions
+// @Produce json
+// @Accept json
+// @Param  decodeRequest body DecodeVINRequest true  "Decode VIN request"
+// @Success 200 {object} DecodeVINResponse "response with definition ID. TODO return polygon transaction if new DD"
+// @Failure 404
+// @Failure 500
+// @Router /device-definitions/decode-vin [post]
+func DecodeVIN(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var dvr DecodeVINRequest
+		if err := c.BodyParser(&dvr); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Couldn't parse request body.")
+		}
+		query := &queries.DecodeVINQuery{VIN: dvr.VIN, Country: dvr.CountryCode}
+
+		result, err := m.Send(c.UserContext(), query)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "Couldn't decode VIN.")
+		}
+		resp := result.(*p_grpc.DecodeVinResponse)
+		dd := DecodeVINResponse{
+			DeviceDefinitionID: resp.NameSlug,
+			LegacyID:           resp.DeviceDefinitionId,
+		}
+
+		return c.Status(fiber.StatusOK).JSON(dd)
+	}
+}
+
+type DecodeVINRequest struct {
+	VIN string `json:"vin"`
+	// 3 letter ISO
+	CountryCode string `json:"countryCode"`
+}
+
+type DecodeVINResponse struct {
+	// new name slug based id, can use this to query identity-api
+	DeviceDefinitionID string `json:"deviceDefinitionId"`
+	// old ksuid based device def id
+	LegacyID string `json:"legacyId"`
+}
 
 // GetDeviceDefinitionByID godoc
 // @Summary gets a device definition

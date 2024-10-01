@@ -16,8 +16,10 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator) {
 
 	app.Get("/v2/device-definitions/:make/all", handlers.GetDeviceDefinitionV2All(m)).Name("device-definitions-all-v2")
 	app.Get("/v2/device-definitions/:make/:id", handlers.GetDeviceDefinitionV2ByID(m)).Name("device-definitions-by-id-v2")
-	// oems by external integration
+	// oems by external integration, used by mobile app
 	app.Get("/manufacturers/integrations/smartcar", handlers.GetSmartcarManufacturers()).Name("device-definitions-smartcar")
+
+	app.Post("/device-definitions/decode-vin", handlers.DecodeVIN(m)).Name("device-definitions-decode-vin")
 }
 
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {

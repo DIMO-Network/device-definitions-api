@@ -4,88 +4,6 @@
         "contact": {}
     },
     "paths": {
-        "/bulk-decode": {
-            "post": {
-                "description": "decodes a list of VINs",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "device-definitions"
-                ],
-                "summary": "gets a list of decoded vins.",
-                "operationId": "BulkDecodeVIN",
-                "parameters": [
-                    {
-                        "description": "vin array.",
-                        "name": "vins",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/bulk-decode/csv": {
-            "post": {
-                "description": "decodes a list of VINs",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "text/csv"
-                ],
-                "tags": [
-                    "device-definitions"
-                ],
-                "summary": "gets a list of decoded vins in csv format.",
-                "operationId": "BulkDecodeVINCSV",
-                "parameters": [
-                    {
-                        "description": "vin array.",
-                        "name": "vins",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
         "/device-definitions": {
             "get": {
                 "description": "gets a specific device definition by make model and year.",
@@ -189,6 +107,47 @@
                         "schema": {
                             "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionByAutocompleteQueryResult"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/device-definitions/decode-vin": {
+            "post": {
+                "description": "gets a device definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a device definition",
+                "operationId": "DecodeVIN",
+                "parameters": [
+                    {
+                        "description": "Decode VIN request",
+                        "name": "decodeRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers.DecodeVINRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "response with definition ID. TODO return polygon transaction if new DD",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers.DecodeVINResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -1068,6 +1027,31 @@
             "type": "object",
             "properties": {
                 "RideGuideLink": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers.DecodeVINRequest": {
+            "type": "object",
+            "properties": {
+                "countryCode": {
+                    "description": "3 letter ISO",
+                    "type": "string"
+                },
+                "vin": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers.DecodeVINResponse": {
+            "type": "object",
+            "properties": {
+                "deviceDefinitionId": {
+                    "description": "new name slug based id, can use this to query identity-api",
+                    "type": "string"
+                },
+                "legacyId": {
+                    "description": "old ksuid based device def id",
                     "type": "string"
                 }
             }

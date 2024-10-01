@@ -337,6 +337,23 @@ definitions:
       RideGuideLink:
         type: string
     type: object
+  internal_api_handlers.DecodeVINRequest:
+    properties:
+      countryCode:
+        description: 3 letter ISO
+        type: string
+      vin:
+        type: string
+    type: object
+  internal_api_handlers.DecodeVINResponse:
+    properties:
+      deviceDefinitionId:
+        description: new name slug based id, can use this to query identity-api
+        type: string
+      legacyId:
+        description: old ksuid based device def id
+        type: string
+    type: object
   null.String:
     properties:
       string:
@@ -363,60 +380,6 @@ definitions:
 info:
   contact: {}
 paths:
-  /bulk-decode:
-    post:
-      consumes:
-      - application/json
-      description: decodes a list of VINs
-      operationId: BulkDecodeVIN
-      parameters:
-      - description: vin array.
-        in: body
-        name: vins
-        required: true
-        schema:
-          items:
-            type: string
-          type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-      summary: gets a list of decoded vins.
-      tags:
-      - device-definitions
-  /bulk-decode/csv:
-    post:
-      consumes:
-      - application/json
-      description: decodes a list of VINs
-      operationId: BulkDecodeVINCSV
-      parameters:
-      - description: vin array.
-        in: body
-        name: vins
-        required: true
-        schema:
-          items:
-            type: string
-          type: array
-      produces:
-      - text/csv
-      responses:
-        "200":
-          description: OK
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-      summary: gets a list of decoded vins in csv format.
-      tags:
-      - device-definitions
   /device-definitions:
     get:
       description: gets a specific device definition by make model and year.
@@ -536,6 +499,34 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets device definitions autocomplete
+      tags:
+      - device-definitions
+  /device-definitions/decode-vin:
+    post:
+      consumes:
+      - application/json
+      description: gets a device definition
+      operationId: DecodeVIN
+      parameters:
+      - description: Decode VIN request
+        in: body
+        name: decodeRequest
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handlers.DecodeVINRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: response with definition ID. TODO return polygon transaction
+            if new DD
+          schema:
+            $ref: '#/definitions/internal_api_handlers.DecodeVINResponse'
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a device definition
       tags:
       - device-definitions
   /device-definitions/search:
