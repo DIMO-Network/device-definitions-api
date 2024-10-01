@@ -12,14 +12,14 @@ import (
 )
 
 // DecodeVIN godoc
-// @Summary gets a device definition
+// @Summary returns device definition id corresponding to a given vin
 // @ID DecodeVIN
-// @Description gets a device definition
+// @Description decode a vin
 // @Tags device-definitions
 // @Produce json
 // @Accept json
 // @Param  decodeRequest body DecodeVINRequest true  "Decode VIN request"
-// @Success 200 {object} DecodeVINResponse "response with definition ID. TODO return polygon transaction if new DD"
+// @Success 200 {object} DecodeVINResponse "Response with definition ID. TODO return polygon transaction if new DD"
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions/decode-vin [post]

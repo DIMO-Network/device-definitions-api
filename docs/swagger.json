@@ -116,7 +116,7 @@
         },
         "/device-definitions/decode-vin": {
             "post": {
-                "description": "gets a device definition",
+                "description": "decode a vin",
                 "consumes": [
                     "application/json"
                 ],
@@ -126,7 +126,7 @@
                 "tags": [
                     "device-definitions"
                 ],
-                "summary": "gets a device definition",
+                "summary": "returns device definition id corresponding to a given vin",
                 "operationId": "DecodeVIN",
                 "parameters": [
                     {
@@ -141,7 +141,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "response with definition ID. TODO return polygon transaction if new DD",
+                        "description": "Response with definition ID. TODO return polygon transaction if new DD",
                         "schema": {
                             "$ref": "#/definitions/internal_api_handlers.DecodeVINResponse"
                         }

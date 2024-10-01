@@ -505,7 +505,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: gets a device definition
+      description: decode a vin
       operationId: DecodeVIN
       parameters:
       - description: Decode VIN request
@@ -518,7 +518,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: response with definition ID. TODO return polygon transaction
+          description: Response with definition ID. TODO return polygon transaction
             if new DD
           schema:
             $ref: '#/definitions/internal_api_handlers.DecodeVINResponse'
@@ -526,7 +526,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-      summary: gets a device definition
+      summary: returns device definition id corresponding to a given vin
       tags:
       - device-definitions
   /device-definitions/search:
