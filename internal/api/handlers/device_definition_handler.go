@@ -22,6 +22,7 @@ import (
 // @Success 200 {object} DecodeVINResponse "Response with definition ID. TODO return polygon transaction if new DD"
 // @Failure 404
 // @Failure 500
+// @Security    BearerAuth
 // @Router /device-definitions/decode-vin [post]
 func DecodeVIN(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -39,6 +40,7 @@ func DecodeVIN(m mediator.Mediator) fiber.Handler {
 		dd := DecodeVINResponse{
 			DeviceDefinitionID: resp.NameSlug,
 			LegacyID:           resp.DeviceDefinitionId,
+			// todo add the tableland trx if any
 		}
 
 		return c.Status(fiber.StatusOK).JSON(dd)
@@ -56,6 +58,8 @@ type DecodeVINResponse struct {
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
 	// old ksuid based device def id
 	LegacyID string `json:"legacyId"`
+	// if a new device definition was created, the tableland transaction hash from the insert statement. Check this has completed before querying the ID
+	NewTransactionHash string `json:"newTransactionHash"`
 }
 
 // GetDeviceDefinitionByID godoc

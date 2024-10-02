@@ -20,6 +20,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// @title                      DIMO Device Definitions API
+// @version                    1.0
+// @securityDefinitions.apikey BearerAuth
+// @in                         header
+// @name                       Authorization
 func main() {
 	gitSha1 := os.Getenv("GIT_SHA1")
 	ctx := context.Background()

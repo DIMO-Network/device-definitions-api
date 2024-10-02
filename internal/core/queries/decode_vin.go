@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +31,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/tidwall/gjson"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -245,6 +245,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Year = vinInfo.Year
 
 	// now match the model for the dd id
+	// todo, next iteration: have this query tableland. underlying method will need to get the table id, we may already have this in part in identity-api
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(shared.SlugString(vinInfo.Model))).
@@ -252,8 +253,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	ddExists := true
 	if err != nil {
-		// create DD if does not exist
+		// create DD if does not exist, metadata will only be set on create
 		if errors.Is(err, sql.ErrNoRows) {
+			// towards the end we create the record on-chain, this should be removed eventually
 			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
 				shared.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
@@ -328,8 +330,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			resp.DeviceStyleId = style.ID
 		}
 	}
-
-	// set the dd metadata if nothing there, if fails just continue
+	// set the dd metadata if nothing there, if fails just continue. this is needed in current setup
 	if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
 		// todo - future: merge metadata properties. Also set style specific metadata - multiple places
 		dd.Metadata = vinInfo.MetaData
@@ -477,7 +478,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
 			return nil, err
 		}
-
+		if trx != nil {
+			resp.NewTrxHash = *trx
+		}
 	}
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()

@@ -20,6 +20,7 @@ message DecodeVinResponse {
   string source = 5;
   string powertrain = 6;
   string name_slug = 7;
+  string new_trx_hash = 8;
 }
 
 service VinDecoderService {
