@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
 	"time"
@@ -329,7 +330,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			resp.DeviceStyleId = style.ID
 		}
 	}
-
+	// set the dd metadata if nothing there, if fails just continue. this is needed in current setup
+	if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
+		// todo - future: merge metadata properties. Also set style specific metadata - multiple places
+		dd.Metadata = vinInfo.MetaData
+		_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+		// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
+	}
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
 		Vin:                vin.String(),
