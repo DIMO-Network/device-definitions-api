@@ -138,7 +138,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		ExternalID:         dd.ExternalID.String,
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		Source:             dd.Source.String,
-		HardwareTemplateID: dd.HardwareTemplateID.String,
+		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
 		DeviceMake: models.DeviceMake{
 			ID:                 dd.R.DeviceMake.ID,
 			Name:               dd.R.DeviceMake.Name,
@@ -379,7 +379,7 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
 		Source:             dd.Source,
-		HardwareTemplateId: dd.HardwareTemplateID,
+		HardwareTemplateId: DefautlAutoPiTemplate, //used for the autopi template id, which should always be 130 now
 		Make: &grpc.DeviceMake{
 			Id:                 dd.DeviceMake.ID,
 			Name:               dd.DeviceMake.Name,

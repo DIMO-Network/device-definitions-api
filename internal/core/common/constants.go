@@ -25,7 +25,7 @@ const (
 
 const (
 	DefaultDeviceType     = "vehicle"
-	DefautlAutoPiTemplate = "130"
+	DefautlAutoPiTemplate = "130" // dimo device client template
 )
 
 func (r RegionEnum) String() string {
