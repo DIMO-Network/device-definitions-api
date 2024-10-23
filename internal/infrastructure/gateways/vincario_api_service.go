@@ -68,7 +68,7 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, erro
 	}
 
 	if infoResp.ModelYear == 0 || len(infoResp.Model) == 0 || len(infoResp.Make) == 0 {
-		return nil, fmt.Errorf("decode failed due to invalid MMY")
+		return nil, fmt.Errorf("decode failed due to invalid MMY. Make %s, Model %s, Year %d", infoResp.Make, infoResp.Model, infoResp.ModelYear)
 	}
 
 	return &infoResp, nil

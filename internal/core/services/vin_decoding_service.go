@@ -146,6 +146,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 
 		// if nothing from vincario, try DATGroup
 		if result == nil || result.Source == "" {
+			// idea: only accept WMI's for DATgroup that they have succesfully decoded in the past
 			datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
 			if err != nil {
 				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")

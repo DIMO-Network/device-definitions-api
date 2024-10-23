@@ -63,7 +63,8 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 
 	if v.FunctionResponse.Data.Decoder.ModelYear.Value == "0" || len(v.FunctionResponse.Data.Decoder.ModelYear.Value) == 0 ||
 		len(v.FunctionResponse.Data.Decoder.Model.Value) == 0 || len(v.FunctionResponse.Data.Decoder.Make.Value) == 0 {
-		return nil, fmt.Errorf("decode failed due to invalid MMY")
+		return nil, fmt.Errorf("decode failed due to invalid MMY. Make: %s Model: %s Year: %s", v.FunctionResponse.Data.Decoder.Make.Value,
+			v.FunctionResponse.Data.Decoder.Model.Value, v.FunctionResponse.Data.Decoder.ModelYear.Value)
 	}
 
 	return v, nil
