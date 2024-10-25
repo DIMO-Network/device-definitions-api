@@ -19,7 +19,7 @@ import (
 // @Produce json
 // @Accept json
 // @Param  decodeRequest body DecodeVINRequest true  "Decode VIN request"
-// @Success 200 {object} DecodeVINResponse "Response with definition ID. TODO return polygon transaction if new DD"
+// @Success 200 {object} DecodeVINResponse "Response with definition ID.
 // @Failure 404
 // @Failure 500
 // @Security    BearerAuth
@@ -40,7 +40,7 @@ func DecodeVIN(m mediator.Mediator) fiber.Handler {
 		dd := DecodeVINResponse{
 			DeviceDefinitionID: resp.NameSlug,
 			LegacyID:           resp.DeviceDefinitionId,
-			// todo add the tableland trx if any
+			NewTransactionHash: resp.NewTrxHash,
 		}
 
 		return c.Status(fiber.StatusOK).JSON(dd)
