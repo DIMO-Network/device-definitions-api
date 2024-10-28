@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -122,6 +123,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
 		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug
+		resp.DefinitionId = vinDecodeNumber.R.DeviceDefinition.NameSlug
 
 		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		if err != nil {
@@ -161,6 +163,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			SerialNumber:       vin.SerialNumber(),
 			DecodeProvider:     null.StringFrom("manual"),
 			Year:               int(dd.Year),
+			DefinitionID:       null.StringFrom(dd.NameSlug),
 		}
 
 		// no style, maybe for future way to pick the Style from Admin
@@ -187,6 +190,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		}
 		resp.Powertrain = pt
 		resp.NameSlug = dd.NameSlug
+		resp.DefinitionId = dd.NameSlug
 
 		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
 
@@ -238,7 +242,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Year = vinInfo.Year
 
 	// now match the model for the dd id
-	// todo, next iteration: have this query tableland. underlying method will need to get the table id, we may already have this in part in identity-api
+	tid := shared.SlugString(vinInfo.Model + " " + strconv.Itoa(int(vinInfo.Year)))
+	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDeviceDefinitionTableland(ctx, dbWMI.R.DeviceMake.TokenID.Int(new(big.Int)), tid)
+	if errTbl != nil {
+		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin %s", vin.String())
+	} else {
+		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland for vin %+v", tblDef)
+	}
+	// todo after observing, below should get replaced by above from tableland
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(shared.SlugString(vinInfo.Model))).
@@ -276,6 +287,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	resp.DeviceDefinitionId = dd.ID
 	resp.NameSlug = dd.NameSlug
+	resp.DefinitionId = dd.NameSlug
 
 	// match style - only process style if name is longer than 1
 	if len(vinInfo.StyleName) < 2 {
@@ -342,6 +354,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		SerialNumber:       vin.SerialNumber(),
 		DecodeProvider:     null.StringFrom(string(vinInfo.Source)),
 		Year:               int(resp.Year),
+		DefinitionID:       null.StringFrom(dd.NameSlug),
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
