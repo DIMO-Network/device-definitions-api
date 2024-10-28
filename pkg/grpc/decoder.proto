@@ -19,8 +19,11 @@ message DecodeVinResponse {
   int32 year = 4;
   string source = 5;
   string powertrain = 6;
-  string name_slug = 7;
+  // deprecated, moved to definition_id
+  string name_slug = 7 [deprecated = true];
   string new_trx_hash = 8;
+  // new human readable tableland id
+  string definition_id = 9;
 }
 
 service VinDecoderService {
