@@ -243,12 +243,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Year = vinInfo.Year
 
 	// now match the model for the dd id
-	tid := shared.SlugString(vinInfo.Model + " " + strconv.Itoa(int(vinInfo.Year)))
+	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, vinInfo.Model, int16(vinInfo.Year))
 	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDeviceDefinitionTableland(ctx, dbWMI.R.DeviceMake.TokenID.Int(new(big.Int)), tid)
 	if errTbl != nil {
 		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin %s", vin.String())
 	} else {
-		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland for vin %+v", tblDef)
+		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland: %+v", tblDef)
 	}
 	// todo after observing, below should get replaced by above from tableland
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
