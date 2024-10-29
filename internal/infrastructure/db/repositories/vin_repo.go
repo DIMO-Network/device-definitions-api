@@ -71,6 +71,8 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make str
 			}
 		}
 	}
+	dbWMI.R.NewStruct()
+	dbWMI.R.DeviceMake = deviceMake
 
 	return dbWMI, nil
 }
