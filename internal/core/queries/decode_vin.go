@@ -248,7 +248,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if errTbl != nil {
 		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin %s", vin.String())
 	} else {
-		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland: %+v", tblDef)
+		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
 	// todo after observing, below should get replaced by above from tableland
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
