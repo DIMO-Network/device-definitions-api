@@ -122,7 +122,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug
+		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug //nolint
 		resp.DefinitionId = vinDecodeNumber.R.DeviceDefinition.NameSlug
 
 		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
@@ -189,7 +189,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			pt = coremodels.ICE.String()
 		}
 		resp.Powertrain = pt
-		resp.NameSlug = dd.NameSlug
+		resp.NameSlug = dd.NameSlug //nolint
 		resp.DefinitionId = dd.NameSlug
 
 		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
@@ -287,7 +287,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, errors.New("could not get or create device_definition")
 	}
 	resp.DeviceDefinitionId = dd.ID
-	resp.NameSlug = dd.NameSlug
+	resp.NameSlug = dd.NameSlug //nolint
 	resp.DefinitionId = dd.NameSlug
 
 	// match style - only process style if name is longer than 1
