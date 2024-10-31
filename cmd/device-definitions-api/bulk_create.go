@@ -183,11 +183,8 @@ func checkTransactionStatus(txHash, apiKey string) (bool, error) {
 	// Check the transaction status
 	if txStatus.Status == "1" && txStatus.Result == "1" {
 		return true, nil
-	} else if txStatus.Status == "1" && txStatus.Result == "0" {
-		return false, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
 type TxStatusResponse struct {
