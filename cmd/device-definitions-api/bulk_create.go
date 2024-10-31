@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -135,13 +136,19 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			}
 			// repository create?
 			hardwareTemplateID := "130"
-			_, err = definitionRepository.GetOrCreate(ctx, nil, "ruptela", "", deviceMake.ID, modelName, year, common.DefaultDeviceType, null.JSON{}, true,
+			result, err := definitionRepository.GetOrCreate(ctx, nil, "ruptela", "", deviceMake.ID, modelName, year, common.DefaultDeviceType, null.JSON{}, true,
 				&hardwareTemplateID)
 			if err != nil {
 				fmt.Println("Error creating definition: ", record[0], err)
 				continue
 			}
-			fmt.Println("---------Created definition: ", record[0])
+			if len(result.TRXHashHex) > 0 {
+				fmt.Println("Created definition: ", record[0], " with transaction hash: ", result.TRXHashHex)
+				time.Sleep(time.Second * 1)
+			} else {
+				fmt.Println("---------no new trx for: ", record[0], "updated at: ", result.UpdatedAt.String())
+			}
+
 		}
 
 	}
