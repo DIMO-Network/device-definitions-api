@@ -26,5 +26,3 @@ vendor/
 
 # Desktop Service Store (macOS)
 .DS_Store
-
-device-definitions-api
