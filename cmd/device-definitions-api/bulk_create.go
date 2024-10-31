@@ -147,13 +147,23 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			if len(result.TRXHashHex) > 0 {
 				fmt.Println("Created definition: ", record[0], " with transaction hash: ", result.TRXHashHex)
 				trxFinished := false
+				loops := 0
 				for !trxFinished {
+					loops++
 					time.Sleep(time.Second * 2)
 					trxFinished, err = checkTransactionStatus(result.TRXHashHex[0], p.settings.PolygonScanAPIKey)
 					if err != nil {
 						fmt.Println("Error checking transaction status: ", err)
 					}
 					fmt.Println("Transaction status: ", trxFinished)
+					if loops > 10 {
+						// get device definition from on chain to see if maybe got created but trx still showing false
+						onchainDD, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
+						fmt.Println("onchainDD: ", onchainDD, err)
+						if onchainDD != nil {
+							break
+						}
+					}
 				}
 			} else {
 				fmt.Println("---------no new trx for: ", record[0], "updated at: ", result.UpdatedAt.String())
