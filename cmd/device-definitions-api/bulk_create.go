@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -144,7 +146,15 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			}
 			if len(result.TRXHashHex) > 0 {
 				fmt.Println("Created definition: ", record[0], " with transaction hash: ", result.TRXHashHex)
-				time.Sleep(time.Second * 1)
+				trxFinished := false
+				for !trxFinished {
+					time.Sleep(time.Second * 2)
+					trxFinished, err = checkTransactionStatus(result.TRXHashHex[0], p.settings.PolygonScanAPIKey)
+					if err != nil {
+						fmt.Println("Error checking transaction status: ", err)
+					}
+					fmt.Println("Transaction status: ", trxFinished)
+				}
 			} else {
 				fmt.Println("---------no new trx for: ", record[0], "updated at: ", result.UpdatedAt.String())
 			}
@@ -154,4 +164,34 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 	}
 
 	return subcommands.ExitSuccess
+}
+
+func checkTransactionStatus(txHash, apiKey string) (bool, error) {
+	url := fmt.Sprintf("https://api.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=%s&apikey=%s", txHash, apiKey)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var txStatus TxStatusResponse
+	if err := json.NewDecoder(resp.Body).Decode(&txStatus); err != nil {
+		return false, err
+	}
+
+	// Check the transaction status
+	if txStatus.Status == "1" && txStatus.Result == "1" {
+		return true, nil
+	} else if txStatus.Status == "1" && txStatus.Result == "0" {
+		return false, nil
+	} else {
+		return false, nil
+	}
+}
+
+type TxStatusResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Result  string `json:"result"`
 }
