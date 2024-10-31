@@ -5,6 +5,7 @@
 //
 //	mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -16,6 +17,7 @@ import (
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	db "github.com/DIMO-Network/shared/db"
 	types "github.com/volatiletech/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -58,6 +60,36 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Create(ctx, make, dd a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Create), ctx, make, dd)
 }
 
+// GetDefinitionByID mocks base method.
+func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*gateways.DeviceDefinitionTablelandModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefinitionByID", ctx, ID, reader)
+	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDefinitionByID indicates an expected call of GetDefinitionByID.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDefinitionByID(ctx, ID, reader any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDefinitionByID), ctx, ID, reader)
+}
+
+// GetDefinitionTableland mocks base method.
+func (m *MockDeviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*gateways.DeviceDefinitionTablelandModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefinitionTableland", ctx, manufacturerID, ID)
+	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDefinitionTableland indicates an expected call of GetDefinitionTableland.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDefinitionTableland(ctx, manufacturerID, ID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefinitionTableland", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDefinitionTableland), ctx, manufacturerID, ID)
+}
+
 // GetDeviceDefinitionByID mocks base method.
 func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
@@ -71,21 +103,6 @@ func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context
 func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionByID(ctx, manufacturerID, ID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitionByID), ctx, manufacturerID, ID)
-}
-
-// GetDeviceDefinitionTableland mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*gateways.DeviceDefinitionTablelandModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitionTableland", ctx, manufacturerID, ID)
-	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDeviceDefinitionTableland indicates an expected call of GetDeviceDefinitionTableland.
-func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionTableland(ctx, manufacturerID, ID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionTableland", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitionTableland), ctx, manufacturerID, ID)
 }
 
 // GetDeviceDefinitions mocks base method.

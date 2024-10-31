@@ -236,7 +236,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 	trxHash := new(string)
 	if dbDD.Verified {
 		// check for any changes
-		ddTbland, err := s.onChainDeviceDefs.GetDeviceDefinitionTableland(ctx, dm.TokenID.Int(new(big.Int)), in.DeviceDefinitionId)
+		ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, dm.TokenID.Int(new(big.Int)), in.DeviceDefinitionId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
 		}

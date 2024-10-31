@@ -53,6 +53,7 @@ type Settings struct {
 	SearchServiceAPIKey               string         `yaml:"SEARCH_SERVICE_API_KEY"`
 	SearchServiceIndexName            string         `yaml:"SEARCH_SERVICE_DEVICE_DEFINITION_INDEX"`
 	JwtKeySetURL                      string         `yaml:"JWT_KEY_SET_URL"`
+	IdentityAPIURL                    url.URL        `yaml:"IDENTITY_API_URL"`
 }
 
 func (s *Settings) IsProd() bool {

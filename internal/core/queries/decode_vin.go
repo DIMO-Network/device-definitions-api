@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -242,11 +241,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Source = string(vinInfo.Source)
 	resp.Year = vinInfo.Year
 
-	// now match the model for the dd id
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, vinInfo.Model, int16(vinInfo.Year))
-	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDeviceDefinitionTableland(ctx, dbWMI.R.DeviceMake.TokenID.Int(new(big.Int)), tid)
+	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
 	if errTbl != nil {
-		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin %s", vin.String())
+		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
+	} else if tblDef == nil {
+		dc.logger.Error().Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
 	} else {
 		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}

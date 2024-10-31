@@ -12,6 +12,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/DIMO-Network/shared/db"
+
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/tidwall/gjson"
 
@@ -38,7 +40,8 @@ import (
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
-	GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
+	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error)
+	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
@@ -99,8 +102,21 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	return nil, nil
 }
 
+func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error) {
+	split := strings.Split(ID, "_")
+	if len(split) != 3 {
+		return nil, fmt.Errorf("invalid slug")
+	}
+	manufacturerName := split[0]
+	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(manufacturerName)).One(ctx, reader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerName)
+	}
+	return e.GetDefinitionTableland(ctx, deviceMake.TokenID.Int(new(big.Int)), ID)
+}
+
 // GetDeviceDefinitionTableland gets dd from tableland with a select statement and returns tbl object
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
