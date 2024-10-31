@@ -107,10 +107,10 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	if len(split) != 3 {
 		return nil, fmt.Errorf("invalid slug")
 	}
-	manufacturerName := split[0]
-	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(manufacturerName)).One(ctx, reader)
+	manufacturerSlug := split[0]
+	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerName)
+		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
 	return e.GetDefinitionTableland(ctx, deviceMake.TokenID.Int(new(big.Int)), ID)
 }

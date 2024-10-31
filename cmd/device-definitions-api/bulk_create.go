@@ -83,21 +83,24 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 
 	// read through each line, forach:
 	for _, record := range records {
-		fmt.Println(record[0])
+		fmt.Println("-----------", record[0])
+		if record[0] == "DefinitionId" {
+			continue // skip first row header
+		}
 		dd, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
 		if err != nil {
 			fmt.Println("Error getting definition: ", record[0], err)
 		}
 		if dd == nil {
-			fmt.Println("Definition not found, creating it: ", record[0])
+			fmt.Println("Definition not found, will try to create it...: ", record[0])
 			split := strings.Split(record[0], "_")
 			if len(split) != 3 {
 				continue
 			}
-			manufacturerName := split[0]
-			deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(manufacturerName)).One(ctx, pdb.DBS().Reader)
+			manufacturerSlug := split[0]
+			deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, pdb.DBS().Reader)
 			if err != nil {
-				fmt.Println("Error getting manufacturer: ", manufacturerName, err)
+				fmt.Println("Error getting manufacturer: ", manufacturerSlug, err)
 				continue
 			}
 			modelSlug := split[1]
@@ -138,6 +141,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 				fmt.Println("Error creating definition: ", record[0], err)
 				continue
 			}
+			fmt.Println("---------Created definition: ", record[0])
 		}
 
 	}
