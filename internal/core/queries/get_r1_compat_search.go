@@ -60,6 +60,7 @@ func (ch GetR1CompatibilitySearchQueryHandler) Handle(ctx context.Context, query
 			Make:         doc["make"].(string),
 			Model:        doc["model"].(string),
 			Year:         int(doc["year"].(float64)),
+			Compatible:   doc["compatible"].(bool),
 		}
 		deviceDefinitions = append(deviceDefinitions, item)
 	}
