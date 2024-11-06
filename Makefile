@@ -49,7 +49,7 @@ gen-proto:
 	@protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative pkg/grpc/*.proto
 
 gen-swag:
-	@swag init -g cmd/devices-api/main.go --parseDependency --parseInternal
+	@swag init -g cmd/device-definitions-api/main.go --parseDependency --parseInternal
 
 add-migration:
 	goose -dir internal/infrastructure/db/migrations create rename_me sql

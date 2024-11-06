@@ -525,8 +525,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Response with definition ID. TODO return polygon transaction
-            if new DD
+          description: Response with definition ID.
           schema:
             $ref: '#/definitions/internal_api_handlers.DecodeVINResponse'
         "404":
