@@ -18,6 +18,7 @@ import (
 type TypesenseAPIService interface {
 	GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error)
 	Autocomplete(ctx context.Context, search string) (*api.SearchResult, error)
+	SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error)
 }
 
 type typesenseAPIService struct {
@@ -90,6 +91,24 @@ func (t typesenseAPIService) Autocomplete(ctx context.Context, search string) (*
 	}
 
 	result, err := t.client.Collection(t.settings.SearchServiceIndexName).Documents().Search(ctx, searchParameters)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t typesenseAPIService) SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error) {
+	searchParameters := &api.SearchCollectionParams{
+		Q:       search,
+		QueryBy: "model, make, year",
+		FacetBy: pointer.String("make,model,year"),
+		Page:    pointer.Int(page),
+		PerPage: pointer.Int(pageSize),
+	}
+
+	result, err := t.client.Collection("r1_compatibility").Documents().Search(ctx, searchParameters)
 
 	if err != nil {
 		return nil, err
