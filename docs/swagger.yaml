@@ -288,6 +288,28 @@ definitions:
       totalPages:
         type: integer
     type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1CompatibilitySearchQueryResult:
+    properties:
+      deviceDefinitions:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1SearchEntryItem'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination'
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1SearchEntryItem:
+    properties:
+      compatible:
+        type: boolean
+      definitionId:
+        type: string
+      make:
+        type: string
+      model:
+        type: string
+      year:
+        type: integer
+    type: object
   github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake:
     properties:
       created_at:
@@ -579,6 +601,38 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets device definitions by search filter
+      tags:
+      - device-definitions
+  /device-definitions/search-r1:
+    get:
+      consumes:
+      - application/json
+      description: gets r1 compatibility search by filter
+      operationId: GetR1CompatibilitySearch
+      parameters:
+      - description: query filter
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: page
+        in: query
+        name: page
+        type: number
+      - description: pageSize
+        in: query
+        name: pageSize
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1CompatibilitySearchQueryResult'
+        "500":
+          description: Internal Server Error
+      summary: gets r1 MMY compatibility by search filter
       tags:
       - device-definitions
   /device-makes:

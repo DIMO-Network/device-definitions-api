@@ -228,6 +228,54 @@
                 }
             }
         },
+        "/device-definitions/search-r1": {
+            "get": {
+                "description": "gets r1 compatibility search by filter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets r1 MMY compatibility by search filter",
+                "operationId": "GetR1CompatibilitySearch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "query filter",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "pageSize",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1CompatibilitySearchQueryResult"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/device-definitions/{id}": {
             "get": {
                 "description": "gets a device definition",
@@ -959,6 +1007,40 @@
                     "type": "integer"
                 },
                 "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1CompatibilitySearchQueryResult": {
+            "type": "object",
+            "properties": {
+                "deviceDefinitions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1SearchEntryItem"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionPagination"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1SearchEntryItem": {
+            "type": "object",
+            "properties": {
+                "compatible": {
+                    "type": "boolean"
+                },
+                "definitionId": {
+                    "type": "string"
+                },
+                "make": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "year": {
                     "type": "integer"
                 }
             }

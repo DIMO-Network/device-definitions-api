@@ -142,9 +142,9 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 // @Param  pageSize query number false "pageSize"
 // @Accept json
 // @Produce json
-// @Success 200 {object} queries.GetAllDeviceDefinitionBySearchQueryResult
+// @Success 200 {object} queries.GetR1CompatibilitySearchQueryResult
 // @Failure 500
-// @Router /device-definitions/search [get]
+// @Router /device-definitions/search-r1 [get]
 func GetR1CompatibilitySearch(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		q := c.Query("query")
