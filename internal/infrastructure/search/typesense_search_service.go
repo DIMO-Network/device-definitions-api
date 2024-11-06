@@ -34,7 +34,7 @@ func NewTypesenseAPIService(settings *config.Settings, log *zerolog.Logger) Type
 		typesense.WithConnectionTimeout(5*time.Second),
 		typesense.WithCircuitBreakerMaxRequests(50),
 		typesense.WithCircuitBreakerInterval(2*time.Minute),
-		typesense.WithCircuitBreakerTimeout(1*time.Minute))
+		typesense.WithCircuitBreakerTimeout(30*time.Second))
 
 	return &typesenseAPIService{
 		settings: settings,
@@ -102,7 +102,7 @@ func (t typesenseAPIService) Autocomplete(ctx context.Context, search string) (*
 func (t typesenseAPIService) SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error) {
 	searchParameters := &api.SearchCollectionParams{
 		Q:       search,
-		QueryBy: "model, make", //year
+		QueryBy: "name",
 		Page:    pointer.Int(page),
 		PerPage: pointer.Int(pageSize),
 	}
