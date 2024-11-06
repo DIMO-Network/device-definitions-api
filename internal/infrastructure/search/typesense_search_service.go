@@ -102,8 +102,7 @@ func (t typesenseAPIService) Autocomplete(ctx context.Context, search string) (*
 func (t typesenseAPIService) SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error) {
 	searchParameters := &api.SearchCollectionParams{
 		Q:       search,
-		QueryBy: "model, make, year",
-		FacetBy: pointer.String("make,model,year"),
+		QueryBy: "model, make", //year
 		Page:    pointer.Int(page),
 		PerPage: pointer.Int(pageSize),
 	}
