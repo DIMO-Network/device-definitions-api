@@ -132,6 +132,40 @@ func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
 	}
 }
 
+// GetR1CompatibilitySearch godoc
+// @Summary gets r1 MMY compatibility by search filter
+// @ID GetR1CompatibilitySearch
+// @Description gets r1 compatibility search by filter
+// @Tags device-definitions
+// @Param  query query string true "query filter"
+// @Param  page query number false "page"
+// @Param  pageSize query number false "pageSize"
+// @Accept json
+// @Produce json
+// @Success 200 {object} queries.GetAllDeviceDefinitionBySearchQueryResult
+// @Failure 500
+// @Router /device-definitions/search [get]
+func GetR1CompatibilitySearch(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		q := c.Query("query")
+
+		defaultPage := 1
+		defaultPageSize := 20
+
+		page := c.Query("page", strconv.Itoa(defaultPage))
+		pageSize := c.Query("pageSize", strconv.Itoa(defaultPageSize))
+
+		pageInt, _ := strconv.Atoi(page)
+		pageSizeInt, _ := strconv.Atoi(pageSize)
+
+		query := &queries.GetR1CompatibilitySearch{Query: q, PageSize: pageSizeInt, Page: pageInt}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}
+
 // GetDeviceDefinitionSearch godoc
 // @Summary gets device definitions by search filter
 // @ID GetDeviceDefinitionSearch
