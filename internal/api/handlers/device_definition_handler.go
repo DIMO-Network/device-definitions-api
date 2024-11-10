@@ -166,6 +166,17 @@ func GetR1CompatibilitySearch(m mediator.Mediator) fiber.Handler {
 	}
 }
 
+func GetCompatibilityR1Sheet(c *fiber.Ctx) error {
+	// todo need cache ~ 10minutes, set headers in fiber for upstream caching too with ttl
+	// todo need settings to pull credentials
+	data, err := queries.GetCompatibilityR1SheetData()
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(data)
+}
+
 // GetDeviceDefinitionSearch godoc
 // @Summary gets device definitions by search filter
 // @ID GetDeviceDefinitionSearch
