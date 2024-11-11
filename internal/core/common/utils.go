@@ -534,8 +534,8 @@ func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, d
 	return null.JSONFrom(j), nil
 }
 
-func BuildDeviceDefinitionName(year int16, make string, model string) string {
-	return fmt.Sprintf("%d %s %s", year, make, model)
+func BuildDeviceDefinitionName(year int16, mk string, model string) string {
+	return fmt.Sprintf("%d %s %s", year, mk, model)
 }
 
 func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceIntegrationFeatureAttribute, dt []*repoModel.IntegrationFeature) ([]map[string]interface{}, error) {
