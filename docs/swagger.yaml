@@ -211,6 +211,25 @@ definitions:
         description: VehicleType PASSENGER CAR, from NHTSA
         type: string
     type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow:
+    properties:
+      compatible:
+        type: string
+      definitionId:
+        type: string
+      id:
+        type: integer
+      make:
+        type: string
+      model:
+        type: string
+      odometer:
+        type: string
+      vin:
+        type: string
+      year:
+        type: integer
+    type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionAutocompleteItem:
     properties:
       id:
@@ -306,6 +325,8 @@ definitions:
       make:
         type: string
       model:
+        type: string
+      name:
         type: string
       year:
         type: integer
@@ -409,6 +430,23 @@ info:
   title: DIMO Device Definitions API
   version: "1.0"
 paths:
+  /compatibility/r1-sheet:
+    get:
+      description: gets r1 MMY compatibility google sheet in JSON form. returns an
+        array of below objects
+      operationId: GetCompatibilityR1Sheet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow'
+        "500":
+          description: Internal Server Error
+      summary: gets r1 MMY compatibility google sheet in JSON form
+      tags:
+      - device-definitions
   /device-definitions:
     get:
       description: gets a specific device definition by make model and year.

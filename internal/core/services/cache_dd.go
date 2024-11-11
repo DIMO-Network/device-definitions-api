@@ -22,9 +22,9 @@ import (
 type DeviceDefinitionCacheService interface {
 	GetDeviceDefinitionByID(ctx context.Context, id string, options ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error)
-	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
+	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	DeleteDeviceDefinitionCacheByID(ctx context.Context, id string)
-	DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int)
+	DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, mk string, model string, year int)
 	DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int)
 	GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error)
 }
@@ -122,14 +122,14 @@ func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByID(ctx contex
 	c.Cache.Del(ctx, cache)
 }
 
-func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, make string, model string, year int) {
-	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, make, model, year)
+func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, mk string, model string, year int) {
+	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, mk, model, year)
 	c.Cache.Del(ctx, cache)
 }
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, make string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
 
-	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, make, model, year)
+	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, mk, model, year)
 	cacheData := c.Cache.Get(ctx, cache)
 
 	rp := &models.GetDeviceDefinitionQueryResult{}
@@ -142,7 +142,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 		}
 	}
 
-	dd, err := c.Repository.GetByMakeModelAndYears(ctx, make, model, year, true)
+	dd, err := c.Repository.GetByMakeModelAndYears(ctx, mk, model, year, true)
 
 	if err != nil {
 		return nil, err

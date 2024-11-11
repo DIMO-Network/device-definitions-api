@@ -16,7 +16,7 @@ import (
 
 //go:generate mockgen -source typesense_search_service.go -destination mocks/typesense_search_service_mock.go -package mocks
 type TypesenseAPIService interface {
-	GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error)
+	GetDeviceDefinitions(ctx context.Context, search, mk, model string, year, page, pageSize int) (*api.SearchResult, error)
 	Autocomplete(ctx context.Context, search string) (*api.SearchResult, error)
 	SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error)
 }
@@ -43,11 +43,11 @@ func NewTypesenseAPIService(settings *config.Settings, log *zerolog.Logger) Type
 	}
 }
 
-func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error) {
+func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, mk, model string, year, page, pageSize int) (*api.SearchResult, error) {
 
 	var filters strings.Builder
-	if make != "" {
-		filters.WriteString(fmt.Sprintf("make_slug:=%s", make))
+	if mk != "" {
+		filters.WriteString(fmt.Sprintf("make_slug:=%s", mk))
 	}
 	if model != "" {
 		if filters.Len() > 0 {
@@ -65,7 +65,7 @@ func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, m
 	searchParameters := &api.SearchCollectionParams{
 		Q:        search,
 		QueryBy:  "name",
-		FacetBy:  pointer.String("make,model,year"),
+		FacetBy:  pointer.String("mk,model,year"),
 		Page:     pointer.Int(page),
 		PerPage:  pointer.Int(pageSize),
 		FilterBy: pointer.String(filters.String()),

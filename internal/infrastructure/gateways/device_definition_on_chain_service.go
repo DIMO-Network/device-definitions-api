@@ -115,7 +115,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	return e.GetDefinitionTableland(ctx, deviceMake.TokenID.Int(new(big.Int)), ID)
 }
 
-// GetDeviceDefinitionTableland gets dd from tableland with a select statement and returns tbl object
+// GetDefinitionTableland gets dd from tableland with a select statement and returns tbl object
 func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
@@ -254,7 +254,7 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -511,9 +511,9 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 	return &trx, nil
 }
 
-func validateAttributes(current, new []DeviceTypeAttribute) ([]DeviceTypeAttribute, []DeviceTypeAttribute) {
+func validateAttributes(current, newAttrs []DeviceTypeAttribute) ([]DeviceTypeAttribute, []DeviceTypeAttribute) {
 	currentMap := attributesToMap(current)
-	newMap := attributesToMap(new)
+	newMap := attributesToMap(newAttrs)
 
 	var newOrModifiedAttributes []DeviceTypeAttribute
 	var removedAttributes []DeviceTypeAttribute

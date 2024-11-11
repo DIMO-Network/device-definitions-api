@@ -56,16 +56,31 @@ func (mr *MockTypesenseAPIServiceMockRecorder) Autocomplete(ctx, search any) *go
 }
 
 // GetDeviceDefinitions mocks base method.
-func (m *MockTypesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, make, model string, year, page, pageSize int) (*api.SearchResult, error) {
+func (m *MockTypesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, mk, model string, year, page, pageSize int) (*api.SearchResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitions", ctx, search, make, model, year, page, pageSize)
+	ret := m.ctrl.Call(m, "GetDeviceDefinitions", ctx, search, mk, model, year, page, pageSize)
 	ret0, _ := ret[0].(*api.SearchResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDeviceDefinitions indicates an expected call of GetDeviceDefinitions.
-func (mr *MockTypesenseAPIServiceMockRecorder) GetDeviceDefinitions(ctx, search, make, model, year, page, pageSize any) *gomock.Call {
+func (mr *MockTypesenseAPIServiceMockRecorder) GetDeviceDefinitions(ctx, search, mk, model, year, page, pageSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockTypesenseAPIService)(nil).GetDeviceDefinitions), ctx, search, make, model, year, page, pageSize)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockTypesenseAPIService)(nil).GetDeviceDefinitions), ctx, search, mk, model, year, page, pageSize)
+}
+
+// SearchR1Compatibility mocks base method.
+func (m *MockTypesenseAPIService) SearchR1Compatibility(ctx context.Context, search string, page, pageSize int) (*api.SearchResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchR1Compatibility", ctx, search, page, pageSize)
+	ret0, _ := ret[0].(*api.SearchResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchR1Compatibility indicates an expected call of SearchR1Compatibility.
+func (mr *MockTypesenseAPIServiceMockRecorder) SearchR1Compatibility(ctx, search, page, pageSize any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchR1Compatibility", reflect.TypeOf((*MockTypesenseAPIService)(nil).SearchR1Compatibility), ctx, search, page, pageSize)
 }

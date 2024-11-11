@@ -87,7 +87,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 	// read through each line, forach:
 	for _, record := range records {
 		fmt.Println("-----------", record[0])
-		if record[0] == "DefinitionId" {
+		if record[0] == "DefinitionID" {
 			continue // skip first row header
 		}
 		dd, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
