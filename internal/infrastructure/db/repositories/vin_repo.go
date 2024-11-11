@@ -17,7 +17,7 @@ import (
 )
 
 type VINRepository interface {
-	GetOrCreateWMI(ctx context.Context, wmi string, make string) (*models.Wmi, error)
+	GetOrCreateWMI(ctx context.Context, wmi string, mk string) (*models.Wmi, error)
 }
 
 type vinRepository struct {
@@ -28,14 +28,14 @@ func NewVINRepository(dbs func() *db.ReaderWriter) VINRepository {
 	return &vinRepository{DBS: dbs}
 }
 
-func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make string) (*models.Wmi, error) {
+func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk string) (*models.Wmi, error) {
 	if len(wmi) != 3 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid wmi for GetOrCreate: %s", wmi)}
 	}
-	if len(make) < 2 {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid make name for GetOrCreate: %s", make)}
+	if len(mk) < 2 {
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid make name for GetOrCreate: %s", mk)}
 	}
-	makeSlug := shared.SlugString(make)
+	makeSlug := shared.SlugString(mk)
 	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, r.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -47,7 +47,7 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, make str
 	}
 
 	if deviceMake.TokenID.IsZero() {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("make has not been minted yet or no tokenID set: %s", make)}
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("make has not been minted yet or no tokenID set: %s", mk)}
 	}
 
 	//dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
