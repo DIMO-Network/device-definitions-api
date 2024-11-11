@@ -80,9 +80,9 @@ func (ch GetAllDeviceDefinitionGroupQueryHandler) Handle(ctx context.Context, _ 
 	return result, nil
 }
 
-func indexOfMake(makes []GetAllDeviceDefinitionGroupQueryResult, make string) int {
+func indexOfMake(makes []GetAllDeviceDefinitionGroupQueryResult, mk string) int {
 	for i, root := range makes {
-		if root.Make == make {
+		if root.Make == mk {
 			return i
 		}
 	}

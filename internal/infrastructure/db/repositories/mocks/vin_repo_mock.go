@@ -40,16 +40,16 @@ func (m *MockVINRepository) EXPECT() *MockVINRepositoryMockRecorder {
 }
 
 // GetOrCreateWMI mocks base method.
-func (m *MockVINRepository) GetOrCreateWMI(ctx context.Context, wmi, make string) (*models.Wmi, error) {
+func (m *MockVINRepository) GetOrCreateWMI(ctx context.Context, wmi, mk string) (*models.Wmi, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrCreateWMI", ctx, wmi, make)
+	ret := m.ctrl.Call(m, "GetOrCreateWMI", ctx, wmi, mk)
 	ret0, _ := ret[0].(*models.Wmi)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrCreateWMI indicates an expected call of GetOrCreateWMI.
-func (mr *MockVINRepositoryMockRecorder) GetOrCreateWMI(ctx, wmi, make any) *gomock.Call {
+func (mr *MockVINRepositoryMockRecorder) GetOrCreateWMI(ctx, wmi, mk any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateWMI", reflect.TypeOf((*MockVINRepository)(nil).GetOrCreateWMI), ctx, wmi, make)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateWMI", reflect.TypeOf((*MockVINRepository)(nil).GetOrCreateWMI), ctx, wmi, mk)
 }
