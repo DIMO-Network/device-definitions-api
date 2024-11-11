@@ -166,15 +166,24 @@ func GetR1CompatibilitySearch(m mediator.Mediator) fiber.Handler {
 	}
 }
 
-func GetCompatibilityR1Sheet(c *fiber.Ctx) error {
-	// todo need cache ~ 10minutes, set headers in fiber for upstream caching too with ttl
-	// todo need settings to pull credentials
-	data, err := queries.GetCompatibilityR1SheetData()
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
+// GetCompatibilityR1Sheet godoc
+// @Summary gets r1 MMY compatibility google sheet in JSON form
+// @ID GetCompatibilityR1Sheet
+// @Description gets r1 MMY compatibility google sheet in JSON form. returns an array of below objects
+// @Tags device-definitions
+// @Produce json
+// @Success 200 {object} queries.CompatibilitySheetRow
+// @Failure 500
+// @Router /compatibility/r1-sheet [get]
+func GetCompatibilityR1Sheet(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// todo add go fiber cache on the route
+		// cache.New(cache.Config{ Expiration: 5 * time.Minute }
+		query := &queries.GetCompatibilityR1SheetQuery{}
+		result, _ := m.Send(c.UserContext(), query)
 
-	return c.Status(fiber.StatusOK).JSON(data)
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
 }
 
 // GetDeviceDefinitionSearch godoc

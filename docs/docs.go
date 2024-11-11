@@ -15,6 +15,30 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/compatibility/r1-sheet": {
+            "get": {
+                "description": "gets r1 MMY compatibility google sheet in JSON form. returns an array of below objects",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets r1 MMY compatibility google sheet in JSON form",
+                "operationId": "GetCompatibilityR1Sheet",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/device-definitions": {
             "get": {
                 "description": "gets a specific device definition by make model and year.",
@@ -902,6 +926,35 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow": {
+            "type": "object",
+            "properties": {
+                "compatible": {
+                    "type": "string"
+                },
+                "definitionId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "make": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "odometer": {
+                    "type": "string"
+                },
+                "vin": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetAllDeviceDefinitionAutocompleteItem": {
             "type": "object",
             "properties": {
@@ -1047,6 +1100,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "model": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "year": {

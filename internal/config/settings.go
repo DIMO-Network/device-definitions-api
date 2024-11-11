@@ -55,6 +55,7 @@ type Settings struct {
 	JwtKeySetURL                      string         `yaml:"JWT_KEY_SET_URL"`
 	IdentityAPIURL                    url.URL        `yaml:"IDENTITY_API_URL"`
 	PolygonScanAPIKey                 string         `yaml:"POLYGON_SCAN_API_KEY"`
+	GoogleSheetsCredentials           string         `yaml:"GOOGLE_SHEETS_CREDENTIALS"`
 }
 
 func (s *Settings) IsProd() bool {
