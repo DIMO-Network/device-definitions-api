@@ -37,9 +37,6 @@ type CompatibilitySheetRow struct {
 	Model        string `json:"model"`
 	Year         int    `json:"year"`
 	Compatible   string `json:"compatible"`
-	Vin          string `json:"vin"`
-	Odometer     string `json:"odometer"`
-	ID           int    `json:"id"`
 }
 
 //func getClient(config *oauth2.Config) *http.Client {

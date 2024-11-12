@@ -935,19 +935,10 @@ const docTemplate = `{
                 "definitionId": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "make": {
                     "type": "string"
                 },
                 "model": {
-                    "type": "string"
-                },
-                "odometer": {
-                    "type": "string"
-                },
-                "vin": {
                     "type": "string"
                 },
                 "year": {
