@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -37,7 +38,7 @@ func (p *setVinNumbersDefinitionID) Execute(ctx context.Context, _ *flag.FlagSet
 
 	fmt.Printf("Starting processing vin numbers\n")
 
-	all, err := models.VinNumbers(models.VinNumberWhere.DefinitionID.IsNull()).All(ctx, pdb.DBS().Reader)
+	all, err := models.VinNumbers(models.VinNumberWhere.DefinitionID.IsNull(), qm.Limit(10000)).All(ctx, pdb.DBS().Reader)
 
 	if err != nil {
 		p.logger.Error().Err(err).Send()
@@ -46,7 +47,6 @@ func (p *setVinNumbersDefinitionID) Execute(ctx context.Context, _ *flag.FlagSet
 	fmt.Printf("Found %d vin numbers\n", len(all))
 
 	counter := 1
-	slugsUpdatedCounter := 0
 	for _, vn := range all {
 		definition, err := models.FindDeviceDefinition(ctx, pdb.DBS().Reader, vn.DeviceDefinitionID)
 		if err != nil {
@@ -61,6 +61,6 @@ func (p *setVinNumbersDefinitionID) Execute(ctx context.Context, _ *flag.FlagSet
 		}
 	}
 
-	fmt.Printf("success. set %d slugs\n", slugsUpdatedCounter)
+	fmt.Printf("success. set %d slugs\n", counter)
 	return subcommands.ExitSuccess
 }
