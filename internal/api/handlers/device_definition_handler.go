@@ -177,11 +177,9 @@ func GetR1CompatibilitySearch(m mediator.Mediator) fiber.Handler {
 // @Router /compatibility/r1-sheet [get]
 func GetCompatibilityR1Sheet(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// todo add go fiber cache on the route
-		// cache.New(cache.Config{ Expiration: 5 * time.Minute }
 		query := &queries.GetCompatibilityR1SheetQuery{}
 		result, _ := m.Send(c.UserContext(), query)
-
+		c.Set("Cache-Control", "public, max-age=600, s-maxage=600, immutable")
 		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
