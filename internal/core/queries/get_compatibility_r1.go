@@ -69,7 +69,7 @@ func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings)
 		if i == 0 {
 			continue
 		}
-		if len(row) >= 3 {
+		if len(row) >= 4 {
 			yr, _ := strconv.Atoi(fmt.Sprintf("%v", row[3]))
 			rows = append(rows, CompatibilitySheetRow{
 				DefinitionID: fmt.Sprintf("%v", row[0]),
