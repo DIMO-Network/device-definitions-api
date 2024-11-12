@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
@@ -14,23 +15,23 @@ import (
 )
 
 // can delete this whole file soon
-type setVinNumbersDefinitionId struct {
+type setVinNumbersDefinitionID struct {
 	logger   zerolog.Logger
 	settings config.Settings
 }
 
-func (*setVinNumbersDefinitionId) Name() string { return "vin-numbers-definition-id" }
-func (*setVinNumbersDefinitionId) Synopsis() string {
+func (*setVinNumbersDefinitionID) Name() string { return "vin-numbers-definition-id" }
+func (*setVinNumbersDefinitionID) Synopsis() string {
 	return "set definition-id in vin_numbers"
 }
-func (*setVinNumbersDefinitionId) Usage() string {
+func (*setVinNumbersDefinitionID) Usage() string {
 	return `vin-numbers-definition-id`
 }
 
-func (p *setVinNumbersDefinitionId) SetFlags(_ *flag.FlagSet) {
+func (p *setVinNumbersDefinitionID) SetFlags(_ *flag.FlagSet) {
 }
 
-func (p *setVinNumbersDefinitionId) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *setVinNumbersDefinitionID) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
