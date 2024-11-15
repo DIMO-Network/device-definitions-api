@@ -346,17 +346,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
-		Vin:                vin.String(),
-		DeviceDefinitionID: dd.ID,
-		DeviceMakeID:       dd.DeviceMakeID,
-		Wmi:                wmi,
-		VDS:                vin.VDS(),
-		Vis:                vin.VIS(),
-		CheckDigit:         vin.CheckDigit(),
-		SerialNumber:       vin.SerialNumber(),
-		DecodeProvider:     null.StringFrom(string(vinInfo.Source)),
-		Year:               int(resp.Year),
-		DefinitionID:       null.StringFrom(dd.NameSlug),
+		Vin:            vin.String(),
+		DeviceMakeID:   dd.DeviceMakeID,
+		Wmi:            wmi,
+		VDS:            vin.VDS(),
+		Vis:            vin.VIS(),
+		CheckDigit:     vin.CheckDigit(),
+		SerialNumber:   vin.SerialNumber(),
+		DecodeProvider: null.StringFrom(string(vinInfo.Source)),
+		Year:           int(resp.Year),
+		DefinitionID:   dd.NameSlug,
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)

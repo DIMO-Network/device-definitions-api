@@ -18,6 +18,7 @@ import (
 	"github.com/typesense/typesense-go/typesense"
 )
 
+// syncDeviceDefinitionSearchCmd cli command to sync to typesense
 type syncDeviceDefinitionSearchCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
