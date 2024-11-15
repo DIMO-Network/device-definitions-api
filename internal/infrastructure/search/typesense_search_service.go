@@ -65,7 +65,7 @@ func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, m
 	searchParameters := &api.SearchCollectionParams{
 		Q:        search,
 		QueryBy:  "name",
-		FacetBy:  pointer.String("mk,model,year"),
+		FacetBy:  pointer.String("make,model,year"),
 		Page:     pointer.Int(page),
 		PerPage:  pointer.Int(pageSize),
 		FilterBy: pointer.String(filters.String()),
