@@ -241,7 +241,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Source = string(vinInfo.Source)
 	resp.Year = vinInfo.Year
 
-	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, vinInfo.Model, int16(vinInfo.Year))
+	modelSlug := shared.SlugString(vinInfo.Model)
+	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
 	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
 	if errTbl != nil {
 		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
@@ -253,7 +254,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// todo after observing, below should get replaced by above from tableland
 	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
-		models.DeviceDefinitionWhere.ModelSlug.EQ(shared.SlugString(vinInfo.Model))).
+		models.DeviceDefinitionWhere.ModelSlug.EQ(modelSlug)).
 		One(ctx, dc.dbs().Reader)
 
 	ddExists := true
@@ -276,7 +277,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
 			}
 			ddExists = false
-			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", shared.SlugString(vinInfo.Model))
+			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", modelSlug)
 		} else {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 			return nil, err
