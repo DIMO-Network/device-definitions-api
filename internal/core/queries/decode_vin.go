@@ -109,23 +109,27 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	defer txVinNumbers.Rollback() //nolint
 	vinDecodeNumber, err := models.VinNumbers(
-		models.VinNumberWhere.Vin.EQ(vin.String()),
-		qm.Load(models.VinNumberRels.DeviceDefinition)).
+		models.VinNumberWhere.Vin.EQ(vin.String())).
 		One(ctx, txVinNumbers)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	if vinDecodeNumber != nil {
+		// get from tableland, probably don't need this here anymore
+		//tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, vinDecodeNumber.DefinitionID, dc.dbs().Reader)
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
-		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug //nolint
-		resp.DefinitionId = vinDecodeNumber.R.DeviceDefinition.NameSlug
-
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		resp.NameSlug = vinDecodeNumber.DefinitionID
+		resp.DefinitionId = vinDecodeNumber.DefinitionID
+		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
+		if len(split) != 3 {
+			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
+		}
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID,
+			vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}
@@ -136,7 +140,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	// If DeviceDefinitionID passed in, override VIN decoding
+	// If DeviceDefinitionID passed in, override VIN decoding // todo next version: this should change to use definitionId
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DeviceDefinitionID)
 	if len(qry.DeviceDefinitionID) > 0 {
 		dd, err := dc.ddRepository.GetByID(ctx, qry.DeviceDefinitionID)
@@ -153,17 +157,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
-			Vin:                vin.String(),
-			DeviceDefinitionID: dd.ID,
-			DeviceMakeID:       dd.DeviceMakeID,
-			Wmi:                dbWMI.Wmi,
-			VDS:                vin.VDS(),
-			Vis:                vin.VIS(),
-			CheckDigit:         vin.CheckDigit(),
-			SerialNumber:       vin.SerialNumber(),
-			DecodeProvider:     null.StringFrom("manual"),
-			Year:               int(dd.Year),
-			DefinitionID:       null.StringFrom(dd.NameSlug),
+			Vin:            vin.String(),
+			DeviceMakeID:   dd.DeviceMakeID,
+			Wmi:            dbWMI.Wmi,
+			VDS:            vin.VDS(),
+			Vis:            vin.VIS(),
+			CheckDigit:     vin.CheckDigit(),
+			SerialNumber:   vin.SerialNumber(),
+			DecodeProvider: null.StringFrom("manual"),
+			Year:           int(dd.Year),
+			DefinitionID:   dd.NameSlug,
+		}
+
+		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
+		if len(split) != 3 {
+			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
 		}
 
 		// no style, maybe for future way to pick the Style from Admin
@@ -182,9 +190,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
-		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, null.JSON{}, null.JSON{})
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID, null.JSON{}, null.JSON{})
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}

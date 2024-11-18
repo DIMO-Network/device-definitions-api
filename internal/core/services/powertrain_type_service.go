@@ -4,12 +4,11 @@ package services
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"os"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/tidwall/gjson"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/volatiletech/null/v8"
 
@@ -25,12 +24,13 @@ type PowerTrainTypeService interface {
 }
 
 type powerTrainTypeService struct {
-	DBS                func() *db.ReaderWriter
-	logger             *zerolog.Logger
-	powerTrainRuleData coremodels.PowerTrainTypeRuleData
+	DBS                            func() *db.ReaderWriter
+	logger                         *zerolog.Logger
+	powerTrainRuleData             coremodels.PowerTrainTypeRuleData
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
-func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string, logger *zerolog.Logger) (PowerTrainTypeService, error) {
+func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string, logger *zerolog.Logger, ddOnChainSvc gateways.DeviceDefinitionOnChainService) (PowerTrainTypeService, error) {
 	if rulesFileName == "" {
 		rulesFileName = "powertrain_type_rule.yaml"
 	}
@@ -45,7 +45,7 @@ func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string,
 		return nil, err
 	}
 
-	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData}, nil
+	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData, deviceDefinitionOnChainService: ddOnChainSvc}, nil
 }
 
 // ResolvePowerTrainFromVinInfo uses standard vin info StyleName and FuelType to figure out powertrain, otherwise returns an empty string
@@ -115,15 +115,19 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 	if definitionID != nil {
 		// future: what about style. also, use the dd cache service
 		// first see if we have already figured out powertrain for this DD
-		dd, _ := models.FindDeviceDefinition(ctx, c.DBS().Reader, *definitionID)
-		if dd != nil && dd.Metadata.Valid {
-			ddPt := gjson.GetBytes(dd.Metadata.JSON, common.VehicleMetadataKey+"."+common.PowerTrainType).String()
-			if ddPt != "" {
-				return ddPt, nil
+		dd, errTbl := c.deviceDefinitionOnChainService.GetDefinitionByID(ctx, *definitionID, c.DBS().Reader)
+		if dd != nil {
+			c.logger.Warn().Err(errTbl).Msgf("failed to get dd from tableland node: %s", *definitionID)
+		}
+		if dd != nil && dd.Metadata != nil {
+			for _, attr := range dd.Metadata.DeviceAttributes {
+				if attr.Name == common.PowerTrainType {
+					return attr.Value, nil
+				}
 			}
 		}
 		// if definitionId is not nil set the drivlyData & vincarioData from a vin number that matches ddID
-		vins, err := models.VinNumbers(models.VinNumberWhere.DeviceDefinitionID.EQ(*definitionID)).All(ctx, c.DBS().Reader)
+		vins, err := models.VinNumbers(models.VinNumberWhere.DefinitionID.EQ(*definitionID)).All(ctx, c.DBS().Reader)
 		if err == nil && len(vins) > 0 {
 			drivlyData = vins[0].DrivlyData
 			vincarioData = vins[0].VincarioData
