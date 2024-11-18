@@ -33,7 +33,7 @@ var deviceTypeVehiclePropertyDataSample []byte
 
 const (
 	dbName               = "device_definitions_api"
-	migrationsDirRelPath = "../../internal/infrastructure/db/migrations"
+	migrationsDirRelPath = "../../infrastructure/db/migrations"
 )
 
 type CreateDeviceDefinitionCommandHandlerSuite struct {
