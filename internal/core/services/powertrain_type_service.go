@@ -4,9 +4,10 @@ package services
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"os"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"

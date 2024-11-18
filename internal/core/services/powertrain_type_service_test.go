@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
+	"go.uber.org/mock/gomock"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
@@ -25,6 +28,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	pdb.WaitForDB(*logger)
 	defer container.Terminate(ctx) //nolint
 
+	ctrl := gomock.NewController(t)
+	onChainSvc := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	defer ctrl.Finish()
+
 	// used for test case where get powertrain from dd
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
@@ -32,7 +39,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	_, err := ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
-	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
+	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger, onChainSvc)
 	require.NoError(t, err)
 
 	type args struct {

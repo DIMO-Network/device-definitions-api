@@ -106,22 +106,6 @@ func (s *GrpcIntegrationService) CreateIntegrationFeature(ctx context.Context, i
 	return &p_grpc.IntegrationBaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcIntegrationService) UpdateIntegrationFeature(ctx context.Context, in *p_grpc.CreateOrUpdateIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
-	command := &commands.UpdateIntegrationFeatureCommand{
-		ID:              in.Id,
-		CSSIcon:         in.CssIcon,
-		DisplayName:     in.DisplayName,
-		ElasticProperty: in.ElasticProperty,
-		FeatureWeight:   float64(in.FeatureWeight),
-	}
-
-	commandResult, _ := s.Mediator.Send(ctx, command)
-
-	result := commandResult.(commands.UpdateIntegrationFeatureResult)
-
-	return &p_grpc.IntegrationBaseResponse{Id: result.ID}, nil
-}
-
 func (s *GrpcIntegrationService) DeleteIntegrationFeature(ctx context.Context, in *p_grpc.DeleteIntegrationFeatureRequest) (*p_grpc.IntegrationBaseResponse, error) {
 	command := &commands.DeleteIntegrationFeatureCommand{
 		ID: in.Id,

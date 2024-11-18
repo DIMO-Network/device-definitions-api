@@ -104,7 +104,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))
 		return subcommands.ExitFailure
 	}
-	vinNumber.DeviceDefinitionID = deviceDefinition.ID
+	vinNumber.DefinitionID = deviceDefinition.NameSlug
 
 	err = vinNumber.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	if err != nil {
@@ -113,7 +113,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	}
 
 	// improvement, from existing data, try to guess Model
-	fmt.Printf("added success, ddId: %s\n", vinNumber.DeviceDefinitionID)
+	fmt.Printf("added success, ddId: %s\n", vinNumber.DefinitionID)
 	return subcommands.ExitSuccess
 }
 

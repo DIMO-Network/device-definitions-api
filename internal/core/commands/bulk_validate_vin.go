@@ -24,7 +24,7 @@ type BulkValidateVinCommandResult struct {
 
 type DecodedVIN struct {
 	VIN                   string                          `json:"vin"`
-	DeviceDefinitionID    string                          `json:"device_definition_id"`
+	DefinitionID          string                          `json:"definition_id"`
 	DeviceMake            models.DeviceMake               `json:"device_make"`
 	DeviceYear            int32                           `json:"device_year"`
 	DeviceModel           string                          `json:"device_model"`
@@ -68,18 +68,18 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 
 		compatibilities := make([]*p_grpc.DeviceCompatibilities, 0)
 
-		deviceDefinitionCompatibilities, err := dc.DeviceDefinitionCompatibilityHandler.Handle(ctx, &queries.GetCompatibilityByDeviceDefinitionQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId})
+		deviceDefinitionCompatibilities, err := dc.DeviceDefinitionCompatibilityHandler.Handle(ctx, &queries.GetCompatibilityByDeviceDefinitionQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId}) //nolint
 
 		if err == nil {
 			compatibilities = deviceDefinitionCompatibilities.(*p_grpc.GetDeviceCompatibilitiesResponse).Compatibilities
 		}
 
-		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId})
+		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId}) //nolint
 
 		if err == nil {
 			decodedVINs = append(decodedVINs, DecodedVIN{
 				VIN:                   vin,
-				DeviceDefinitionID:    decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId,
+				DefinitionID:          decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId,
 				DeviceYear:            decodedVIN.(*p_grpc.DecodeVinResponse).Year,
 				CompatibilityFeatures: compatibilities,
 				DeviceMake:            devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceMake,

@@ -24,7 +24,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/elastic"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/DIMO-Network/shared/redis"
@@ -60,12 +59,11 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
-	elasticSearchService, _ := elastic.NewElasticAppSearchService(settings, logger)
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
+	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
+	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, ddOnChainService)
 	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
@@ -73,9 +71,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vinRepository := repositories.NewVINRepository(pdb.DBS)
 
 	//cache services
-	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, deviceDefinitionOnChainService)
+	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, ddOnChainService)
 	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
-	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger, ddOnChainService)
 	searchService := search.NewTypesenseAPIService(settings, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
@@ -130,9 +128,8 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
 
 		mediator.WithHandler(&commands.CreateIntegrationFeatureCommand{}, commands.NewCreateIntegrationFeatureCommandHandler(pdb.DBS)),
-		mediator.WithHandler(&commands.UpdateIntegrationFeatureCommand{}, commands.NewUpdateIntegrationFeatureCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteIntegrationFeatureCommand{}, commands.NewDeleteIntegrationFeatureCommandHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, deviceDefinitionOnChainService)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService)),
 
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionByMakeYearRangeQuery{}, queries.NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(deviceDefinitionRepository)),
 
@@ -140,15 +137,14 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
-			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, deviceDefinitionOnChainService),
+			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService),
 			queries.NewGetCompatibilityByDeviceDefinitionQueryHandler(pdb.DBS),
 			queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService),
 		)),
 
-		mediator.WithHandler(&commands.SyncSearchDataCommand{}, commands.NewSyncSearchDataCommandHandler(pdb.DBS, elasticSearchService, logger)),
 		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
 
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, deviceDefinitionOnChainService)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, ddOnChainService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionOnChainByIDQuery{}, queries.NewGetDeviceDefinitionOnChainByIDQueryHandler(ddCacheService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionBySearchQuery{}, queries.NewGetAllDeviceDefinitionBySearchQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetR1CompatibilitySearch{}, queries.NewGetR1CompatibilitySearchQueryHandler(searchService)),
@@ -181,7 +177,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS, deviceDefinitionOnChainService)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService)
 
 	// Start Server from a different go routine
 	go func() {

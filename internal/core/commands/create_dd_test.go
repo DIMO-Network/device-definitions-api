@@ -31,6 +31,11 @@ import (
 //go:embed device_type_vehicle_properties.json
 var deviceTypeVehiclePropertyDataSample []byte
 
+const (
+	dbName               = "device_definitions_api"
+	migrationsDirRelPath = "../../internal/infrastructure/db/migrations"
+)
+
 type CreateDeviceDefinitionCommandHandlerSuite struct {
 	suite.Suite
 	*require.Assertions

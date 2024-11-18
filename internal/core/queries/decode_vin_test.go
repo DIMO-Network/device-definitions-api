@@ -159,7 +159,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate WMI was inserted
 	wmi, err := models.Wmis().One(s.ctx, s.pdb.DBS().Reader)
@@ -284,7 +284,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ddCreated, err := models.DeviceDefinitions().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(ddCreated.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(ddCreated.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
@@ -300,7 +300,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	require.NoError(s.T(), err)
 	s.Assert().True(vn.DrivlyData.Valid)
 	s.Assert().Equal(2021, vn.Year)
-	s.Assert().Equal(ddCreated.ID, vn.DeviceDefinitionID)
+	s.Assert().Equal(ddCreated.NameSlug, vn.DefinitionID)
 	s.Assert().Equal(wmi, vn.Wmi)
 	s.Assert().Equal("drivly", vn.DecodeProvider.String)
 	s.Assert().Equal(vin, vn.Vin)
@@ -393,7 +393,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	s.Assert().Equal(ds.ID, result.DeviceStyleId)
 
@@ -481,7 +481,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
@@ -505,16 +505,16 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	// insert into vin numbers
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
-		Vin:                vin,
-		Wmi:                v.Wmi(),
-		VDS:                v.VDS(),
-		CheckDigit:         v.CheckDigit(),
-		SerialNumber:       v.SerialNumber(),
-		Vis:                v.VIS(),
-		DeviceMakeID:       dm.ID,
-		DeviceDefinitionID: dd.ID,
-		Year:               2021,
-		DecodeProvider:     null.StringFrom("drivly"),
+		Vin:            vin,
+		Wmi:            v.Wmi(),
+		VDS:            v.VDS(),
+		CheckDigit:     v.CheckDigit(),
+		SerialNumber:   v.SerialNumber(),
+		Vis:            v.VIS(),
+		DeviceMakeID:   dm.ID,
+		DefinitionID:   dd.NameSlug,
+		Year:           2021,
+		DecodeProvider: null.StringFrom("drivly"),
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
@@ -527,7 +527,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
@@ -660,7 +660,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	assert.Equal(s.T(), int32(2022), result.Year)
 	assert.Equal(s.T(), dm.ID, result.DeviceMakeId)
 	assert.Equal(s.T(), "probably smartcar", result.Source)
-	assert.NotEmptyf(s.T(), result.DeviceDefinitionId, "dd expected")
+	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
 }
 
 func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {

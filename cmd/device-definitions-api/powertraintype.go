@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
@@ -39,7 +42,22 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &p.logger)
+	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+	send, err := createSender(ctx, &p.settings, &p.logger)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	onChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send)
+
+	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &p.logger, onChainService)
 	if err != nil {
 		p.logger.Err(err).Stack().Send()
 	}
