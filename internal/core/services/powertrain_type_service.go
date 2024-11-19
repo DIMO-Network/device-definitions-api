@@ -82,7 +82,8 @@ func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *coremodels.
 }
 
 // ResolvePowerTrainType figures out the powertrain based on make, model, and optionally definitionID or vin decoder data
-func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string, drivlyData null.JSON, vincarioData null.JSON) (string, error) {
+func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug string, modelSlug string, definitionID *string,
+	drivlyData null.JSON, vincarioData null.JSON) (string, error) {
 	// iterate over hard coded rules in yaml file first
 	for _, ptType := range c.powerTrainRuleData.PowerTrainTypeList {
 		for _, mk := range ptType.Makes {

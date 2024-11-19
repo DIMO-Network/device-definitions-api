@@ -456,7 +456,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 							} else {
 								vincarioData = vinInfo.MetaData
 							}
-							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
+							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, &dd.NameSlug, drivlyData, vincarioData)
 							if err != nil {
 								dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
 							}
