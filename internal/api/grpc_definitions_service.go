@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -20,7 +22,6 @@ import (
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GrpcDefinitionsService struct {
@@ -273,17 +274,6 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 		return nil, errors.Wrap(err, "failed to update device definition")
 	}
 	return &p_grpc.BaseResponse{Id: dbDD.NameSlug}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionHardwareTemplateByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionHardwareTemplateByIDRequest) (*p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionHardwareTemplateByIDQuery{
-		DeviceDefinitionID: in.Id,
-		IntegrationID:      in.IntegrationId,
-	})
-
-	result := qryResult.(coremodels.GetDeviceDefinitionHardwareTemplateQueryResult)
-
-	return &p_grpc.GetDeviceDefinitionHardwareTemplateByIDResponse{HardwareTemplateId: result.TemplateID}, nil
 }
 
 func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {

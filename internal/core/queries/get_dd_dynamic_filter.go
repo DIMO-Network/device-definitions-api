@@ -73,7 +73,7 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 	var queryMods []qm.QueryMod
 
 	if len(qry.DeviceDefinitionID) > 1 {
-		queryMods = append(queryMods, models.DeviceDefinitionWhere.ID.EQ(string(qry.DeviceDefinitionID)))
+		queryMods = append(queryMods, models.DeviceDefinitionWhere.ID.EQ(qry.DeviceDefinitionID))
 	}
 
 	if len(qry.VerifiedVinList) > 1 {

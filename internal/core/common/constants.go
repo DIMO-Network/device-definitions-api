@@ -19,7 +19,6 @@ const (
 
 const (
 	SmartCarVendor = "SmartCar"
-	TeslaVendor    = "Tesla"
 	AutoPiVendor   = "AutoPi"
 )
 

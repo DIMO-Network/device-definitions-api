@@ -530,11 +530,11 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel stri
 	return vinInfo, nil
 }
 
-func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, make, model string, year int, prodID int, prodFormat int) error {
+func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, mk, model string, year int, prodID int, prodFormat int) error {
 
-	img, err := dc.fuelAPIService.FetchDeviceImages(make, model, year, prodID, prodFormat)
+	img, err := dc.fuelAPIService.FetchDeviceImages(mk, model, year, prodID, prodFormat)
 	if err != nil {
-		dc.logger.Warn().Err(err).Msgf("unable to fetch device image for: %d %s %s", year, make, model)
+		dc.logger.Warn().Err(err).Msgf("unable to fetch device image for: %d %s %s", year, mk, model)
 		return nil
 	}
 
@@ -554,7 +554,7 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 
 		err = p.Upsert(ctx, dc.dbs().Writer, true, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 		if err != nil {
-			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", deviceDefinitionID, year, make, model)
+			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", deviceDefinitionID, year, mk, model)
 			continue
 		}
 	}

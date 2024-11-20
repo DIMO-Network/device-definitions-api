@@ -73,8 +73,8 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 		dm.OemPlatformName = command.OemPlatformName
 	}
 
-	dm.ExternalIds = null.JSONFrom([]byte(command.ExternalIDs))
-	dm.Metadata = null.JSONFrom([]byte(command.Metadata))
+	dm.ExternalIds = null.JSONFrom(command.ExternalIDs)
+	dm.Metadata = null.JSONFrom(command.Metadata)
 	dm.HardwareTemplateID = null.StringFrom(command.HardwareTemplateID)
 
 	if err := dm.Upsert(ctx, ch.DBS().Writer.DB, true, []string{models.DeviceMakeColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
