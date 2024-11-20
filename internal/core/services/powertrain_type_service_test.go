@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/segmentio/ksuid"
-	"testing"
 
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
