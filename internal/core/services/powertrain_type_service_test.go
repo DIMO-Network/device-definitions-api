@@ -4,6 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/segmentio/ksuid"
+
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
+	"go.uber.org/mock/gomock"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
@@ -25,6 +31,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	pdb.WaitForDB(*logger)
 	defer container.Terminate(ctx) //nolint
 
+	ctrl := gomock.NewController(t)
+	onChainSvc := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	defer ctrl.Finish()
+
 	// used for test case where get powertrain from dd
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
@@ -32,7 +42,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	_, err := ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
 
-	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger)
+	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger, onChainSvc)
 	require.NoError(t, err)
 
 	type args struct {
@@ -43,9 +53,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 		vincarioData null.JSON
 	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name   string
+		args   args
+		want   string
+		before func()
 	}{
 		{
 			name: "Tesla EV - from rules",
@@ -109,18 +120,39 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 		{
 			name: "device definition already has powertrain - BEV",
 			args: args{
-				definitionID: &ddWithPt.ID,
+				definitionID: &ddWithPt.NameSlug,
 			},
 			want: "BEV",
+			before: func() {
+				onChainSvc.EXPECT().GetDefinitionByID(gomock.Any(), ddWithPt.NameSlug, gomock.Any()).
+					Return(buildTestTblDD(ddWithPt.NameSlug, "super-special", 2022, "BEV"), nil)
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.before != nil {
+				tt.before()
+			}
 
 			got, err := ptSvc.ResolvePowerTrainType(ctx, tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			assert.Equalf(t, tt.want, got, "ResolvePowerTrainType( %v, %v, %v, %v, %v)", tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
 		})
+	}
+}
+
+func buildTestTblDD(definitionID, model string, year int, powerTrainType string) *gateways.DeviceDefinitionTablelandModel {
+	return &gateways.DeviceDefinitionTablelandModel{
+		ID:         definitionID,
+		KSUID:      ksuid.New().String(),
+		Model:      model,
+		Year:       year,
+		DeviceType: "vehicle",
+		ImageURI:   "",
+		Metadata: &gateways.DeviceDefinitionMetadata{DeviceAttributes: []gateways.DeviceTypeAttribute{
+			{Name: "powertrain_type", Value: powerTrainType},
+		}},
 	}
 }

@@ -109,23 +109,27 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	defer txVinNumbers.Rollback() //nolint
 	vinDecodeNumber, err := models.VinNumbers(
-		models.VinNumberWhere.Vin.EQ(vin.String()),
-		qm.Load(models.VinNumberRels.DeviceDefinition)).
+		models.VinNumberWhere.Vin.EQ(vin.String())).
 		One(ctx, txVinNumbers)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	if vinDecodeNumber != nil {
+		// get from tableland, probably don't need this here anymore
+		//tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, vinDecodeNumber.DefinitionID, dc.dbs().Reader)
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
-		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		resp.NameSlug = vinDecodeNumber.R.DeviceDefinition.NameSlug //nolint
-		resp.DefinitionId = vinDecodeNumber.R.DeviceDefinition.NameSlug
-
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		resp.NameSlug = vinDecodeNumber.DefinitionID //nolint
+		resp.DefinitionId = vinDecodeNumber.DefinitionID
+		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
+		if len(split) != 3 {
+			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
+		}
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID,
+			vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}
@@ -136,7 +140,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	// If DeviceDefinitionID passed in, override VIN decoding
+	// If DeviceDefinitionID passed in, override VIN decoding // todo next version: this should change to use definitionId
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DeviceDefinitionID)
 	if len(qry.DeviceDefinitionID) > 0 {
 		dd, err := dc.ddRepository.GetByID(ctx, qry.DeviceDefinitionID)
@@ -153,17 +157,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
-			Vin:                vin.String(),
-			DeviceDefinitionID: dd.ID,
-			DeviceMakeID:       dd.DeviceMakeID,
-			Wmi:                dbWMI.Wmi,
-			VDS:                vin.VDS(),
-			Vis:                vin.VIS(),
-			CheckDigit:         vin.CheckDigit(),
-			SerialNumber:       vin.SerialNumber(),
-			DecodeProvider:     null.StringFrom("manual"),
-			Year:               int(dd.Year),
-			DefinitionID:       null.StringFrom(dd.NameSlug),
+			Vin:            vin.String(),
+			DeviceMakeID:   dd.DeviceMakeID,
+			Wmi:            dbWMI.Wmi,
+			VDS:            vin.VDS(),
+			Vis:            vin.VIS(),
+			CheckDigit:     vin.CheckDigit(),
+			SerialNumber:   vin.SerialNumber(),
+			DecodeProvider: null.StringFrom("manual"),
+			Year:           int(dd.Year),
+			DefinitionID:   dd.NameSlug,
+		}
+
+		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
+		if len(split) != 3 {
+			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
 		}
 
 		// no style, maybe for future way to pick the Style from Admin
@@ -182,9 +190,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
-		resp.DeviceDefinitionId = vinDecodeNumber.DeviceDefinitionID
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &vinDecodeNumber.DeviceDefinitionID, null.JSON{}, null.JSON{})
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID, null.JSON{}, null.JSON{})
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}
@@ -209,7 +216,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	vinInfo, err := dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
 
-	// if no luck decoding VIN, try buildingVinInfo from known data passed in
+	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
 	if err != nil {
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
 			// note if this is successful, err gets set to nil
@@ -245,9 +252,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
 	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
 	if errTbl != nil {
-		dc.logger.Error().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
+		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
 	} else if tblDef == nil {
-		dc.logger.Error().Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
+		dc.logger.Warn().Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
 	} else {
 		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
@@ -261,7 +268,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err != nil {
 		// create DD if does not exist, metadata will only be set on create
 		if errors.Is(err, sql.ErrNoRows) {
-			// towards the end we create the record on-chain, this should be removed eventually
+			// this method creates on-chain as well as in dd database
 			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
 				shared.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
@@ -287,8 +294,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.New("could not get or create device_definition")
 	}
-	resp.DeviceDefinitionId = dd.ID
-	resp.NameSlug = dd.NameSlug //nolint
+	resp.DeviceDefinitionId = dd.ID //nolint
+	resp.NameSlug = dd.NameSlug     //nolint
 	resp.DefinitionId = dd.NameSlug
 
 	// match style - only process style if name is longer than 1
@@ -346,17 +353,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
-		Vin:                vin.String(),
-		DeviceDefinitionID: dd.ID,
-		DeviceMakeID:       dd.DeviceMakeID,
-		Wmi:                wmi,
-		VDS:                vin.VDS(),
-		Vis:                vin.VIS(),
-		CheckDigit:         vin.CheckDigit(),
-		SerialNumber:       vin.SerialNumber(),
-		DecodeProvider:     null.StringFrom(string(vinInfo.Source)),
-		Year:               int(resp.Year),
-		DefinitionID:       null.StringFrom(dd.NameSlug),
+		Vin:            vin.String(),
+		DeviceMakeID:   dd.DeviceMakeID,
+		Wmi:            wmi,
+		VDS:            vin.VDS(),
+		Vis:            vin.VIS(),
+		CheckDigit:     vin.CheckDigit(),
+		SerialNumber:   vin.SerialNumber(),
+		DecodeProvider: null.StringFrom(string(vinInfo.Source)),
+		Year:           int(resp.Year),
+		DefinitionID:   dd.NameSlug,
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
@@ -450,7 +456,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 							} else {
 								vincarioData = vinInfo.MetaData
 							}
-							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, nil, drivlyData, vincarioData)
+							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, &dd.NameSlug, drivlyData, vincarioData)
 							if err != nil {
 								dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
 							}
@@ -495,7 +501,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	// if powertrain not set yet, try resolving for it
 	if resp.Powertrain == "" {
-		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, "", "", &resp.DeviceDefinitionId, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		split := strings.Split(resp.DefinitionId, "_")
+		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &resp.DefinitionId, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		resp.Powertrain = pt
 	}
 
@@ -523,11 +530,11 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel stri
 	return vinInfo, nil
 }
 
-func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, make, model string, year int, prodID int, prodFormat int) error {
+func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, mk, model string, year int, prodID int, prodFormat int) error {
 
-	img, err := dc.fuelAPIService.FetchDeviceImages(make, model, year, prodID, prodFormat)
+	img, err := dc.fuelAPIService.FetchDeviceImages(mk, model, year, prodID, prodFormat)
 	if err != nil {
-		dc.logger.Warn().Err(err).Msgf("unable to fetch device image for: %d %s %s", year, make, model)
+		dc.logger.Warn().Err(err).Msgf("unable to fetch device image for: %d %s %s", year, mk, model)
 		return nil
 	}
 
@@ -547,7 +554,7 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 
 		err = p.Upsert(ctx, dc.dbs().Writer, true, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 		if err != nil {
-			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", deviceDefinitionID, year, make, model)
+			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", deviceDefinitionID, year, mk, model)
 			continue
 		}
 	}

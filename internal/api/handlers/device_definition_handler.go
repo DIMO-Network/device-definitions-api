@@ -39,7 +39,7 @@ func DecodeVIN(m mediator.Mediator) fiber.Handler {
 		resp := result.(*p_grpc.DecodeVinResponse)
 		dd := DecodeVINResponse{
 			DeviceDefinitionID: resp.DefinitionId,
-			LegacyID:           resp.DeviceDefinitionId,
+			LegacyID:           resp.DeviceDefinitionId, //nolint
 			NewTransactionHash: resp.NewTrxHash,
 		}
 

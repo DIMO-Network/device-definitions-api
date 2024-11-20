@@ -1,99 +1,8 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
 package grpc;
-
-message IntegrationBaseResponse {
-  string id = 1;
-}
-
-message GetIntegrationFeatureByIDRequest {
-  string id = 1;
-}
-
-message CreateOrUpdateIntegrationFeatureRequest {
-  string id = 1;
-  string elastic_property = 2;
-  string display_name = 3;
-  string css_icon = 4;
-  float feature_weight = 5;
-}
-
-message DeleteIntegrationFeatureRequest {
-  string id = 1;
-}
-
-message GetIntegrationFeatureListResponse {
-  repeated GetIntegrationFeatureResponse integration_features = 2;
-}
-
-message GetIntegrationFeatureResponse {
-  string feature_key = 1;
-  string elastic_property = 2;
-  string display_name = 3;
-  string css_icon = 4;
-  float feature_weight = 5;
-}
-
-message GetCompatibilitiesByMakeRequest {
-  string make_id = 1;
-  string integration_id = 2;
-  string region = 3;
-  int64 skip = 4;
-  int64 take = 5;
-}
-
-message GetCompatibilitiesByMakeResponse {
-  repeated DeviceCompatibilities models = 1;
-  int64 totalCount = 2;
-}
-
-message DeviceCompatibilities {
-  int32 year = 1;
-  repeated Feature features = 2;
-  string level = 3;
-
-  string integration_id = 4;
-  string integration_vendor = 5;
-  string region = 6;
-
-  string model = 7;
-  string model_slug = 8;
-  
-  float score = 9;
-  string device_definition_id = 10;
-}
-
-message Feature {
-  string key = 1;
-  int32 support_level = 2;
-  string css_icon = 3;
-  string display_name = 4;
-}
-
-message GetCompatibilityByDeviceArrayRequest {
-  repeated string device_definition_ids = 1;
-}
-
-message GetCompatibilityByDeviceArrayResponseItem {
-  string device_definition_id = 1;
-  repeated DeviceCompatibilities compatibilities = 2;
-}
-
-message GetCompatibilityByDeviceArrayResponse {
-  repeated GetCompatibilityByDeviceArrayResponseItem response = 1;
-}
-
-message GetCompatibilityByDeviceDefinitionRequest {
-  string device_definition_id = 1;
-}
-
-message GetDeviceCompatibilitiesResponse {
-  repeated DeviceCompatibilities compatibilities = 4;
-}
 
 message GetIntegrationOptionsRequest {
   string make_id = 1;
@@ -109,17 +18,6 @@ message GetIntegrationOptionItem {
 }
 
 service IntegrationService {
-  // GetCompatibilitiesByMake for explorer makes page, get by makeId
-  rpc GetCompatibilitiesByMake(GetCompatibilitiesByMakeRequest) returns (GetCompatibilitiesByMakeResponse);
-  // GetCompatibilityByDeviceDefinition for explorer models page, get by ddid
-  rpc GetCompatibilityByDeviceDefinition(GetCompatibilityByDeviceDefinitionRequest) returns (GetDeviceCompatibilitiesResponse);
-  // GetCompatibilityByDeviceArray for models endpoint, returns all model compatability levels
-  rpc GetCompatibilityByDeviceArray(GetCompatibilityByDeviceArrayRequest) returns (GetCompatibilityByDeviceArrayResponse);
-  rpc GetIntegrationFeatureByID(GetIntegrationFeatureByIDRequest) returns (GetIntegrationFeatureResponse);
-  rpc GetIntegrationFeatures(google.protobuf.Empty) returns (GetIntegrationFeatureListResponse);
   // GetIntegrationOptions for dropdowns in explorer makes page, get by makeId
   rpc GetIntegrationOptions(GetIntegrationOptionsRequest) returns (GetIntegrationOptionsResponse);
-  rpc CreateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (IntegrationBaseResponse);
-  rpc UpdateIntegrationFeature(CreateOrUpdateIntegrationFeatureRequest) returns (IntegrationBaseResponse);
-  rpc DeleteIntegrationFeature(DeleteIntegrationFeatureRequest) returns (IntegrationBaseResponse);
 }

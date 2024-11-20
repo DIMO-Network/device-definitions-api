@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/segmentio/ksuid"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/volatiletech/null/v8"
@@ -138,9 +140,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	metaDataInfo["vehicle_info"] = deviceTypeInfo
 	metaData, _ := json.Marshal(metaDataInfo)
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
-
+	definitionID := dd.NameSlug
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("ICE")
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -159,7 +163,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate WMI was inserted
 	wmi, err := models.Wmis().One(s.ctx, s.pdb.DBS().Reader)
@@ -251,7 +255,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 		Model:     vinInfoResp.Model,
 		Raw:       raw,
 	}
-
+	definitionID := "ford_escape_2021"
 	metaDataInfo := make(map[string]interface{})
 	metaDataInfo["vehicle_info"] = deviceTypeInfo
 	metaData, _ := json.Marshal(metaDataInfo)
@@ -259,6 +263,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 
 	styleLevelPT := "PHEV"
 	//s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&iceValue, nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, "Escape", 2021), nil)
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return(styleLevelPT)
 
@@ -284,7 +290,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ddCreated, err := models.DeviceDefinitions().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(ddCreated.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(ddCreated.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
@@ -300,7 +306,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	require.NoError(s.T(), err)
 	s.Assert().True(vn.DrivlyData.Valid)
 	s.Assert().Equal(2021, vn.Year)
-	s.Assert().Equal(ddCreated.ID, vn.DeviceDefinitionID)
+	s.Assert().Equal(ddCreated.NameSlug, vn.DefinitionID)
 	s.Assert().Equal(wmi, vn.Wmi)
 	s.Assert().Equal("drivly", vn.DecodeProvider.String)
 	s.Assert().Equal(vin, vn.Vin)
@@ -317,6 +323,20 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ddImages, err := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(ddCreated.ID)).All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
 	s.Assert().NotEmpty(ddImages)
+}
+
+func buildTestTblDD(definitionID, model string, year int) *gateways.DeviceDefinitionTablelandModel {
+	return &gateways.DeviceDefinitionTablelandModel{
+		ID:         definitionID,
+		KSUID:      ksuid.New().String(),
+		Model:      model,
+		Year:       year,
+		DeviceType: "vehicle",
+		ImageURI:   "",
+		Metadata: &gateways.DeviceDefinitionMetadata{DeviceAttributes: []gateways.DeviceTypeAttribute{
+			{Name: "powertrain_type", Value: "ICE"},
+		}},
+	}
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleAndMetadata() {
@@ -369,10 +389,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	metaDataInfo["vehicle_info"] = deviceTypeInfo
 	metaData, _ := json.Marshal(metaDataInfo)
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+	definitionID := dd.NameSlug
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", &dd.ID, gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
-
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", &dd.NameSlug, gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil)
 	// db setup
 	ds := dbtesthelper.SetupCreateStyle(s.T(), dd.ID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
 
@@ -393,7 +415,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	s.Assert().Equal(ds.ID, result.DeviceStyleId)
 
@@ -460,9 +482,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	metaDataInfo["vehicle_info"] = deviceTypeInfo
 	metaData, _ := json.Marshal(metaDataInfo)
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
+	definitionID := dd.NameSlug
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData).Return("HEV")
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -481,7 +506,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
@@ -505,21 +530,21 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	// insert into vin numbers
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
-		Vin:                vin,
-		Wmi:                v.Wmi(),
-		VDS:                v.VDS(),
-		CheckDigit:         v.CheckDigit(),
-		SerialNumber:       v.SerialNumber(),
-		Vis:                v.VIS(),
-		DeviceMakeID:       dm.ID,
-		DeviceDefinitionID: dd.ID,
-		Year:               2021,
-		DecodeProvider:     null.StringFrom("drivly"),
+		Vin:            vin,
+		Wmi:            v.Wmi(),
+		VDS:            v.VDS(),
+		CheckDigit:     v.CheckDigit(),
+		SerialNumber:   v.SerialNumber(),
+		Vis:            v.VIS(),
+		DeviceMakeID:   dm.ID,
+		DefinitionID:   dd.NameSlug,
+		Year:           2021,
+		DecodeProvider: null.StringFrom("drivly"),
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	// when we get the vin already found, we lookup the powertrain using powertrain service
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", &dd.ID, vinNumb.DrivlyData, vinNumb.VincarioData)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", &dd.NameSlug, vinNumb.DrivlyData, vinNumb.VincarioData)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -527,7 +552,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DeviceDefinitionId)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
@@ -547,10 +572,13 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 		Make:   dm.Name,
 		Model:  "Escape",
 	}
+	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, "Escape", 2021), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -583,10 +611,13 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 		Model:     "Escape",
 		StyleName: "1",
 	}
+	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, "Escape", 2017), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -633,11 +664,14 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
 	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.ID, s.pdb)
 
+	definitionID := "ford_bronco_2022"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "", "", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "bronco", &definitionID, gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, "Escape", 2017), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -660,7 +694,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	assert.Equal(s.T(), int32(2022), result.Year)
 	assert.Equal(s.T(), dm.ID, result.DeviceMakeId)
 	assert.Equal(s.T(), "probably smartcar", result.Source)
-	assert.NotEmptyf(s.T(), result.DeviceDefinitionId, "dd expected")
+	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
 }
 
 func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {

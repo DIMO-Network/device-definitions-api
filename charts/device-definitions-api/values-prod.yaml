@@ -63,8 +63,3 @@ jobs:
     args:
       - '-c'
       - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
-  - name: feat-compat-updte
-    schedule: 0 0 * * 0
-    args:
-      - '-c'
-      - /device-definitions-api populate-device-features; CODE=$?; echo "weekly integration features update completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
