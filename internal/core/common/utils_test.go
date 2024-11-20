@@ -113,7 +113,7 @@ func TestBuildDeviceTypeAttributes_errorsInvalidProperty(t *testing.T) {
 	}
 	// assert
 	got, err := BuildDeviceTypeAttributes(attributes, deviceType)
-	require.NoError(t, err)
+	require.NotNil(t, got)
 	assert.Equal(t, false, got.Valid)
 	assert.ErrorContains(t, err, "invalid", "expected an error when get a property not in device type attrs")
 }
