@@ -43,7 +43,7 @@ type DeviceDefinitionOnChainService interface {
 	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
-	Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error)
+	Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 }
 
@@ -277,7 +277,7 @@ const (
 )
 
 // Create does a create for tableland, on-chain operation - checks if already exists
-func (e *deviceDefinitionOnChainService) Create(ctx context.Context, make models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
@@ -328,11 +328,11 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, make models
 	}
 
 	// Validate if manufacturer exists
-	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, make.Name)
+	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, mk.Name)
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", make.Name, err)
+		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", mk.Name, err)
 	}
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
