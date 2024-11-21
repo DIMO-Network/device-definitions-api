@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/shared"
+
 	"google.golang.org/api/option"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -39,12 +42,6 @@ type CompatibilitySheetRow struct {
 	Compatible   string `json:"compatible"`
 }
 
-//func getClient(config *oauth2.Config) *http.Client {
-//	token := &oauth2.Token{}
-//	client := config.Client(context.Background(), token)
-//	return client
-//}
-
 func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings) ([]CompatibilitySheetRow, error) {
 	srv, err := sheets.NewService(ctx,
 		option.WithCredentialsJSON([]byte(settings.GoogleSheetsCredentials)),
@@ -53,8 +50,8 @@ func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings)
 		return nil, fmt.Errorf("unable to retrieve Sheets client: %v", err)
 	}
 
-	spreadsheetID := "1PjUQm84M5xcEGDpykKyjljhslmzGpqaAbRHZQi8q1f0" // Replace with your actual spreadsheet ID
-	rangeData := "R1API!A1:E"                                       // Replace with the relevant range
+	spreadsheetID := "1immL2UJb27I2WLBJwQs29HF68sBbLYSLUB9EpnwovTQ" // Replace with your actual spreadsheet ID
+	rangeData := "R1 Compatibility Checker!A1:D"                    // Replace with the relevant range
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, rangeData).Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve data from sheet: %v", err)
@@ -66,14 +63,18 @@ func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings)
 		if i == 0 {
 			continue
 		}
-		if len(row) >= 5 {
-			yr, _ := strconv.Atoi(fmt.Sprintf("%v", row[3]))
+		if len(row) >= 4 {
+			mk := fmt.Sprintf("%v", row[0])
+			model := fmt.Sprintf("%v", row[1])
+			yr, _ := strconv.Atoi(fmt.Sprintf("%v", row[2]))
+			compat := fmt.Sprintf("%v", row[3])
+
 			rows = append(rows, CompatibilitySheetRow{
-				DefinitionID: fmt.Sprintf("%v", row[0]),
-				Make:         fmt.Sprintf("%v", row[1]),
-				Model:        fmt.Sprintf("%v", row[2]),
+				DefinitionID: common.DeviceDefinitionSlug(shared.SlugString(mk), shared.SlugString(model), int16(yr)),
+				Make:         mk,
+				Model:        model,
 				Year:         yr,
-				Compatible:   fmt.Sprintf("%v", row[4]),
+				Compatible:   compat,
 			})
 		}
 	}
