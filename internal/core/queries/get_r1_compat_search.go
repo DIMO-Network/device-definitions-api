@@ -24,8 +24,8 @@ type GetR1SearchEntryItem struct {
 	Make         string `json:"make"`
 	Model        string `json:"model"`
 	Year         int    `json:"year"`
-	Compatible   bool   `json:"compatible"`
-	Name         string
+	Compatible   string `json:"compatible"`
+	Name         string `json:"name"`
 }
 
 func (*GetR1CompatibilitySearch) Key() string {
@@ -62,7 +62,7 @@ func (ch GetR1CompatibilitySearchQueryHandler) Handle(ctx context.Context, query
 			Name:         doc["name"].(string),
 			Model:        doc["model"].(string),
 			Year:         int(doc["year"].(float64)),
-			Compatible:   doc["compatible"].(bool),
+			Compatible:   doc["compatible"].(string),
 		}
 		deviceDefinitions = append(deviceDefinitions, item)
 	}
