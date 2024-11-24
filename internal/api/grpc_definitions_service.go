@@ -55,8 +55,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlug(ctx context.Context, 
 		DefinitionID: in.Slug,
 	})
 
-	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
-	result := common.BuildFromQueryResultToGRPC(dd)
+	result := qryResult.(*p_grpc.GetDeviceDefinitionItemResponse)
 	return result, nil
 }
 

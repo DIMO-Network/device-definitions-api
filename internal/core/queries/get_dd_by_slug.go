@@ -66,7 +66,11 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gateways.DeviceDefinitionTablelandModel) *grpc.GetDeviceDefinitionItemResponse {
 	rp := &grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: tbl.KSUID,
-		NameSlug:           tbl.ID,
+		Ksuid:              tbl.KSUID,
+		Model:              tbl.Model,
+		Year:               int32(tbl.Year),
+		Id:                 tbl.ID,
+		NameSlug:           tbl.ID, //nolint
 		Name:               common.BuildDeviceDefinitionName(int16(tbl.Year), dd.R.DeviceMake.Name, tbl.Model),
 		ImageUrl:           tbl.ImageURI,
 

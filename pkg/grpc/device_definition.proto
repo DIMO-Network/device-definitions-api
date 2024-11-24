@@ -35,9 +35,12 @@ message GetDeviceDefinitionItemResponse {
   repeated DeviceTypeAttribute device_attributes = 12;
   repeated ExternalID external_ids = 13 [deprecated = true];
   string hardware_template_id = 14 [deprecated = true];
-  string name_slug = 15;
+  string name_slug = 15[deprecated = true];
   repeated string transactions = 16;
   int32 year = 17;
+  string model = 18;
+  string ksuid = 19;
+  string id = 20;
 }
 
 message GetDevicesMMYResponse {
