@@ -48,11 +48,11 @@ type DecodeVINQueryHandler struct {
 }
 
 type DecodeVINQuery struct {
-	VIN                string `json:"vin"`
-	KnownModel         string `json:"knownModel"`
-	KnownYear          int32  `json:"knownYear"`
-	Country            string `json:"country"`
-	DeviceDefinitionID string `json:"device_definition_id"`
+	VIN          string `json:"vin"`
+	KnownModel   string `json:"knownModel"`
+	KnownYear    int32  `json:"knownYear"`
+	Country      string `json:"country"`
+	DefinitionID string `json:"definition_id"`
 }
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
@@ -141,14 +141,18 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// If DeviceDefinitionID passed in, override VIN decoding // todo next version: this should change to use definitionId
-	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DeviceDefinitionID)
-	if len(qry.DeviceDefinitionID) > 0 {
-		dd, err := dc.ddRepository.GetByID(ctx, qry.DeviceDefinitionID)
+	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
+	if len(qry.DefinitionID) > 0 {
+		tblDef, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get device definition id")
+			return nil, errors.Wrapf(err, "failed to get device definition id: %s", qry.DefinitionID)
 		}
-
-		dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, dd.R.DeviceMake.Name)
+		makeSlug := strings.Split(tblDef.ID, "_")[0]
+		dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, dc.dbs().Reader)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get device make for: %s", qry.DefinitionID)
+		}
+		dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, dm.Name)
 		if err != nil {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 			localLog.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
@@ -158,15 +162,15 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
 			Vin:            vin.String(),
-			DeviceMakeID:   dd.DeviceMakeID,
+			DeviceMakeID:   dm.ID,
 			Wmi:            dbWMI.Wmi,
 			VDS:            vin.VDS(),
 			Vis:            vin.VIS(),
 			CheckDigit:     vin.CheckDigit(),
 			SerialNumber:   vin.SerialNumber(),
 			DecodeProvider: null.StringFrom("manual"),
-			Year:           int(dd.Year),
-			DefinitionID:   dd.NameSlug,
+			Year:           tblDef.Year,
+			DefinitionID:   tblDef.ID,
 		}
 
 		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
@@ -179,8 +183,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// note we use a transaction here all throughout and commit at the end
 		if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 			localLog.Err(err).
-				Str("device_definition_id", dd.ID).
-				Str("device_make_id", dd.DeviceMakeID).
+				Str("definition_id", tblDef.ID).
 				Msg("failed to insert to vin_numbers")
 		}
 		err = txVinNumbers.Commit()
@@ -196,8 +199,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			pt = coremodels.ICE.String()
 		}
 		resp.Powertrain = pt
-		resp.NameSlug = dd.NameSlug //nolint
-		resp.DefinitionId = dd.NameSlug
+		resp.NameSlug = tblDef.ID //nolint
+		resp.DefinitionId = tblDef.ID
 
 		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
 

@@ -9,7 +9,8 @@ message DecodeVinRequest {
   string country = 2;
   string knownModel = 3;
   int32 knownYear = 4;
-  string device_definition_id = 5;
+  string device_definition_id = 5 [deprecated = true];
+  string definition_id = 6;
 }
 
 message DecodeVinResponse {
