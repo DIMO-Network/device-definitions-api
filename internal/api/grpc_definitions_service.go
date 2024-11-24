@@ -52,8 +52,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, in
 func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlug(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugQuery{
-		Slug: in.Slug,
-		Year: int(in.Year),
+		DefinitionID: in.Slug,
 	})
 
 	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)

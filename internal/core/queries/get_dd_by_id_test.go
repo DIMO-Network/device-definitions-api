@@ -44,19 +44,12 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	mk := "Toyota"
 	makeID := "1"
-	model := "Hummer"
-	year := 2020
 
 	dd := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: deviceDefinitionID,
 		DeviceMake: models.DeviceMake{
 			ID:   makeID,
 			Name: mk,
-		},
-		Type: models.DeviceType{
-			Model: model,
-			Year:  year,
-			Make:  mk,
 		},
 		DeviceStyles: []models.DeviceStyle{
 			models.DeviceStyle{
@@ -76,22 +69,6 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 				SubModel:           "Wagon",
 			},
 		},
-		DeviceIntegrations: []models.DeviceIntegration{
-			models.DeviceIntegration{
-				ID:     ksuid.New().String(),
-				Type:   "API",
-				Style:  "Webhook",
-				Vendor: "SmartCar",
-				Region: "Asia",
-			},
-			models.DeviceIntegration{
-				ID:     ksuid.New().String(),
-				Type:   "API",
-				Style:  "Webhook",
-				Vendor: "SmartCar",
-				Region: "USA",
-			},
-		},
 		Verified: true,
 	}
 
@@ -104,20 +81,12 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
-	s.Equal(result.Type.Model, model)
-	s.Equal(result.Type.Make, mk)
 
 	s.Equal(result.DeviceStyles[0].DeviceDefinitionID, dd.DeviceDefinitionID)
 	s.Equal(result.DeviceStyles[0].Name, dd.DeviceStyles[0].Name)
 	s.Equal(result.DeviceStyles[0].ExternalStyleID, dd.DeviceStyles[0].ExternalStyleID)
 	s.Equal(result.DeviceStyles[0].Source, dd.DeviceStyles[0].Source)
 	s.Equal(result.DeviceStyles[0].SubModel, dd.DeviceStyles[0].SubModel)
-
-	s.Equal(result.DeviceIntegrations[0].ID, dd.DeviceIntegrations[0].ID)
-	s.Equal(result.DeviceIntegrations[0].Vendor, dd.DeviceIntegrations[0].Vendor)
-	s.Equal(result.DeviceIntegrations[0].Style, dd.DeviceIntegrations[0].Style)
-	s.Equal(result.DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
-
 }
 
 func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Exception() {

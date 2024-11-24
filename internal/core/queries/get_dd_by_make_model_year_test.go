@@ -53,11 +53,6 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 			ID:   makeID,
 			Name: mk,
 		},
-		Type: models.DeviceType{
-			Model: model,
-			Year:  year,
-			Make:  mk,
-		},
 		Verified: true,
 	}
 
@@ -72,7 +67,4 @@ func (s *GetDeviceDefinitionByMakeModelYearQuerySuite) TestGetDeviceDefinitionBy
 
 	s.NoError(err)
 	assert.Equal(s.T(), deviceDefinitionID, result.DeviceDefinitionID)
-	assert.Equal(s.T(), mk, result.Type.Make)
-	assert.Equal(s.T(), model, result.Type.Model)
-	assert.Equal(s.T(), year, result.Type.Year)
 }

@@ -47,18 +47,12 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 	mk := "Toyota"
 	makeID := "1"
 	model := "Hummer"
-	year := 2020
 
 	dd := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: deviceDefinitionID,
 		DeviceMake: models.DeviceMake{
 			ID:   makeID,
 			Name: mk,
-		},
-		Type: models.DeviceType{
-			Model: model,
-			Year:  year,
-			Make:  mk,
 		},
 		DeviceStyles: []models.DeviceStyle{
 			models.DeviceStyle{
@@ -76,22 +70,6 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 				Name:               "4dr SUV 4WD",
 				Source:             "edmunds",
 				SubModel:           "Wagon",
-			},
-		},
-		DeviceIntegrations: []models.DeviceIntegration{
-			models.DeviceIntegration{
-				ID:     ksuid.New().String(),
-				Type:   "API",
-				Style:  "Webhook",
-				Vendor: "SmartCar",
-				Region: "Asia",
-			},
-			models.DeviceIntegration{
-				ID:     ksuid.New().String(),
-				Type:   "API",
-				Style:  "Webhook",
-				Vendor: "SmartCar",
-				Region: "USA",
 			},
 		},
 		Verified: true,
@@ -114,11 +92,6 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].ExternalStyleId, dd.DeviceStyles[0].ExternalStyleID)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Source, dd.DeviceStyles[0].Source)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].SubModel, dd.DeviceStyles[0].SubModel)
-
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Id, dd.DeviceIntegrations[0].ID)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Vendor, dd.DeviceIntegrations[0].Vendor)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Integration.Style, dd.DeviceIntegrations[0].Style)
-	s.Equal(result.DeviceDefinitions[0].DeviceIntegrations[0].Region, dd.DeviceIntegrations[0].Region)
 }
 
 func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds_BadRequest_Exception() {

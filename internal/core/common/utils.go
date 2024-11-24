@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -117,17 +116,6 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 	return dmMetadata
 }
 
-func ExternalIDsFromGRPC(externalIDsGRPC []*grpc.ExternalID) []*models.ExternalID {
-	externalIDs := make([]*models.ExternalID, len(externalIDsGRPC))
-	for i, ei := range externalIDsGRPC {
-		externalIDs[i] = &models.ExternalID{
-			Vendor: ei.Vendor,
-			ID:     ei.Id,
-		}
-	}
-	return externalIDs
-}
-
 func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
 	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
 		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
@@ -135,9 +123,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
 		NameSlug:           dd.NameSlug,
-		ExternalID:         dd.ExternalID.String,
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		Source:             dd.Source.String,
 		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
 		DeviceMake: models.DeviceMake{
 			ID:                 dd.R.DeviceMake.ID,
@@ -149,34 +135,16 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
 			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
 		},
-		Type: models.DeviceType{
-			Type:      strings.TrimSpace(dd.R.DeviceType.ID),
-			Make:      dd.R.DeviceMake.Name,
-			Model:     dd.Model,
-			Year:      int(dd.Year),
-			MakeSlug:  dd.R.DeviceMake.NameSlug,
-			ModelSlug: dd.ModelSlug,
-		},
-		Metadata:    dd.Metadata.JSON,
-		Verified:    dd.Verified,
-		ExternalIDs: BuildExternalIDs(dd.ExternalIds),
+		Metadata: dd.Metadata.JSON,
+		Verified: dd.Verified,
 	}
 
 	if !dd.R.DeviceMake.TokenID.IsZero() {
 		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
 	}
 
-	// vehicle info deprecated
-	var vi map[string]models.VehicleInfo
-	if err := dd.Metadata.Unmarshal(&vi); err == nil {
-		//nolint
-		rp.VehicleInfo = vi[dd.R.DeviceType.Metadatakey]
-	}
-
 	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []models.DeviceIntegration{}
 	rp.DeviceStyles = []models.DeviceStyle{}
-	rp.CompatibleIntegrations = []models.DeviceIntegration{}
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
 	// pull out the device type device attributes, egGetDev. vehicle information
@@ -199,15 +167,10 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 					deviceIntegration.Features = deviceIntegrationFeature
 				}
 			}
-			rp.DeviceIntegrations = append(rp.DeviceIntegrations, deviceIntegration)
-
-			rp.CompatibleIntegrations = rp.DeviceIntegrations
 		}
 	}
 
 	if dd.R.DeviceStyles != nil {
-		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
-
 		for _, ds := range dd.R.DeviceStyles {
 			deviceStyle := models.DeviceStyle{
 				ID:                 ds.ID,
@@ -375,10 +338,8 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 	rp := &grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: dd.DeviceDefinitionID,
 		NameSlug:           dd.NameSlug,
-		ExternalId:         dd.ExternalID,
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
-		Source:             dd.Source,
 		HardwareTemplateId: DefautlAutoPiTemplate, //used for the autopi template id, which should always be 130 now
 		Make: &grpc.DeviceMake{
 			Id:                 dd.DeviceMake.ID,
@@ -388,76 +349,12 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 			NameSlug:           dd.DeviceMake.NameSlug,
 			HardwareTemplateId: dd.DeviceMake.HardwareTemplateID.String,
 		},
-		Type: &grpc.DeviceType{
-			Type:      dd.Type.Type,
-			Make:      dd.DeviceMake.Name,
-			Model:     dd.Type.Model,
-			Year:      int32(dd.Type.Year),
-			MakeSlug:  dd.Type.MakeSlug,
-			ModelSlug: dd.Type.ModelSlug,
-		},
 		Verified:     dd.Verified,
-		ExternalIds:  ExternalIDsToGRPC(dd.ExternalIDs),
 		Transactions: dd.Transactions,
 	}
 
 	if dd.DeviceMake.TokenID != nil {
 		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
-	}
-
-	// todo: remove this in future, now using device_attributes vehicle info
-	//nolint
-	numberOfDoors, _ := strconv.ParseInt(dd.VehicleInfo.NumberOfDoors, 6, 12)
-	//nolint
-	mpgHighway, _ := strconv.ParseFloat(dd.VehicleInfo.MPGHighway, 32)
-	//nolint
-	mpgCity, _ := strconv.ParseFloat(dd.VehicleInfo.MPGCity, 32)
-	//nolint
-	fuelTankCapacityGal, _ := strconv.ParseFloat(dd.VehicleInfo.FuelTankCapacityGal, 32)
-	//nolint
-	mpg, _ := strconv.ParseFloat(dd.VehicleInfo.MPG, 32)
-
-	//nolint
-	rp.VehicleData = &grpc.VehicleInfo{
-		FuelType:            dd.VehicleInfo.FuelType,
-		DrivenWheels:        dd.VehicleInfo.DrivenWheels,
-		NumberOfDoors:       int32(numberOfDoors),
-		Base_MSRP:           int32(dd.VehicleInfo.BaseMSRP),
-		EPAClass:            dd.VehicleInfo.EPAClass,
-		VehicleType:         dd.VehicleInfo.VehicleType,
-		MPGHighway:          float32(mpgHighway),
-		MPGCity:             float32(mpgCity),
-		FuelTankCapacityGal: float32(fuelTankCapacityGal),
-		MPG:                 float32(mpg),
-	}
-
-	// sub_models
-	rp.Type.SubModels = dd.Type.SubModels
-
-	// build object for integrations that have all the info
-	rp.DeviceIntegrations = []*grpc.DeviceIntegration{}
-	for _, di := range dd.DeviceIntegrations {
-		deviceIntegration := &grpc.DeviceIntegration{
-			DeviceDefinitionId: dd.DeviceDefinitionID,
-			Integration: &grpc.Integration{
-				Id:     di.ID,
-				Type:   di.Type,
-				Style:  di.Style,
-				Vendor: di.Vendor,
-			},
-			Region: di.Region,
-		}
-
-		if len(di.Features) > 0 {
-			for _, feature := range di.Features {
-				deviceIntegration.Features = append(deviceIntegration.Features, &grpc.DeviceIntegrationFeature{
-					FeatureKey:   feature.FeatureKey,
-					SupportLevel: int32(feature.SupportLevel),
-				})
-			}
-		}
-
-		rp.DeviceIntegrations = append(rp.DeviceIntegrations, deviceIntegration)
 	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}

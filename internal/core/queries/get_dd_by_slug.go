@@ -4,26 +4,30 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type GetDeviceDefinitionBySlugQuery struct {
-	// Slug is the model slug
-	Slug string `json:"slug"`
-	Year int    `json:"year"`
+	DefinitionID string `json:"definitionId"`
 }
 
 func (*GetDeviceDefinitionBySlugQuery) Key() string { return "GetDeviceDefinitionBySlugQuery" }
 
 type GetDeviceDefinitionBySlugQueryHandler struct {
-	DDCache services.DeviceDefinitionCacheService
+	definitionsOnChainService gateways.DeviceDefinitionOnChainService
+	dbs                       func() *db.ReaderWriter
 }
 
-func NewGetDeviceDefinitionBySlugQueryHandler(cache services.DeviceDefinitionCacheService) GetDeviceDefinitionBySlugQueryHandler {
+func NewGetDeviceDefinitionBySlugQueryHandler(ddOnChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionBySlugQueryHandler {
 	return GetDeviceDefinitionBySlugQueryHandler{
-		DDCache: cache,
+		definitionsOnChainService: ddOnChainSvc,
+		dbs:                       dbs,
 	}
 }
 
@@ -31,7 +35,7 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionBySlugQuery)
 
-	dd, err := ch.DDCache.GetDeviceDefinitionBySlug(ctx, qry.Slug, qry.Year)
+	dd, err := ch.definitionsOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
 
 	if err != nil {
 		return nil, err
@@ -39,9 +43,18 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 
 	if dd == nil {
 		return nil, &exceptions.NotFoundError{
-			Err: fmt.Errorf("could not find device slug: %s and year: %d", qry.Slug, qry.Year),
+			Err: fmt.Errorf("could not find definition id: %s", qry.DefinitionID),
 		}
 	}
 
-	return dd, nil
+	dbDefinition, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(dd.ID),
+		qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.DeviceType)).One(ctx, ch.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := common.BuildFromDeviceDefinitionToQueryResult(dbDefinition)
+
+	return result, err
 }
