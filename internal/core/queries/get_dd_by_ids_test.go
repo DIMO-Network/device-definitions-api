@@ -46,7 +46,6 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	mk := "Toyota"
 	makeID := "1"
-	model := "Hummer"
 
 	dd := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: deviceDefinitionID,
@@ -84,8 +83,6 @@ func (s *GetDeviceDefinitionByIDsQueryHandlerSuite) TestGetDeviceDefinitionByIds
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitions[0].DeviceDefinitionId, deviceDefinitionID)
-	s.Equal(result.DeviceDefinitions[0].Type.Model, model)
-	s.Equal(result.DeviceDefinitions[0].Type.Make, mk)
 
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].DeviceDefinitionId, dd.DeviceDefinitionID)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Name, dd.DeviceStyles[0].Name)

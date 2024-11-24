@@ -42,30 +42,24 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Me
 	}
 
 	for i, v := range all {
-		eids := common.BuildExternalIDs(v.ExternalIds)
 		md := &coremodels.DeviceMakeMetadata{}
 		_ = v.Metadata.Unmarshal(md)
 
 		result.DeviceMakes[i] = &p_grpc.DeviceMake{
-			Id:               v.ID,
-			Name:             v.Name,
-			LogoUrl:          v.LogoURL.String,
-			OemPlatformName:  v.OemPlatformName.String,
-			NameSlug:         v.NameSlug,
-			ExternalIds:      string(v.ExternalIds.JSON),
-			ExternalIdsTyped: common.ExternalIDsToGRPC(eids),
-			Metadata:         common.DeviceMakeMetadataToGRPC(md),
-			CreatedAt:        timestamppb.New(v.CreatedAt),
-			UpdatedAt:        timestamppb.New(v.UpdatedAt),
+			Id:              v.ID,
+			Name:            v.Name,
+			LogoUrl:         v.LogoURL.String,
+			OemPlatformName: v.OemPlatformName.String,
+			NameSlug:        v.NameSlug,
+			Metadata:        common.DeviceMakeMetadataToGRPC(md),
+			CreatedAt:       timestamppb.New(v.CreatedAt),
+			UpdatedAt:       timestamppb.New(v.UpdatedAt),
 		}
 
 		if !v.TokenID.IsZero() {
 			result.DeviceMakes[i].TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
 		}
 
-		if v.HardwareTemplateID.Valid {
-			result.DeviceMakes[i].HardwareTemplateId = v.HardwareTemplateID.String
-		}
 	}
 
 	return result, nil

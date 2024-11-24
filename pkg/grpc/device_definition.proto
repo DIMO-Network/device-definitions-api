@@ -13,7 +13,7 @@ message GetDeviceDefinitionRequest {
 }
 message GetDeviceDefinitionBySlugRequest {
   string slug = 1;
-  int32 year = 2;
+  int32 year = 2 [deprecated = true];
 }
 message GetDeviceDefinitionBySlugNameRequest {
   string slug = 1;
@@ -26,19 +26,18 @@ message GetDeviceDefinitionItemResponse {
   string device_definition_id = 1;
   string name = 2;
   string image_url = 3;
-  DeviceType type = 4;
-  VehicleInfo vehicle_data = 5 [deprecated = true];
   bool  verified = 6;
-  repeated  DeviceIntegration device_integrations = 7;
+  repeated  DeviceIntegration device_integrations = 7 [deprecated = true];
   DeviceMake make = 8;
   repeated DeviceStyle device_styles = 9;
   string source = 10 [deprecated = true];
   string external_id = 11 [deprecated = true];
   repeated DeviceTypeAttribute device_attributes = 12;
-  repeated ExternalID external_ids = 13;
-  string hardware_template_id = 14;
+  repeated ExternalID external_ids = 13 [deprecated = true];
+  string hardware_template_id = 14 [deprecated = true];
   string name_slug = 15;
   repeated string transactions = 16;
+  int32 year = 17;
 }
 
 message GetDevicesMMYResponse {
@@ -108,13 +107,14 @@ message DeviceMake {
   uint64 token_id = 5;
   string name_slug = 6;
   string external_ids = 7 [deprecated = true];
-  repeated ExternalID external_ids_typed = 8;
+  repeated ExternalID external_ids_typed = 8 [deprecated = true];
   Metadata metadata = 9;
-  string hardware_template_id = 10;
+  string hardware_template_id = 10 [deprecated = true];
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
 }
 
+// deprecated
 message VehicleInfo {
   string fuel_type = 1;
   string driven_wheels = 2;
@@ -171,6 +171,7 @@ message DeviceIntegration {
   repeated DeviceIntegrationFeature features = 5;
 }
 
+// deprecated
 message DeviceIntegrationFeature {
   string feature_key = 1;
   int32 support_level = 2;
@@ -195,6 +196,7 @@ message CreateDeviceDefinitionRequest {
   bool verified = 8;
 }
 
+// deprecated
 message CreateDeviceIntegrationRequest {
   string device_definition_id = 1;
   string integration_id = 2;
@@ -202,6 +204,7 @@ message CreateDeviceIntegrationRequest {
   repeated DeviceIntegrationFeatureAttributeRequest features = 4;
 }
 
+// deprecated
 message DeviceIntegrationFeatureAttributeRequest {
   string feature_key = 1;
   int32 support_level = 2;

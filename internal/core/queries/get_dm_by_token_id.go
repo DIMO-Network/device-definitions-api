@@ -63,29 +63,22 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		}
 	}
 
-	eids := common.BuildExternalIDs(v.ExternalIds)
 	md := &coremodels.DeviceMakeMetadata{}
 	_ = v.Metadata.Unmarshal(md)
 
 	result := &p_grpc.DeviceMake{
-		Id:               v.ID,
-		Name:             v.Name,
-		LogoUrl:          v.LogoURL.String,
-		OemPlatformName:  v.OemPlatformName.String,
-		NameSlug:         v.NameSlug,
-		ExternalIds:      string(v.ExternalIds.JSON),
-		ExternalIdsTyped: common.ExternalIDsToGRPC(eids),
-		Metadata:         common.DeviceMakeMetadataToGRPC(md),
-		CreatedAt:        timestamppb.New(v.CreatedAt),
-		UpdatedAt:        timestamppb.New(v.UpdatedAt),
+		Id:              v.ID,
+		Name:            v.Name,
+		LogoUrl:         v.LogoURL.String,
+		OemPlatformName: v.OemPlatformName.String,
+		NameSlug:        v.NameSlug,
+		Metadata:        common.DeviceMakeMetadataToGRPC(md),
+		CreatedAt:       timestamppb.New(v.CreatedAt),
+		UpdatedAt:       timestamppb.New(v.UpdatedAt),
 	}
 
 	if !v.TokenID.IsZero() {
 		result.TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
-	}
-
-	if v.HardwareTemplateID.Valid {
-		result.HardwareTemplateId = v.HardwareTemplateID.String
 	}
 
 	return result, nil

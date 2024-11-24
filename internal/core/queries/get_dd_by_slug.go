@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -31,6 +33,7 @@ func NewGetDeviceDefinitionBySlugQueryHandler(ddOnChainSvc gateways.DeviceDefini
 	}
 }
 
+// Handle the request - pretty much only used by grpc response
 func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetDeviceDefinitionBySlugQuery)
@@ -49,12 +52,64 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 
 	dbDefinition, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(dd.ID),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(models.DeviceDefinitionRels.DeviceType)).One(ctx, ch.dbs().Reader)
+		qm.Load(models.DeviceDefinitionRels.DeviceType),
+	).One(ctx, ch.dbs().Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := common.BuildFromDeviceDefinitionToQueryResult(dbDefinition)
+	result := BuildFromDeviceDefinitionToGRPCResult(dbDefinition, dd)
 
-	return result, err
+	return result, nil
+}
+
+func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gateways.DeviceDefinitionTablelandModel) *grpc.GetDeviceDefinitionItemResponse {
+	rp := &grpc.GetDeviceDefinitionItemResponse{
+		DeviceDefinitionId: tbl.KSUID,
+		NameSlug:           tbl.ID,
+		Name:               common.BuildDeviceDefinitionName(int16(tbl.Year), dd.R.DeviceMake.Name, tbl.Model),
+		ImageUrl:           tbl.ImageURI,
+
+		HardwareTemplateId: "130", //used for the autopi template id, which should always be 130 now
+		Make: &grpc.DeviceMake{
+			Id:              dd.R.DeviceMake.ID,
+			Name:            dd.R.DeviceMake.Name,
+			LogoUrl:         dd.R.DeviceMake.LogoURL.String,
+			OemPlatformName: dd.R.DeviceMake.OemPlatformName.String,
+			NameSlug:        dd.R.DeviceMake.NameSlug,
+		},
+		Verified:     dd.Verified,
+		Transactions: dd.TRXHashHex,
+	}
+
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.Make.TokenId, _ = dd.R.DeviceMake.TokenID.Uint64()
+	}
+
+	rp.DeviceStyles = []*grpc.DeviceStyle{}
+	for _, ds := range dd.R.DeviceStyles {
+		rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyle{
+			DeviceDefinitionId: tbl.KSUID,
+			ExternalStyleId:    ds.ExternalStyleID,
+			Id:                 ds.ID,
+			Name:               ds.Name,
+			Source:             ds.Source,
+			SubModel:           ds.SubModel,
+		})
+	}
+
+	rp.DeviceAttributes = []*grpc.DeviceTypeAttribute{}
+	for _, da := range common.GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey) {
+		rp.DeviceAttributes = append(rp.DeviceAttributes, &grpc.DeviceTypeAttribute{
+			Name:        da.Name,
+			Label:       da.Label,
+			Description: da.Description,
+			Value:       da.Value,
+			Required:    da.Required,
+			Type:        da.Type,
+			Options:     da.Option,
+		})
+	}
+
+	return rp
 }

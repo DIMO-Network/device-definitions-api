@@ -96,8 +96,6 @@ func (s *GetDeviceDefinitionAllQueryHandlerSuite) TestGetDeviceDefinitionAll_Suc
 
 	s.NoError(err)
 	s.Equal(result.DeviceDefinitions[0].DeviceDefinitionId, deviceDefinitionID)
-	s.Equal(result.DeviceDefinitions[0].Type.Model, model)
-	s.Equal(result.DeviceDefinitions[0].Type.Make, mk)
 
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Name, dd.R.DeviceStyles[0].Name)
 	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].ExternalStyleId, dd.R.DeviceStyles[0].ExternalStyleID)

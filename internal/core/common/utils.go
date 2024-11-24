@@ -116,87 +116,23 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 	return dmMetadata
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
-	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
-		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
-	}
-	rp := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID: dd.ID,
-		NameSlug:           dd.NameSlug,
-		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
-		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
-		DeviceMake: models.DeviceMake{
-			ID:                 dd.R.DeviceMake.ID,
-			Name:               dd.R.DeviceMake.Name,
-			LogoURL:            dd.R.DeviceMake.LogoURL,
-			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
-			NameSlug:           dd.R.DeviceMake.NameSlug,
-			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
-			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
-			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
-		},
-		Metadata: dd.Metadata.JSON,
-		Verified: dd.Verified,
-	}
-
-	if !dd.R.DeviceMake.TokenID.IsZero() {
-		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
-	}
-
-	// build object for integrations that have all the info
-	rp.DeviceStyles = []models.DeviceStyle{}
-	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
-
-	// pull out the device type device attributes, egGetDev. vehicle information
-	rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
-
-	if dd.R.DeviceIntegrations != nil {
-		for _, di := range dd.R.DeviceIntegrations {
-			deviceIntegration := models.DeviceIntegration{
-				ID:     di.R.Integration.ID,
-				Type:   di.R.Integration.Type,
-				Style:  di.R.Integration.Style,
-				Vendor: di.R.Integration.Vendor,
-				Region: di.Region,
+// GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
+func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
+	img := ""
+	if dd.R.Images != nil {
+		w := 0
+		for _, image := range dd.R.Images {
+			extra := 0
+			if !image.NotExactImage {
+				extra = 2000 // we want to give preference to exact images
 			}
-
-			if di.Features.Valid {
-				var deviceIntegrationFeature []models.DeviceIntegrationFeature
-				if err := di.Features.Unmarshal(&deviceIntegrationFeature); err == nil {
-					//nolint
-					deviceIntegration.Features = deviceIntegrationFeature
-				}
+			if image.Width.Int+extra > w {
+				w = image.Width.Int + extra
+				img = image.SourceURL
 			}
 		}
 	}
-
-	if dd.R.DeviceStyles != nil {
-		for _, ds := range dd.R.DeviceStyles {
-			deviceStyle := models.DeviceStyle{
-				ID:                 ds.ID,
-				DeviceDefinitionID: ds.DeviceDefinitionID,
-				ExternalStyleID:    ds.ExternalStyleID,
-				Name:               ds.Name,
-				Source:             ds.Source,
-				SubModel:           ds.SubModel,
-				Metadata:           GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
-			}
-
-			if ds.HardwareTemplateID.Valid {
-				deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
-			}
-
-			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
-		}
-	}
-	// trying pulling most recent images, pick the biggest one and where not exact image = false
-	rp.ImageURL = GetDefaultImageURL(dd)
-
-	if dd.TRXHashHex != nil {
-		rp.Transactions = dd.TRXHashHex
-	}
-
-	return rp, nil
+	return img
 }
 
 //func BuildFromDeviceDefinitionOnChainToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
@@ -295,25 +231,6 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 //	return rp, nil
 //}
 
-// GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
-func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
-	img := ""
-	if dd.R.Images != nil {
-		w := 0
-		for _, image := range dd.R.Images {
-			extra := 0
-			if !image.NotExactImage {
-				extra = 2000 // we want to give preference to exact images
-			}
-			if image.Width.Int+extra > w {
-				w = image.Width.Int + extra
-				img = image.SourceURL
-			}
-		}
-	}
-	return img
-}
-
 func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTypeAttribute {
 	var respAttrs []models.DeviceTypeAttribute
 	var ai map[string]any
@@ -334,12 +251,96 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 	return respAttrs
 }
 
+func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
+	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
+		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
+	}
+	rp := &models.GetDeviceDefinitionQueryResult{
+		DeviceDefinitionID: dd.ID,
+		NameSlug:           dd.NameSlug,
+		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
+		DeviceMake: models.DeviceMake{
+			ID:                 dd.R.DeviceMake.ID,
+			Name:               dd.R.DeviceMake.Name,
+			LogoURL:            dd.R.DeviceMake.LogoURL,
+			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
+			NameSlug:           dd.R.DeviceMake.NameSlug,
+			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
+			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
+			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
+		},
+		Metadata: dd.Metadata.JSON,
+		Verified: dd.Verified,
+	}
+
+	if !dd.R.DeviceMake.TokenID.IsZero() {
+		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
+	}
+
+	// build object for integrations that have all the info
+	rp.DeviceStyles = []models.DeviceStyle{}
+	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
+
+	// pull out the device type device attributes, egGetDev. vehicle information
+	rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
+
+	if dd.R.DeviceIntegrations != nil {
+		for _, di := range dd.R.DeviceIntegrations {
+			deviceIntegration := models.DeviceIntegration{
+				ID:     di.R.Integration.ID,
+				Type:   di.R.Integration.Type,
+				Style:  di.R.Integration.Style,
+				Vendor: di.R.Integration.Vendor,
+				Region: di.Region,
+			}
+
+			if di.Features.Valid {
+				var deviceIntegrationFeature []models.DeviceIntegrationFeature
+				if err := di.Features.Unmarshal(&deviceIntegrationFeature); err == nil {
+					//nolint
+					deviceIntegration.Features = deviceIntegrationFeature
+				}
+			}
+		}
+	}
+
+	if dd.R.DeviceStyles != nil {
+		for _, ds := range dd.R.DeviceStyles {
+			deviceStyle := models.DeviceStyle{
+				ID:                 ds.ID,
+				DeviceDefinitionID: ds.DeviceDefinitionID,
+				ExternalStyleID:    ds.ExternalStyleID,
+				Name:               ds.Name,
+				Source:             ds.Source,
+				SubModel:           ds.SubModel,
+				Metadata:           GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
+			}
+
+			if ds.HardwareTemplateID.Valid {
+				deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
+			}
+
+			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
+		}
+	}
+	// trying pulling most recent images, pick the biggest one and where not exact image = false
+	rp.ImageURL = GetDefaultImageURL(dd)
+
+	if dd.TRXHashHex != nil {
+		rp.Transactions = dd.TRXHashHex
+	}
+
+	return rp, nil
+}
+
 func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {
 	rp := &grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: dd.DeviceDefinitionID,
 		NameSlug:           dd.NameSlug,
 		Name:               dd.Name,
 		ImageUrl:           dd.ImageURL,
+
 		HardwareTemplateId: DefautlAutoPiTemplate, //used for the autopi template id, which should always be 130 now
 		Make: &grpc.DeviceMake{
 			Id:                 dd.DeviceMake.ID,

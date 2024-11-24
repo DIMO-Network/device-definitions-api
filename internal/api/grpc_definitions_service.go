@@ -605,21 +605,15 @@ func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_
 	deviceMake := qryResult.(coremodels.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
-		Id:               deviceMake.ID,
-		Name:             deviceMake.Name,
-		NameSlug:         deviceMake.NameSlug,
-		LogoUrl:          deviceMake.LogoURL.String,
-		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIDs),
-		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
+		Id:              deviceMake.ID,
+		Name:            deviceMake.Name,
+		NameSlug:        deviceMake.NameSlug,
+		LogoUrl:         deviceMake.LogoURL.String,
+		OemPlatformName: deviceMake.OemPlatformName.String,
 	}
 
 	if deviceMake.TokenID != nil {
 		result.TokenId = deviceMake.TokenID.Uint64()
-	}
-
-	if deviceMake.HardwareTemplateID.Valid {
-		result.HardwareTemplateId = deviceMake.HardwareTemplateID.String
 	}
 
 	return result, nil
