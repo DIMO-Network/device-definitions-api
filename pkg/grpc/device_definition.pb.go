@@ -5489,7 +5489,7 @@ var file_pkg_grpc_device_definition_proto_rawDesc = []byte{
 	0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x4f, 0x6e, 0x43, 0x68, 0x61, 0x69, 0x6e,
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x6d, 0x61, 0x6b, 0x65, 0x5f,
 	0x73, 0x6c, 0x75, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6d, 0x61, 0x6b, 0x65,
-	0x53, 0x6c, 0x75, 0x67, 0x32, 0xd5, 0x1d, 0x0a, 0x17, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
+	0x53, 0x6c, 0x75, 0x67, 0x32, 0xe1, 0x1c, 0x0a, 0x17, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44,
 	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
 	0x12, 0x5e, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66,
 	0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x79, 0x49, 0x44, 0x12, 0x20, 0x2e, 0x67, 0x72,
@@ -5719,18 +5719,11 @@ var file_pkg_grpc_device_definition_proto_rawDesc = []byte{
 	0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74,
 	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x72, 0x0a, 0x1d, 0x47, 0x65, 0x74, 0x44,
-	0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x42,
-	0x79, 0x53, 0x6c, 0x75, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x2a, 0x2e, 0x67, 0x72, 0x70, 0x63,
-	0x2e, 0x47, 0x65, 0x74, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69,
-	0x74, 0x69, 0x6f, 0x6e, 0x42, 0x79, 0x53, 0x6c, 0x75, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74,
-	0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x44, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x49, 0x74, 0x65, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x39, 0x5a, 0x37,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x44, 0x49, 0x4d, 0x4f, 0x2d,
-	0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x2d, 0x64,
-	0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x70,
-	0x6b, 0x67, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x44, 0x49, 0x4d, 0x4f, 0x2d, 0x4e, 0x65, 0x74, 0x77,
+	0x6f, 0x72, 0x6b, 0x2f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x2d, 0x64, 0x65, 0x66, 0x69, 0x6e,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x67,
+	0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -5899,51 +5892,49 @@ var file_pkg_grpc_device_definition_proto_depIdxs = []int32{
 	61, // 77: grpc.DeviceDefinitionService.GetDeviceDefinitionByMakeAndYearRange:input_type -> grpc.GetDeviceDefinitionByMakeAndYearRangeRequest
 	0,  // 78: grpc.DeviceDefinitionService.GetDeviceDefinitionOnChainByID:input_type -> grpc.GetDeviceDefinitionRequest
 	31, // 79: grpc.DeviceDefinitionService.GetDeviceDefinitionsOnChain:input_type -> grpc.FilterDeviceDefinitionRequest
-	2,  // 80: grpc.DeviceDefinitionService.GetDeviceDefinitionBySlugName:input_type -> grpc.GetDeviceDefinitionBySlugNameRequest
-	3,  // 81: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:output_type -> grpc.GetDeviceDefinitionResponse
-	4,  // 82: grpc.DeviceDefinitionService.GetDeviceDefinitionBySlug:output_type -> grpc.GetDeviceDefinitionItemResponse
-	3,  // 83: grpc.DeviceDefinitionService.GetDeviceDefinitions:output_type -> grpc.GetDeviceDefinitionResponse
-	5,  // 84: grpc.DeviceDefinitionService.GetDevicesMMY:output_type -> grpc.GetDevicesMMYResponse
-	5,  // 85: grpc.DeviceDefinitionService.GetDeviceDefinitionsWithHardwareTemplate:output_type -> grpc.GetDevicesMMYResponse
-	4,  // 86: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:output_type -> grpc.GetDeviceDefinitionItemResponse
-	4,  // 87: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionItemResponse
-	3,  // 88: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:output_type -> grpc.GetDeviceDefinitionResponse
-	29, // 89: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
-	13, // 90: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake
-	13, // 91: grpc.DeviceDefinitionService.GetDeviceMakeBySlug:output_type -> grpc.DeviceMake
-	13, // 92: grpc.DeviceDefinitionService.GetDeviceMakeByTokenID:output_type -> grpc.DeviceMake
-	44, // 93: grpc.DeviceDefinitionService.GetDeviceMakes:output_type -> grpc.GetDeviceMakeResponse
-	17, // 94: grpc.DeviceDefinitionService.GetIntegrations:output_type -> grpc.GetIntegrationResponse
-	18, // 95: grpc.DeviceDefinitionService.GetIntegrationByID:output_type -> grpc.Integration
-	21, // 96: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:output_type -> grpc.GetDeviceDefinitionIntegrationResponse
-	59, // 97: grpc.DeviceDefinitionService.GetDeviceImagesByIDs:output_type -> grpc.GetDeviceImagesResponse
-	27, // 98: grpc.DeviceDefinitionService.CreateDeviceDefinition:output_type -> grpc.CreateDeviceDefinitionResponse
-	26, // 99: grpc.DeviceDefinitionService.CreateDeviceIntegration:output_type -> grpc.BaseResponse
-	26, // 100: grpc.DeviceDefinitionService.CreateDeviceStyle:output_type -> grpc.BaseResponse
-	26, // 101: grpc.DeviceDefinitionService.CreateDeviceMake:output_type -> grpc.BaseResponse
-	26, // 102: grpc.DeviceDefinitionService.CreateIntegration:output_type -> grpc.BaseResponse
-	26, // 103: grpc.DeviceDefinitionService.UpdateDeviceDefinition:output_type -> grpc.BaseResponse
-	32, // 104: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:output_type -> grpc.GetFilteredDeviceDefinitionsResponse
-	12, // 105: grpc.DeviceDefinitionService.GetDeviceStyleByID:output_type -> grpc.DeviceStyle
-	12, // 106: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:output_type -> grpc.DeviceStyle
-	40, // 107: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:output_type -> grpc.GetDeviceStyleResponse
-	40, // 108: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:output_type -> grpc.GetDeviceStyleResponse
-	26, // 109: grpc.DeviceDefinitionService.UpdateDeviceMake:output_type -> grpc.BaseResponse
-	26, // 110: grpc.DeviceDefinitionService.UpdateDeviceStyle:output_type -> grpc.BaseResponse
-	49, // 111: grpc.DeviceDefinitionService.GetDeviceTypesByID:output_type -> grpc.GetDeviceTypeResponse
-	50, // 112: grpc.DeviceDefinitionService.GetDeviceTypes:output_type -> grpc.GetDeviceTypeListResponse
-	26, // 113: grpc.DeviceDefinitionService.CreateDeviceType:output_type -> grpc.BaseResponse
-	26, // 114: grpc.DeviceDefinitionService.UpdateDeviceType:output_type -> grpc.BaseResponse
-	26, // 115: grpc.DeviceDefinitionService.DeleteDeviceType:output_type -> grpc.BaseResponse
-	57, // 116: grpc.DeviceDefinitionService.GetDeviceDefinitionHardwareTemplateByID:output_type -> grpc.GetDeviceDefinitionHardwareTemplateByIDResponse
-	60, // 117: grpc.DeviceDefinitionService.SyncDeviceDefinitionsWithElasticSearch:output_type -> grpc.SyncStatusResult
-	18, // 118: grpc.DeviceDefinitionService.GetIntegrationByTokenID:output_type -> grpc.Integration
-	3,  // 119: grpc.DeviceDefinitionService.GetDeviceDefinitionByMakeAndYearRange:output_type -> grpc.GetDeviceDefinitionResponse
-	3,  // 120: grpc.DeviceDefinitionService.GetDeviceDefinitionOnChainByID:output_type -> grpc.GetDeviceDefinitionResponse
-	3,  // 121: grpc.DeviceDefinitionService.GetDeviceDefinitionsOnChain:output_type -> grpc.GetDeviceDefinitionResponse
-	4,  // 122: grpc.DeviceDefinitionService.GetDeviceDefinitionBySlugName:output_type -> grpc.GetDeviceDefinitionItemResponse
-	81, // [81:123] is the sub-list for method output_type
-	39, // [39:81] is the sub-list for method input_type
+	3,  // 80: grpc.DeviceDefinitionService.GetDeviceDefinitionByID:output_type -> grpc.GetDeviceDefinitionResponse
+	4,  // 81: grpc.DeviceDefinitionService.GetDeviceDefinitionBySlug:output_type -> grpc.GetDeviceDefinitionItemResponse
+	3,  // 82: grpc.DeviceDefinitionService.GetDeviceDefinitions:output_type -> grpc.GetDeviceDefinitionResponse
+	5,  // 83: grpc.DeviceDefinitionService.GetDevicesMMY:output_type -> grpc.GetDevicesMMYResponse
+	5,  // 84: grpc.DeviceDefinitionService.GetDeviceDefinitionsWithHardwareTemplate:output_type -> grpc.GetDevicesMMYResponse
+	4,  // 85: grpc.DeviceDefinitionService.GetDeviceDefinitionByMMY:output_type -> grpc.GetDeviceDefinitionItemResponse
+	4,  // 86: grpc.DeviceDefinitionService.GetDeviceDefinitionBySource:output_type -> grpc.GetDeviceDefinitionItemResponse
+	3,  // 87: grpc.DeviceDefinitionService.GetDeviceDefinitionWithoutImages:output_type -> grpc.GetDeviceDefinitionResponse
+	29, // 88: grpc.DeviceDefinitionService.GetDeviceDefinitionAll:output_type -> grpc.GetDeviceDefinitionAllResponse
+	13, // 89: grpc.DeviceDefinitionService.GetDeviceMakeByName:output_type -> grpc.DeviceMake
+	13, // 90: grpc.DeviceDefinitionService.GetDeviceMakeBySlug:output_type -> grpc.DeviceMake
+	13, // 91: grpc.DeviceDefinitionService.GetDeviceMakeByTokenID:output_type -> grpc.DeviceMake
+	44, // 92: grpc.DeviceDefinitionService.GetDeviceMakes:output_type -> grpc.GetDeviceMakeResponse
+	17, // 93: grpc.DeviceDefinitionService.GetIntegrations:output_type -> grpc.GetIntegrationResponse
+	18, // 94: grpc.DeviceDefinitionService.GetIntegrationByID:output_type -> grpc.Integration
+	21, // 95: grpc.DeviceDefinitionService.GetDeviceDefinitionIntegration:output_type -> grpc.GetDeviceDefinitionIntegrationResponse
+	59, // 96: grpc.DeviceDefinitionService.GetDeviceImagesByIDs:output_type -> grpc.GetDeviceImagesResponse
+	27, // 97: grpc.DeviceDefinitionService.CreateDeviceDefinition:output_type -> grpc.CreateDeviceDefinitionResponse
+	26, // 98: grpc.DeviceDefinitionService.CreateDeviceIntegration:output_type -> grpc.BaseResponse
+	26, // 99: grpc.DeviceDefinitionService.CreateDeviceStyle:output_type -> grpc.BaseResponse
+	26, // 100: grpc.DeviceDefinitionService.CreateDeviceMake:output_type -> grpc.BaseResponse
+	26, // 101: grpc.DeviceDefinitionService.CreateIntegration:output_type -> grpc.BaseResponse
+	26, // 102: grpc.DeviceDefinitionService.UpdateDeviceDefinition:output_type -> grpc.BaseResponse
+	32, // 103: grpc.DeviceDefinitionService.GetFilteredDeviceDefinition:output_type -> grpc.GetFilteredDeviceDefinitionsResponse
+	12, // 104: grpc.DeviceDefinitionService.GetDeviceStyleByID:output_type -> grpc.DeviceStyle
+	12, // 105: grpc.DeviceDefinitionService.GetDeviceStyleByExternalID:output_type -> grpc.DeviceStyle
+	40, // 106: grpc.DeviceDefinitionService.GetDeviceStylesByDeviceDefinitionID:output_type -> grpc.GetDeviceStyleResponse
+	40, // 107: grpc.DeviceDefinitionService.GetDeviceStylesByFilter:output_type -> grpc.GetDeviceStyleResponse
+	26, // 108: grpc.DeviceDefinitionService.UpdateDeviceMake:output_type -> grpc.BaseResponse
+	26, // 109: grpc.DeviceDefinitionService.UpdateDeviceStyle:output_type -> grpc.BaseResponse
+	49, // 110: grpc.DeviceDefinitionService.GetDeviceTypesByID:output_type -> grpc.GetDeviceTypeResponse
+	50, // 111: grpc.DeviceDefinitionService.GetDeviceTypes:output_type -> grpc.GetDeviceTypeListResponse
+	26, // 112: grpc.DeviceDefinitionService.CreateDeviceType:output_type -> grpc.BaseResponse
+	26, // 113: grpc.DeviceDefinitionService.UpdateDeviceType:output_type -> grpc.BaseResponse
+	26, // 114: grpc.DeviceDefinitionService.DeleteDeviceType:output_type -> grpc.BaseResponse
+	57, // 115: grpc.DeviceDefinitionService.GetDeviceDefinitionHardwareTemplateByID:output_type -> grpc.GetDeviceDefinitionHardwareTemplateByIDResponse
+	60, // 116: grpc.DeviceDefinitionService.SyncDeviceDefinitionsWithElasticSearch:output_type -> grpc.SyncStatusResult
+	18, // 117: grpc.DeviceDefinitionService.GetIntegrationByTokenID:output_type -> grpc.Integration
+	3,  // 118: grpc.DeviceDefinitionService.GetDeviceDefinitionByMakeAndYearRange:output_type -> grpc.GetDeviceDefinitionResponse
+	3,  // 119: grpc.DeviceDefinitionService.GetDeviceDefinitionOnChainByID:output_type -> grpc.GetDeviceDefinitionResponse
+	3,  // 120: grpc.DeviceDefinitionService.GetDeviceDefinitionsOnChain:output_type -> grpc.GetDeviceDefinitionResponse
+	80, // [80:121] is the sub-list for method output_type
+	39, // [39:80] is the sub-list for method input_type
 	39, // [39:39] is the sub-list for extension type_name
 	39, // [39:39] is the sub-list for extension extendee
 	0,  // [0:39] is the sub-list for field type_name

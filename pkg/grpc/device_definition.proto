@@ -516,5 +516,4 @@ service DeviceDefinitionService {
 
   rpc GetDeviceDefinitionOnChainByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionsOnChain(FilterDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
-  rpc GetDeviceDefinitionBySlugName(GetDeviceDefinitionBySlugNameRequest) returns (GetDeviceDefinitionItemResponse);
 }
