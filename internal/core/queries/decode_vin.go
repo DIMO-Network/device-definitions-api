@@ -122,7 +122,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		resp.NameSlug = vinDecodeNumber.DefinitionID //nolint
 		resp.DefinitionId = vinDecodeNumber.DefinitionID
 		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
 		if len(split) != 3 {
@@ -199,7 +198,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			pt = coremodels.ICE.String()
 		}
 		resp.Powertrain = pt
-		resp.NameSlug = tblDef.ID //nolint
 		resp.DefinitionId = tblDef.ID
 
 		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
@@ -297,8 +295,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.New("could not get or create device_definition")
 	}
-	resp.DeviceDefinitionId = dd.ID //nolint
-	resp.NameSlug = dd.NameSlug     //nolint
 	resp.DefinitionId = dd.NameSlug
 
 	// match style - only process style if name is longer than 1

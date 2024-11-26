@@ -39,7 +39,6 @@ func DecodeVIN(m mediator.Mediator) fiber.Handler {
 		resp := result.(*p_grpc.DecodeVinResponse)
 		dd := DecodeVINResponse{
 			DeviceDefinitionID: resp.DefinitionId,
-			LegacyID:           resp.DeviceDefinitionId, //nolint
 			NewTransactionHash: resp.NewTrxHash,
 		}
 
@@ -56,8 +55,6 @@ type DecodeVINRequest struct {
 type DecodeVINResponse struct {
 	// new name slug based id, can use this to query identity-api
 	DeviceDefinitionID string `json:"deviceDefinitionId"`
-	// old ksuid based device def id
-	LegacyID string `json:"legacyId"`
 	// if a new device definition was created, the tableland transaction hash from the insert statement. Check this has completed before querying the ID
 	NewTransactionHash string `json:"newTransactionHash"`
 }

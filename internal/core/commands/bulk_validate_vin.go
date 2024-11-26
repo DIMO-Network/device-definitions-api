@@ -63,7 +63,7 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 			continue
 		}
 
-		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DeviceDefinitionId}) //nolint
+		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId}) //nolint
 
 		if err == nil {
 			decodedVINs = append(decodedVINs, DecodedVIN{
