@@ -39,7 +39,9 @@ import (
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
+	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
+	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug
 	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)

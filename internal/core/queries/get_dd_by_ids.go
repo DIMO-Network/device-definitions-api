@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -20,17 +21,21 @@ type GetDeviceDefinitionByIDsQuery struct {
 func (*GetDeviceDefinitionByIDsQuery) Key() string { return "GetDeviceDefinitionByIDsQuery" }
 
 type GetDeviceDefinitionByIDsQueryHandler struct {
-	DDCache services.DeviceDefinitionCacheService
-	log     *zerolog.Logger
+	DDCache    services.DeviceDefinitionCacheService
+	log        *zerolog.Logger
+	repository repositories.DeviceDefinitionRepository
 }
 
-func NewGetDeviceDefinitionByIDsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger) GetDeviceDefinitionByIDsQueryHandler {
+func NewGetDeviceDefinitionByIDsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger,
+	repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionByIDsQueryHandler {
 	return GetDeviceDefinitionByIDsQueryHandler{
-		DDCache: cache,
-		log:     log,
+		DDCache:    cache,
+		log:        log,
+		repository: repository,
 	}
 }
 
+// Handle gets device definition based on legacy KSUID id
 func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetDeviceDefinitionByIDsQuery)
@@ -41,25 +46,21 @@ func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	response := &grpc.GetDeviceDefinitionResponse{}
-
-	for _, v := range qry.DeviceDefinitionID {
-		dd, _ := ch.DDCache.GetDeviceDefinitionByID(ctx, v)
-
-		if dd == nil {
-			if len(qry.DeviceDefinitionID) > 1 {
-				ch.log.Warn().Str("deviceDefinitionId", v).Msg("Not found - Device Definition")
-				continue
-			}
-
-			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("could not find device definition id: %s", v),
-			}
-		}
-
-		rp := common.BuildFromQueryResultToGRPC(dd)
-		response.DeviceDefinitions = append(response.DeviceDefinitions, rp)
+	dd, err := ch.repository.GetByID(ctx, qry.DeviceDefinitionID[0])
+	if err != nil {
+		return nil, err
 	}
 
-	return response, nil
+	if dd == nil {
+		return nil, &exceptions.NotFoundError{
+			Err: fmt.Errorf("could not find device definition id: %s", qry.DeviceDefinitionID[0]),
+		}
+	}
+
+	rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd)
+	if err != nil {
+		return nil, err
+	}
+
+	return common.BuildFromQueryResultToGRPC(rp), nil
 }
