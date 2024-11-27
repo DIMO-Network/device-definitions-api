@@ -14,6 +14,7 @@ import (
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"time"
 )
 
 // syncDeviceDefinitionSearchCmd cli command to sync to typesense
@@ -129,10 +130,9 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		p.logger.Fatal().Err(err).Send()
 	}
 
-	var documents []interface{}
+	var documents []SearchEntryItem
 	// todo this should come from tableland - problem is iterating over all the tables, or do it via identity-api
 	for _, dd := range all {
-
 		id := dd.NameSlug
 		deviceDefinitionID := dd.ID
 		name := common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model)
@@ -156,19 +156,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			manufacturerTokenID, _ = dd.R.DeviceMake.TokenID.Int64()
 		}
 
-		newDocument := struct {
-			ID                  string `json:"id"`
-			DeviceDefinitionID  string `json:"device_definition_id"` //nolint
-			Name                string `json:"name"`
-			Make                string `json:"make"`
-			MakeSlug            string `json:"make_slug"`             //nolint
-			ManufacturerTokenID int    `json:"manufacturer_token_id"` //nolint
-			Model               string `json:"model"`
-			ModelSlug           string `json:"model_slug"` //nolint
-			Year                int    `json:"year"`
-			ImageURL            string `json:"image_url"` //nolint
-			Score               int    `json:"score"`
-		}{
+		newDocument := SearchEntryItem{
 			ID:                  id,
 			DeviceDefinitionID:  deviceDefinitionID,
 			Name:                name,
@@ -183,29 +171,45 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		}
 
 		documents = append(documents, newDocument)
-
 	}
 
-	batchSize := 100
-	for i := 0; i < len(documents); i += batchSize {
-		end := i + batchSize
-		if end > len(documents) {
-			end = len(documents)
-		}
-
-		batch := documents[i:end]
-		_, err = client.Collection(collectionName).
-			Documents().
-			Import(context.Background(), batch, &api.ImportDocumentsParams{})
-
-		if err != nil {
-			p.logger.Error().Err(err).Send()
-			return subcommands.ExitFailure
-		} else {
-			fmt.Printf("Documents imported successfully: %d - %d\n", i, end)
-		}
-	}
+	err = uploadWithApi(client, documents)
 
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
+}
+
+func uploadWithApi(client *typesense.Client, entries []SearchEntryItem) error {
+	processedCount := 0
+	for _, entry := range entries {
+		processedCount++
+		_, err := client.Collection("r1_compatibility").Documents().Upsert(context.Background(), entry)
+		if err != nil {
+			fmt.Printf("Error uploading entry: %v\n Retrying...", err)
+			time.Sleep(1000)
+			_, err = client.Collection("r1_compatibility").Documents().Upsert(context.Background(), entry)
+			// todo fancier retry
+			if err != nil {
+				return err
+			}
+		}
+		if processedCount%100 == 0 {
+			fmt.Printf("Uploaded %d definitionIds to Typesense search.\n", processedCount)
+		}
+	}
+	return nil
+}
+
+type SearchEntryItem struct {
+	ID                  string `json:"id"`
+	DeviceDefinitionID  string `json:"device_definition_id"` //nolint
+	Name                string `json:"name"`
+	Make                string `json:"make"`
+	MakeSlug            string `json:"make_slug"`             //nolint
+	ManufacturerTokenID int    `json:"manufacturer_token_id"` //nolint
+	Model               string `json:"model"`
+	ModelSlug           string `json:"model_slug"` //nolint
+	Year                int    `json:"year"`
+	ImageURL            string `json:"image_url"` //nolint
+	Score               int    `json:"score"`
 }
