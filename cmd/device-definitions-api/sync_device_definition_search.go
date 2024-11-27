@@ -159,6 +159,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		newDocument := SearchEntryItem{
 			ID:                  id,
 			DeviceDefinitionID:  deviceDefinitionID,
+			DefinitionID:        dd.NameSlug,
 			Name:                name,
 			Make:                makeName,
 			MakeSlug:            makeSlug,
@@ -173,21 +174,21 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		documents = append(documents, newDocument)
 	}
 
-	err = uploadWithApi(client, documents)
+	err = uploadWithApi(client, documents, p.settings.SearchServiceIndexName)
 
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
 }
 
-func uploadWithApi(client *typesense.Client, entries []SearchEntryItem) error {
+func uploadWithApi(client *typesense.Client, entries []SearchEntryItem, collectionName string) error {
 	processedCount := 0
 	for _, entry := range entries {
 		processedCount++
-		_, err := client.Collection("r1_compatibility").Documents().Upsert(context.Background(), entry)
+		_, err := client.Collection(collectionName).Documents().Upsert(context.Background(), entry)
 		if err != nil {
 			fmt.Printf("Error uploading entry: %v\n Retrying...", err)
 			time.Sleep(1000)
-			_, err = client.Collection("r1_compatibility").Documents().Upsert(context.Background(), entry)
+			_, err = client.Collection(collectionName).Documents().Upsert(context.Background(), entry)
 			// todo fancier retry
 			if err != nil {
 				return err
@@ -212,4 +213,5 @@ type SearchEntryItem struct {
 	Year                int    `json:"year"`
 	ImageURL            string `json:"image_url"` //nolint
 	Score               int    `json:"score"`
+	DefinitionID        string `json:"definition_id"` //nolint
 }
