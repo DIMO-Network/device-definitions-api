@@ -206,8 +206,8 @@ type SearchEntryItem struct {
 	DeviceDefinitionID  string `json:"device_definition_id"` //nolint
 	Name                string `json:"name"`
 	Make                string `json:"make"`
-	MakeSlug            string `json:"make_slug"`             //nolint
-	ManufacturerTokenID int    `json:"manufacturer_token_id"` //nolint
+	MakeSlug            string `json:"make_slug"`     //nolint
+	ManufacturerTokenID int    `json:"make_token_id"` //nolint
 	Model               string `json:"model"`
 	ModelSlug           string `json:"model_slug"` //nolint
 	Year                int    `json:"year"`
