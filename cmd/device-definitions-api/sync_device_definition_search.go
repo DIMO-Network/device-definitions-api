@@ -4,19 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math/big"
-
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/typesense/typesense-go/typesense/api"
-	"github.com/typesense/typesense-go/typesense/api/pointer"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
 	"github.com/typesense/typesense-go/typesense"
+	"github.com/typesense/typesense-go/typesense/api"
+	"github.com/typesense/typesense-go/typesense/api/pointer"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 // syncDeviceDefinitionSearchCmd cli command to sync to typesense
@@ -154,7 +151,10 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 		makeName := dd.R.DeviceMake.Name
 		makeSlug := dd.R.DeviceMake.NameSlug
-		manufacturerTokenID := dd.R.DeviceMake.TokenID.Int(new(big.Int)).Int64()
+		manufacturerTokenID := int64(0)
+		if !dd.R.DeviceMake.TokenID.IsZero() {
+			manufacturerTokenID, _ = dd.R.DeviceMake.TokenID.Int64()
+		}
 
 		newDocument := struct {
 			ID                  string `json:"id"`
