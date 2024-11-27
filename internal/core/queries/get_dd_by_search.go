@@ -81,7 +81,7 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 			continue
 		}
 		item := GetAllDeviceDefinitionItem{
-			ID:                 doc["id"].(string),
+			ID:                 doc["definition_id"].(string), // new slug id
 			DeviceDefinitionID: doc["device_definition_id"].(string),
 			Name:               doc["name"].(string),
 			Make:               doc["make"].(string),
