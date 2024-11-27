@@ -12,7 +12,6 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/ethereum/go-ethereum v1.14.7
 	github.com/friendsofgo/errors v0.9.2
-	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/contrib/jwt v1.0.10
 	github.com/gofiber/fiber/v2 v2.52.5

@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
+	"math/big"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared/db"
@@ -124,97 +125,65 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 	fmt.Printf("Starting processing definitions\n")
 
-	url := "https://device-definitions-api.dimo.zone/device-definitions/all"
-
-	resp, err := http.Get(url)
+	all, err := models.DeviceDefinitions(qm.Load(models.DeviceDefinitionRels.DeviceMake),
+		qm.Load(models.DeviceDefinitionRels.Images),
+		models.DeviceDefinitionWhere.Verified.EQ(true)).All(ctx, pdb.DBS().Reader)
 	if err != nil {
-		p.logger.Error().Err(err).Send()
-		return subcommands.ExitFailure
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		p.logger.Error().Err(err).Send()
-		return subcommands.ExitFailure
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		p.logger.Error().Err(err).Send()
-		return subcommands.ExitFailure
-	}
-
-	var result map[string]interface{}
-	err = json.Unmarshal(body, &result)
-	if err != nil {
-		p.logger.Error().Err(err).Send()
-		return subcommands.ExitFailure
+		p.logger.Fatal().Err(err).Send()
 	}
 
 	var documents []interface{}
-	// todo this should come from tableland - problem is the images.
-	if deviceDefinitions, ok := result["device_definitions"].([]interface{}); ok {
-		for _, dd := range deviceDefinitions {
-			if deviceMap, ok := dd.(map[string]interface{}); ok {
+	// todo this should come from tableland - problem is iterating over all the tables, or do it via identity-api
+	for _, dd := range all {
 
-				id := deviceMap["name_slug"].(string)
-				deviceDefinitionID := deviceMap["device_definition_id"].(string)
-				name := deviceMap["name"].(string)
-				var imageUrl string
-				if imageUrlString, ok := deviceMap["image_url"].(string); ok {
-					imageUrl = imageUrlString
-				}
-				typeMap := deviceMap["type"].(map[string]interface{})
-				modelName := typeMap["model"].(string)
-				modelSlug := typeMap["model_slug"].(string)
-
-				var year int
-				if yearFloat, ok := typeMap["year"].(float64); ok {
-					year = int(yearFloat)
-				} else {
-					continue
-				}
-				if year < 2005 {
-					continue // do not sync old cars into search
-				}
-
-				makeMap := deviceMap["make"].(map[string]interface{})
-				makeName := makeMap["name"].(string)
-				makeSlug := makeMap["name_slug"].(string)
-				var manufacturerTokenID int
-				if manufTokenIDFloat, ok := makeMap["token_id"].(float64); ok {
-					manufacturerTokenID = int(manufTokenIDFloat)
-				}
-
-				newDocument := struct {
-					ID                  string `json:"id"`
-					DeviceDefinitionID  string `json:"device_definition_id"` //nolint
-					Name                string `json:"name"`
-					Make                string `json:"make"`
-					MakeSlug            string `json:"make_slug"`             //nolint
-					ManufacturerTokenID int    `json:"manufacturer_token_id"` //nolint
-					Model               string `json:"model"`
-					ModelSlug           string `json:"model_slug"` //nolint
-					Year                int    `json:"year"`
-					ImageURL            string `json:"image_url"` //nolint
-					Score               int    `json:"score"`
-				}{
-					ID:                  id,
-					DeviceDefinitionID:  deviceDefinitionID,
-					Name:                name,
-					Make:                makeName,
-					MakeSlug:            makeSlug,
-					ManufacturerTokenID: manufacturerTokenID,
-					Model:               modelName,
-					ModelSlug:           modelSlug,
-					Year:                year,
-					ImageURL:            imageUrl,
-					Score:               1,
-				}
-
-				documents = append(documents, newDocument)
-			}
+		id := dd.NameSlug
+		deviceDefinitionID := dd.ID
+		name := common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model)
+		imageUrl := ""
+		for _, image := range dd.R.Images {
+			imageUrl = image.SourceURL
+			break
 		}
+		modelName := dd.Model
+		modelSlug := dd.ModelSlug
+
+		year := dd.Year
+		if year < 2005 {
+			continue // do not sync old cars into search
+		}
+
+		makeName := dd.R.DeviceMake.Name
+		makeSlug := dd.R.DeviceMake.NameSlug
+		manufacturerTokenID := dd.R.DeviceMake.TokenID.Int(new(big.Int)).Int64()
+
+		newDocument := struct {
+			ID                  string `json:"id"`
+			DeviceDefinitionID  string `json:"device_definition_id"` //nolint
+			Name                string `json:"name"`
+			Make                string `json:"make"`
+			MakeSlug            string `json:"make_slug"`             //nolint
+			ManufacturerTokenID int    `json:"manufacturer_token_id"` //nolint
+			Model               string `json:"model"`
+			ModelSlug           string `json:"model_slug"` //nolint
+			Year                int    `json:"year"`
+			ImageURL            string `json:"image_url"` //nolint
+			Score               int    `json:"score"`
+		}{
+			ID:                  id,
+			DeviceDefinitionID:  deviceDefinitionID,
+			Name:                name,
+			Make:                makeName,
+			MakeSlug:            makeSlug,
+			ManufacturerTokenID: int(manufacturerTokenID),
+			Model:               modelName,
+			ModelSlug:           modelSlug,
+			Year:                int(year),
+			ImageURL:            imageUrl,
+			Score:               1,
+		}
+
+		documents = append(documents, newDocument)
+
 	}
 
 	batchSize := 100
