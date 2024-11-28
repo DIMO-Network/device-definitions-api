@@ -107,7 +107,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error) {
 	split := strings.Split(ID, "_")
 	if len(split) != 3 {
-		return nil, fmt.Errorf("invalid slug")
+		return nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
 	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)

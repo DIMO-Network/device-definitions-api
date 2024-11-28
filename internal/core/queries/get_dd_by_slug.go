@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
@@ -41,7 +42,7 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 	dd, err := ch.definitionsOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "handler failed to get dd by slug "+qry.DefinitionID)
 	}
 
 	if dd == nil {
