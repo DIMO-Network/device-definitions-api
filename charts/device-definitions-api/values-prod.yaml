@@ -21,7 +21,7 @@ env:
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   ETHEREUM_SEND_TRANSACTION: true
-  TABLELAND_API_GATEWAY: http://tableland-node-prod.prod.svc.cluster.local/
+  TABLELAND_API_GATEWAY: http://tableland-node-prod.prod.svc.cluster.local:8080/
   ETHEREUM_REGISTRY_ADDRESS: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod
 ingress:
