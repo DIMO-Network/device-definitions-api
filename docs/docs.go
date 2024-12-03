@@ -528,6 +528,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/device-definitions/{id}": {
+            "get": {
+                "description": "gets a device definition by the new slug id eg. ford_escape_2021",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets a device definition by the new slug id eg. ford_escape_2021",
+                "operationId": "GetDeviceDefinitionByIDv2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "slug definition id eg. ford_escape_2021",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/v2/device-definitions/{make}/all": {
             "get": {
                 "description": "gets a device definition",
@@ -608,43 +644,6 @@ const docTemplate = `{
     "definitions": {
         "big.Int": {
             "type": "object"
-        },
-        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration": {
-            "type": "object",
-            "properties": {
-                "features": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature"
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "style": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "vendor": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature": {
-            "type": "object",
-            "properties": {
-                "featureKey": {
-                    "type": "string"
-                },
-                "supportLevel": {
-                    "type": "integer"
-                }
-            }
         },
         "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake": {
             "type": "object",
@@ -739,36 +738,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType": {
-            "type": "object",
-            "properties": {
-                "make": {
-                    "type": "string"
-                },
-                "makeSlug": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "modelSlug": {
-                    "type": "string"
-                },
-                "subModels": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "type": {
-                    "description": "Type is eg. Vehicle, E-bike, roomba",
-                    "type": "string"
-                },
-                "year": {
-                    "type": "integer"
-                }
-            }
-        },
         "github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute": {
             "type": "object",
             "properties": {
@@ -812,12 +781,6 @@ const docTemplate = `{
         "github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult": {
             "type": "object",
             "properties": {
-                "compatibleIntegrations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration"
-                    }
-                },
                 "deviceAttributes": {
                     "type": "array",
                     "items": {
@@ -827,27 +790,11 @@ const docTemplate = `{
                 "deviceDefinitionId": {
                     "type": "string"
                 },
-                "deviceIntegrations": {
-                    "description": "DeviceIntegrations has integrations this vehicle can integrate with, from table device_integrations",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration"
-                    }
-                },
                 "deviceStyles": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle"
                     }
-                },
-                "externalIds": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID"
-                    }
-                },
-                "external_id": {
-                    "type": "string"
                 },
                 "hardware_template_id": {
                     "type": "string"
@@ -870,59 +817,14 @@ const docTemplate = `{
                 "nameSlug": {
                     "type": "string"
                 },
-                "source": {
-                    "type": "string"
-                },
                 "transactions": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "type": {
-                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType"
-                },
-                "vehicleData": {
-                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo"
-                },
                 "verified": {
                     "type": "boolean"
-                }
-            }
-        },
-        "github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo": {
-            "type": "object",
-            "properties": {
-                "base_msrp": {
-                    "type": "integer"
-                },
-                "driven_wheels": {
-                    "type": "string"
-                },
-                "epa_class": {
-                    "type": "string"
-                },
-                "fuel_tank_capacity_gal": {
-                    "type": "string"
-                },
-                "fuel_type": {
-                    "type": "string"
-                },
-                "mpg": {
-                    "type": "string"
-                },
-                "mpg_city": {
-                    "type": "string"
-                },
-                "mpg_highway": {
-                    "type": "string"
-                },
-                "number_of_doors": {
-                    "type": "string"
-                },
-                "vehicle_type": {
-                    "description": "VehicleType PASSENGER CAR, from NHTSA",
-                    "type": "string"
                 }
             }
         },
@@ -1082,7 +984,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "compatible": {
-                    "type": "boolean"
+                    "type": "string"
                 },
                 "definitionId": {
                     "type": "string"
@@ -1101,6 +1003,54 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata": {
+            "type": "object",
+            "properties": {
+                "device_attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute"
+                    }
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel": {
+            "type": "object",
+            "properties": {
+                "devicetype": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imageuri": {
+                    "type": "string"
+                },
+                "ksuid": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake": {
             "type": "object",
             "properties": {
@@ -1112,12 +1062,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "external_ids_typed": {
+                    "description": "Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.ExternalID"
                     }
                 },
                 "hardware_template_id": {
+                    "description": "Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.",
                     "type": "string"
                 },
                 "id": {
@@ -1193,10 +1145,6 @@ const docTemplate = `{
             "properties": {
                 "deviceDefinitionId": {
                     "description": "new name slug based id, can use this to query identity-api",
-                    "type": "string"
-                },
-                "legacyId": {
-                    "description": "old ksuid based device def id",
                     "type": "string"
                 },
                 "newTransactionHash": {

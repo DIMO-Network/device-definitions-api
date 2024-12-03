@@ -119,7 +119,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 		// first see if we have already figured out powertrain for this DD
 		dd, errTbl := c.deviceDefinitionOnChainService.GetDefinitionByID(ctx, *definitionID, c.DBS().Reader)
 		if dd != nil {
-			c.logger.Warn().Err(errTbl).Msgf("failed to get dd from tableland node: %s", *definitionID)
+			c.logger.Warn().Err(errTbl).Msgf("resolve powertrain: failed to get dd from tableland node: %s", *definitionID)
 		}
 		if dd != nil && dd.Metadata != nil {
 			for _, attr := range dd.Metadata.DeviceAttributes {

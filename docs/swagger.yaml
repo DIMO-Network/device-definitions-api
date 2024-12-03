@@ -1,30 +1,6 @@
 definitions:
   big.Int:
     type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration:
-    properties:
-      features:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature'
-        type: array
-      id:
-        type: string
-      region:
-        type: string
-      style:
-        type: string
-      type:
-        type: string
-      vendor:
-        type: string
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegrationFeature:
-    properties:
-      featureKey:
-        type: string
-      supportLevel:
-        type: integer
-    type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake:
     properties:
       created_at:
@@ -86,26 +62,6 @@ definitions:
       subModel:
         type: string
     type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType:
-    properties:
-      make:
-        type: string
-      makeSlug:
-        type: string
-      model:
-        type: string
-      modelSlug:
-        type: string
-      subModels:
-        items:
-          type: string
-        type: array
-      type:
-        description: Type is eg. Vehicle, E-bike, roomba
-        type: string
-      year:
-        type: integer
-    type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute:
     properties:
       description:
@@ -134,31 +90,15 @@ definitions:
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult:
     properties:
-      compatibleIntegrations:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration'
-        type: array
       deviceAttributes:
         items:
           $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute'
         type: array
       deviceDefinitionId:
         type: string
-      deviceIntegrations:
-        description: DeviceIntegrations has integrations this vehicle can integrate
-          with, from table device_integrations
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceIntegration'
-        type: array
       deviceStyles:
         items:
           $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle'
-        type: array
-      external_id:
-        type: string
-      externalIds:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID'
         type: array
       hardware_template_id:
         type: string
@@ -174,42 +114,12 @@ definitions:
         type: string
       nameSlug:
         type: string
-      source:
-        type: string
       transactions:
         items:
           type: string
         type: array
-      type:
-        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceType'
-      vehicleData:
-        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo'
       verified:
         type: boolean
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.VehicleInfo:
-    properties:
-      base_msrp:
-        type: integer
-      driven_wheels:
-        type: string
-      epa_class:
-        type: string
-      fuel_tank_capacity_gal:
-        type: string
-      fuel_type:
-        type: string
-      mpg:
-        type: string
-      mpg_city:
-        type: string
-      mpg_highway:
-        type: string
-      number_of_doors:
-        type: string
-      vehicle_type:
-        description: VehicleType PASSENGER CAR, from NHTSA
-        type: string
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow:
     properties:
@@ -313,7 +223,7 @@ definitions:
   github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetR1SearchEntryItem:
     properties:
       compatible:
-        type: boolean
+        type: string
       definitionId:
         type: string
       make:
@@ -325,6 +235,37 @@ definitions:
       year:
         type: integer
     type: object
+  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata:
+    properties:
+      device_attributes:
+        items:
+          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute'
+        type: array
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel:
+    properties:
+      devicetype:
+        type: string
+      id:
+        type: string
+      imageuri:
+        type: string
+      ksuid:
+        type: string
+      metadata:
+        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata'
+      model:
+        type: string
+      year:
+        type: integer
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    type: object
   github_com_DIMO-Network_device-definitions-api_pkg_grpc.DeviceMake:
     properties:
       created_at:
@@ -333,10 +274,12 @@ definitions:
         description: 'Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.'
         type: string
       external_ids_typed:
+        description: 'Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.'
         items:
           $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_pkg_grpc.ExternalID'
         type: array
       hardware_template_id:
+        description: 'Deprecated: Marked as deprecated in pkg/grpc/device_definition.proto.'
         type: string
       id:
         type: string
@@ -386,9 +329,6 @@ definitions:
     properties:
       deviceDefinitionId:
         description: new name slug based id, can use this to query identity-api
-        type: string
-      legacyId:
-        description: old ksuid based device def id
         type: string
       newTransactionHash:
         description: if a new device definition was created, the tableland transaction
@@ -765,6 +705,30 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets all supported manufacturers for the smartcar external integration
+      tags:
+      - device-definitions
+  /v2/device-definitions/{id}:
+    get:
+      description: gets a device definition by the new slug id eg. ford_escape_2021
+      operationId: GetDeviceDefinitionByIDv2
+      parameters:
+      - description: slug definition id eg. ford_escape_2021
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel'
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets a device definition by the new slug id eg. ford_escape_2021
       tags:
       - device-definitions
   /v2/device-definitions/{make}/{id}:

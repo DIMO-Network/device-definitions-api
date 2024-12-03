@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -14,7 +16,6 @@ import (
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"time"
 )
 
 // syncDeviceDefinitionSearchCmd cli command to sync to typesense
@@ -179,13 +180,13 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		documents = append(documents, newDocument)
 	}
 
-	err = uploadWithApi(client, documents, p.settings.SearchServiceIndexName)
+	err = uploadWithAPI(client, documents, p.settings.SearchServiceIndexName)
 
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
 }
 
-func uploadWithApi(client *typesense.Client, entries []SearchEntryItem, collectionName string) error {
+func uploadWithAPI(client *typesense.Client, entries []SearchEntryItem, collectionName string) error {
 	processedCount := 0
 	for _, entry := range entries {
 		processedCount++

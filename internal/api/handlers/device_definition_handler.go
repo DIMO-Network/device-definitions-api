@@ -6,8 +6,9 @@ import (
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate modesl
+	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate models
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	_ "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways" // required for swagger to generate models
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -74,6 +75,28 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		query := &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: id}
+
+		result, _ := m.Send(c.UserContext(), query)
+
+		return c.Status(fiber.StatusOK).JSON(result)
+	}
+}
+
+// GetDeviceDefinitionByIDv2 godoc
+// @Summary gets a device definition by the new slug id eg. ford_escape_2021
+// @ID GetDeviceDefinitionByIDv2
+// @Description gets a device definition by the new slug id eg. ford_escape_2021
+// @Tags device-definitions
+// @Param  id path string true "slug definition id eg. ford_escape_2021"
+// @Produce json
+// @Success 200 {object} gateways.DeviceDefinitionTablelandModel
+// @Failure 404
+// @Failure 500
+// @Router /v2/device-definitions/{id} [get]
+func GetDeviceDefinitionByIDv2(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		query := &queries.GetDeviceDefinitionByIDQueryV2{DefinitionID: id}
 
 		result, _ := m.Send(c.UserContext(), query)
 
