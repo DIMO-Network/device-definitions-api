@@ -56,13 +56,13 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		}
 
 		hasFacet := true
+		nestedFields := false
+		sort := true
 		schema := &api.CollectionSchema{
-			Name: collectionName,
+			Name:                collectionName,
+			EnableNestedFields:  &nestedFields,
+			DefaultSortingField: pointer.String("score"),
 			Fields: []api.Field{
-				{
-					Name: "id",
-					Type: "string",
-				},
 				{
 					Name: "device_definition_id",
 					Type: "string",
@@ -70,6 +70,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 				{
 					Name: "name",
 					Type: "string",
+					Sort: &sort,
 				},
 				{
 					Name:  "make",
@@ -82,7 +83,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Facet: &hasFacet,
 				},
 				{
-					Name:  "manufacturer_token_id",
+					Name:  "make_token_id",
 					Type:  "int32",
 					Facet: &hasFacet,
 				},
@@ -109,8 +110,11 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 					Name: "score",
 					Type: "int32",
 				},
+				{
+					Name: "definition_id",
+					Type: "string",
+				},
 			},
-			DefaultSortingField: pointer.String("score"),
 		}
 		_, err = client.Collections().Create(context.Background(), schema)
 		if err != nil {
