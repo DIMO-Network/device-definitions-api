@@ -117,7 +117,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 		return nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
-	// call out to identity-api but need caching
+	// call out to identity-api w/ caching
 	manufacturer, err := e.getManufacturer(ctx, manufacturerSlug, reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
@@ -168,7 +168,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 
 	var modelTableland []DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to query tableland, manufacturer: %d", manufacturerID.Int64())
 	}
 	if len(modelTableland) == 0 {
 		return nil, nil
@@ -290,7 +290,7 @@ func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]s
 	}
 
 	if err := json.Unmarshal(body, result); err != nil {
-		return errors.Wrapf(err, "resp body: %s", string(body))
+		return errors.Wrapf(err, "resp body: %s. url: %s", string(body), fullURL.String())
 	}
 	return nil
 }
