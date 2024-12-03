@@ -50,21 +50,24 @@ type DeviceDefinitionOnChainService interface {
 }
 
 type deviceDefinitionOnChainService struct {
-	settings *config.Settings
-	logger   *zerolog.Logger
-	client   *ethclient.Client
-	sender   sender.Sender
-	chainID  *big.Int
+	settings    *config.Settings
+	logger      *zerolog.Logger
+	client      *ethclient.Client
+	sender      sender.Sender
+	chainID     *big.Int
+	identityAPI IdentityAPI
 }
 
 func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client, chainID *big.Int, sender sender.Sender) DeviceDefinitionOnChainService {
-	return &deviceDefinitionOnChainService{
-		settings: settings,
-		logger:   logger,
-		client:   client,
-		chainID:  chainID,
-		sender:   sender,
+	ocs := &deviceDefinitionOnChainService{
+		settings:    settings,
+		logger:      logger,
+		client:      client,
+		chainID:     chainID,
+		sender:      sender,
+		identityAPI: NewIdentityAPIService(logger, settings, nil),
 	}
+	return ocs
 }
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
@@ -110,6 +113,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 		return nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
+	// call out to identity-api
 	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)

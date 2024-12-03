@@ -24,6 +24,7 @@ env:
   TABLELAND_API_GATEWAY: http://tableland-node-prod.prod.svc.cluster.local:8080/
   ETHEREUM_REGISTRY_ADDRESS: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod
+  IDENTITY_API_URL: https://identity-api.dimo.zone/query
 ingress:
   enabled: true
   className: nginx
