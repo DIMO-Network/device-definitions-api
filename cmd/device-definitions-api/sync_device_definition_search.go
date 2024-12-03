@@ -54,6 +54,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		if err != nil {
 			p.logger.Error().Err(err).Send()
 		}
+		fmt.Println("Successfully deleted index: " + collectionName)
 
 		hasFacet := true
 		nestedFields := false
@@ -122,7 +123,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			return subcommands.ExitFailure
 		}
 
-		fmt.Printf("Index %s created", collectionName)
+		fmt.Printf("Index %s created\n", collectionName)
 	}
 
 	fmt.Printf("Starting processing definitions\n")
