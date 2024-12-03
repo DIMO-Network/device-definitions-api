@@ -2,12 +2,13 @@ package gateways
 
 import (
 	"encoding/json"
+	"io"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"io"
-	"time"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -19,7 +20,7 @@ type identityAPIService struct {
 	identityAPIURL string
 }
 
-//go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go
+//go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go -package mocks
 type IdentityAPI interface {
 	GetManufacturer(slug string) (*Manufacturer, error)
 }
@@ -103,9 +104,9 @@ func (i *identityAPIService) fetchWithQuery(query string, result interface{}) er
 }
 
 type Manufacturer struct {
-	TokenId int    `json:"tokenId"`
+	TokenID int    `json:"tokenId"`
 	Name    string `json:"name"`
-	TableId int    `json:"tableId"`
+	TableID int    `json:"tableId"`
 	Owner   string `json:"owner"`
 }
 

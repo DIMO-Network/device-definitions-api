@@ -11,6 +11,9 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/DIMO-Network/shared/db"
 
@@ -56,18 +59,19 @@ type deviceDefinitionOnChainService struct {
 	sender      sender.Sender
 	chainID     *big.Int
 	identityAPI IdentityAPI
+	inmemCache  *cache.Cache
 }
 
 func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client, chainID *big.Int, sender sender.Sender) DeviceDefinitionOnChainService {
-	ocs := &deviceDefinitionOnChainService{
+	return &deviceDefinitionOnChainService{
 		settings:    settings,
 		logger:      logger,
 		client:      client,
 		chainID:     chainID,
 		sender:      sender,
 		identityAPI: NewIdentityAPIService(logger, settings, nil),
+		inmemCache:  cache.New(48*time.Hour, 1*time.Hour),
 	}
-	return ocs
 }
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
@@ -113,12 +117,30 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 		return nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
-	// call out to identity-api
-	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)
+	// call out to identity-api but need caching
+	manufacturer, err := e.getManufacturer(ctx, manufacturerSlug, reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
-	return e.GetDefinitionTableland(ctx, deviceMake.TokenID.Int(new(big.Int)), ID)
+	bigInt := big.NewInt(int64(manufacturer.TokenID))
+	return e.GetDefinitionTableland(ctx, bigInt, ID)
+}
+
+func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {
+	value, found := e.inmemCache.Get(manufacturerSlug)
+	if found {
+		return value.(*Manufacturer), nil
+	}
+	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get DeviceMake from db: %s", manufacturerSlug)
+	}
+	manufacturer, err := e.identityAPI.GetManufacturer(deviceMake.Name)
+	if err != nil {
+		return nil, err
+	}
+	e.inmemCache.Set(manufacturerSlug, manufacturer, time.Hour*48)
+	return manufacturer, nil
 }
 
 // GetDefinitionTableland gets dd from tableland with a select statement and returns tbl object
