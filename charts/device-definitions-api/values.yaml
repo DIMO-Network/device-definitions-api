@@ -54,6 +54,7 @@ env:
   TABLELAND_API_GATEWAY: http://tableland-node-dev.dev.svc.cluster.local:8080/
   ETHEREUM_REGISTRY_ADDRESS: '0x5eAA326fB2fc97fAcCe6A79A304876daD0F2e96c'
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_dev
+  IDENTITY_API_URL: https://identity-api.dev.dimo.zone/query
 service:
   type: ClusterIP
   ports:
