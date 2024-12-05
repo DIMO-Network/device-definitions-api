@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"os"
 	"strconv"
@@ -90,6 +91,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 		if record[0] == "DefinitionID" {
 			continue // skip first row header
 		}
+
 		dd, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
 		if err != nil {
 			fmt.Println("Error getting definition: ", record[0], err)
@@ -100,12 +102,33 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			if len(split) != 3 {
 				continue
 			}
-			manufacturerSlug := split[0]
-			deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, pdb.DBS().Reader)
+			// read from database, check that it exists there
+			dbDefinition, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(record[0]),
+				qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
 			if err != nil {
-				fmt.Println("Error getting manufacturer: ", manufacturerSlug, err)
-				continue
+				fmt.Println("Error getting definition from DB: ", record[0], err)
 			}
+			deviceMake := &models.DeviceMake{}
+			if dbDefinition != nil {
+				deviceMake = dbDefinition.R.DeviceMake
+				// go ahead and create on chain
+				trx, err := deviceDefinitionOnChainService.Create(ctx, *dbDefinition.R.DeviceMake, *dbDefinition)
+				if err != nil {
+					fmt.Println("Error creating device: ", record[0], err)
+					continue
+				}
+				dbDefinition.TRXHashHex = append(dbDefinition.TRXHashHex, *trx)
+				fmt.Println("Created device: ", record[0], *trx)
+			} else {
+				fmt.Println("No device definition found for: ", record[0])
+				manufacturerSlug := split[0]
+				deviceMake, err = models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, pdb.DBS().Reader)
+				if err != nil {
+					fmt.Println("Error getting manufacturer: ", manufacturerSlug, err)
+					continue
+				}
+			}
+
 			modelSlug := split[1]
 			year, yrErr := strconv.Atoi(split[2])
 			if yrErr != nil {
@@ -136,9 +159,9 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 				}
 				mappedModels[modelSlug] = modelName
 			}
-			// repository create?
+			// repository create
 			hardwareTemplateID := "130"
-			result, err := definitionRepository.GetOrCreate(ctx, nil, "ruptela", "", deviceMake.ID, modelName, year, common.DefaultDeviceType, null.JSON{}, true,
+			result, err := definitionRepository.GetOrCreate(ctx, nil, "manual", "", deviceMake.ID, modelName, year, common.DefaultDeviceType, null.JSON{}, true,
 				&hardwareTemplateID)
 			if err != nil {
 				fmt.Println("Error creating definition: ", record[0], err)
