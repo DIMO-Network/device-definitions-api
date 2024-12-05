@@ -112,13 +112,44 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			if dbDefinition != nil {
 				deviceMake = dbDefinition.R.DeviceMake
 				// go ahead and create on chain
+				fmt.Println("trying to create new on chain dd for ", record[0])
 				trx, err := deviceDefinitionOnChainService.Create(ctx, *dbDefinition.R.DeviceMake, *dbDefinition)
 				if err != nil {
 					fmt.Println("Error creating device: ", record[0], err)
 					continue
 				}
+				if trx == nil {
+					fmt.Println("transaction null, stopping: ", record[0])
+					break
+				}
 				dbDefinition.TRXHashHex = append(dbDefinition.TRXHashHex, *trx)
 				fmt.Println("Created device: ", record[0], *trx)
+
+				// check for trx status
+				if len(*trx) > 0 {
+					fmt.Println("Created definition: ", record[0], " with transaction hash: ", *trx)
+					trxFinished := false
+					loops := 0
+					for !trxFinished {
+						loops++
+						time.Sleep(time.Second * 2)
+						trxFinished, err = checkTransactionStatus(*trx, p.settings.PolygonScanAPIKey)
+						if err != nil {
+							fmt.Println("Error checking transaction status: ", err)
+						}
+						fmt.Println("Transaction status: ", trxFinished)
+						if loops > 10 {
+							// get device definition from on chain to see if maybe got created but trx still showing false
+							onchainDD, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
+							fmt.Println("onchainDD: ", onchainDD, err)
+							if onchainDD != nil {
+								break
+							}
+						}
+					}
+				} else {
+					fmt.Println("---------no new trx for: ", record[0])
+				}
 			} else {
 				fmt.Println("No device definition found for: ", record[0])
 				manufacturerSlug := split[0]
