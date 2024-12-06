@@ -60,6 +60,21 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Create(ctx, mk, dd any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Create), ctx, mk, dd)
 }
 
+// Delete mocks base method.
+func (m *MockDeviceDefinitionOnChainService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, manufacturerName, id)
+	ret0, _ := ret[0].(*string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Delete(ctx, manufacturerName, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Delete), ctx, manufacturerName, id)
+}
+
 // GetDefinitionByID mocks base method.
 func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*gateways.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()

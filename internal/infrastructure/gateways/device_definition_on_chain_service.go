@@ -50,6 +50,7 @@ type DeviceDefinitionOnChainService interface {
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
+	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -300,6 +301,7 @@ const (
 	TablelandFindByID = "Tableland_FindByID_Request"
 	TablelandCreated  = "Tableland_Created_Request"
 	TablelandUpdated  = "Tableland_Updated_Request"
+	TablelandDeleted  = "Tableland_Deleted_Request"
 	TablelandExists   = "Tableland_Exists_Request"
 	TablelandErrors   = "Tableland_Error_Request"
 )
@@ -535,6 +537,110 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 	trx := tx.Hash().Hex()
 
 	e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s in ManufacturerID %s", input.Id, trx, bigManufID)
+
+	return &trx, nil
+}
+
+// Delete on-chain device definition by id. Requires existing tableland record to exist to delete
+func (e *deviceDefinitionOnChainService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {
+
+	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
+	e.logger.Info().Msgf("OnChain Start Delete for device definition %s. EthereumSendTransaction %t.", id, e.settings.EthereumSendTransaction)
+
+	if !e.settings.EthereumSendTransaction {
+		return nil, nil
+	}
+
+	// validations
+	if len(id) == 0 {
+		return nil, fmt.Errorf("id is required")
+	}
+
+	contractAddress := e.settings.EthereumRegistryAddress
+	fromAddress := e.sender.Address()
+
+	nonce, err := e.client.PendingNonceAt(ctx, fromAddress)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get PendingNonceAt: %w", err)
+	}
+
+	gasPrice, err := e.client.SuggestGasPrice(ctx)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get SuggestGasPrice: %w", err)
+	}
+
+	bump := big.NewInt(20)
+	bumpedPrice := getGasPrice(gasPrice, bump)
+
+	e.logger.Info().Msgf("bumped gas price: %d", bumpedPrice)
+
+	auth, err := NewKeyedTransactorWithChainID(ctx, e.sender, e.chainID)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get NewKeyedTransactorWithChainID: %w", err)
+	}
+	//auth.Value = big.NewInt(0)
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.GasLimit = uint64(300000)
+	auth.GasPrice = bumpedPrice
+	auth.From = fromAddress
+
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+	}
+
+	// Validate if manufacturer exists
+	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerName)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", manufacturerName, err)
+	}
+	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
+	}
+
+	// check if any field changed
+	existingTblDD, err := e.GetDeviceDefinitionByID(ctx, bigManufID, id)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		e.logger.Err(err).Msgf("Error occurred get device definition %s from tableland, manuf id: %d.", id, bigManufID.Int64())
+		return nil, err
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandFindByID}).Inc()
+	if existingTblDD == nil {
+		return nil, fmt.Errorf("device definition %s not found in tableland to update", id)
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandExists}).Inc()
+	// todo - change GetDeviceDefinition above to return just the tableland object, and compare with our input for any changes.
+	// if no changes just return nil trx hash. do not allow changing model or year since it changes the slug id - need to look into these cases better
+	// as they have vehicle NFT implications.
+
+	e.logger.Info().Msgf("Executing DeleteDeviceDefinition %s with manufacturer ID %d", id, bigManufID.Int64())
+
+	tx, err := instance.DeleteDeviceDefinition(auth, bigManufID, id)
+	if err != nil {
+		e.logger.Err(err).Msgf("OnChainError - %s", id)
+		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
+		return nil, fmt.Errorf("failed delete DeleteDeviceDefinition: %w", err)
+	}
+	metrics.Success.With(prometheus.Labels{"method": TablelandDeleted}).Inc()
+
+	trx := tx.Hash().Hex()
+
+	e.logger.Info().Msgf("Executed DeleteDeviceDefinition %s with Trx %s in ManufacturerID %s", id, trx, bigManufID)
 
 	return &trx, nil
 }
