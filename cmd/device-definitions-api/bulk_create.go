@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"os"
@@ -97,7 +98,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			fmt.Println("Error getting definition: ", record[0], err)
 		}
 		if dd == nil {
-			fmt.Println("Definition not found, will try to create it...: ", record[0])
+			fmt.Println("Definition not found on chain, will try to create it: ", record[0])
 			split := strings.Split(record[0], "_")
 			if len(split) != 3 {
 				continue
@@ -122,8 +123,13 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 					fmt.Println("transaction null, stopping: ", record[0])
 					break
 				}
+				fmt.Println("Created device on chain: ", record[0], *trx)
+				time.Sleep(time.Second * 10)
 				dbDefinition.TRXHashHex = append(dbDefinition.TRXHashHex, *trx)
-				fmt.Println("Created device: ", record[0], *trx)
+				_, err = dbDefinition.Update(ctx, pdb.DBS().Writer, boil.Infer())
+				if err != nil {
+					fmt.Println("Error updating device: ", record[0], err)
+				}
 
 				// check for trx status
 				if len(*trx) > 0 {
