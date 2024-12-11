@@ -19,23 +19,21 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // DeviceMake is an object representing the database table.
 type DeviceMake struct {
-	ID                 string            `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name               string            `boil:"name" json:"name" toml:"name" yaml:"name"`
-	ExternalIds        null.JSON         `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
-	CreatedAt          time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	TokenID            types.NullDecimal `boil:"token_id" json:"token_id,omitempty" toml:"token_id" yaml:"token_id,omitempty"`
-	LogoURL            null.String       `boil:"logo_url" json:"logo_url,omitempty" toml:"logo_url" yaml:"logo_url,omitempty"`
-	OemPlatformName    null.String       `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
-	NameSlug           string            `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
-	Metadata           null.JSON         `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
-	HardwareTemplateID null.String       `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
+	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name               string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	ExternalIds        null.JSON   `boil:"external_ids" json:"external_ids,omitempty" toml:"external_ids" yaml:"external_ids,omitempty"`
+	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	LogoURL            null.String `boil:"logo_url" json:"logo_url,omitempty" toml:"logo_url" yaml:"logo_url,omitempty"`
+	OemPlatformName    null.String `boil:"oem_platform_name" json:"oem_platform_name,omitempty" toml:"oem_platform_name" yaml:"oem_platform_name,omitempty"`
+	NameSlug           string      `boil:"name_slug" json:"name_slug" toml:"name_slug" yaml:"name_slug"`
+	Metadata           null.JSON   `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	HardwareTemplateID null.String `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 
 	R *deviceMakeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceMakeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -47,7 +45,6 @@ var DeviceMakeColumns = struct {
 	ExternalIds        string
 	CreatedAt          string
 	UpdatedAt          string
-	TokenID            string
 	LogoURL            string
 	OemPlatformName    string
 	NameSlug           string
@@ -59,7 +56,6 @@ var DeviceMakeColumns = struct {
 	ExternalIds:        "external_ids",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
-	TokenID:            "token_id",
 	LogoURL:            "logo_url",
 	OemPlatformName:    "oem_platform_name",
 	NameSlug:           "name_slug",
@@ -73,7 +69,6 @@ var DeviceMakeTableColumns = struct {
 	ExternalIds        string
 	CreatedAt          string
 	UpdatedAt          string
-	TokenID            string
 	LogoURL            string
 	OemPlatformName    string
 	NameSlug           string
@@ -85,7 +80,6 @@ var DeviceMakeTableColumns = struct {
 	ExternalIds:        "device_makes.external_ids",
 	CreatedAt:          "device_makes.created_at",
 	UpdatedAt:          "device_makes.updated_at",
-	TokenID:            "device_makes.token_id",
 	LogoURL:            "device_makes.logo_url",
 	OemPlatformName:    "device_makes.oem_platform_name",
 	NameSlug:           "device_makes.name_slug",
@@ -95,39 +89,12 @@ var DeviceMakeTableColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_NullDecimal struct{ field string }
-
-func (w whereHelpertypes_NullDecimal) EQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpertypes_NullDecimal) NEQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpertypes_NullDecimal) LT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_NullDecimal) LTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_NullDecimal) GT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_NullDecimal) GTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpertypes_NullDecimal) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
-
 var DeviceMakeWhere = struct {
 	ID                 whereHelperstring
 	Name               whereHelperstring
 	ExternalIds        whereHelpernull_JSON
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
-	TokenID            whereHelpertypes_NullDecimal
 	LogoURL            whereHelpernull_String
 	OemPlatformName    whereHelpernull_String
 	NameSlug           whereHelperstring
@@ -139,7 +106,6 @@ var DeviceMakeWhere = struct {
 	ExternalIds:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_makes\".\"external_ids\""},
 	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_makes\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"device_makes\".\"updated_at\""},
-	TokenID:            whereHelpertypes_NullDecimal{field: "\"device_definitions_api\".\"device_makes\".\"token_id\""},
 	LogoURL:            whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"logo_url\""},
 	OemPlatformName:    whereHelpernull_String{field: "\"device_definitions_api\".\"device_makes\".\"oem_platform_name\""},
 	NameSlug:           whereHelperstring{field: "\"device_definitions_api\".\"device_makes\".\"name_slug\""},
@@ -149,23 +115,20 @@ var DeviceMakeWhere = struct {
 
 // DeviceMakeRels is where relationship names are stored.
 var DeviceMakeRels = struct {
-	DeviceDefinitions             string
-	ManufacturerTokenIntegrations string
-	VinNumbers                    string
-	Wmis                          string
+	DeviceDefinitions string
+	VinNumbers        string
+	Wmis              string
 }{
-	DeviceDefinitions:             "DeviceDefinitions",
-	ManufacturerTokenIntegrations: "ManufacturerTokenIntegrations",
-	VinNumbers:                    "VinNumbers",
-	Wmis:                          "Wmis",
+	DeviceDefinitions: "DeviceDefinitions",
+	VinNumbers:        "VinNumbers",
+	Wmis:              "Wmis",
 }
 
 // deviceMakeR is where relationships are stored.
 type deviceMakeR struct {
-	DeviceDefinitions             DeviceDefinitionSlice `boil:"DeviceDefinitions" json:"DeviceDefinitions" toml:"DeviceDefinitions" yaml:"DeviceDefinitions"`
-	ManufacturerTokenIntegrations IntegrationSlice      `boil:"ManufacturerTokenIntegrations" json:"ManufacturerTokenIntegrations" toml:"ManufacturerTokenIntegrations" yaml:"ManufacturerTokenIntegrations"`
-	VinNumbers                    VinNumberSlice        `boil:"VinNumbers" json:"VinNumbers" toml:"VinNumbers" yaml:"VinNumbers"`
-	Wmis                          WmiSlice              `boil:"Wmis" json:"Wmis" toml:"Wmis" yaml:"Wmis"`
+	DeviceDefinitions DeviceDefinitionSlice `boil:"DeviceDefinitions" json:"DeviceDefinitions" toml:"DeviceDefinitions" yaml:"DeviceDefinitions"`
+	VinNumbers        VinNumberSlice        `boil:"VinNumbers" json:"VinNumbers" toml:"VinNumbers" yaml:"VinNumbers"`
+	Wmis              WmiSlice              `boil:"Wmis" json:"Wmis" toml:"Wmis" yaml:"Wmis"`
 }
 
 // NewStruct creates a new relationship struct
@@ -178,13 +141,6 @@ func (r *deviceMakeR) GetDeviceDefinitions() DeviceDefinitionSlice {
 		return nil
 	}
 	return r.DeviceDefinitions
-}
-
-func (r *deviceMakeR) GetManufacturerTokenIntegrations() IntegrationSlice {
-	if r == nil {
-		return nil
-	}
-	return r.ManufacturerTokenIntegrations
 }
 
 func (r *deviceMakeR) GetVinNumbers() VinNumberSlice {
@@ -205,9 +161,9 @@ func (r *deviceMakeR) GetWmis() WmiSlice {
 type deviceMakeL struct{}
 
 var (
-	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "name_slug", "metadata", "hardware_template_id"}
+	deviceMakeAllColumns            = []string{"id", "name", "external_ids", "created_at", "updated_at", "logo_url", "oem_platform_name", "name_slug", "metadata", "hardware_template_id"}
 	deviceMakeColumnsWithoutDefault = []string{"id", "name", "name_slug"}
-	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "token_id", "logo_url", "oem_platform_name", "metadata", "hardware_template_id"}
+	deviceMakeColumnsWithDefault    = []string{"external_ids", "created_at", "updated_at", "logo_url", "oem_platform_name", "metadata", "hardware_template_id"}
 	deviceMakePrimaryKeyColumns     = []string{"id"}
 	deviceMakeGeneratedColumns      = []string{}
 )
@@ -531,20 +487,6 @@ func (o *DeviceMake) DeviceDefinitions(mods ...qm.QueryMod) deviceDefinitionQuer
 	return DeviceDefinitions(queryMods...)
 }
 
-// ManufacturerTokenIntegrations retrieves all the integration's Integrations with an executor via manufacturer_token_id column.
-func (o *DeviceMake) ManufacturerTokenIntegrations(mods ...qm.QueryMod) integrationQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("\"device_definitions_api\".\"integrations\".\"manufacturer_token_id\"=?", o.TokenID),
-	)
-
-	return Integrations(queryMods...)
-}
-
 // VinNumbers retrieves all the vin_number's VinNumbers with an executor.
 func (o *DeviceMake) VinNumbers(mods ...qm.QueryMod) vinNumberQuery {
 	var queryMods []qm.QueryMod
@@ -678,119 +620,6 @@ func (deviceMakeL) LoadDeviceDefinitions(ctx context.Context, e boil.ContextExec
 					foreign.R = &deviceDefinitionR{}
 				}
 				foreign.R.DeviceMake = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadManufacturerTokenIntegrations allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (deviceMakeL) LoadManufacturerTokenIntegrations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceMake interface{}, mods queries.Applicator) error {
-	var slice []*DeviceMake
-	var object *DeviceMake
-
-	if singular {
-		var ok bool
-		object, ok = maybeDeviceMake.(*DeviceMake)
-		if !ok {
-			object = new(DeviceMake)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceMake)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceMake))
-			}
-		}
-	} else {
-		s, ok := maybeDeviceMake.(*[]*DeviceMake)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceMake)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceMake))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &deviceMakeR{}
-		}
-		args[object.TokenID] = struct{}{}
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &deviceMakeR{}
-			}
-			args[obj.TokenID] = struct{}{}
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.integrations`),
-		qm.WhereIn(`device_definitions_api.integrations.manufacturer_token_id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load integrations")
-	}
-
-	var resultSlice []*Integration
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice integrations")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on integrations")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for integrations")
-	}
-
-	if len(integrationAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.ManufacturerTokenIntegrations = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &integrationR{}
-			}
-			foreign.R.ManufacturerToken = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if queries.Equal(local.TokenID, foreign.ManufacturerTokenID) {
-				local.R.ManufacturerTokenIntegrations = append(local.R.ManufacturerTokenIntegrations, foreign)
-				if foreign.R == nil {
-					foreign.R = &integrationR{}
-				}
-				foreign.R.ManufacturerToken = local
 				break
 			}
 		}
@@ -1075,133 +904,6 @@ func (o *DeviceMake) AddDeviceDefinitions(ctx context.Context, exec boil.Context
 			rel.R.DeviceMake = o
 		}
 	}
-	return nil
-}
-
-// AddManufacturerTokenIntegrations adds the given related objects to the existing relationships
-// of the device_make, optionally inserting them as new records.
-// Appends related to o.R.ManufacturerTokenIntegrations.
-// Sets related.R.ManufacturerToken appropriately.
-func (o *DeviceMake) AddManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Integration) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			queries.Assign(&rel.ManufacturerTokenID, o.TokenID)
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"device_definitions_api\".\"integrations\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_token_id"}),
-				strmangle.WhereClause("\"", "\"", 2, integrationPrimaryKeyColumns),
-			)
-			values := []interface{}{o.TokenID, rel.ID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			queries.Assign(&rel.ManufacturerTokenID, o.TokenID)
-		}
-	}
-
-	if o.R == nil {
-		o.R = &deviceMakeR{
-			ManufacturerTokenIntegrations: related,
-		}
-	} else {
-		o.R.ManufacturerTokenIntegrations = append(o.R.ManufacturerTokenIntegrations, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &integrationR{
-				ManufacturerToken: o,
-			}
-		} else {
-			rel.R.ManufacturerToken = o
-		}
-	}
-	return nil
-}
-
-// SetManufacturerTokenIntegrations removes all previously related items of the
-// device_make replacing them completely with the passed
-// in related items, optionally inserting them as new records.
-// Sets o.R.ManufacturerToken's ManufacturerTokenIntegrations accordingly.
-// Replaces o.R.ManufacturerTokenIntegrations with related.
-// Sets related.R.ManufacturerToken's ManufacturerTokenIntegrations accordingly.
-func (o *DeviceMake) SetManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Integration) error {
-	query := "update \"device_definitions_api\".\"integrations\" set \"manufacturer_token_id\" = null where \"manufacturer_token_id\" = $1"
-	values := []interface{}{o.TokenID}
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, query)
-		fmt.Fprintln(writer, values)
-	}
-	_, err := exec.ExecContext(ctx, query, values...)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove relationships before set")
-	}
-
-	if o.R != nil {
-		for _, rel := range o.R.ManufacturerTokenIntegrations {
-			queries.SetScanner(&rel.ManufacturerTokenID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.ManufacturerToken = nil
-		}
-		o.R.ManufacturerTokenIntegrations = nil
-	}
-
-	return o.AddManufacturerTokenIntegrations(ctx, exec, insert, related...)
-}
-
-// RemoveManufacturerTokenIntegrations relationships from objects passed in.
-// Removes related items from R.ManufacturerTokenIntegrations (uses pointer comparison, removal does not keep order)
-// Sets related.R.ManufacturerToken.
-func (o *DeviceMake) RemoveManufacturerTokenIntegrations(ctx context.Context, exec boil.ContextExecutor, related ...*Integration) error {
-	if len(related) == 0 {
-		return nil
-	}
-
-	var err error
-	for _, rel := range related {
-		queries.SetScanner(&rel.ManufacturerTokenID, nil)
-		if rel.R != nil {
-			rel.R.ManufacturerToken = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("manufacturer_token_id")); err != nil {
-			return err
-		}
-	}
-	if o.R == nil {
-		return nil
-	}
-
-	for _, rel := range related {
-		for i, ri := range o.R.ManufacturerTokenIntegrations {
-			if rel != ri {
-				continue
-			}
-
-			ln := len(o.R.ManufacturerTokenIntegrations)
-			if ln > 1 && i < ln-1 {
-				o.R.ManufacturerTokenIntegrations[i] = o.R.ManufacturerTokenIntegrations[ln-1]
-			}
-			o.R.ManufacturerTokenIntegrations = o.R.ManufacturerTokenIntegrations[:ln-1]
-			break
-		}
-	}
-
 	return nil
 }
 
