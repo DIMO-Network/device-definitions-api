@@ -3,8 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"math/big"
-
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
@@ -30,10 +29,12 @@ type GrpcDefinitionsService struct {
 	logger            *zerolog.Logger
 	dbs               *db.ReaderWriter
 	onChainDeviceDefs gateways.DeviceDefinitionOnChainService
+	queryInstance     *contracts.Registry
 }
 
-func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter, onChainDefs gateways.DeviceDefinitionOnChainService) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs(), onChainDeviceDefs: onChainDefs}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter,
+	onChainDefs gateways.DeviceDefinitionOnChainService, queryInstance *contracts.Registry) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs(), onChainDeviceDefs: onChainDefs, queryInstance: queryInstance}
 }
 
 //** Device Definitions
@@ -235,7 +236,11 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 	trxHash := new(string)
 	if dbDD.Verified {
 		// check for any changes
-		ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, dm.TokenID.Int(new(big.Int)), in.DeviceDefinitionId)
+		manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, dm.Name)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", dm.Name)
+		}
+		ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, manufacturerID, in.DeviceDefinitionId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
 		}
@@ -611,9 +616,11 @@ func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_
 		OemPlatformName: deviceMake.OemPlatformName.String,
 	}
 
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
+	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, deviceMake.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", deviceMake.Name)
 	}
+	result.TokenId = manufacturerID.Uint64()
 
 	return result, nil
 }
@@ -635,13 +642,11 @@ func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_
 		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
 	}
 
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
+	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, deviceMake.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", deviceMake.Name)
 	}
-
-	if deviceMake.TokenID != nil {
-		result.TokenId = deviceMake.TokenID.Uint64()
-	}
+	result.TokenId = manufacturerID.Uint64()
 
 	return result, nil
 }

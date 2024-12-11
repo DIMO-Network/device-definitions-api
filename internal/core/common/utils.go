@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
@@ -274,10 +273,6 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		Verified: dd.Verified,
 	}
 
-	if !dd.R.DeviceMake.TokenID.IsZero() {
-		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
-	}
-
 	// build object for integrations that have all the info
 	rp.DeviceStyles = []models.DeviceStyle{}
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
@@ -352,10 +347,6 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		},
 		Verified:     dd.Verified,
 		Transactions: dd.Transactions,
-	}
-
-	if dd.DeviceMake.TokenID != nil {
-		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
 	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}

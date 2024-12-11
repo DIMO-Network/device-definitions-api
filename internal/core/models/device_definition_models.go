@@ -3,7 +3,6 @@ package models
 
 import (
 	"encoding/json"
-	"math/big"
 	"time"
 
 	"github.com/volatiletech/null/v8"
@@ -87,11 +86,12 @@ type DeviceStyle struct {
 }
 
 type DeviceMake struct {
-	ID                 string              `json:"id"`
-	Name               string              `json:"name"`
-	LogoURL            null.String         `json:"logo_url"`
-	OemPlatformName    null.String         `json:"oem_platform_name"`
-	TokenID            *big.Int            `json:"tokenId,omitempty"`
+	ID              string      `json:"id"`
+	Name            string      `json:"name"`
+	LogoURL         null.String `json:"logo_url"`
+	OemPlatformName null.String `json:"oem_platform_name"`
+	// look on chain or identity-api if you want the token id
+	//TokenID            *big.Int            `json:"tokenId,omitempty"`
 	NameSlug           string              `json:"nameSlug"`
 	ExternalIDs        json.RawMessage     `json:"external_ids"`
 	ExternalIDsTyped   []*ExternalID       `json:"externalIdsTyped"`
