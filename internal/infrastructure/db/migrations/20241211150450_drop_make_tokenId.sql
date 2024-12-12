@@ -3,9 +3,9 @@
 SELECT 'up SQL query';
 SET search_path = device_definitions_api, public;
 alter table device_makes
-    drop constraint device_makes_token_id_key CASCADE;
+    drop constraint if exists device_makes_token_id_key CASCADE;
 
-alter table device_makes drop column token_id;
+alter table device_makes drop column if exists token_id;
 -- +goose StatementEnd
 
 -- +goose Down
