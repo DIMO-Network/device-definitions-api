@@ -344,6 +344,9 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 		Verified:     dd.Verified,
 		Transactions: dd.Transactions,
 	}
+	if dd.DeviceMake.TokenID != nil {
+		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
+	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}
 	for _, ds := range dd.DeviceStyles {
