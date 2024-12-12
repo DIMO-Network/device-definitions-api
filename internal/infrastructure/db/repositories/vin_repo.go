@@ -28,8 +28,8 @@ type vinRepository struct {
 	registryInstance *contracts.Registry
 }
 
-func NewVINRepository(dbs func() *db.ReaderWriter) VINRepository {
-	return &vinRepository{DBS: dbs}
+func NewVINRepository(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry) VINRepository {
+	return &vinRepository{DBS: dbs, registryInstance: registryInstance}
 }
 
 func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk string) (*models.Wmi, error) {
