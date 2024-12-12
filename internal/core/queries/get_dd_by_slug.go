@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/pkg/errors"
 
@@ -40,7 +41,7 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionBySlugQuery)
 
-	dd, err := ch.definitionsOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
+	dd, manufacturerID, err := ch.definitionsOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "handler failed to get dd by slug "+qry.DefinitionID)
@@ -60,12 +61,12 @@ func (ch GetDeviceDefinitionBySlugQueryHandler) Handle(ctx context.Context, quer
 		return nil, err
 	}
 
-	result := BuildFromDeviceDefinitionToGRPCResult(dbDefinition, dd)
+	result := BuildFromDeviceDefinitionToGRPCResult(dbDefinition, dd, manufacturerID)
 
 	return result, nil
 }
 
-func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gateways.DeviceDefinitionTablelandModel) *grpc.GetDeviceDefinitionItemResponse {
+func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gateways.DeviceDefinitionTablelandModel, manufacturerID *big.Int) *grpc.GetDeviceDefinitionItemResponse {
 	rp := &grpc.GetDeviceDefinitionItemResponse{
 		DeviceDefinitionId: tbl.KSUID,
 		Ksuid:              tbl.KSUID,
@@ -83,6 +84,7 @@ func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gat
 			LogoUrl:         dd.R.DeviceMake.LogoURL.String,
 			OemPlatformName: dd.R.DeviceMake.OemPlatformName.String,
 			NameSlug:        dd.R.DeviceMake.NameSlug,
+			TokenId:         manufacturerID.Uint64(),
 		},
 		Verified:     dd.Verified,
 		Transactions: dd.TRXHashHex,

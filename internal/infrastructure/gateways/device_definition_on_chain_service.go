@@ -44,8 +44,8 @@ import (
 type DeviceDefinitionOnChainService interface {
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
-	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug
-	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error)
+	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
+	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, *big.Int, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
 	Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error)
@@ -112,19 +112,21 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	return nil, nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, error) {
+// GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
+func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, *big.Int, error) {
 	split := strings.Split(ID, "_")
 	if len(split) != 3 {
-		return nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
+		return nil, nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
 	// call out to identity-api w/ caching
 	manufacturer, err := e.getManufacturer(ctx, manufacturerSlug, reader)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
+		return nil, nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
 	bigInt := big.NewInt(int64(manufacturer.TokenID))
-	return e.GetDefinitionTableland(ctx, bigInt, ID)
+	tblDD, err := e.GetDefinitionTableland(ctx, bigInt, ID)
+	return tblDD, bigInt, err
 }
 
 func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {

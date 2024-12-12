@@ -94,7 +94,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 			continue // skip first row header
 		}
 
-		dd, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
+		dd, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
 		if err != nil {
 			fmt.Println("Error getting definition: ", record[0], err)
 		}
@@ -147,7 +147,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 						fmt.Println("Transaction status: ", trxFinished)
 						if loops > 10 {
 							// get device definition from on chain to see if maybe got created but trx still showing false
-							onchainDD, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
+							onchainDD, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
 							fmt.Println("onchainDD: ", onchainDD, err)
 							if onchainDD != nil {
 								break
@@ -219,7 +219,7 @@ func (p *bulkCreateDefinitions) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 					fmt.Println("Transaction status: ", trxFinished)
 					if loops > 10 {
 						// get device definition from on chain to see if maybe got created but trx still showing false
-						onchainDD, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
+						onchainDD, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, record[0], pdb.DBS().Reader)
 						fmt.Println("onchainDD: ", onchainDD, err)
 						if onchainDD != nil {
 							break

@@ -142,7 +142,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// If DeviceDefinitionID passed in, override VIN decoding // todo next version: this should change to use definitionId
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
-		tblDef, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
+		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get device definition id: %s", qry.DefinitionID)
 		}
@@ -251,7 +251,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	modelSlug := shared.SlugString(vinInfo.Model)
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
-	tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
+	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
 	if errTbl != nil {
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
 	} else if tblDef == nil {

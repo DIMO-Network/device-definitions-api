@@ -117,7 +117,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSl
 	if definitionID != nil {
 		// future: what about style. also, use the dd cache service
 		// first see if we have already figured out powertrain for this DD
-		dd, errTbl := c.deviceDefinitionOnChainService.GetDefinitionByID(ctx, *definitionID, c.DBS().Reader)
+		dd, _, errTbl := c.deviceDefinitionOnChainService.GetDefinitionByID(ctx, *definitionID, c.DBS().Reader)
 		if dd != nil {
 			c.logger.Warn().Err(errTbl).Msgf("resolve powertrain: failed to get dd from tableland node: %s", *definitionID)
 		}

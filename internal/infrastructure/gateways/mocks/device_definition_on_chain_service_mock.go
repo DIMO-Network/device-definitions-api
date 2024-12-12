@@ -22,7 +22,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockDeviceDefinitionOnChainService is a mock of ddOnChainSvc interface.
+// MockDeviceDefinitionOnChainService is a mock of DeviceDefinitionOnChainService interface.
 type MockDeviceDefinitionOnChainService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDeviceDefinitionOnChainServiceMockRecorder
@@ -76,12 +76,13 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Delete(ctx, manufactur
 }
 
 // GetDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*gateways.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*gateways.DeviceDefinitionTablelandModel, *big.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDefinitionByID", ctx, ID, reader)
 	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*big.Int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetDefinitionByID indicates an expected call of GetDefinitionByID.

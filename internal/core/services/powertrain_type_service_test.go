@@ -125,7 +125,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 			want: "BEV",
 			before: func() {
 				onChainSvc.EXPECT().GetDefinitionByID(gomock.Any(), ddWithPt.NameSlug, gomock.Any()).
-					Return(buildTestTblDD(ddWithPt.NameSlug, "super-special", 2022, "BEV"), nil)
+					Return(buildTestTblDD(ddWithPt.NameSlug, "super-special", 2022, "BEV"), nil, nil)
 			},
 		},
 	}

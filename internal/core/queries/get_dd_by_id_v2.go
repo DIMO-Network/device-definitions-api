@@ -33,7 +33,7 @@ func (ch GetDeviceDefinitionByIDQueryV2Handler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionByIDQueryV2)
 
-	dd, err := ch.ddOnChainSvc.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
+	dd, _, err := ch.ddOnChainSvc.GetDefinitionByID(ctx, qry.DefinitionID, ch.dbs().Reader)
 
 	if err != nil {
 		return nil, err
