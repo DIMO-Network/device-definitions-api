@@ -651,21 +651,6 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "externalIdsTyped": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID"
-                    }
-                },
-                "external_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "hardware_template_id": {
-                    "$ref": "#/definitions/null.String"
-                },
                 "id": {
                     "type": "string"
                 },
@@ -763,17 +748,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "vendor": {
                     "type": "string"
                 }
             }

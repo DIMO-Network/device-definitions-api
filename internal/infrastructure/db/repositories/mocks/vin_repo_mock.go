@@ -5,6 +5,7 @@
 //
 //	mockgen -source vin_repo.go -destination mocks/vin_repo_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

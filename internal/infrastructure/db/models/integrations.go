@@ -146,29 +146,19 @@ var IntegrationWhere = struct {
 
 // IntegrationRels is where relationship names are stored.
 var IntegrationRels = struct {
-	ManufacturerToken  string
 	DeviceIntegrations string
 }{
-	ManufacturerToken:  "ManufacturerToken",
 	DeviceIntegrations: "DeviceIntegrations",
 }
 
 // integrationR is where relationships are stored.
 type integrationR struct {
-	ManufacturerToken  *DeviceMake            `boil:"ManufacturerToken" json:"ManufacturerToken" toml:"ManufacturerToken" yaml:"ManufacturerToken"`
 	DeviceIntegrations DeviceIntegrationSlice `boil:"DeviceIntegrations" json:"DeviceIntegrations" toml:"DeviceIntegrations" yaml:"DeviceIntegrations"`
 }
 
 // NewStruct creates a new relationship struct
 func (*integrationR) NewStruct() *integrationR {
 	return &integrationR{}
-}
-
-func (r *integrationR) GetManufacturerToken() *DeviceMake {
-	if r == nil {
-		return nil
-	}
-	return r.ManufacturerToken
 }
 
 func (r *integrationR) GetDeviceIntegrations() DeviceIntegrationSlice {
@@ -494,17 +484,6 @@ func (q integrationQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
-// ManufacturerToken pointed to by the foreign key.
-func (o *Integration) ManufacturerToken(mods ...qm.QueryMod) deviceMakeQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"token_id\" = ?", o.ManufacturerTokenID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DeviceMakes(queryMods...)
-}
-
 // DeviceIntegrations retrieves all the device_integration's DeviceIntegrations with an executor.
 func (o *Integration) DeviceIntegrations(mods ...qm.QueryMod) deviceIntegrationQuery {
 	var queryMods []qm.QueryMod
@@ -517,130 +496,6 @@ func (o *Integration) DeviceIntegrations(mods ...qm.QueryMod) deviceIntegrationQ
 	)
 
 	return DeviceIntegrations(queryMods...)
-}
-
-// LoadManufacturerToken allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (integrationL) LoadManufacturerToken(ctx context.Context, e boil.ContextExecutor, singular bool, maybeIntegration interface{}, mods queries.Applicator) error {
-	var slice []*Integration
-	var object *Integration
-
-	if singular {
-		var ok bool
-		object, ok = maybeIntegration.(*Integration)
-		if !ok {
-			object = new(Integration)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeIntegration)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeIntegration))
-			}
-		}
-	} else {
-		s, ok := maybeIntegration.(*[]*Integration)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeIntegration)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeIntegration))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &integrationR{}
-		}
-		if !queries.IsNil(object.ManufacturerTokenID) {
-			args[object.ManufacturerTokenID] = struct{}{}
-		}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &integrationR{}
-			}
-
-			if !queries.IsNil(obj.ManufacturerTokenID) {
-				args[obj.ManufacturerTokenID] = struct{}{}
-			}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.device_makes`),
-		qm.WhereIn(`device_definitions_api.device_makes.token_id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceMake")
-	}
-
-	var resultSlice []*DeviceMake
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceMake")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_makes")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_makes")
-	}
-
-	if len(deviceMakeAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.ManufacturerToken = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceMakeR{}
-		}
-		foreign.R.ManufacturerTokenIntegrations = append(foreign.R.ManufacturerTokenIntegrations, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if queries.Equal(local.ManufacturerTokenID, foreign.TokenID) {
-				local.R.ManufacturerToken = foreign
-				if foreign.R == nil {
-					foreign.R = &deviceMakeR{}
-				}
-				foreign.R.ManufacturerTokenIntegrations = append(foreign.R.ManufacturerTokenIntegrations, local)
-				break
-			}
-		}
-	}
-
-	return nil
 }
 
 // LoadDeviceIntegrations allows an eager lookup of values, cached into the
@@ -753,86 +608,6 @@ func (integrationL) LoadDeviceIntegrations(ctx context.Context, e boil.ContextEx
 		}
 	}
 
-	return nil
-}
-
-// SetManufacturerToken of the integration to the related item.
-// Sets o.R.ManufacturerToken to related.
-// Adds o to related.R.ManufacturerTokenIntegrations.
-func (o *Integration) SetManufacturerToken(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceMake) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"device_definitions_api\".\"integrations\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"manufacturer_token_id"}),
-		strmangle.WhereClause("\"", "\"", 2, integrationPrimaryKeyColumns),
-	)
-	values := []interface{}{related.TokenID, o.ID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	queries.Assign(&o.ManufacturerTokenID, related.TokenID)
-	if o.R == nil {
-		o.R = &integrationR{
-			ManufacturerToken: related,
-		}
-	} else {
-		o.R.ManufacturerToken = related
-	}
-
-	if related.R == nil {
-		related.R = &deviceMakeR{
-			ManufacturerTokenIntegrations: IntegrationSlice{o},
-		}
-	} else {
-		related.R.ManufacturerTokenIntegrations = append(related.R.ManufacturerTokenIntegrations, o)
-	}
-
-	return nil
-}
-
-// RemoveManufacturerToken relationship.
-// Sets o.R.ManufacturerToken to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *Integration) RemoveManufacturerToken(ctx context.Context, exec boil.ContextExecutor, related *DeviceMake) error {
-	var err error
-
-	queries.SetScanner(&o.ManufacturerTokenID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("manufacturer_token_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.ManufacturerToken = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.ManufacturerTokenIntegrations {
-		if queries.Equal(o.ManufacturerTokenID, ri.ManufacturerTokenID) {
-			continue
-		}
-
-		ln := len(related.R.ManufacturerTokenIntegrations)
-		if ln > 1 && i < ln-1 {
-			related.R.ManufacturerTokenIntegrations[i] = related.R.ManufacturerTokenIntegrations[ln-1]
-		}
-		related.R.ManufacturerTokenIntegrations = related.R.ManufacturerTokenIntegrations[:ln-1]
-		break
-	}
 	return nil
 }
 

@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
@@ -261,21 +260,14 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
 		DeviceMake: models.DeviceMake{
-			ID:                 dd.R.DeviceMake.ID,
-			Name:               dd.R.DeviceMake.Name,
-			LogoURL:            dd.R.DeviceMake.LogoURL,
-			OemPlatformName:    dd.R.DeviceMake.OemPlatformName,
-			NameSlug:           dd.R.DeviceMake.NameSlug,
-			ExternalIDs:        JSONOrDefault(dd.R.DeviceMake.ExternalIds),
-			ExternalIDsTyped:   BuildExternalIDs(dd.R.DeviceMake.ExternalIds),
-			HardwareTemplateID: dd.R.DeviceMake.HardwareTemplateID,
+			ID:              dd.R.DeviceMake.ID,
+			Name:            dd.R.DeviceMake.Name,
+			LogoURL:         dd.R.DeviceMake.LogoURL,
+			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
+			NameSlug:        dd.R.DeviceMake.NameSlug,
 		},
 		Metadata: dd.Metadata.JSON,
 		Verified: dd.Verified,
-	}
-
-	if !dd.R.DeviceMake.TokenID.IsZero() {
-		rp.DeviceMake.TokenID = dd.R.DeviceMake.TokenID.Big.Int(new(big.Int))
 	}
 
 	// build object for integrations that have all the info
@@ -343,19 +335,14 @@ func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc
 
 		HardwareTemplateId: DefautlAutoPiTemplate, //used for the autopi template id, which should always be 130 now
 		Make: &grpc.DeviceMake{
-			Id:                 dd.DeviceMake.ID,
-			Name:               dd.DeviceMake.Name,
-			LogoUrl:            dd.DeviceMake.LogoURL.String,
-			OemPlatformName:    dd.DeviceMake.OemPlatformName.String,
-			NameSlug:           dd.DeviceMake.NameSlug,
-			HardwareTemplateId: dd.DeviceMake.HardwareTemplateID.String,
+			Id:              dd.DeviceMake.ID,
+			Name:            dd.DeviceMake.Name,
+			LogoUrl:         dd.DeviceMake.LogoURL.String,
+			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
+			NameSlug:        dd.DeviceMake.NameSlug,
 		},
 		Verified:     dd.Verified,
 		Transactions: dd.Transactions,
-	}
-
-	if dd.DeviceMake.TokenID != nil {
-		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
 	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}

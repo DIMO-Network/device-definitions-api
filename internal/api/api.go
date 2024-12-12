@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
@@ -59,6 +60,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
+	registryInstance, err := contracts.NewRegistry(settings.EthereumRegistryAddress, ethClient)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
+	}
 	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
@@ -68,10 +73,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
 	deviceMakeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
-	vinRepository := repositories.NewVINRepository(pdb.DBS)
+	vinRepository := repositories.NewVINRepository(pdb.DBS, registryInstance)
 
 	//cache services
-	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, ddOnChainService)
+	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, deviceMakeRepository, ddOnChainService, registryInstance)
 	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger, ddOnChainService)
 	searchService := search.NewTypesenseAPIService(settings, &logger)
@@ -102,10 +107,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetDeviceStyleByFilterQuery{}, queries.NewGetDeviceStyleByFilterQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByDeviceDefinitionIDQuery{}, queries.NewGetDeviceStyleByDeviceDefinitionIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByExternalIDQuery{}, queries.NewGetDeviceStyleByExternalIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceMakeByNameQuery{}, queries.NewGetDeviceMakeByNameQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceMakeBySlugQuery{}, queries.NewGetDeviceMakeBySlugQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceMakeByTokenIDQuery{}, queries.NewGetDeviceMakeByTokenIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetAllDeviceMakeQuery{}, queries.NewGetAllDeviceMakeQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceMakeByNameQuery{}, queries.NewGetDeviceMakeByNameQueryHandler(pdb.DBS, ddCacheService)),
+		mediator.WithHandler(&queries.GetDeviceMakeBySlugQuery{}, queries.NewGetDeviceMakeBySlugQueryHandler(pdb.DBS, ddCacheService)),
+		mediator.WithHandler(&queries.GetDeviceMakeByTokenIDQuery{}, queries.NewGetDeviceMakeByTokenIDQueryHandler(pdb.DBS, registryInstance, ddCacheService)),
+		mediator.WithHandler(&queries.GetAllDeviceMakeQuery{}, queries.NewGetAllDeviceMakeQueryHandler(pdb.DBS, ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionImagesByIDsQuery{}, queries.NewGetDeviceDefinitionImagesByIDsQueryHandler(pdb.DBS, &logger)),
 		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS, powerTrainTypeService)),
@@ -138,7 +143,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
 
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, ddOnChainService)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, ddOnChainService, ddCacheService)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionOnChainByIDQuery{}, queries.NewGetDeviceDefinitionOnChainByIDQueryHandler(ddCacheService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionBySearchQuery{}, queries.NewGetAllDeviceDefinitionBySearchQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetR1CompatibilitySearch{}, queries.NewGetR1CompatibilitySearchQueryHandler(searchService)),
@@ -172,7 +177,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService, registryInstance)
 
 	// Start Server from a different go routine
 	go func() {

@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -48,6 +52,15 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
 	collectionName := p.settings.SearchServiceIndexName
+
+	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+	queryInstance, err := contracts.NewRegistry(p.settings.EthereumRegistryAddress, ethClient)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
+	}
 
 	if p.createIndex {
 
@@ -135,6 +148,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	if err != nil {
 		p.logger.Fatal().Err(err).Send()
 	}
+	makes := map[string]int64{}
 
 	var documents []SearchEntryItem
 	// todo this should come from tableland - problem is iterating over all the tables, or do it via identity-api
@@ -158,8 +172,15 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		makeName := dd.R.DeviceMake.Name
 		makeSlug := dd.R.DeviceMake.NameSlug
 		manufacturerTokenID := int64(0)
-		if !dd.R.DeviceMake.TokenID.IsZero() {
-			manufacturerTokenID, _ = dd.R.DeviceMake.TokenID.Int64()
+		if val, ok := makes[makeName]; ok {
+			manufacturerTokenID = val
+		} else {
+			manufacturerID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, makeName)
+			if err != nil {
+				p.logger.Fatal().Err(err).Msgf("unable to get manufacturer id by name: %s", makeName)
+			}
+			makes[makeName] = manufacturerID.Int64()
+			manufacturerTokenID = manufacturerID.Int64()
 		}
 
 		newDocument := SearchEntryItem{

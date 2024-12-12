@@ -6,8 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
+	"sync"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	"github.com/DIMO-Network/shared"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
@@ -20,6 +24,7 @@ import (
 )
 
 type DeviceDefinitionCacheService interface {
+	GetDeviceMakeByName(ctx context.Context, makeName string) (*models.DeviceMake, error)
 	GetDeviceDefinitionByID(ctx context.Context, id string, options ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error)
 	GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error)
@@ -30,13 +35,19 @@ type DeviceDefinitionCacheService interface {
 }
 
 type deviceDefinitionCacheService struct {
-	Cache                          redis.CacheService
-	Repository                     repositories.DeviceDefinitionRepository
-	DeviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	Cache         redis.CacheService
+	Repository    repositories.DeviceDefinitionRepository
+	makesRepo     repositories.DeviceMakeRepository
+	ddOnChainSvc  gateways.DeviceDefinitionOnChainService
+	queryInstance *contracts.Registry
+	makesBySlug   map[string]*models.DeviceMake
+	mu            sync.RWMutex
 }
 
-func NewDeviceDefinitionCacheService(cache redis.CacheService, repository repositories.DeviceDefinitionRepository, deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DeviceDefinitionCacheService {
-	return &deviceDefinitionCacheService{Cache: cache, Repository: repository, DeviceDefinitionOnChainService: deviceDefinitionOnChainService}
+func NewDeviceDefinitionCacheService(cache redis.CacheService, repository repositories.DeviceDefinitionRepository, deviceMakesRepo repositories.DeviceMakeRepository,
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry) DeviceDefinitionCacheService {
+	return &deviceDefinitionCacheService{Cache: cache, Repository: repository, ddOnChainSvc: deviceDefinitionOnChainService,
+		queryInstance: registryInstance, makesRepo: deviceMakesRepo, makesBySlug: make(map[string]*models.DeviceMake)}
 }
 
 const (
@@ -47,7 +58,42 @@ const (
 	cacheDeviceDefinitionSlugNameKey = "device-definition-by-slug-name"
 )
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string, opts ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c *deviceDefinitionCacheService) GetDeviceMakeByName(ctx context.Context, makeName string) (*models.DeviceMake, error) {
+	slug := shared.SlugString(makeName)
+
+	if m, ok := c.makesBySlug[slug]; ok {
+		return m, nil
+	}
+	// else need to get and set
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	dm, err := c.makesRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	manufacturerID, err := c.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, makeName)
+	if err != nil {
+		return nil, err
+	}
+	result := &models.DeviceMake{
+		ID:              dm.ID,
+		Name:            dm.Name,
+		LogoURL:         dm.LogoURL,
+		OemPlatformName: dm.OemPlatformName,
+		TokenID:         manufacturerID,
+		NameSlug:        dm.NameSlug,
+		Metadata:        dm.Metadata.JSON,
+		MetadataTyped:   common.BuildDeviceMakeMetadata(dm.Metadata),
+		CreatedAt:       dm.CreatedAt,
+		UpdatedAt:       dm.UpdatedAt,
+	}
+	c.makesBySlug[slug] = result
+
+	return result, nil
+}
+
+func (c *deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Context, id string, opts ...GetDeviceDefinitionOption) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	params := defaultGetDeviceDefinitionCacheOptions
 	for _, opt := range opts {
@@ -89,7 +135,11 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 	}
 
 	if params.UseOnChainData {
-		dd, err = c.DeviceDefinitionOnChainService.GetDeviceDefinitionByID(ctx, params.Make.TokenID.Int(new(big.Int)), id)
+		dm, err := c.GetDeviceMakeByName(ctx, params.Make.Name)
+		if err != nil {
+			return nil, err
+		}
+		dd, err = c.ddOnChainSvc.GetDeviceDefinitionByID(ctx, dm.TokenID, id)
 
 		if err != nil {
 			return nil, err
@@ -117,17 +167,17 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByID(ctx context.Contex
 	return rp, nil
 }
 
-func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByID(ctx context.Context, id string) {
+func (c *deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByID(ctx context.Context, id string) {
 	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionKey, id)
 	c.Cache.Del(ctx, cache)
 }
 
-func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, mk string, model string, year int) {
+func (c *deviceDefinitionCacheService) DeleteDeviceDefinitionCacheByMakeModelAndYears(ctx context.Context, mk string, model string, year int) {
 	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, mk, model, year)
 	c.Cache.Del(ctx, cache)
 }
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c *deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	cache := fmt.Sprintf("%s-%s-%s-%d", cacheDeviceDefinitionMMYKey, mk, model, year)
 	cacheData := c.Cache.Get(ctx, cache)
@@ -163,7 +213,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ctx
 	return rp, nil
 }
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c *deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Context, slug string, year int) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	cache := fmt.Sprintf("%s-%s-%d", cacheDeviceDefinitionSlugKey, slug, year)
 	cacheData := c.Cache.Get(ctx, cache)
@@ -199,7 +249,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Cont
 	return rp, nil
 }
 
-func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error) {
+func (c *deviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context.Context, slug string) (*models.GetDeviceDefinitionQueryResult, error) {
 
 	cache := fmt.Sprintf("%s-%s", cacheDeviceDefinitionSlugNameKey, slug)
 	cacheData := c.Cache.Get(ctx, cache)
@@ -235,7 +285,7 @@ func (c deviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context.
 	return rp, nil
 }
 
-func (c deviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int) {
+func (c *deviceDefinitionCacheService) DeleteDeviceDefinitionCacheBySlug(ctx context.Context, slug string, year int) {
 	cache := fmt.Sprintf("%s-%s-%d", cacheDeviceDefinitionSlugKey, slug, year)
 	c.Cache.Del(ctx, cache)
 }

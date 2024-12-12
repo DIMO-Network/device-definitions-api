@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
@@ -31,7 +33,8 @@ type CacheDeviceDefinitionSuite struct {
 	ctx                                context.Context
 	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
-	cache DeviceDefinitionCacheService
+	cache               DeviceDefinitionCacheService
+	mockDeviceMakesRepo *mock_repository.MockDeviceMakeRepository
 }
 
 func TestCacheDeviceDefinition(t *testing.T) {
@@ -52,9 +55,10 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 
 	s.mockRedis = mocks.NewMockRedisCacheService(s.ctrl)
 	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+	s.mockDeviceMakesRepo = mock_repository.NewMockDeviceMakeRepository(s.ctrl)
 
 	s.repository = repositories.NewDeviceDefinitionRepository(s.pdb.DBS, s.mockDeviceDefinitionOnChainService)
-	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository, s.mockDeviceDefinitionOnChainService)
+	s.cache = NewDeviceDefinitionCacheService(s.mockRedis, s.repository, s.mockDeviceMakesRepo, s.mockDeviceDefinitionOnChainService, nil)
 }
 
 func (s *CacheDeviceDefinitionSuite) TearDownTest() {

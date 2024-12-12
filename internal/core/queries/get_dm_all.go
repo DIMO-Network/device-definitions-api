@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 	"fmt"
-	"math/big"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -22,11 +22,12 @@ type GetAllDeviceMakeQuery struct {
 func (*GetAllDeviceMakeQuery) Key() string { return "GetAllDeviceMakeQuery" }
 
 type GetAllDeviceMakeQueryHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS     func() *db.ReaderWriter
+	ddCache services.DeviceDefinitionCacheService
 }
 
-func NewGetAllDeviceMakeQueryHandler(dbs func() *db.ReaderWriter) GetAllDeviceMakeQueryHandler {
-	return GetAllDeviceMakeQueryHandler{DBS: dbs}
+func NewGetAllDeviceMakeQueryHandler(dbs func() *db.ReaderWriter, ddCache services.DeviceDefinitionCacheService) GetAllDeviceMakeQueryHandler {
+	return GetAllDeviceMakeQueryHandler{DBS: dbs, ddCache: ddCache}
 }
 
 func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Message) (interface{}, error) {
@@ -55,11 +56,11 @@ func (ch GetAllDeviceMakeQueryHandler) Handle(ctx context.Context, _ mediator.Me
 			CreatedAt:       timestamppb.New(v.CreatedAt),
 			UpdatedAt:       timestamppb.New(v.UpdatedAt),
 		}
+		dm, _ := ch.ddCache.GetDeviceMakeByName(ctx, v.Name)
 
-		if !v.TokenID.IsZero() {
-			result.DeviceMakes[i].TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
+		if dm != nil {
+			result.DeviceMakes[i].TokenId = dm.TokenID.Uint64()
 		}
-
 	}
 
 	return result, nil

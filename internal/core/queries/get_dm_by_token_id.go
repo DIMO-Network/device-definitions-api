@@ -2,24 +2,22 @@ package queries
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math/big"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/volatiletech/null/v8"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/ericlagergren/decimal"
-	"github.com/pkg/errors"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type GetDeviceMakeByTokenIDQuery struct {
@@ -29,11 +27,13 @@ type GetDeviceMakeByTokenIDQuery struct {
 func (*GetDeviceMakeByTokenIDQuery) Key() string { return "GetDeviceMakeByTokenIDQuery" }
 
 type GetDeviceMakeByTokenIDQueryHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS           func() *db.ReaderWriter
+	queryInstance *contracts.Registry
+	ddCache       services.DeviceDefinitionCacheService
 }
 
-func NewGetDeviceMakeByTokenIDQueryHandler(dbs func() *db.ReaderWriter) GetDeviceMakeByTokenIDQueryHandler {
-	return GetDeviceMakeByTokenIDQueryHandler{DBS: dbs}
+func NewGetDeviceMakeByTokenIDQueryHandler(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry, ddCache services.DeviceDefinitionCacheService) GetDeviceMakeByTokenIDQueryHandler {
+	return GetDeviceMakeByTokenIDQueryHandler{DBS: dbs, queryInstance: registryInstance, ddCache: ddCache}
 }
 
 func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -48,37 +48,31 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		}
 	}
 
-	tid := types.NewNullDecimal(new(decimal.Big).SetBigMantScale(ti, 0))
-
-	v, err := models.DeviceMakes(qm.Where("token_id = ?", qry.TokenID)).One(ctx, ch.DBS().Reader)
+	manufName, err := ch.queryInstance.GetManufacturerNameById(&bind.CallOpts{Context: ctx, Pending: true}, ti)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, &exceptions.NotFoundError{
-				Err: fmt.Errorf("could not find device make with tokenId param: %s, and bigint tid %v", qry.TokenID, tid),
-			}
-		}
-
 		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device make by token id"),
+			Err: fmt.Errorf("failed to get manufacturer name by token id: %s", qry.TokenID),
+		}
+	}
+	dm, err := ch.ddCache.GetDeviceMakeByName(ctx, manufName)
+	if err != nil {
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device make by name: %s", manufName),
 		}
 	}
 
-	md := &coremodels.DeviceMakeMetadata{}
-	_ = v.Metadata.Unmarshal(md)
+	metadata := common.BuildDeviceMakeMetadata(null.JSONFrom(dm.Metadata))
 
 	result := &p_grpc.DeviceMake{
-		Id:              v.ID,
-		Name:            v.Name,
-		LogoUrl:         v.LogoURL.String,
-		OemPlatformName: v.OemPlatformName.String,
-		NameSlug:        v.NameSlug,
-		Metadata:        common.DeviceMakeMetadataToGRPC(md),
-		CreatedAt:       timestamppb.New(v.CreatedAt),
-		UpdatedAt:       timestamppb.New(v.UpdatedAt),
-	}
-
-	if !v.TokenID.IsZero() {
-		result.TokenId = v.TokenID.Big.Int(new(big.Int)).Uint64()
+		Id:              dm.ID,
+		Name:            dm.Name,
+		LogoUrl:         dm.LogoURL.String,
+		OemPlatformName: dm.OemPlatformName.String,
+		NameSlug:        dm.NameSlug,
+		TokenId:         ti.Uint64(),
+		Metadata:        common.DeviceMakeMetadataToGRPC(metadata),
+		CreatedAt:       timestamppb.New(dm.CreatedAt),
+		UpdatedAt:       timestamppb.New(dm.UpdatedAt),
 	}
 
 	return result, nil
