@@ -292,17 +292,6 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	return dm
 }
 
-func SetupCreateMakeWithTokenID(t *testing.T, mk string, tokenID int64, pdb db.Store) models.DeviceMake {
-	dm := models.DeviceMake{
-		ID:       ksuid.New().String(),
-		Name:     mk,
-		NameSlug: shared.SlugString(mk),
-	}
-	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "no db error expected")
-	return dm
-}
-
 func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
 	ds := models.DeviceStyle{
 		ID:                 ksuid.New().String(),

@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/shared/db"

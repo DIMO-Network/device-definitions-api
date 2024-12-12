@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"google.golang.org/protobuf/types/known/emptypb"
 

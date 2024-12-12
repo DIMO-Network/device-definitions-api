@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"net"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"

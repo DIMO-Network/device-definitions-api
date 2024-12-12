@@ -4,10 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"

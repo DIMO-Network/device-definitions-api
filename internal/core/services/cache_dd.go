@@ -6,11 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/shared"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"sync"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 

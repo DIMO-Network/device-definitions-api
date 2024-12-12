@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
