@@ -5,16 +5,6 @@ definitions:
     properties:
       created_at:
         type: string
-      external_ids:
-        items:
-          type: integer
-        type: array
-      externalIdsTyped:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID'
-        type: array
-      hardware_template_id:
-        $ref: '#/definitions/null.String'
       id:
         type: string
       logo_url:
@@ -79,13 +69,6 @@ definitions:
       type:
         type: string
       value:
-        type: string
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.ExternalID:
-    properties:
-      id:
-        type: string
-      vendor:
         type: string
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult:
