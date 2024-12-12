@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -80,6 +82,11 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
 	}
 
+	queryInstance, err := contracts.NewRegistry(s.EthereumRegistryAddress, ethClient)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
+	}
+
 	//infra
 	drivlyAPIService := gateways.NewDrivlyAPIService(s)
 	vincarioAPIService := gateways.NewVincarioAPIService(s, &logger)
@@ -89,7 +96,7 @@ func vinNumbersSync(ctx context.Context, s *config.Settings, logger zerolog.Logg
 
 	//repos
 	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, deviceDefinitionOnChainService)
-	vinRepository := repositories.NewVINRepository(pdb.DBS)
+	vinRepository := repositories.NewVINRepository(pdb.DBS, queryInstance)
 
 	//service
 	vinDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, nil, &logger, deviceDefinitionRepository, datGroupWSService)

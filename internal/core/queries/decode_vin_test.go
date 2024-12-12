@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/segmentio/ksuid"
 	"strconv"
 	"strings"
 	"testing"
+
+	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+	"github.com/segmentio/ksuid"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared"
