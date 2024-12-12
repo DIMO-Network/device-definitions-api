@@ -88,10 +88,6 @@ func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gat
 		Transactions: dd.TRXHashHex,
 	}
 
-	if !dd.R.DeviceMake.TokenID.IsZero() {
-		rp.Make.TokenId, _ = dd.R.DeviceMake.TokenID.Uint64()
-	}
-
 	rp.DeviceStyles = []*grpc.DeviceStyle{}
 	for _, ds := range dd.R.DeviceStyles {
 		rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyle{

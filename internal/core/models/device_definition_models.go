@@ -3,6 +3,7 @@ package models
 
 import (
 	"encoding/json"
+	"math/big"
 	"time"
 
 	"github.com/volatiletech/null/v8"
@@ -86,20 +87,16 @@ type DeviceStyle struct {
 }
 
 type DeviceMake struct {
-	ID              string      `json:"id"`
-	Name            string      `json:"name"`
-	LogoURL         null.String `json:"logo_url"`
-	OemPlatformName null.String `json:"oem_platform_name"`
-	// look on chain or identity-api if you want the token id
-	//TokenID            *big.Int            `json:"tokenId,omitempty"`
-	NameSlug           string              `json:"nameSlug"`
-	ExternalIDs        json.RawMessage     `json:"external_ids"`
-	ExternalIDsTyped   []*ExternalID       `json:"externalIdsTyped"`
-	Metadata           json.RawMessage     `json:"metadata"`
-	MetadataTyped      *DeviceMakeMetadata `json:"metadataTyped"`
-	HardwareTemplateID null.String         `json:"hardware_template_id"`
-	CreatedAt          time.Time           `json:"created_at,omitempty"`
-	UpdatedAt          time.Time           `json:"updated_at,omitempty"`
+	ID              string              `json:"id"`
+	Name            string              `json:"name"`
+	LogoURL         null.String         `json:"logo_url"`
+	OemPlatformName null.String         `json:"oem_platform_name"`
+	TokenID         *big.Int            `json:"tokenId,omitempty"`
+	NameSlug        string              `json:"nameSlug"`
+	Metadata        json.RawMessage     `json:"metadata"`
+	MetadataTyped   *DeviceMakeMetadata `json:"metadataTyped"`
+	CreatedAt       time.Time           `json:"created_at,omitempty"`
+	UpdatedAt       time.Time           `json:"updated_at,omitempty"`
 }
 
 type ExternalID struct {

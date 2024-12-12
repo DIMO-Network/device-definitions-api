@@ -633,13 +633,11 @@ func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_
 	deviceMake := qryResult.(coremodels.DeviceMake)
 
 	result := &p_grpc.DeviceMake{
-		Id:               deviceMake.ID,
-		Name:             deviceMake.Name,
-		NameSlug:         deviceMake.NameSlug,
-		LogoUrl:          deviceMake.LogoURL.String,
-		OemPlatformName:  deviceMake.OemPlatformName.String,
-		ExternalIds:      string(deviceMake.ExternalIDs),
-		ExternalIdsTyped: common.ExternalIDsToGRPC(deviceMake.ExternalIDsTyped),
+		Id:              deviceMake.ID,
+		Name:            deviceMake.Name,
+		NameSlug:        deviceMake.NameSlug,
+		LogoUrl:         deviceMake.LogoURL.String,
+		OemPlatformName: deviceMake.OemPlatformName.String,
 	}
 
 	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, deviceMake.Name)

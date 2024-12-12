@@ -21,6 +21,7 @@ import (
 
 type DeviceMakeRepository interface {
 	GetAll(ctx context.Context) ([]*models.DeviceMake, error)
+	GetBySlug(ctx context.Context, slug string) (*models.DeviceMake, error)
 	GetOrCreate(ctx context.Context, makeName string, logURL string, externalIDs string, metadata string, hardwareTemplateID string) (*models.DeviceMake, error)
 }
 
@@ -70,6 +71,14 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 			return m, nil
 		}
 		return nil, errors.Wrapf(err, "error querying for make: %s", makeName)
+	}
+	return m, nil
+}
+
+func (r *deviceMakeRepository) GetBySlug(ctx context.Context, slug string) (*models.DeviceMake, error) {
+	m, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(strings.TrimSpace(slug))).One(ctx, r.DBS().Writer)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error querying for make: %s", slug)
 	}
 	return m, nil
 }

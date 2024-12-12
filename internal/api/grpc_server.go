@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"net"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -21,13 +22,14 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Mediator, dbs func() *db.ReaderWriter, onChainDeviceDefs gateways.DeviceDefinitionOnChainService) {
+func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Mediator, dbs func() *db.ReaderWriter,
+	onChainDeviceDefs gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry) {
 	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
-	deviceDefinitionService := NewGrpcService(m, &logger, dbs, onChainDeviceDefs)
+	deviceDefinitionService := NewGrpcService(m, &logger, dbs, onChainDeviceDefs, registryInstance)
 	integrationService := NewGrpcIntegrationService(m, &logger)
 	decodeService := NewGrpcVinDecoderService(m, &logger)
 

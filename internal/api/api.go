@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
@@ -59,6 +59,10 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
+	queryInstance, err := contracts.NewRegistry(settings.EthereumRegistryAddress, ethClient)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
+	}
 	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
@@ -172,7 +176,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService, queryInstance)
 
 	// Start Server from a different go routine
 	go func() {

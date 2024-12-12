@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"math/big"
 	"os"
 	"testing"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/docker/go-connections/nat"
-	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
@@ -26,7 +24,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 //go:embed device_type_vehicle_properties.json
@@ -289,7 +286,6 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 		ID:       ksuid.New().String(),
 		Name:     mk,
 		NameSlug: shared.SlugString(mk),
-		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(100), 0)),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")
@@ -301,7 +297,6 @@ func SetupCreateMakeWithTokenID(t *testing.T, mk string, tokenID int64, pdb db.S
 		ID:       ksuid.New().String(),
 		Name:     mk,
 		NameSlug: shared.SlugString(mk),
-		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(tokenID), 0)),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")
@@ -328,9 +323,6 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 		ID:       ksuid.New().String(),
 		Name:     "AutoPi",
 		NameSlug: "autopi",
-		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(144), 0)),
-		//TokenID: types.NullDecimal{},
-		//TokenID: types.NewNullDecimal(decimal.New(int64(1), 0)),
 	}
 
 	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -365,7 +357,6 @@ func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		ID:       ksuid.New().String(),
 		Name:     "Smartcar",
 		NameSlug: "smartcar",
-		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(143), 0)),
 	}
 
 	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
@@ -391,7 +382,6 @@ func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integrat
 		ID:       ksuid.New().String(),
 		Name:     "Macaron",
 		NameSlug: "macaron",
-		TokenID:  types.NewNullDecimal(new(decimal.Big).SetBigMantScale(big.NewInt(142), 0)),
 	}
 
 	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())

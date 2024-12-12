@@ -22,7 +22,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockDeviceDefinitionOnChainService is a mock of DeviceDefinitionOnChainService interface.
+// MockDeviceDefinitionOnChainService is a mock of ddOnChainSvc interface.
 type MockDeviceDefinitionOnChainService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDeviceDefinitionOnChainServiceMockRecorder

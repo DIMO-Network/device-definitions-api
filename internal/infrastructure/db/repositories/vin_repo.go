@@ -6,6 +6,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	"github.com/DIMO-Network/shared"
 
@@ -21,7 +23,8 @@ type VINRepository interface {
 }
 
 type vinRepository struct {
-	DBS func() *db.ReaderWriter
+	DBS              func() *db.ReaderWriter
+	registryInstance *contracts.Registry
 }
 
 func NewVINRepository(dbs func() *db.ReaderWriter) VINRepository {
@@ -45,9 +48,9 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 		}
 		return nil, err
 	}
-
-	if deviceMake.TokenID.IsZero() {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("make has not been minted yet or no tokenID set: %s", mk)}
+	manufacturerID, err := r.registryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, deviceMake.Name)
+	if err != nil || manufacturerID == nil {
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("make has not been minted yet or no tokenID set: %s :%s", mk, err)}
 	}
 
 	//dbWMI, err := models.FindWmi(ctx, r.DBS().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
