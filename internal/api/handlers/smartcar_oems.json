@@ -141,6 +141,12 @@
     "isPopular": false
   },
   {
+    "name": "MG",
+    "logo": "mg-logo.png",
+    "appName": "",
+    "isPopular": false
+  },
+  {
     "name": "Mini",
     "logo": "mini-logo.png",
     "appName": "",
