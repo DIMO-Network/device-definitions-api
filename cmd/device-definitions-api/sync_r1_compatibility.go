@@ -1,3 +1,4 @@
+//nolint:tagliatelle
 package main
 
 import (
@@ -5,14 +6,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/google/subcommands"
-	"github.com/rs/zerolog"
-	"github.com/typesense/typesense-go/typesense"
 	"io"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/google/subcommands"
+	"github.com/rs/zerolog"
+	"github.com/typesense/typesense-go/typesense"
 )
 
 const typeSenseR1Index = "r1_compatibility"
@@ -71,7 +73,7 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 		processedCount++
 
 		entry := R1SearchEntryItem{
-			DefinitionID: item.DefinitionId,
+			DefinitionID: item.DefinitionID,
 			Make:         item.Make,
 			Model:        item.Model,
 			Year:         item.Year,
@@ -86,7 +88,7 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 		}
 	}
 	fmt.Printf("Processed %d definitionIds. Uploading items...\n", processedCount)
-	err = uploadWithApi(client, searchEntries)
+	err = uploadR1EntriesWithAPI(client, searchEntries)
 	if err != nil {
 		p.logger.Fatal().Msgf("Error uploading to Typesense: %v", err)
 	}
@@ -95,8 +97,8 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 	return subcommands.ExitSuccess
 }
 
-type R1Api struct {
-	DefinitionId string `json:"definitionId"`
+type R1Definition struct {
+	DefinitionID string `json:"definitionId"`
 	Make         string `json:"make"`
 	Model        string `json:"model"`
 	Year         int    `json:"year"`
@@ -104,9 +106,9 @@ type R1Api struct {
 }
 
 // UnmarshalJSON Custom unmarshaller for Vehicle struct
-func (v *R1Api) UnmarshalJSON(data []byte) error {
+func (v *R1Definition) UnmarshalJSON(data []byte) error {
 	// Define a temporary struct with Model as interface{} to handle both types
-	type Alias R1Api
+	type Alias R1Definition
 	temp := &struct {
 		Model interface{} `json:"model"`
 		*Alias
@@ -142,8 +144,8 @@ type R1SearchEntryItem struct {
 }
 
 // fetchSheetData gets the data from the api endpoint that pulls from the google sheet
-func fetchSheetData(url string) ([]R1Api, error) {
-	var result []R1Api
+func fetchSheetData(url string) ([]R1Definition, error) {
+	var result []R1Definition
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -160,7 +162,7 @@ func fetchSheetData(url string) ([]R1Api, error) {
 	return result, err
 }
 
-func uploadWithApi(client *typesense.Client, entries []R1SearchEntryItem) error {
+func uploadR1EntriesWithAPI(client *typesense.Client, entries []R1SearchEntryItem) error {
 	processedCount := 0
 	for _, entry := range entries {
 		processedCount++
