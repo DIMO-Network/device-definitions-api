@@ -20,7 +20,7 @@ type GetR1CompatibilitySearchQueryResult struct {
 }
 
 type GetR1SearchEntryItem struct {
-	DefinitionID string `json:"definitionId"`
+	DefinitionID string `json:"id"` //nolint
 	Make         string `json:"make"`
 	Model        string `json:"model"`
 	Year         int    `json:"year"`
@@ -57,7 +57,7 @@ func (ch GetR1CompatibilitySearchQueryHandler) Handle(ctx context.Context, query
 			continue
 		}
 		item := GetR1SearchEntryItem{
-			DefinitionID: doc["definition_id"].(string),
+			DefinitionID: doc["id"].(string),
 			Make:         doc["make"].(string),
 			Name:         doc["name"].(string),
 			Model:        doc["model"].(string),
