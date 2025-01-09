@@ -41,8 +41,7 @@ func (p *syncR1CompatibiltyCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.oemFilter, "oem-filter", "", "oem filter")
 }
 
-// nolint
-func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *syncR1CompatibiltyCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	compatSheetAPI := "https://device-definitions-api.dimo.zone/compatibility/r1-sheet"
 
 	client := typesense.NewClient(
