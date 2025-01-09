@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/google/subcommands"
@@ -14,8 +17,6 @@ import (
 	"github.com/typesense/typesense-go/typesense"
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
-	"io"
-	"net/http"
 )
 
 const typeSenseR1Index = "r1_compatibility"
