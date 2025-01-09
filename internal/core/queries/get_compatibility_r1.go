@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -40,6 +41,35 @@ type CompatibilitySheetRow struct {
 	Model        string `json:"model"`
 	Year         int    `json:"year"`
 	Compatible   string `json:"compatible"`
+}
+
+// UnmarshalJSON Custom unmarshaller for CompatibilitySheetRow struct because model can sometimes be interpreted as a number
+func (v *CompatibilitySheetRow) UnmarshalJSON(data []byte) error {
+	// Define a temporary struct with Model as interface{} to handle both types
+	type Alias CompatibilitySheetRow
+	temp := &struct {
+		Model interface{} `json:"model"`
+		*Alias
+	}{
+		Alias: (*Alias)(v),
+	}
+
+	// Unmarshal into the temporary struct
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Handle the model field depending on its type
+	switch model := temp.Model.(type) {
+	case string:
+		v.Model = model
+	case float64:
+		v.Model = strconv.Itoa(int(model)) // Convert number to string
+	default:
+		v.Model = "" // Or handle any unexpected type here
+	}
+
+	return nil
 }
 
 func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings) ([]CompatibilitySheetRow, error) {

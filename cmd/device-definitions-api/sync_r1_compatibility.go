@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
-	"strconv"
-	"time"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/google/subcommands"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/typesense/typesense-go/typesense"
+	"github.com/typesense/typesense-go/typesense/api"
+	"github.com/typesense/typesense-go/typesense/api/pointer"
+	"io"
+	"net/http"
 )
 
 const typeSenseR1Index = "r1_compatibility"
@@ -41,7 +42,7 @@ func (p *syncR1CompatibiltyCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.oemFilter, "oem-filter", "", "oem filter")
 }
 
-func (p *syncR1CompatibiltyCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	compatSheetAPI := "https://device-definitions-api.dimo.zone/compatibility/r1-sheet"
 
 	client := typesense.NewClient(
@@ -59,7 +60,7 @@ func (p *syncR1CompatibiltyCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ..
 	}
 	fmt.Printf("Fetched %d records\n", len(sheetyData))
 
-	searchEntries := make([]R1SearchEntryItem, 0)
+	searchEntries := make([]queries.GetR1SearchEntryItem, 0)
 
 	// Step 2: Check each definitionId via GraphQL
 	processedCount := 0
@@ -71,7 +72,7 @@ func (p *syncR1CompatibiltyCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ..
 		}
 		processedCount++
 
-		entry := R1SearchEntryItem{
+		entry := queries.GetR1SearchEntryItem{
 			DefinitionID: item.DefinitionID,
 			Make:         item.Make,
 			Model:        item.Model,
@@ -87,64 +88,26 @@ func (p *syncR1CompatibiltyCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ..
 		}
 	}
 	fmt.Printf("Processed %d definitionIds. Uploading items...\n", processedCount)
-	err = uploadR1EntriesWithAPI(client, searchEntries)
+	if p.createIndex {
+		err := createR1CompatibilityIndex(p.logger, client, typeSenseR1Index)
+		if err != nil {
+			p.logger.Fatal().Msgf("error creating index: %v", err)
+		}
+		p.logger.Info().Msg("index created: " + typeSenseR1Index)
+	}
+	err = uploadR1EntriesWithAPI(ctx, client, searchEntries)
 	if err != nil {
-		p.logger.Fatal().Msgf("Error uploading to Typesense: %v", err)
+		p.logger.Fatal().Msgf("error uploading to Typesense: %v", err)
 	}
 
 	p.logger.Info().Msg("completed syncing ruptela compatibility search")
 	return subcommands.ExitSuccess
 }
 
-type R1Definition struct {
-	DefinitionID string `json:"definitionId"`
-	Make         string `json:"make"`
-	Model        string `json:"model"`
-	Year         int    `json:"year"`
-	Compatible   string `json:"compatible"`
-}
-
-// UnmarshalJSON Custom unmarshaller for Vehicle struct
-func (v *R1Definition) UnmarshalJSON(data []byte) error {
-	// Define a temporary struct with Model as interface{} to handle both types
-	type Alias R1Definition
-	temp := &struct {
-		Model interface{} `json:"model"`
-		*Alias
-	}{
-		Alias: (*Alias)(v),
-	}
-
-	// Unmarshal into the temporary struct
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	// Handle the model field depending on its type
-	switch model := temp.Model.(type) {
-	case string:
-		v.Model = model
-	case float64:
-		v.Model = strconv.Itoa(int(model)) // Convert number to string
-	default:
-		v.Model = "" // Or handle any unexpected type here
-	}
-
-	return nil
-}
-
-type R1SearchEntryItem struct {
-	DefinitionID string `json:"definition_id"`
-	Make         string `json:"make"`
-	Model        string `json:"model"`
-	Year         int    `json:"year"`
-	Compatible   string `json:"compatible"`
-	Name         string `json:"name"`
-}
-
 // fetchSheetData gets the data from the api endpoint that pulls from the google sheet
-func fetchSheetData(url string) ([]R1Definition, error) {
-	var result []R1Definition
+func fetchSheetData(url string) ([]queries.CompatibilitySheetRow, error) {
+	// todo call google directly here like in get_compatibility_r1
+	var result []queries.CompatibilitySheetRow
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -161,23 +124,97 @@ func fetchSheetData(url string) ([]R1Definition, error) {
 	return result, err
 }
 
-func uploadR1EntriesWithAPI(client *typesense.Client, entries []R1SearchEntryItem) error {
-	processedCount := 0
+func uploadR1EntriesWithAPI(ctx context.Context, client *typesense.Client, entries []queries.GetR1SearchEntryItem) error {
+	//processedCount := 0
+	action := "upsert"
+	var interfaceSlice []interface{}
 	for _, entry := range entries {
-		processedCount++
-		_, err := client.Collection(typeSenseR1Index).Documents().Upsert(context.Background(), entry)
-		if err != nil {
-			fmt.Printf("Error uploading entry: %v\n Retrying...", err)
-			time.Sleep(1000)
-			_, err = client.Collection(typeSenseR1Index).Documents().Upsert(context.Background(), entry)
-			// todo fancier retry
-			if err != nil {
-				return err
-			}
+		// some validation
+		if entry.DefinitionID != "" && entry.Make != "" && entry.Model != "" && entry.Name != "" && entry.Compatible != "" {
+			interfaceSlice = append(interfaceSlice, entry)
 		}
-		if processedCount%100 == 0 {
-			fmt.Printf("Uploaded %d definitionIds to Typesense search.\n", processedCount)
-		}
+	}
+
+	responses, err := client.Collection(typeSenseR1Index).Documents().Import(ctx, interfaceSlice, &api.ImportDocumentsParams{
+		Action:                   &action,
+		BatchSize:                nil,
+		DirtyValues:              nil,
+		RemoteEmbeddingBatchSize: nil,
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to import documents")
+	}
+	fmt.Println(responses)
+
+	//for _, entry := range entries {
+	//	processedCount++
+	//
+	//	_, err := client.Collection(typeSenseR1Index).Documents().Upsert(ctx, entry)
+	//	if err != nil {
+	//		fmt.Printf("Error uploading entry: %v\n Retrying...", err)
+	//		time.Sleep(1000)
+	//		_, err = client.Collection(typeSenseR1Index).Documents().Upsert(ctx, entry)
+	//		// todo fancier retry
+	//		if err != nil {
+	//			return err
+	//		}
+	//	}
+	//	if processedCount%100 == 0 {
+	//		fmt.Printf("Uploaded %d definitionIds to Typesense search.\n", processedCount)
+	//	}
+	//}
+	return nil
+}
+
+func createR1CompatibilityIndex(logger zerolog.Logger, client *typesense.Client, collectionName string) error {
+	_, err := client.Collection(collectionName).Delete(context.Background())
+	if err != nil {
+		logger.Error().Err(err).Send()
+	}
+	fmt.Println("Successfully deleted index: " + collectionName)
+
+	hasFacet := true
+	nestedFields := false
+	sort := true
+	schema := &api.CollectionSchema{
+		Name:                collectionName,
+		EnableNestedFields:  &nestedFields,
+		DefaultSortingField: pointer.String("year"),
+		Fields: []api.Field{
+			{
+				// this will hold the device_definition_id - must be called id for typesense upsert to work
+				Name: "id",
+				Type: "string",
+			},
+			{
+				Name: "name",
+				Type: "string",
+				Sort: &sort,
+			},
+			{
+				Name:  "make",
+				Type:  "string",
+				Facet: &hasFacet,
+			},
+			{
+				Name:  "model",
+				Type:  "string",
+				Facet: &hasFacet,
+			},
+			{
+				Name:  "year",
+				Type:  "int32",
+				Facet: &hasFacet,
+			},
+			{
+				Name: "compatible",
+				Type: "string",
+			},
+		},
+	}
+	_, err = client.Collections().Create(context.Background(), schema)
+	if err != nil {
+		return errors.Wrap(err, "failed to create collection")
 	}
 	return nil
 }
