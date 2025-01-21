@@ -71,7 +71,7 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 		chainID:     chainID,
 		sender:      sender,
 		identityAPI: NewIdentityAPIService(logger, settings, nil),
-		inmemCache:  cache.New(48*time.Hour, 1*time.Hour),
+		inmemCache:  cache.New(128*time.Hour, 1*time.Hour),
 	}
 }
 
@@ -81,6 +81,9 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
 
+	// todo optimize this
+	// can i use getManufacturer and use the tableId returned?
+	// otherwise move this to a func and add caching same as getManufacturer
 	contractAddress := e.settings.EthereumRegistryAddress
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
@@ -110,6 +113,28 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Con
 	}
 
 	return nil, nil
+}
+
+func (e *deviceDefinitionOnChainService) getTablelandTableName(ctx context.Context, manufacturerID *big.Int) (string, error) {
+	cacheKey := "manufacturer_" + manufacturerID.String()
+	value, found := e.inmemCache.Get(cacheKey)
+	if found {
+		return value.(string), nil
+	}
+
+	contractAddress := e.settings.EthereumRegistryAddress
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return "", fmt.Errorf("failed to establish NewRegistry: %w", err)
+	}
+
+	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to getTablelandTableName for %d", manufacturerID.Uint64())
+	}
+	e.inmemCache.Set(cacheKey, tableName, time.Hour*300)
+
+	return tableName, nil
 }
 
 // GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
@@ -142,7 +167,7 @@ func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, ma
 	if err != nil {
 		return nil, err
 	}
-	e.inmemCache.Set(manufacturerSlug, manufacturer, time.Hour*48)
+	e.inmemCache.Set(manufacturerSlug, manufacturer, time.Hour*300)
 	return manufacturer, nil
 }
 
@@ -152,6 +177,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
 
+	// todo refactor this with GetDeviceDefinitionByID
 	contractAddress := e.settings.EthereumRegistryAddress
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
 	if err != nil {
@@ -215,7 +241,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID has not value")
 	}
-
+	// todo refactor this with above two methods
 	contractAddress := e.settings.EthereumRegistryAddress
 	fromAddress := e.sender.Address()
 	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
