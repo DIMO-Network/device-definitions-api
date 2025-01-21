@@ -77,39 +77,13 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
 func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
-	if manufacturerID.Uint64() == 0 {
-		return nil, fmt.Errorf("manufacturerID has not value")
-	}
-
-	// todo optimize this
-	// can i use getManufacturer and use the tableId returned?
-	// otherwise move this to a func and add caching same as getManufacturer
-	contractAddress := e.settings.EthereumRegistryAddress
-	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	tablelandDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
-	}
-
-	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
-	if err != nil {
-		e.logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
-	}
-
-	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, ID)
-	queryParams := map[string]string{
-		"statement": statement,
-	}
-
-	e.logger.Info().Msgf("Tableland %s query => %s", tableName, statement)
-
-	var modelTableland []DeviceDefinitionTablelandModel
-	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
 
-	if len(modelTableland) > 0 {
-		return transformToDefinition(modelTableland[0]), nil
+	if tablelandDD != nil {
+		return transformToDefinition(*tablelandDD), nil
 	}
 
 	return nil, nil
@@ -177,17 +151,10 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
 
-	// todo refactor this with GetDeviceDefinitionByID
-	contractAddress := e.settings.EthereumRegistryAddress
-	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
-	if err != nil {
-		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
-	}
-
-	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
+	tableName, err := e.getTablelandTableName(ctx, manufacturerID)
 	if err != nil {
 		e.logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+		return nil, err
 	}
 
 	statement := fmt.Sprintf("SELECT * FROM %s WHERE id = '%s'", tableName, ID)
@@ -239,21 +206,12 @@ func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceD
 
 func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
 	if manufacturerID.IsZero() {
-		return nil, fmt.Errorf("manufacturerID has not value")
+		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
-	// todo refactor this with above two methods
-	contractAddress := e.settings.EthereumRegistryAddress
-	fromAddress := e.sender.Address()
-	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
-	if err != nil {
-		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
-	}
-
 	bigManufID := manufacturerID.Big.Int(new(big.Int))
-	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true, From: fromAddress}, bigManufID)
+	tableName, err := e.getTablelandTableName(ctx, bigManufID)
 	if err != nil {
-		e.logger.Info().Msgf("%s", err)
-		return nil, fmt.Errorf("failed get GetDeviceDefinitionTableName: %w", err)
+		return nil, err
 	}
 
 	var conditions []string
