@@ -72,13 +72,6 @@
     "isPopular": false
   },
   {
-    "name": "Honda",
-    "logo": "honda-logo.png",
-    "appName": "",
-    "isPopular": false,
-    "disabled": true
-  },
-  {
     "name": "Hyundai",
     "logo": "hyundai-logo.png",
     "appName": "",
@@ -103,13 +96,6 @@
     "isPopular": false
   },
   {
-    "name": "Kia",
-    "logo": "kia-logo.png",
-    "appName": "",
-    "isPopular": false,
-    "disabled": true
-  },
-  {
     "name": "Land Rover",
     "logo": "land-rover-logo.png",
     "appName": "",
@@ -120,13 +106,6 @@
     "logo": "lexus-logo.png",
     "appName": "",
     "isPopular": false
-  },
-  {
-    "name": "Lincoln",
-    "logo": "lincoln-logo.png",
-    "appName": "",
-    "isPopular": false,
-    "disabled": true
   },
   {
     "name": "Mazda",
