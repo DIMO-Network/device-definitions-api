@@ -3,12 +3,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/google/subcommands"
@@ -44,7 +40,16 @@ func (p *syncR1CompatibiltyCmd) SetFlags(f *flag.FlagSet) {
 }
 
 func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	compatSheetAPI := "https://device-definitions-api.dimo.zone/compatibility/r1-sheet"
+	// get data from sheet using google sheets
+	qh := queries.NewCompatibilityR1SheetQueryHandler(&p.settings)
+	compatibilityRows, err := qh.Handle(ctx, nil)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("error fetching compatibility sheet data")
+		return subcommands.ExitFailure
+	}
+	sheetData := compatibilityRows.([]queries.CompatibilitySheetRow)
+
+	fmt.Printf("Fetched %d records\n", len(sheetData))
 
 	client := typesense.NewClient(
 		typesense.WithServer("https://i0bj2htyg7r4l31kp.a1.typesense.net"),
@@ -54,18 +59,11 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 	if len(p.oemFilter) > 1 {
 		fmt.Println("Make filter used: " + p.oemFilter)
 	}
-	// Step 1: Fetch Sheety Data
-	sheetyData, err := fetchSheetData(compatSheetAPI)
-	if err != nil {
-		p.logger.Fatal().Msgf("Error fetching Sheety API data: %v", err)
-	}
-	fmt.Printf("Fetched %d records\n", len(sheetyData))
-
 	searchEntries := make([]queries.GetR1SearchEntryItem, 0)
 
 	// Step 2: Check each definitionId via GraphQL
 	processedCount := 0
-	for _, item := range sheetyData {
+	for _, item := range sheetData {
 		if p.oemFilter != "" {
 			if p.oemFilter != item.Make {
 				continue
@@ -103,26 +101,6 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 
 	p.logger.Info().Msg("completed syncing ruptela compatibility search")
 	return subcommands.ExitSuccess
-}
-
-// fetchSheetData gets the data from the api endpoint that pulls from the google sheet
-func fetchSheetData(url string) ([]queries.CompatibilitySheetRow, error) {
-	// todo call google directly here like in get_compatibility_r1
-	var result []queries.CompatibilitySheetRow
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return result, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return result, err
-	}
-
-	err = json.Unmarshal(body, &result)
-	return result, err
 }
 
 func uploadR1EntriesWithAPI(ctx context.Context, client *typesense.Client, entries []queries.GetR1SearchEntryItem) error {
