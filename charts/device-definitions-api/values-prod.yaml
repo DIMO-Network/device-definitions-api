@@ -64,8 +64,8 @@ jobs:
     args:
       - '-c'
       - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
-  - name: r1-search-gsheet-sync
-    schedule: 0 5 * * *
-    args:
-      - '-c'
-      - /device-definitions-api sync-r1-compatibilty; CODE=$?; echo "daily r1 compatibility gsheet to typesense search sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+#  - name: r1-search-gsheet-sync
+#    schedule: 0 5 * * *
+#    args:
+#      - '-c'
+#      - /device-definitions-api sync-r1-compatibilty; CODE=$?; echo "daily r1 compatibility gsheet to typesense search sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
