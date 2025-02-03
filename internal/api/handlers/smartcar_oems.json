@@ -100,7 +100,7 @@
     "logo": "kia-logo.png",
     "appName": "",
     "isPopular": false,
-    "disabled": true
+    "disabled": false
   },
   {
     "name": "Land Rover",
