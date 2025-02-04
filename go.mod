@@ -5,7 +5,7 @@ go 1.22.3
 toolchain go1.22.6
 
 require (
-	github.com/DIMO-Network/shared v0.12.1
+	github.com/DIMO-Network/shared v0.12.9
 	github.com/antchfx/xmlquery v1.4.1
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
@@ -129,6 +129,7 @@ require (
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
