@@ -230,5 +230,11 @@
     "appName": "",
     "isPopular": false,
     "disabled": false
+  },
+    {
+    "name": "Alfa Romeo",
+    "logo": "alfa-romeo-logo.png",
+    "appName": "",
+    "isPopular": false
   }
 ]
