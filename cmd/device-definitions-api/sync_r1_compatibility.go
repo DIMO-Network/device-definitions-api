@@ -123,7 +123,8 @@ func uploadR1EntriesWithAPI(ctx context.Context, client *typesense.Client, entri
 	if err != nil {
 		return errors.Wrap(err, "failed to import documents")
 	}
-	fmt.Println(responses)
+
+	fmt.Printf("Uploaded %d definitions to Typesense search.\n", len(responses))
 
 	//for _, entry := range entries {
 	//	processedCount++
