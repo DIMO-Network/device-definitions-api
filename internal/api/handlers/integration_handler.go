@@ -89,7 +89,7 @@ var smartcarOems []byte
 // @Failure 500
 // @Router /manufacturers/integrations/smartcar [get]
 func GetSmartcarManufacturers() fiber.Handler {
-	const explorer = "https://explorer.dimo.zone/images/oem-logos/"
+	const assetApi = "https://api.dimo.co/assets/logos/"
 
 	return func(c *fiber.Ctx) error {
 		var jsonContent []map[string]interface{}
@@ -100,7 +100,7 @@ func GetSmartcarManufacturers() fiber.Handler {
 		// Prepend the url path to each "logo" field in the array
 		for _, item := range jsonContent {
 			if logo, ok := item["logo"].(string); ok {
-				item["logo"] = explorer + logo
+				item["logo"] = assetApi + logo
 			}
 		}
 
