@@ -52,8 +52,8 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 	fmt.Printf("Fetched %d records\n", len(sheetData))
 
 	client := typesense.NewClient(
-		typesense.WithServer("https://i0bj2htyg7r4l31kp.a1.typesense.net"),
-		typesense.WithAPIKey("MqHDdccLzBy4tnw4fxXl12huGQMYzpjB"))
+		typesense.WithServer(p.settings.SearchServiceAPIURL.String()),
+		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
 	// get optional Make filter from cmd line
 	if len(p.oemFilter) > 1 {
@@ -81,10 +81,6 @@ func (p *syncR1CompatibiltyCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ 
 		}
 
 		searchEntries = append(searchEntries, entry)
-
-		if processedCount%100 == 0 {
-			fmt.Printf("Processed %d definitionIds\n", processedCount)
-		}
 	}
 	fmt.Printf("Processed %d definitionIds. Uploading items...\n", processedCount)
 	if p.createIndex {
