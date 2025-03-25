@@ -115,6 +115,20 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	assert.Equal(s.T(), result.Source, coremodels.DrivlyProvider)
 }
 
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_Tesla() {
+	ctx := context.Background()
+	const vin = "5YJ3E1EA2PF696023"
+	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.TeslaProvider, "USA")
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
+	assert.Equal(s.T(), result.Make, "Tesla")
+	assert.Equal(s.T(), result.Model, "Model 3")
+	assert.Equal(s.T(), string(result.MetaData.JSON), `{"fuel_type":"electric","powertrain_type":"BEV"}`)
+	assert.Equal(s.T(), result.Source, coremodels.TeslaProvider)
+}
+
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	ctx := context.Background()
 	const vin = "WAUZZZKM04D018683"
