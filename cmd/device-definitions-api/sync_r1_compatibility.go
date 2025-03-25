@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/google/subcommands"

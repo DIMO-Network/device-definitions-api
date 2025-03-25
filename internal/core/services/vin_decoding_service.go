@@ -6,12 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/shared"
-	"github.com/volatiletech/null/v8"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/shared"
+	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 

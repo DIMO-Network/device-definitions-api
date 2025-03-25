@@ -215,7 +215,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
 		localLog.Info().Msgf("encountered vin with non-standard year digit")
 	}
-	vinInfo, err := dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
+	// check if this is a Tesla VIN, if not just follow regular path
+	vinInfo := &coremodels.VINDecodingInfoData{}
+	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi), qm.Load(models.WmiRels.DeviceMake)).One(ctx, dc.dbs().Reader)
+	if err == nil && dbWMI != nil {
+		if dbWMI.R.DeviceMake != nil && dbWMI.R.DeviceMake.Name == "Tesla" {
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
+		}
+	} else {
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
+	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
 	if err != nil {
@@ -238,12 +247,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
 		return nil, err
 	}
-
-	dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
-	if err != nil {
-		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
-		return resp, nil
+	// we may have already gotten this above
+	if dbWMI == nil {
+		dbWMI, err = dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
+		if err != nil {
+			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+			dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
+			return resp, nil
+		}
 	}
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 	resp.Source = string(vinInfo.Source)
