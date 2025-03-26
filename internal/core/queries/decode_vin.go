@@ -357,16 +357,17 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
-		Vin:            vin.String(),
-		DeviceMakeID:   resp.DeviceMakeId, // todo change this for the Manufacturer and drop this column
-		Wmi:            wmi,
-		VDS:            vin.VDS(),
-		Vis:            vin.VIS(),
-		CheckDigit:     vin.CheckDigit(),
-		SerialNumber:   vin.SerialNumber(),
-		DecodeProvider: null.StringFrom(string(vinInfo.Source)),
-		Year:           int(resp.Year),
-		DefinitionID:   resp.DefinitionId,
+		Vin:              vin.String(),
+		ManufacturerName: null.StringFrom(resp.Manufacturer),
+		DeviceMakeID:     resp.DeviceMakeId, // todo script to backfill ManufacturerName and drop this column
+		Wmi:              wmi,
+		VDS:              vin.VDS(),
+		Vis:              vin.VIS(),
+		CheckDigit:       vin.CheckDigit(),
+		SerialNumber:     vin.SerialNumber(),
+		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
+		Year:             int(resp.Year),
+		DefinitionID:     resp.DefinitionId,
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
@@ -418,7 +419,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	if !ddExists {
-		// todo I think this whole block has some duplicative stuff with above check, like the create onchain call a bit below
 		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(legacyKSUID),
 			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
@@ -486,7 +486,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
 
-		// Create DD onchain
+		// todo this is already being done in above block
 		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
 		if err != nil {
 			localLog.Err(err).Msg("failed to create or update DD on chain")
