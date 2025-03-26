@@ -139,7 +139,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	// If DeviceDefinitionID passed in, override VIN decoding // todo next version: this should change to use definitionId
+	// If DeviceDefinitionID passed in, override VIN decoding
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
 		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
@@ -222,7 +222,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if dbWMI.R.DeviceMake != nil && dbWMI.R.DeviceMake.Name == "Tesla" {
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
 		}
-	} else {
+	}
+	if vinInfo == nil || vinInfo.Model == "" {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
 	}
 

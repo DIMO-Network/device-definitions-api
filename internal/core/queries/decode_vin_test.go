@@ -281,7 +281,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -513,7 +512,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -729,7 +727,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country,
 		KnownYear:  2022,
