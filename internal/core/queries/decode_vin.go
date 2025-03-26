@@ -259,6 +259,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.DeviceMakeId = dbWMI.DeviceMakeID
 	resp.Source = string(vinInfo.Source)
 	resp.Year = vinInfo.Year
+	resp.Model = vinInfo.Model
+	resp.Manufacturer = vinInfo.Make
 
 	modelSlug := shared.SlugString(vinInfo.Model)
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
@@ -270,15 +272,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	} else {
 		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
-	// todo after observing, below should get replaced by above from tableland
-	dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.DeviceMakeID.EQ(dbWMI.DeviceMakeID),
-		models.DeviceDefinitionWhere.Year.EQ(int16(resp.Year)),
-		models.DeviceDefinitionWhere.ModelSlug.EQ(modelSlug)).
-		One(ctx, dc.dbs().Reader)
+
+	dd := &models.DeviceDefinition{}
 
 	ddExists := true
-	if err != nil {
-		// create DD if does not exist, metadata will only be set on create
+	// if dd not found in tableland, we want to creat it
+	if tblDef == nil {
+		// metadata will only be set on create
 		if errors.Is(err, sql.ErrNoRows) {
 			// this method creates on-chain as well as in dd database
 			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
