@@ -4,9 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/segmentio/ksuid"
-
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
 
@@ -117,17 +114,6 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 			},
 			want: "BEV",
 		},
-		{
-			name: "device definition already has powertrain - BEV",
-			args: args{
-				definitionID: &ddWithPt.NameSlug,
-			},
-			want: "BEV",
-			before: func() {
-				onChainSvc.EXPECT().GetDefinitionByID(gomock.Any(), ddWithPt.NameSlug, gomock.Any()).
-					Return(buildTestTblDD(ddWithPt.NameSlug, "super-special", 2022, "BEV"), nil, nil)
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -135,24 +121,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 				tt.before()
 			}
 
-			got, err := ptSvc.ResolvePowerTrainType(ctx, tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
+			got, err := ptSvc.ResolvePowerTrainType(tt.args.makeSlug, tt.args.modelSlug, tt.args.drivlyData, tt.args.vincarioData)
 			assert.NoError(t, err)
 
 			assert.Equalf(t, tt.want, got, "ResolvePowerTrainType( %v, %v, %v, %v, %v)", tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
 		})
-	}
-}
-
-func buildTestTblDD(definitionID, model string, year int, powerTrainType string) *gateways.DeviceDefinitionTablelandModel {
-	return &gateways.DeviceDefinitionTablelandModel{
-		ID:         definitionID,
-		KSUID:      ksuid.New().String(),
-		Model:      model,
-		Year:       year,
-		DeviceType: "vehicle",
-		ImageURI:   "",
-		Metadata: &gateways.DeviceDefinitionMetadata{DeviceAttributes: []gateways.DeviceTypeAttribute{
-			{Name: "powertrain_type", Value: powerTrainType},
-		}},
 	}
 }

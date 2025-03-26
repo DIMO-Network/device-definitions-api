@@ -127,8 +127,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if len(split) != 3 {
 			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
 		}
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID,
-			vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}
@@ -193,7 +192,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.Source = vinDecodeNumber.DecodeProvider.String
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &vinDecodeNumber.DefinitionID, null.JSON{}, null.JSON{})
+		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], null.JSON{}, null.JSON{})
 		if err != nil {
 			pt = coremodels.ICE.String()
 		}
@@ -467,7 +466,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 							} else {
 								vincarioData = vinInfo.MetaData
 							}
-							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(ctx, dd.R.DeviceMake.NameSlug, dd.ModelSlug, &dd.NameSlug, drivlyData, vincarioData)
+							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(dd.R.DeviceMake.NameSlug, dd.ModelSlug, drivlyData, vincarioData)
 							if err != nil {
 								dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
 							}
@@ -513,7 +512,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// if powertrain not set yet, try resolving for it
 	if resp.Powertrain == "" {
 		split := strings.Split(resp.DefinitionId, "_")
-		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(ctx, split[0], split[1], &resp.DefinitionId, vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
 		resp.Powertrain = pt
 	}
 
