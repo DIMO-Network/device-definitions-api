@@ -403,7 +403,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	definitionID := dd.NameSlug
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", &dd.NameSlug, gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	// db setup
@@ -562,8 +562,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 	definitionID := dd.NameSlug
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.TeslaProvider, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	ddID := "tesla_model-3_2023"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "tesla", "model-3", &ddID, gomock.Any(), gomock.Any()).Return("BEV", nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("tesla", "model-3", gomock.Any(), gomock.Any()).Return("BEV", nil)
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	wmiDb := &models.Wmi{
@@ -628,7 +627,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	// when we get the vin already found, we lookup the powertrain using powertrain service
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", &dd.NameSlug, vinNumb.DrivlyData, vinNumb.VincarioData)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", vinNumb.DrivlyData, vinNumb.VincarioData)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -658,7 +657,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 	}
 	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
@@ -704,7 +703,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 	}
 	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "escape", gomock.Any(), gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
@@ -764,7 +763,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 
 	definitionID := "ford_bronco_2022"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "ford", "bronco", &definitionID, gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "bronco", gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
 	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
