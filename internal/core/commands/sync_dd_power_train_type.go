@@ -96,7 +96,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 							powerTrainTypeValue = &strValue
 						}
 						if powerTrainTypeValue == nil || *powerTrainTypeValue == "" || *powerTrainTypeValue == "null" {
-							pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, &definition.ID, null.JSON{}, null.JSON{})
+							pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(definition.R.DeviceMake.NameSlug, definition.ModelSlug, null.JSON{}, null.JSON{})
 							powerTrainTypeValue = &pt
 							if err != nil {
 								ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
@@ -105,7 +105,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 							needsUpdate = true
 						} else {
 							if command.ForceUpdate {
-								pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, &definition.ID, null.JSON{}, null.JSON{})
+								pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(definition.R.DeviceMake.NameSlug, definition.ModelSlug, null.JSON{}, null.JSON{})
 								powerTrainTypeValue = &pt
 								if err != nil {
 									ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")
@@ -122,7 +122,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 				}
 
 				if !hasPowerTrainType {
-					pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, definition.R.DeviceMake.NameSlug, definition.ModelSlug, &definition.ID, null.JSON{}, null.JSON{})
+					pt, err := ch.powerTrainTypeService.ResolvePowerTrainType(definition.R.DeviceMake.NameSlug, definition.ModelSlug, null.JSON{}, null.JSON{})
 					powerTrainTypeValue = &pt
 					if err != nil {
 						ch.logger.Error().Err(err).Stack().Msg("failed to ResolvePowerTrainType")

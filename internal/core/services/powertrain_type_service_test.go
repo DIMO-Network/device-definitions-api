@@ -135,7 +135,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 				tt.before()
 			}
 
-			got, err := ptSvc.ResolvePowerTrainType(ctx, tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
+			got, err := ptSvc.ResolvePowerTrainType(tt.args.makeSlug, tt.args.modelSlug, tt.args.drivlyData, tt.args.vincarioData)
 			assert.NoError(t, err)
 
 			assert.Equalf(t, tt.want, got, "ResolvePowerTrainType( %v, %v, %v, %v, %v)", tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)

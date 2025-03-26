@@ -5,15 +5,15 @@
 //
 //	mockgen -source powertrain_type_service.go -destination mocks/powertrain_type_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
 import (
-	context "context"
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	v8 "github.com/volatiletech/null/v8"
+	null "github.com/volatiletech/null/v8"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -55,16 +55,16 @@ func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainFromVinInfo(vi
 }
 
 // ResolvePowerTrainType mocks base method.
-func (m *MockPowerTrainTypeService) ResolvePowerTrainType(ctx context.Context, makeSlug, modelSlug string, definitionID *string, drivlyData, vincarioData v8.JSON) (string, error) {
+func (m *MockPowerTrainTypeService) ResolvePowerTrainType(makeSlug, modelSlug string, drivlyData, vincarioData null.JSON) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolvePowerTrainType", ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData)
+	ret := m.ctrl.Call(m, "ResolvePowerTrainType", makeSlug, modelSlug, drivlyData, vincarioData)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ResolvePowerTrainType indicates an expected call of ResolvePowerTrainType.
-func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData any) *gomock.Call {
+func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainType(makeSlug, modelSlug, drivlyData, vincarioData any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), ctx, makeSlug, modelSlug, definitionID, drivlyData, vincarioData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainType", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainType), makeSlug, modelSlug, drivlyData, vincarioData)
 }

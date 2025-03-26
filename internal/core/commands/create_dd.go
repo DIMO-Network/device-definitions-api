@@ -84,7 +84,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 		}
 		if !powerTrainExists {
-			powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(ctx, shared.SlugString(command.Make), shared.SlugString(command.Model), nil, null.JSON{}, null.JSON{})
+			powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(command.Make), shared.SlugString(command.Model), null.JSON{}, null.JSON{})
 			if err != nil {
 				return nil, &exceptions.InternalError{
 					Err: fmt.Errorf("failed to get powertraintype"),
