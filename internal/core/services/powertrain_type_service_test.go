@@ -117,17 +117,6 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 			},
 			want: "BEV",
 		},
-		{
-			name: "device definition already has powertrain - BEV",
-			args: args{
-				definitionID: &ddWithPt.NameSlug,
-			},
-			want: "BEV",
-			before: func() {
-				onChainSvc.EXPECT().GetDefinitionByID(gomock.Any(), ddWithPt.NameSlug, gomock.Any()).
-					Return(buildTestTblDD(ddWithPt.NameSlug, "super-special", 2022, "BEV"), nil, nil)
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

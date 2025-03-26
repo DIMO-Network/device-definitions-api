@@ -158,15 +158,18 @@ func (c powerTrainTypeService) ResolvePowerTrainType(makeSlug string, modelSlug 
 }
 
 // powertrainNameInference figures out powertrain just from name
-func powertrainNameInference(name string) string {
-	// model name based inference
-	if strings.Contains(name, "plug-in") {
+func powertrainNameInference(modelSlug string) string {
+	// model modelSlug based inference
+	if strings.Contains(modelSlug, "plug-in") {
 		return coremodels.PHEV.String()
 	}
-	if strings.Contains(name, "hybrid") {
+	if strings.Contains(modelSlug, "hybrid") {
 		return coremodels.HEV.String()
 	}
-	if strings.Contains(name, "e-tron") {
+	if strings.Contains(modelSlug, "e-tron") {
+		return coremodels.BEV.String()
+	}
+	if strings.Contains(modelSlug, "-ev") {
 		return coremodels.BEV.String()
 	}
 
