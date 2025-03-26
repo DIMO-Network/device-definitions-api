@@ -12,6 +12,7 @@ const (
 	AutoIsoProvider  DecodeProviderEnum = "autoiso"
 	DATGroupProvider DecodeProviderEnum = "dat"
 	AllProviders     DecodeProviderEnum = ""
+	TeslaProvider    DecodeProviderEnum = "tesla"
 )
 
 type VINDecodingInfoData struct {

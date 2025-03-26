@@ -281,7 +281,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -513,7 +512,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -532,6 +530,66 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
+	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
+	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	// validate same number of wmi's
+	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	s.Assert().Len(wmis, 1)
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
+	ctx := context.Background()
+	const vin = "5YJ3E1EA2PF696023" // tesla model 3 2023
+
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Tesla", s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Model 3", 2023, s.pdb)
+	wmi := models.Wmi{
+		Wmi:          "5YJ",
+		DeviceMakeID: dm.ID,
+	}
+	err := wmi.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		Make:   "Tesla",
+		Source: "tesla",
+		Year:   int32(2023),
+		Model:  "Model 3",
+	}
+
+	definitionID := dd.NameSlug
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.TeslaProvider, "USA").Times(1).Return(vinDecodingInfoData, nil)
+	ddID := "tesla_model-3_2023"
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "tesla", "model-3", &ddID, gomock.Any(), gomock.Any()).Return("BEV", nil)
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
+		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
+	wmiDb := &models.Wmi{
+		Wmi:          vin[:3],
+		DeviceMakeID: dm.ID,
+	}
+	wmiDb.R = wmiDb.R.NewStruct()
+	wmiDb.R.DeviceMake = &dm
+
+	image := gateways.FuelImage{
+		SourceURL: "https://image",
+	}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{
+		FuelAPIID: "1",
+		Height:    1,
+		Width:     1,
+		Images:    []gateways.FuelImage{image},
+	}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+
+	s.NotNil(result, "expected result not nil")
+	s.Assert().Equal(int32(2023), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
 	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate same number of wmi's
@@ -729,7 +787,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	}
 	wmiDb.R = wmiDb.R.NewStruct()
 	wmiDb.R.DeviceMake = &dm
-	s.mockVINRepo.EXPECT().GetOrCreateWMI(gomock.Any(), vin[:3], dm.Name).Return(wmiDb, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country,
 		KnownYear:  2022,

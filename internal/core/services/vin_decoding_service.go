@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/shared"
+	"github.com/volatiletech/null/v8"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -24,6 +27,7 @@ import (
 )
 
 type VINDecodingService interface {
+	// GetVIN decodes a vin using one of the providers passed in or if AllProviders applies an ordered logic. Only pass TeslaProvider if know it is a Tesla.
 	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error)
 }
 
@@ -64,6 +68,22 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 	}
 
 	switch provider {
+	case models.TeslaProvider:
+		v := shared.VIN(vin)
+		metadata := map[string]interface{}{
+			"fuel_type":       "electric",
+			"powertrain_type": models.BEV.String(),
+		}
+		bytes, _ := json.Marshal(metadata)
+		result = &models.VINDecodingInfoData{
+			VIN:      vin,
+			Year:     int32(v.Year()),
+			Make:     "Tesla",
+			Model:    v.TeslaModel(),
+			Source:   models.TeslaProvider,
+			FuelType: "electric",
+			MetaData: null.JSONFrom(bytes),
+		}
 	case models.DrivlyProvider:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
@@ -102,6 +122,8 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			return nil, err
 		}
 	case models.AllProviders:
+		// todo if tesla, just build from tesla and use model
+
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
 			localLog.Warn().Err(err).Msg("AllProviders decode - unable decode vin with drivly")
