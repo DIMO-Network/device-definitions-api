@@ -562,8 +562,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 	definitionID := dd.NameSlug
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.TeslaProvider, "USA").Times(1).Return(vinDecodingInfoData, nil)
-	ddId := "tesla_model-3_2023"
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "tesla", "model-3", &ddId, gomock.Any(), gomock.Any()).Return("BEV", nil)
+	ddID := "tesla_model-3_2023"
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType(gomock.Any(), "tesla", "model-3", &ddID, gomock.Any(), gomock.Any()).Return("BEV", nil)
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	wmiDb := &models.Wmi{
