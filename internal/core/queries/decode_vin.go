@@ -5,11 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/tidwall/gjson"
 
 	"github.com/tidwall/sjson"
 
@@ -273,15 +272,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
 
-	dd := &models.DeviceDefinition{}
-
 	ddExists := true
+	legacyKSUID := ""
 	// if dd not found in tableland, we want to creat it
 	if tblDef == nil {
 		// metadata will only be set on create
 		if errors.Is(err, sql.ErrNoRows) {
 			// this method creates on-chain as well as in dd database
-			dd, err = dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
+			dd, err := dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
 				string(vinInfo.Source),
 				shared.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
 				dbWMI.DeviceMakeID,
@@ -297,35 +295,37 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			}
 			ddExists = false
 			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", modelSlug)
+			// set the response definition id from the newly created DD
+			resp.DefinitionId = dd.NameSlug
+			legacyKSUID = dd.ID
 		} else {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 			return nil, err
 		}
+	} else {
+		resp.DefinitionId = tblDef.ID // we can use the one from tableland since that exists
+		legacyKSUID = tblDef.KSUID
 	}
-	if dd == nil {
-		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, errors.New("could not get or create device_definition")
-	}
-	resp.DefinitionId = dd.NameSlug
 
 	// match style - only process style if name is longer than 1
 	if len(vinInfo.StyleName) < 2 {
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		externalStyleID := shared.SlugString(vinInfo.StyleName)
+		// todo future: styles tied to definition id not old ksuid
 		// see if match existing style exists. First search is based on db device_definition_style_idx
-		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
+		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(legacyKSUID),
 			models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
 			models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
-			style, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID),
+			style, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(legacyKSUID),
 				models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
 		}
 
 		if errors.Is(err, sql.ErrNoRows) {
 			style = &models.DeviceStyle{
 				ID:                 ksuid.New().String(),
-				DeviceDefinitionID: dd.ID,
+				DeviceDefinitionID: legacyKSUID,
 				Name:               vinInfo.StyleName,
 				ExternalStyleID:    externalStyleID,
 				Source:             string(vinInfo.Source),
@@ -354,17 +354,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			resp.DeviceStyleId = style.ID
 		}
 	}
-	// set the dd metadata if nothing there, if fails just continue. this is needed in current setup
-	if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
-		// todo - future: merge metadata properties. Also set style specific metadata - multiple places
-		dd.Metadata = vinInfo.MetaData
-		_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
-		// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
-	}
+
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
 		Vin:            vin.String(),
-		DeviceMakeID:   dd.DeviceMakeID,
+		DeviceMakeID:   resp.DeviceMakeId, // todo change this for the Manufacturer and drop this column
 		Wmi:            wmi,
 		VDS:            vin.VDS(),
 		Vis:            vin.VIS(),
@@ -372,7 +366,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		SerialNumber:   vin.SerialNumber(),
 		DecodeProvider: null.StringFrom(string(vinInfo.Source)),
 		Year:           int(resp.Year),
-		DefinitionID:   dd.NameSlug,
+		DefinitionID:   resp.DefinitionId,
 	}
 	if len(resp.DeviceStyleId) > 0 {
 		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
@@ -390,8 +384,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		vinDecodeNumber.DatgroupData = null.JSONFrom(vinInfo.Raw)
 	}
 
-	localLog.Info().Str("device_definition_id", dd.ID).
-		Str("device_make_id", dd.DeviceMakeID).
+	localLog.Info().Str("device_definition_id", resp.DefinitionId).
 		Str("style_id", resp.DeviceStyleId).
 		Str("wmi", wmi).
 		Str("vds", vin.VDS()).
@@ -400,8 +393,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// note we use a transaction here all throughout and commit at the end
 	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
 		localLog.Err(err).
-			Str("device_definition_id", dd.ID).
-			Str("device_make_id", dd.DeviceMakeID).
+			Str("device_definition_id", resp.DefinitionId).
 			Msg("failed to insert to vin_numbers")
 	}
 	err = txVinNumbers.Commit()
@@ -410,29 +402,38 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// resolve images
-	images, _ := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(dd.ID)).All(ctx, dc.dbs().Reader)
+	images, _ := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(legacyKSUID)).All(ctx, dc.dbs().Reader)
 	localLog.Debug().Msgf("Current Images : %d", len(images))
 
 	if len(images) == 0 {
-		err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
+		err = dc.associateImagesToDeviceDefinition(ctx, legacyKSUID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
 		if err != nil {
 			localLog.Err(err).Send()
 		}
 
-		err = dc.associateImagesToDeviceDefinition(ctx, dd.ID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
+		err = dc.associateImagesToDeviceDefinition(ctx, legacyKSUID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
 		if err != nil {
 			localLog.Err(err).Send()
 		}
 	}
 
 	if !ddExists {
-		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(dd.ID),
+		// todo I think this whole block has some duplicative stuff with above check, like the create onchain call a bit below
+		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(legacyKSUID),
 			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
 			qm.Load(models.DeviceDefinitionRels.DeviceMake),
 			qm.Load(models.DeviceDefinitionRels.Images)).One(ctx, dc.dbs().Reader)
 		if err != nil {
 			return nil, errors.Wrap(err, "error when get dd for update powertraintype")
+		}
+
+		// set the dd metadata if nothing there, if fails just continue. this is needed in current setup
+		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
+			// todo - future: merge metadata properties. Also set style specific metadata - multiple places
+			dd.Metadata = vinInfo.MetaData
+			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
+			// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
 		}
 
 		metadataKey := dd.R.DeviceType.Metadatakey

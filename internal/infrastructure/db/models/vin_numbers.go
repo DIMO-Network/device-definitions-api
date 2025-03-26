@@ -24,142 +24,149 @@ import (
 
 // VinNumber is an object representing the database table.
 type VinNumber struct {
-	Vin            string      `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
-	Wmi            string      `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
-	VDS            string      `boil:"vds" json:"vds" toml:"vds" yaml:"vds"`
-	CheckDigit     string      `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
-	SerialNumber   string      `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
-	Vis            string      `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
-	DeviceMakeID   string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
-	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	StyleID        null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
-	DecodeProvider null.String `boil:"decode_provider" json:"decode_provider,omitempty" toml:"decode_provider" yaml:"decode_provider,omitempty"`
-	Year           int         `boil:"year" json:"year" toml:"year" yaml:"year"`
-	VincarioData   null.JSON   `boil:"vincario_data" json:"vincario_data,omitempty" toml:"vincario_data" yaml:"vincario_data,omitempty"`
-	DrivlyData     null.JSON   `boil:"drivly_data" json:"drivly_data,omitempty" toml:"drivly_data" yaml:"drivly_data,omitempty"`
-	AutoisoData    null.JSON   `boil:"autoiso_data" json:"autoiso_data,omitempty" toml:"autoiso_data" yaml:"autoiso_data,omitempty"`
-	DatgroupData   null.JSON   `boil:"datgroup_data" json:"datgroup_data,omitempty" toml:"datgroup_data" yaml:"datgroup_data,omitempty"`
-	DefinitionID   string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
+	Vin              string      `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
+	Wmi              string      `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
+	VDS              string      `boil:"vds" json:"vds" toml:"vds" yaml:"vds"`
+	CheckDigit       string      `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
+	SerialNumber     string      `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
+	Vis              string      `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
+	DeviceMakeID     string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
+	CreatedAt        time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	StyleID          null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
+	DecodeProvider   null.String `boil:"decode_provider" json:"decode_provider,omitempty" toml:"decode_provider" yaml:"decode_provider,omitempty"`
+	Year             int         `boil:"year" json:"year" toml:"year" yaml:"year"`
+	VincarioData     null.JSON   `boil:"vincario_data" json:"vincario_data,omitempty" toml:"vincario_data" yaml:"vincario_data,omitempty"`
+	DrivlyData       null.JSON   `boil:"drivly_data" json:"drivly_data,omitempty" toml:"drivly_data" yaml:"drivly_data,omitempty"`
+	AutoisoData      null.JSON   `boil:"autoiso_data" json:"autoiso_data,omitempty" toml:"autoiso_data" yaml:"autoiso_data,omitempty"`
+	DatgroupData     null.JSON   `boil:"datgroup_data" json:"datgroup_data,omitempty" toml:"datgroup_data" yaml:"datgroup_data,omitempty"`
+	DefinitionID     string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
+	ManufacturerName null.String `boil:"manufacturer_name" json:"manufacturer_name,omitempty" toml:"manufacturer_name" yaml:"manufacturer_name,omitempty"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VinNumberColumns = struct {
-	Vin            string
-	Wmi            string
-	VDS            string
-	CheckDigit     string
-	SerialNumber   string
-	Vis            string
-	DeviceMakeID   string
-	CreatedAt      string
-	UpdatedAt      string
-	StyleID        string
-	DecodeProvider string
-	Year           string
-	VincarioData   string
-	DrivlyData     string
-	AutoisoData    string
-	DatgroupData   string
-	DefinitionID   string
+	Vin              string
+	Wmi              string
+	VDS              string
+	CheckDigit       string
+	SerialNumber     string
+	Vis              string
+	DeviceMakeID     string
+	CreatedAt        string
+	UpdatedAt        string
+	StyleID          string
+	DecodeProvider   string
+	Year             string
+	VincarioData     string
+	DrivlyData       string
+	AutoisoData      string
+	DatgroupData     string
+	DefinitionID     string
+	ManufacturerName string
 }{
-	Vin:            "vin",
-	Wmi:            "wmi",
-	VDS:            "vds",
-	CheckDigit:     "check_digit",
-	SerialNumber:   "serial_number",
-	Vis:            "vis",
-	DeviceMakeID:   "device_make_id",
-	CreatedAt:      "created_at",
-	UpdatedAt:      "updated_at",
-	StyleID:        "style_id",
-	DecodeProvider: "decode_provider",
-	Year:           "year",
-	VincarioData:   "vincario_data",
-	DrivlyData:     "drivly_data",
-	AutoisoData:    "autoiso_data",
-	DatgroupData:   "datgroup_data",
-	DefinitionID:   "definition_id",
+	Vin:              "vin",
+	Wmi:              "wmi",
+	VDS:              "vds",
+	CheckDigit:       "check_digit",
+	SerialNumber:     "serial_number",
+	Vis:              "vis",
+	DeviceMakeID:     "device_make_id",
+	CreatedAt:        "created_at",
+	UpdatedAt:        "updated_at",
+	StyleID:          "style_id",
+	DecodeProvider:   "decode_provider",
+	Year:             "year",
+	VincarioData:     "vincario_data",
+	DrivlyData:       "drivly_data",
+	AutoisoData:      "autoiso_data",
+	DatgroupData:     "datgroup_data",
+	DefinitionID:     "definition_id",
+	ManufacturerName: "manufacturer_name",
 }
 
 var VinNumberTableColumns = struct {
-	Vin            string
-	Wmi            string
-	VDS            string
-	CheckDigit     string
-	SerialNumber   string
-	Vis            string
-	DeviceMakeID   string
-	CreatedAt      string
-	UpdatedAt      string
-	StyleID        string
-	DecodeProvider string
-	Year           string
-	VincarioData   string
-	DrivlyData     string
-	AutoisoData    string
-	DatgroupData   string
-	DefinitionID   string
+	Vin              string
+	Wmi              string
+	VDS              string
+	CheckDigit       string
+	SerialNumber     string
+	Vis              string
+	DeviceMakeID     string
+	CreatedAt        string
+	UpdatedAt        string
+	StyleID          string
+	DecodeProvider   string
+	Year             string
+	VincarioData     string
+	DrivlyData       string
+	AutoisoData      string
+	DatgroupData     string
+	DefinitionID     string
+	ManufacturerName string
 }{
-	Vin:            "vin_numbers.vin",
-	Wmi:            "vin_numbers.wmi",
-	VDS:            "vin_numbers.vds",
-	CheckDigit:     "vin_numbers.check_digit",
-	SerialNumber:   "vin_numbers.serial_number",
-	Vis:            "vin_numbers.vis",
-	DeviceMakeID:   "vin_numbers.device_make_id",
-	CreatedAt:      "vin_numbers.created_at",
-	UpdatedAt:      "vin_numbers.updated_at",
-	StyleID:        "vin_numbers.style_id",
-	DecodeProvider: "vin_numbers.decode_provider",
-	Year:           "vin_numbers.year",
-	VincarioData:   "vin_numbers.vincario_data",
-	DrivlyData:     "vin_numbers.drivly_data",
-	AutoisoData:    "vin_numbers.autoiso_data",
-	DatgroupData:   "vin_numbers.datgroup_data",
-	DefinitionID:   "vin_numbers.definition_id",
+	Vin:              "vin_numbers.vin",
+	Wmi:              "vin_numbers.wmi",
+	VDS:              "vin_numbers.vds",
+	CheckDigit:       "vin_numbers.check_digit",
+	SerialNumber:     "vin_numbers.serial_number",
+	Vis:              "vin_numbers.vis",
+	DeviceMakeID:     "vin_numbers.device_make_id",
+	CreatedAt:        "vin_numbers.created_at",
+	UpdatedAt:        "vin_numbers.updated_at",
+	StyleID:          "vin_numbers.style_id",
+	DecodeProvider:   "vin_numbers.decode_provider",
+	Year:             "vin_numbers.year",
+	VincarioData:     "vin_numbers.vincario_data",
+	DrivlyData:       "vin_numbers.drivly_data",
+	AutoisoData:      "vin_numbers.autoiso_data",
+	DatgroupData:     "vin_numbers.datgroup_data",
+	DefinitionID:     "vin_numbers.definition_id",
+	ManufacturerName: "vin_numbers.manufacturer_name",
 }
 
 // Generated where
 
 var VinNumberWhere = struct {
-	Vin            whereHelperstring
-	Wmi            whereHelperstring
-	VDS            whereHelperstring
-	CheckDigit     whereHelperstring
-	SerialNumber   whereHelperstring
-	Vis            whereHelperstring
-	DeviceMakeID   whereHelperstring
-	CreatedAt      whereHelpertime_Time
-	UpdatedAt      whereHelpertime_Time
-	StyleID        whereHelpernull_String
-	DecodeProvider whereHelpernull_String
-	Year           whereHelperint
-	VincarioData   whereHelpernull_JSON
-	DrivlyData     whereHelpernull_JSON
-	AutoisoData    whereHelpernull_JSON
-	DatgroupData   whereHelpernull_JSON
-	DefinitionID   whereHelperstring
+	Vin              whereHelperstring
+	Wmi              whereHelperstring
+	VDS              whereHelperstring
+	CheckDigit       whereHelperstring
+	SerialNumber     whereHelperstring
+	Vis              whereHelperstring
+	DeviceMakeID     whereHelperstring
+	CreatedAt        whereHelpertime_Time
+	UpdatedAt        whereHelpertime_Time
+	StyleID          whereHelpernull_String
+	DecodeProvider   whereHelpernull_String
+	Year             whereHelperint
+	VincarioData     whereHelpernull_JSON
+	DrivlyData       whereHelpernull_JSON
+	AutoisoData      whereHelpernull_JSON
+	DatgroupData     whereHelpernull_JSON
+	DefinitionID     whereHelperstring
+	ManufacturerName whereHelpernull_String
 }{
-	Vin:            whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
-	Wmi:            whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
-	VDS:            whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vds\""},
-	CheckDigit:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"check_digit\""},
-	SerialNumber:   whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"serial_number\""},
-	Vis:            whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vis\""},
-	DeviceMakeID:   whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"device_make_id\""},
-	CreatedAt:      whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"created_at\""},
-	UpdatedAt:      whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
-	StyleID:        whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
-	DecodeProvider: whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"decode_provider\""},
-	Year:           whereHelperint{field: "\"device_definitions_api\".\"vin_numbers\".\"year\""},
-	VincarioData:   whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"vincario_data\""},
-	DrivlyData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"drivly_data\""},
-	AutoisoData:    whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"autoiso_data\""},
-	DatgroupData:   whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"datgroup_data\""},
-	DefinitionID:   whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"definition_id\""},
+	Vin:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
+	Wmi:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
+	VDS:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vds\""},
+	CheckDigit:       whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"check_digit\""},
+	SerialNumber:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"serial_number\""},
+	Vis:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vis\""},
+	DeviceMakeID:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"device_make_id\""},
+	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"created_at\""},
+	UpdatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
+	StyleID:          whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
+	DecodeProvider:   whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"decode_provider\""},
+	Year:             whereHelperint{field: "\"device_definitions_api\".\"vin_numbers\".\"year\""},
+	VincarioData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"vincario_data\""},
+	DrivlyData:       whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"drivly_data\""},
+	AutoisoData:      whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"autoiso_data\""},
+	DatgroupData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"datgroup_data\""},
+	DefinitionID:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"definition_id\""},
+	ManufacturerName: whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"manufacturer_name\""},
 }
 
 // VinNumberRels is where relationship names are stored.
@@ -200,9 +207,9 @@ func (r *vinNumberR) GetDeviceMake() *DeviceMake {
 type vinNumberL struct{}
 
 var (
-	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id"}
+	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id", "manufacturer_name"}
 	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "definition_id"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data"}
+	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "manufacturer_name"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )
