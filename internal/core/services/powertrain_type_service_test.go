@@ -4,9 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/segmentio/ksuid"
-
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
 
@@ -129,19 +126,5 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 
 			assert.Equalf(t, tt.want, got, "ResolvePowerTrainType( %v, %v, %v, %v, %v)", tt.args.makeSlug, tt.args.modelSlug, tt.args.definitionID, tt.args.drivlyData, tt.args.vincarioData)
 		})
-	}
-}
-
-func buildTestTblDD(definitionID, model string, year int, powerTrainType string) *gateways.DeviceDefinitionTablelandModel {
-	return &gateways.DeviceDefinitionTablelandModel{
-		ID:         definitionID,
-		KSUID:      ksuid.New().String(),
-		Model:      model,
-		Year:       year,
-		DeviceType: "vehicle",
-		ImageURI:   "",
-		Metadata: &gateways.DeviceDefinitionMetadata{DeviceAttributes: []gateways.DeviceTypeAttribute{
-			{Name: "powertrain_type", Value: powerTrainType},
-		}},
 	}
 }
