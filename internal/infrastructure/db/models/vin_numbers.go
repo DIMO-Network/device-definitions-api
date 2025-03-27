@@ -30,7 +30,6 @@ type VinNumber struct {
 	CheckDigit       string      `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
 	SerialNumber     string      `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
 	Vis              string      `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
-	DeviceMakeID     string      `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
 	CreatedAt        time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt        time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	StyleID          null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
@@ -41,7 +40,7 @@ type VinNumber struct {
 	AutoisoData      null.JSON   `boil:"autoiso_data" json:"autoiso_data,omitempty" toml:"autoiso_data" yaml:"autoiso_data,omitempty"`
 	DatgroupData     null.JSON   `boil:"datgroup_data" json:"datgroup_data,omitempty" toml:"datgroup_data" yaml:"datgroup_data,omitempty"`
 	DefinitionID     string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
-	ManufacturerName null.String `boil:"manufacturer_name" json:"manufacturer_name,omitempty" toml:"manufacturer_name" yaml:"manufacturer_name,omitempty"`
+	ManufacturerName string      `boil:"manufacturer_name" json:"manufacturer_name" toml:"manufacturer_name" yaml:"manufacturer_name"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,7 +53,6 @@ var VinNumberColumns = struct {
 	CheckDigit       string
 	SerialNumber     string
 	Vis              string
-	DeviceMakeID     string
 	CreatedAt        string
 	UpdatedAt        string
 	StyleID          string
@@ -73,7 +71,6 @@ var VinNumberColumns = struct {
 	CheckDigit:       "check_digit",
 	SerialNumber:     "serial_number",
 	Vis:              "vis",
-	DeviceMakeID:     "device_make_id",
 	CreatedAt:        "created_at",
 	UpdatedAt:        "updated_at",
 	StyleID:          "style_id",
@@ -94,7 +91,6 @@ var VinNumberTableColumns = struct {
 	CheckDigit       string
 	SerialNumber     string
 	Vis              string
-	DeviceMakeID     string
 	CreatedAt        string
 	UpdatedAt        string
 	StyleID          string
@@ -113,7 +109,6 @@ var VinNumberTableColumns = struct {
 	CheckDigit:       "vin_numbers.check_digit",
 	SerialNumber:     "vin_numbers.serial_number",
 	Vis:              "vin_numbers.vis",
-	DeviceMakeID:     "vin_numbers.device_make_id",
 	CreatedAt:        "vin_numbers.created_at",
 	UpdatedAt:        "vin_numbers.updated_at",
 	StyleID:          "vin_numbers.style_id",
@@ -136,7 +131,6 @@ var VinNumberWhere = struct {
 	CheckDigit       whereHelperstring
 	SerialNumber     whereHelperstring
 	Vis              whereHelperstring
-	DeviceMakeID     whereHelperstring
 	CreatedAt        whereHelpertime_Time
 	UpdatedAt        whereHelpertime_Time
 	StyleID          whereHelpernull_String
@@ -147,7 +141,7 @@ var VinNumberWhere = struct {
 	AutoisoData      whereHelpernull_JSON
 	DatgroupData     whereHelpernull_JSON
 	DefinitionID     whereHelperstring
-	ManufacturerName whereHelpernull_String
+	ManufacturerName whereHelperstring
 }{
 	Vin:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
 	Wmi:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
@@ -155,7 +149,6 @@ var VinNumberWhere = struct {
 	CheckDigit:       whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"check_digit\""},
 	SerialNumber:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"serial_number\""},
 	Vis:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vis\""},
-	DeviceMakeID:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"device_make_id\""},
 	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"created_at\""},
 	UpdatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
 	StyleID:          whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
@@ -166,22 +159,19 @@ var VinNumberWhere = struct {
 	AutoisoData:      whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"autoiso_data\""},
 	DatgroupData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"datgroup_data\""},
 	DefinitionID:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"definition_id\""},
-	ManufacturerName: whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"manufacturer_name\""},
+	ManufacturerName: whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"manufacturer_name\""},
 }
 
 // VinNumberRels is where relationship names are stored.
 var VinNumberRels = struct {
-	Style      string
-	DeviceMake string
+	Style string
 }{
-	Style:      "Style",
-	DeviceMake: "DeviceMake",
+	Style: "Style",
 }
 
 // vinNumberR is where relationships are stored.
 type vinNumberR struct {
-	Style      *DeviceStyle `boil:"Style" json:"Style" toml:"Style" yaml:"Style"`
-	DeviceMake *DeviceMake  `boil:"DeviceMake" json:"DeviceMake" toml:"DeviceMake" yaml:"DeviceMake"`
+	Style *DeviceStyle `boil:"Style" json:"Style" toml:"Style" yaml:"Style"`
 }
 
 // NewStruct creates a new relationship struct
@@ -196,20 +186,13 @@ func (r *vinNumberR) GetStyle() *DeviceStyle {
 	return r.Style
 }
 
-func (r *vinNumberR) GetDeviceMake() *DeviceMake {
-	if r == nil {
-		return nil
-	}
-	return r.DeviceMake
-}
-
 // vinNumberL is where Load methods for each relationship are stored.
 type vinNumberL struct{}
 
 var (
-	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id", "manufacturer_name"}
-	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "device_make_id", "definition_id"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "manufacturer_name"}
+	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id", "manufacturer_name"}
+	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "definition_id", "manufacturer_name"}
+	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )
@@ -530,17 +513,6 @@ func (o *VinNumber) Style(mods ...qm.QueryMod) deviceStyleQuery {
 	return DeviceStyles(queryMods...)
 }
 
-// DeviceMake pointed to by the foreign key.
-func (o *VinNumber) DeviceMake(mods ...qm.QueryMod) deviceMakeQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DeviceMakeID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DeviceMakes(queryMods...)
-}
-
 // LoadStyle allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (vinNumberL) LoadStyle(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVinNumber interface{}, mods queries.Applicator) error {
@@ -665,126 +637,6 @@ func (vinNumberL) LoadStyle(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// LoadDeviceMake allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (vinNumberL) LoadDeviceMake(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVinNumber interface{}, mods queries.Applicator) error {
-	var slice []*VinNumber
-	var object *VinNumber
-
-	if singular {
-		var ok bool
-		object, ok = maybeVinNumber.(*VinNumber)
-		if !ok {
-			object = new(VinNumber)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeVinNumber)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVinNumber))
-			}
-		}
-	} else {
-		s, ok := maybeVinNumber.(*[]*VinNumber)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeVinNumber)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVinNumber))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &vinNumberR{}
-		}
-		args[object.DeviceMakeID] = struct{}{}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &vinNumberR{}
-			}
-
-			args[obj.DeviceMakeID] = struct{}{}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.device_makes`),
-		qm.WhereIn(`device_definitions_api.device_makes.id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceMake")
-	}
-
-	var resultSlice []*DeviceMake
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceMake")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_makes")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_makes")
-	}
-
-	if len(deviceMakeAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.DeviceMake = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceMakeR{}
-		}
-		foreign.R.VinNumbers = append(foreign.R.VinNumbers, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.DeviceMakeID == foreign.ID {
-				local.R.DeviceMake = foreign
-				if foreign.R == nil {
-					foreign.R = &deviceMakeR{}
-				}
-				foreign.R.VinNumbers = append(foreign.R.VinNumbers, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
 // SetStyle of the vinNumber to the related item.
 // Sets o.R.Style to related.
 // Adds o to related.R.StyleVinNumbers.
@@ -862,53 +714,6 @@ func (o *VinNumber) RemoveStyle(ctx context.Context, exec boil.ContextExecutor, 
 		related.R.StyleVinNumbers = related.R.StyleVinNumbers[:ln-1]
 		break
 	}
-	return nil
-}
-
-// SetDeviceMake of the vinNumber to the related item.
-// Sets o.R.DeviceMake to related.
-// Adds o to related.R.VinNumbers.
-func (o *VinNumber) SetDeviceMake(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceMake) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"device_definitions_api\".\"vin_numbers\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
-		strmangle.WhereClause("\"", "\"", 2, vinNumberPrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.Vin}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.DeviceMakeID = related.ID
-	if o.R == nil {
-		o.R = &vinNumberR{
-			DeviceMake: related,
-		}
-	} else {
-		o.R.DeviceMake = related
-	}
-
-	if related.R == nil {
-		related.R = &deviceMakeR{
-			VinNumbers: VinNumberSlice{o},
-		}
-	} else {
-		related.R.VinNumbers = append(related.R.VinNumbers, o)
-	}
-
 	return nil
 }
 

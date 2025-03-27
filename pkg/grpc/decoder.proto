@@ -14,7 +14,7 @@ message DecodeVinRequest {
 }
 
 message DecodeVinResponse {
-  string device_make_id = 1;
+  string device_make_id = 1 [deprecated=true];
   string device_style_id = 3;
   int32 year = 4;
   string source = 5;

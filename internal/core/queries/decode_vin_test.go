@@ -613,16 +613,16 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	// insert into vin numbers
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
-		Vin:            vin,
-		Wmi:            v.Wmi(),
-		VDS:            v.VDS(),
-		CheckDigit:     v.CheckDigit(),
-		SerialNumber:   v.SerialNumber(),
-		Vis:            v.VIS(),
-		DeviceMakeID:   dm.ID,
-		DefinitionID:   dd.NameSlug,
-		Year:           2021,
-		DecodeProvider: null.StringFrom("drivly"),
+		Vin:              vin,
+		Wmi:              v.Wmi(),
+		VDS:              v.VDS(),
+		CheckDigit:       v.CheckDigit(),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              v.VIS(),
+		ManufacturerName: dm.Name,
+		DefinitionID:     dd.NameSlug,
+		Year:             2021,
+		DecodeProvider:   null.StringFrom("drivly"),
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)

@@ -117,7 +117,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if vinDecodeNumber != nil {
 		// get from tableland, probably don't need this here anymore
 		//tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, vinDecodeNumber.DefinitionID, dc.dbs().Reader)
-		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
+		// should mark this deprecated
+		//resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
+		resp.Manufacturer = vinDecodeNumber.ManufacturerName
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
 		resp.Source = vinDecodeNumber.DecodeProvider.String
@@ -158,16 +160,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		// insert vin_numbers
 		vinDecodeNumber = &models.VinNumber{
-			Vin:            vin.String(),
-			DeviceMakeID:   dm.ID,
-			Wmi:            dbWMI.Wmi,
-			VDS:            vin.VDS(),
-			Vis:            vin.VIS(),
-			CheckDigit:     vin.CheckDigit(),
-			SerialNumber:   vin.SerialNumber(),
-			DecodeProvider: null.StringFrom("manual"),
-			Year:           tblDef.Year,
-			DefinitionID:   tblDef.ID,
+			Vin:              vin.String(),
+			ManufacturerName: dm.Name,
+			Wmi:              dbWMI.Wmi,
+			VDS:              vin.VDS(),
+			Vis:              vin.VIS(),
+			CheckDigit:       vin.CheckDigit(),
+			SerialNumber:     vin.SerialNumber(),
+			DecodeProvider:   null.StringFrom("manual"),
+			Year:             tblDef.Year,
+			DefinitionID:     tblDef.ID,
 		}
 
 		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
@@ -188,7 +190,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 		}
 
-		resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
+		resp.DeviceMakeId = dm.ID
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.Source = vinDecodeNumber.DecodeProvider.String
 		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], null.JSON{}, null.JSON{})
@@ -219,8 +221,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	if err == nil && dbWMI != nil {
 		if dbWMI.R.DeviceMake != nil && dbWMI.R.DeviceMake.Name == "Tesla" {
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
+			resp.Manufacturer = "Tesla"
+			resp.DeviceMakeId = dbWMI.R.DeviceMake.ID
 		}
 	}
+	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
 		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first
 	}
@@ -312,13 +317,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		externalStyleID := shared.SlugString(vinInfo.StyleName)
-		// todo future: styles tied to definition id not old ksuid
 		// see if match existing style exists. First search is based on db device_definition_style_idx
-		style, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(legacyKSUID),
+		style, err := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(resp.DefinitionId),
 			models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
 			models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID)).One(ctx, dc.dbs().Reader)
 		if errors.Is(err, sql.ErrNoRows) {
-			style, err = models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(legacyKSUID),
+			style, err = models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(resp.DefinitionId),
 				models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
 		}
 
@@ -326,6 +330,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			style = &models.DeviceStyle{
 				ID:                 ksuid.New().String(),
 				DeviceDefinitionID: legacyKSUID,
+				DefinitionID:       resp.DefinitionId,
 				Name:               vinInfo.StyleName,
 				ExternalStyleID:    externalStyleID,
 				Source:             string(vinInfo.Source),
@@ -358,8 +363,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// insert vin_numbers
 	vinDecodeNumber = &models.VinNumber{
 		Vin:              vin.String(),
-		ManufacturerName: null.StringFrom(resp.Manufacturer),
-		DeviceMakeID:     resp.DeviceMakeId, // todo script to backfill ManufacturerName and drop this column
+		ManufacturerName: resp.Manufacturer,
 		Wmi:              wmi,
 		VDS:              vin.VDS(),
 		Vis:              vin.VIS(),
@@ -418,8 +422,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		}
 	}
 
+	// why are we doing this if already have something similar above?
 	if !ddExists {
-		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(legacyKSUID),
+		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(resp.DefinitionId),
 			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
 			qm.Load(models.DeviceDefinitionRels.DeviceMake),

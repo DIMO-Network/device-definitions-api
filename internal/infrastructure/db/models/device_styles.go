@@ -34,6 +34,7 @@ type DeviceStyle struct {
 	SubModel           string      `boil:"sub_model" json:"sub_model" toml:"sub_model" yaml:"sub_model"`
 	HardwareTemplateID null.String `boil:"hardware_template_id" json:"hardware_template_id,omitempty" toml:"hardware_template_id" yaml:"hardware_template_id,omitempty"`
 	Metadata           null.JSON   `boil:"metadata" json:"metadata,omitempty" toml:"metadata" yaml:"metadata,omitempty"`
+	DefinitionID       string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
 
 	R *deviceStyleR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L deviceStyleL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var DeviceStyleColumns = struct {
 	SubModel           string
 	HardwareTemplateID string
 	Metadata           string
+	DefinitionID       string
 }{
 	ID:                 "id",
 	DeviceDefinitionID: "device_definition_id",
@@ -61,6 +63,7 @@ var DeviceStyleColumns = struct {
 	SubModel:           "sub_model",
 	HardwareTemplateID: "hardware_template_id",
 	Metadata:           "metadata",
+	DefinitionID:       "definition_id",
 }
 
 var DeviceStyleTableColumns = struct {
@@ -74,6 +77,7 @@ var DeviceStyleTableColumns = struct {
 	SubModel           string
 	HardwareTemplateID string
 	Metadata           string
+	DefinitionID       string
 }{
 	ID:                 "device_styles.id",
 	DeviceDefinitionID: "device_styles.device_definition_id",
@@ -85,6 +89,7 @@ var DeviceStyleTableColumns = struct {
 	SubModel:           "device_styles.sub_model",
 	HardwareTemplateID: "device_styles.hardware_template_id",
 	Metadata:           "device_styles.metadata",
+	DefinitionID:       "device_styles.definition_id",
 }
 
 // Generated where
@@ -100,6 +105,7 @@ var DeviceStyleWhere = struct {
 	SubModel           whereHelperstring
 	HardwareTemplateID whereHelpernull_String
 	Metadata           whereHelpernull_JSON
+	DefinitionID       whereHelperstring
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"id\""},
 	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"device_definition_id\""},
@@ -111,6 +117,7 @@ var DeviceStyleWhere = struct {
 	SubModel:           whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"sub_model\""},
 	HardwareTemplateID: whereHelpernull_String{field: "\"device_definitions_api\".\"device_styles\".\"hardware_template_id\""},
 	Metadata:           whereHelpernull_JSON{field: "\"device_definitions_api\".\"device_styles\".\"metadata\""},
+	DefinitionID:       whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"definition_id\""},
 }
 
 // DeviceStyleRels is where relationship names are stored.
@@ -151,8 +158,8 @@ func (r *deviceStyleR) GetStyleVinNumbers() VinNumberSlice {
 type deviceStyleL struct{}
 
 var (
-	deviceStyleAllColumns            = []string{"id", "device_definition_id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model", "hardware_template_id", "metadata"}
-	deviceStyleColumnsWithoutDefault = []string{"id", "device_definition_id", "name", "external_style_id", "source", "sub_model"}
+	deviceStyleAllColumns            = []string{"id", "device_definition_id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model", "hardware_template_id", "metadata", "definition_id"}
+	deviceStyleColumnsWithoutDefault = []string{"id", "device_definition_id", "name", "external_style_id", "source", "sub_model", "definition_id"}
 	deviceStyleColumnsWithDefault    = []string{"created_at", "updated_at", "hardware_template_id", "metadata"}
 	deviceStylePrimaryKeyColumns     = []string{"id"}
 	deviceStyleGeneratedColumns      = []string{}
