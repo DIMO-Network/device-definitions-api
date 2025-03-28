@@ -448,11 +448,12 @@ message GetDeviceDefinitionHardwareTemplateByIDResponse {
 }
 
 message DeviceImage {
-  string device_definition_id = 1;
+  string device_definition_id = 1 [deprecated = true];
   string image_url = 2;
   int32 width = 3;
   int32 height = 4;
   string color = 5;
+  string definition_id = 6;
 }
 
 message GetDeviceImagesResponse {

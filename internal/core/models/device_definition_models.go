@@ -77,7 +77,7 @@ type DeviceIntegrationFeature struct {
 
 type DeviceStyle struct {
 	ID                 string                `json:"id"`
-	DeviceDefinitionID string                `json:"deviceDefinitionId"`
+	DefinitionID       string                `json:"definitionId"`
 	Name               string                `json:"name"`
 	ExternalStyleID    string                `json:"externalStyleId"`
 	Source             string                `json:"source"`

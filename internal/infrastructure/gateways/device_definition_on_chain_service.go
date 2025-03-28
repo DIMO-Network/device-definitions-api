@@ -717,9 +717,9 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 
 func GetDefaultImageURL(dd models.DeviceDefinition) string {
 	imgURI := ""
-	if dd.R != nil && dd.R.Images != nil {
+	if dd.R != nil && dd.R.DefinitionImages != nil {
 		w := 0
-		for _, image := range dd.R.Images {
+		for _, image := range dd.R.DefinitionImages {
 			extra := 0
 			if !image.NotExactImage {
 				extra = 2000 // we want to give preference to exact images

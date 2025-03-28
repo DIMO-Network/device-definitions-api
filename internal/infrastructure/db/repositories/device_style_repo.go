@@ -25,11 +25,11 @@ func NewDeviceStyleRepository(dbs func() *db.ReaderWriter) DeviceStyleRepository
 	return &deviceStyleRepository{DBS: dbs}
 }
 
-func (r *deviceStyleRepository) Create(ctx context.Context, deviceDefinitionID string, name string, externalStyleID string, source string, subModel string, templateID string) (*models.DeviceStyle, error) {
+func (r *deviceStyleRepository) Create(ctx context.Context, definitionID string, name string, externalStyleID string, source string, subModel string, templateID string) (*models.DeviceStyle, error) {
 
 	ds := &models.DeviceStyle{
 		ID:                 ksuid.New().String(),
-		DeviceDefinitionID: deviceDefinitionID,
+		DefinitionID:       definitionID,
 		Name:               name,
 		ExternalStyleID:    externalStyleID,
 		Source:             source,

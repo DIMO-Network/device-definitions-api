@@ -344,6 +344,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 				// todo unit test for this getting set in this scenario
 				resp.Powertrain = pt
 			}
+			// todo test error: device definition does not exist in the database
 			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
 			if errStyle != nil {
 				localLog.Err(errStyle).Msgf("error creating style with values: %+v", style)

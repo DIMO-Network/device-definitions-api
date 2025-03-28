@@ -91,7 +91,7 @@ func BuildFromDeviceDefinitionToGRPCResult(dd *models.DeviceDefinition, tbl *gat
 	}
 
 	rp.DeviceStyles = []*grpc.DeviceStyle{}
-	for _, ds := range dd.R.DeviceStyles {
+	for _, ds := range dd.R.DefinitionDeviceStyles {
 		rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyle{
 			DeviceDefinitionId: tbl.KSUID,
 			ExternalStyleId:    ds.ExternalStyleID,

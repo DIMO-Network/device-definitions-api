@@ -322,8 +322,8 @@ func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodi
 		Model: info.Model,
 	}
 
-	if len(info.R.DeviceStyles) > 0 {
-		v.StyleName = info.R.DeviceStyles[0].Name
+	if len(info.R.DefinitionDeviceStyles) > 0 {
+		v.StyleName = info.R.DefinitionDeviceStyles[0].Name
 	}
 
 	if info.ExternalID.Valid {

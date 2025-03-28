@@ -15,9 +15,9 @@ import (
 )
 
 type GetDeviceStyleByFilterQuery struct {
-	DeviceDefinitionID string `json:"device_definition_id"`
-	Name               string `json:"name"`
-	SubModel           string `json:"sub_model"`
+	DefinitionID string `json:"definition_id"`
+	Name         string `json:"name"`
+	SubModel     string `json:"sub_model"`
 }
 
 func (*GetDeviceStyleByFilterQuery) Key() string {
@@ -37,7 +37,7 @@ func (ch GetDeviceStyleByFilterQueryHandler) Handle(ctx context.Context, query m
 	qry := query.(*GetDeviceStyleByFilterQuery)
 
 	style, err := models.DeviceStyles(
-		models.DeviceStyleWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID),
+		models.DeviceStyleWhere.DefinitionID.EQ(qry.DefinitionID),
 		models.DeviceStyleWhere.Name.EQ(qry.Name),
 		models.DeviceStyleWhere.SubModel.EQ(qry.SubModel),
 	).One(ctx, ch.DBS().Reader)
@@ -58,7 +58,7 @@ func (ch GetDeviceStyleByFilterQueryHandler) Handle(ctx context.Context, query m
 
 	deviceStyle := coremodels.GetDeviceStyleQueryResult{
 		ID:                 style.ID,
-		DeviceDefinitionID: style.DeviceDefinitionID,
+		DefinitionID:       style.DefinitionID,
 		Name:               style.Name,
 		ExternalStyleID:    style.ExternalStyleID,
 		Source:             style.Source,

@@ -41,32 +41,32 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TearDownTest() {
 
 func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_Success() {
 	ctx := context.Background()
-	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
+	definitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
 	mk := "Toyota"
 	makeID := "1"
 
 	dd := &models.GetDeviceDefinitionQueryResult{
-		DeviceDefinitionID: deviceDefinitionID,
+		DeviceDefinitionID: definitionID,
 		DeviceMake: models.DeviceMake{
 			ID:   makeID,
 			Name: mk,
 		},
 		DeviceStyles: []models.DeviceStyle{
 			models.DeviceStyle{
-				ID:                 ksuid.New().String(),
-				ExternalStyleID:    ksuid.New().String(),
-				DeviceDefinitionID: deviceDefinitionID,
-				Name:               "Hard Top 4dr SUV AWD",
-				Source:             "edmunds",
-				SubModel:           "Hard Top",
+				ID:              ksuid.New().String(),
+				ExternalStyleID: ksuid.New().String(),
+				DefinitionID:    definitionID,
+				Name:            "Hard Top 4dr SUV AWD",
+				Source:          "edmunds",
+				SubModel:        "Hard Top",
 			},
 			models.DeviceStyle{
-				ID:                 ksuid.New().String(),
-				ExternalStyleID:    ksuid.New().String(),
-				DeviceDefinitionID: deviceDefinitionID,
-				Name:               "4dr SUV 4WD",
-				Source:             "edmunds",
-				SubModel:           "Wagon",
+				ID:              ksuid.New().String(),
+				ExternalStyleID: ksuid.New().String(),
+				DefinitionID:    definitionID,
+				Name:            "4dr SUV 4WD",
+				Source:          "edmunds",
+				SubModel:        "Wagon",
 			},
 		},
 		Verified: true,
@@ -75,14 +75,14 @@ func (s *GetDeviceDefinitionByIDQueryHandlerSuite) TestGetDeviceDefinitionById_S
 	s.mockDeviceDefinitionCache.EXPECT().GetDeviceDefinitionByID(ctx, gomock.Any()).Return(dd, nil).Times(1)
 
 	qryResult, err := s.queryHandler.Handle(ctx, &GetDeviceDefinitionByIDQuery{
-		DeviceDefinitionID: deviceDefinitionID,
+		DeviceDefinitionID: definitionID,
 	})
 	result := qryResult.(*models.GetDeviceDefinitionQueryResult)
 
 	s.NoError(err)
-	s.Equal(result.DeviceDefinitionID, deviceDefinitionID)
+	s.Equal(result.DeviceDefinitionID, definitionID)
 
-	s.Equal(result.DeviceStyles[0].DeviceDefinitionID, dd.DeviceDefinitionID)
+	s.Equal(result.DeviceStyles[0].DefinitionID, dd.DeviceDefinitionID)
 	s.Equal(result.DeviceStyles[0].Name, dd.DeviceStyles[0].Name)
 	s.Equal(result.DeviceStyles[0].ExternalStyleID, dd.DeviceStyles[0].ExternalStyleID)
 	s.Equal(result.DeviceStyles[0].Source, dd.DeviceStyles[0].Source)

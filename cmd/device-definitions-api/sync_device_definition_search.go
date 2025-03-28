@@ -143,7 +143,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	fmt.Printf("Starting processing definitions\n")
 
 	all, err := models.DeviceDefinitions(qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(models.DeviceDefinitionRels.Images),
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
 		models.DeviceDefinitionWhere.Verified.EQ(true)).All(ctx, pdb.DBS().Reader)
 	if err != nil {
 		p.logger.Fatal().Err(err).Send()

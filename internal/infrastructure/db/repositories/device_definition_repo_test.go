@@ -262,7 +262,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 
 	newStyles := []*models.DeviceStyle{}
 
-	for _, style := range dd.R.DeviceStyles {
+	for _, style := range dd.R.DefinitionDeviceStyles {
 		newStyles = append(newStyles, style)
 	}
 
@@ -393,8 +393,8 @@ func setupDeviceDefinitionWithStyles(t *testing.T, pdb db.Store, makeName string
 	ds2 := dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
 
 	dd.R = dd.R.NewStruct()
-	dd.R.DeviceStyles = append(dd.R.DeviceStyles, &ds1)
-	dd.R.DeviceStyles = append(dd.R.DeviceStyles, &ds2)
+	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &ds1)
+	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &ds2)
 	dd.R.DeviceMake = &dm
 
 	return dd

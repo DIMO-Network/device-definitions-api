@@ -292,14 +292,14 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	return dm
 }
 
-func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
+func SetupCreateStyle(t *testing.T, definitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
 	ds := models.DeviceStyle{
-		ID:                 ksuid.New().String(),
-		Name:               name,
-		DeviceDefinitionID: deviceDefinitionID,
-		Source:             source,
-		SubModel:           subModel,
-		ExternalStyleID:    ksuid.New().String(),
+		ID:              ksuid.New().String(),
+		Name:            name,
+		DefinitionID:    definitionID,
+		Source:          source,
+		SubModel:        subModel,
+		ExternalStyleID: ksuid.New().String(),
 	}
 	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")

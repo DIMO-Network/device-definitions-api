@@ -46,12 +46,12 @@ func (ch GetDeviceStyleByExternalIDQueryHandler) Handle(ctx context.Context, que
 	}
 
 	result := coremodels.GetDeviceStyleQueryResult{
-		ID:                 v.ID,
-		DeviceDefinitionID: v.DeviceDefinitionID,
-		Name:               v.Name,
-		ExternalStyleID:    v.ExternalStyleID,
-		Source:             v.Source,
-		SubModel:           v.SubModel,
+		ID:              v.ID,
+		DefinitionID:    v.DefinitionID,
+		Name:            v.Name,
+		ExternalStyleID: v.ExternalStyleID,
+		Source:          v.Source,
+		SubModel:        v.SubModel,
 	}
 
 	if v.HardwareTemplateID.Valid {

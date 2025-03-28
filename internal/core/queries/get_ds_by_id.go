@@ -50,7 +50,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, ds.DeviceDefinitionID)
+	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, ds.DefinitionID)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),
@@ -59,7 +59,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 
 	deviceStyleResult := coremodels.GetDeviceStyleQueryResult{
 		ID:                 ds.ID,
-		DeviceDefinitionID: ds.DeviceDefinitionID,
+		DefinitionID:       ds.DefinitionID,
 		Name:               ds.Name,
 		ExternalStyleID:    ds.ExternalStyleID,
 		Source:             ds.Source,

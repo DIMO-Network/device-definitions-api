@@ -30,9 +30,9 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "Escape", 2022, pdb)
-	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
-	dsNormal := dbtesthelper.SetupCreateStyle(t, dd.ID, "2.0 vvti", "drivly", "2", pdb)
-	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.ID, "super energiii", "drivly", "3", pdb)
+	dsHybridName := dbtesthelper.SetupCreateStyle(t, dd.NameSlug, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
+	dsNormal := dbtesthelper.SetupCreateStyle(t, dd.NameSlug, "2.0 vvti", "drivly", "2", pdb)
+	dsWithPowertrain := dbtesthelper.SetupCreateStyle(t, dd.NameSlug, "super energiii", "drivly", "3", pdb)
 	dsWithPowertrain.Metadata = null.JSONFrom([]byte(fmt.Sprintf(`{"%s": "BEV"}`, common.PowerTrainType)))
 	_, err := dsWithPowertrain.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -80,9 +80,9 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 
 			result := got.(coremodels.GetDeviceStyleQueryResult)
 			if result.ID == dsHybridOverride.ID {
-				assert.Equal(t, ddWithPt.ID, result.DeviceDefinitionID)
+				assert.Equal(t, ddWithPt.ID, result.DefinitionID)
 			} else {
-				assert.Equal(t, dd.ID, result.DeviceDefinitionID)
+				assert.Equal(t, dd.ID, result.DefinitionID)
 			}
 			pt := ""
 			for _, attribute := range result.DeviceDefinition.DeviceAttributes {
