@@ -735,7 +735,7 @@ func (o *DeviceMake) AddDeviceDefinitions(ctx context.Context, exec boil.Context
 				strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
 				strmangle.WhereClause("\"", "\"", 2, deviceDefinitionPrimaryKeyColumns),
 			)
-			values := []interface{}{o.ID, rel.ID}
+			values := []interface{}{o.ID, rel.NameSlug}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)

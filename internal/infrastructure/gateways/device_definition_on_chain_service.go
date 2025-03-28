@@ -123,9 +123,9 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
-	bigInt := big.NewInt(int64(manufacturer.TokenID))
-	tblDD, err := e.GetDefinitionTableland(ctx, bigInt, ID)
-	return tblDD, bigInt, err
+	manufacturerID := big.NewInt(int64(manufacturer.TokenID))
+	tblDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
+	return tblDD, manufacturerID, err
 }
 
 func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {

@@ -25,7 +25,6 @@ import (
 // DeviceStyle is an object representing the database table.
 type DeviceStyle struct {
 	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
 	Name               string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	ExternalStyleID    string      `boil:"external_style_id" json:"external_style_id" toml:"external_style_id" yaml:"external_style_id"`
 	Source             string      `boil:"source" json:"source" toml:"source" yaml:"source"`
@@ -42,7 +41,6 @@ type DeviceStyle struct {
 
 var DeviceStyleColumns = struct {
 	ID                 string
-	DeviceDefinitionID string
 	Name               string
 	ExternalStyleID    string
 	Source             string
@@ -54,7 +52,6 @@ var DeviceStyleColumns = struct {
 	DefinitionID       string
 }{
 	ID:                 "id",
-	DeviceDefinitionID: "device_definition_id",
 	Name:               "name",
 	ExternalStyleID:    "external_style_id",
 	Source:             "source",
@@ -68,7 +65,6 @@ var DeviceStyleColumns = struct {
 
 var DeviceStyleTableColumns = struct {
 	ID                 string
-	DeviceDefinitionID string
 	Name               string
 	ExternalStyleID    string
 	Source             string
@@ -80,7 +76,6 @@ var DeviceStyleTableColumns = struct {
 	DefinitionID       string
 }{
 	ID:                 "device_styles.id",
-	DeviceDefinitionID: "device_styles.device_definition_id",
 	Name:               "device_styles.name",
 	ExternalStyleID:    "device_styles.external_style_id",
 	Source:             "device_styles.source",
@@ -96,7 +91,6 @@ var DeviceStyleTableColumns = struct {
 
 var DeviceStyleWhere = struct {
 	ID                 whereHelperstring
-	DeviceDefinitionID whereHelperstring
 	Name               whereHelperstring
 	ExternalStyleID    whereHelperstring
 	Source             whereHelperstring
@@ -108,7 +102,6 @@ var DeviceStyleWhere = struct {
 	DefinitionID       whereHelperstring
 }{
 	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"id\""},
-	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"device_definition_id\""},
 	Name:               whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"name\""},
 	ExternalStyleID:    whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"external_style_id\""},
 	Source:             whereHelperstring{field: "\"device_definitions_api\".\"device_styles\".\"source\""},
@@ -122,17 +115,17 @@ var DeviceStyleWhere = struct {
 
 // DeviceStyleRels is where relationship names are stored.
 var DeviceStyleRels = struct {
-	DeviceDefinition string
-	StyleVinNumbers  string
+	Definition      string
+	StyleVinNumbers string
 }{
-	DeviceDefinition: "DeviceDefinition",
-	StyleVinNumbers:  "StyleVinNumbers",
+	Definition:      "Definition",
+	StyleVinNumbers: "StyleVinNumbers",
 }
 
 // deviceStyleR is where relationships are stored.
 type deviceStyleR struct {
-	DeviceDefinition *DeviceDefinition `boil:"DeviceDefinition" json:"DeviceDefinition" toml:"DeviceDefinition" yaml:"DeviceDefinition"`
-	StyleVinNumbers  VinNumberSlice    `boil:"StyleVinNumbers" json:"StyleVinNumbers" toml:"StyleVinNumbers" yaml:"StyleVinNumbers"`
+	Definition      *DeviceDefinition `boil:"Definition" json:"Definition" toml:"Definition" yaml:"Definition"`
+	StyleVinNumbers VinNumberSlice    `boil:"StyleVinNumbers" json:"StyleVinNumbers" toml:"StyleVinNumbers" yaml:"StyleVinNumbers"`
 }
 
 // NewStruct creates a new relationship struct
@@ -140,11 +133,11 @@ func (*deviceStyleR) NewStruct() *deviceStyleR {
 	return &deviceStyleR{}
 }
 
-func (r *deviceStyleR) GetDeviceDefinition() *DeviceDefinition {
+func (r *deviceStyleR) GetDefinition() *DeviceDefinition {
 	if r == nil {
 		return nil
 	}
-	return r.DeviceDefinition
+	return r.Definition
 }
 
 func (r *deviceStyleR) GetStyleVinNumbers() VinNumberSlice {
@@ -158,8 +151,8 @@ func (r *deviceStyleR) GetStyleVinNumbers() VinNumberSlice {
 type deviceStyleL struct{}
 
 var (
-	deviceStyleAllColumns            = []string{"id", "device_definition_id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model", "hardware_template_id", "metadata", "definition_id"}
-	deviceStyleColumnsWithoutDefault = []string{"id", "device_definition_id", "name", "external_style_id", "source", "sub_model", "definition_id"}
+	deviceStyleAllColumns            = []string{"id", "name", "external_style_id", "source", "created_at", "updated_at", "sub_model", "hardware_template_id", "metadata", "definition_id"}
+	deviceStyleColumnsWithoutDefault = []string{"id", "name", "external_style_id", "source", "sub_model", "definition_id"}
 	deviceStyleColumnsWithDefault    = []string{"created_at", "updated_at", "hardware_template_id", "metadata"}
 	deviceStylePrimaryKeyColumns     = []string{"id"}
 	deviceStyleGeneratedColumns      = []string{}
@@ -470,10 +463,10 @@ func (q deviceStyleQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
-// DeviceDefinition pointed to by the foreign key.
-func (o *DeviceStyle) DeviceDefinition(mods ...qm.QueryMod) deviceDefinitionQuery {
+// Definition pointed to by the foreign key.
+func (o *DeviceStyle) Definition(mods ...qm.QueryMod) deviceDefinitionQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DeviceDefinitionID),
+		qm.Where("\"name_slug\" = ?", o.DefinitionID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -495,9 +488,9 @@ func (o *DeviceStyle) StyleVinNumbers(mods ...qm.QueryMod) vinNumberQuery {
 	return VinNumbers(queryMods...)
 }
 
-// LoadDeviceDefinition allows an eager lookup of values, cached into the
+// LoadDefinition allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (deviceStyleL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceStyle interface{}, mods queries.Applicator) error {
+func (deviceStyleL) LoadDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceStyle interface{}, mods queries.Applicator) error {
 	var slice []*DeviceStyle
 	var object *DeviceStyle
 
@@ -528,7 +521,7 @@ func (deviceStyleL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExec
 		if object.R == nil {
 			object.R = &deviceStyleR{}
 		}
-		args[object.DeviceDefinitionID] = struct{}{}
+		args[object.DefinitionID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -536,7 +529,7 @@ func (deviceStyleL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExec
 				obj.R = &deviceStyleR{}
 			}
 
-			args[obj.DeviceDefinitionID] = struct{}{}
+			args[obj.DefinitionID] = struct{}{}
 
 		}
 	}
@@ -554,7 +547,7 @@ func (deviceStyleL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExec
 
 	query := NewQuery(
 		qm.From(`device_definitions_api.device_definitions`),
-		qm.WhereIn(`device_definitions_api.device_definitions.id in ?`, argsSlice...),
+		qm.WhereIn(`device_definitions_api.device_definitions.name_slug in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -591,22 +584,22 @@ func (deviceStyleL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExec
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.DeviceDefinition = foreign
+		object.R.Definition = foreign
 		if foreign.R == nil {
 			foreign.R = &deviceDefinitionR{}
 		}
-		foreign.R.DeviceStyles = append(foreign.R.DeviceStyles, object)
+		foreign.R.DefinitionDeviceStyles = append(foreign.R.DefinitionDeviceStyles, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.DeviceDefinitionID == foreign.ID {
-				local.R.DeviceDefinition = foreign
+			if local.DefinitionID == foreign.NameSlug {
+				local.R.Definition = foreign
 				if foreign.R == nil {
 					foreign.R = &deviceDefinitionR{}
 				}
-				foreign.R.DeviceStyles = append(foreign.R.DeviceStyles, local)
+				foreign.R.DefinitionDeviceStyles = append(foreign.R.DefinitionDeviceStyles, local)
 				break
 			}
 		}
@@ -728,10 +721,10 @@ func (deviceStyleL) LoadStyleVinNumbers(ctx context.Context, e boil.ContextExecu
 	return nil
 }
 
-// SetDeviceDefinition of the deviceStyle to the related item.
-// Sets o.R.DeviceDefinition to related.
-// Adds o to related.R.DeviceStyles.
-func (o *DeviceStyle) SetDeviceDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
+// SetDefinition of the deviceStyle to the related item.
+// Sets o.R.Definition to related.
+// Adds o to related.R.DefinitionDeviceStyles.
+func (o *DeviceStyle) SetDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -741,10 +734,10 @@ func (o *DeviceStyle) SetDeviceDefinition(ctx context.Context, exec boil.Context
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"device_definitions_api\".\"device_styles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"device_definition_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"definition_id"}),
 		strmangle.WhereClause("\"", "\"", 2, deviceStylePrimaryKeyColumns),
 	)
-	values := []interface{}{related.ID, o.ID}
+	values := []interface{}{related.NameSlug, o.ID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -755,21 +748,21 @@ func (o *DeviceStyle) SetDeviceDefinition(ctx context.Context, exec boil.Context
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.DeviceDefinitionID = related.ID
+	o.DefinitionID = related.NameSlug
 	if o.R == nil {
 		o.R = &deviceStyleR{
-			DeviceDefinition: related,
+			Definition: related,
 		}
 	} else {
-		o.R.DeviceDefinition = related
+		o.R.Definition = related
 	}
 
 	if related.R == nil {
 		related.R = &deviceDefinitionR{
-			DeviceStyles: DeviceStyleSlice{o},
+			DefinitionDeviceStyles: DeviceStyleSlice{o},
 		}
 	} else {
-		related.R.DeviceStyles = append(related.R.DeviceStyles, o)
+		related.R.DefinitionDeviceStyles = append(related.R.DefinitionDeviceStyles, o)
 	}
 
 	return nil

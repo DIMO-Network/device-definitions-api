@@ -24,72 +24,72 @@ import (
 
 // Image is an object representing the database table.
 type Image struct {
-	ID                 string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	DeviceDefinitionID string      `boil:"device_definition_id" json:"device_definition_id" toml:"device_definition_id" yaml:"device_definition_id"`
-	FuelAPIID          null.String `boil:"fuel_api_id" json:"fuel_api_id,omitempty" toml:"fuel_api_id" yaml:"fuel_api_id,omitempty"`
-	Width              null.Int    `boil:"width" json:"width,omitempty" toml:"width" yaml:"width,omitempty"`
-	Height             null.Int    `boil:"height" json:"height,omitempty" toml:"height" yaml:"height,omitempty"`
-	SourceURL          string      `boil:"source_url" json:"source_url" toml:"source_url" yaml:"source_url"`
-	DimoS3URL          null.String `boil:"dimo_s3_url" json:"dimo_s3_url,omitempty" toml:"dimo_s3_url" yaml:"dimo_s3_url,omitempty"`
-	Color              string      `boil:"color" json:"color" toml:"color" yaml:"color"`
-	NotExactImage      bool        `boil:"not_exact_image" json:"not_exact_image" toml:"not_exact_image" yaml:"not_exact_image"`
-	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID            string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	FuelAPIID     null.String `boil:"fuel_api_id" json:"fuel_api_id,omitempty" toml:"fuel_api_id" yaml:"fuel_api_id,omitempty"`
+	Width         null.Int    `boil:"width" json:"width,omitempty" toml:"width" yaml:"width,omitempty"`
+	Height        null.Int    `boil:"height" json:"height,omitempty" toml:"height" yaml:"height,omitempty"`
+	SourceURL     string      `boil:"source_url" json:"source_url" toml:"source_url" yaml:"source_url"`
+	DimoS3URL     null.String `boil:"dimo_s3_url" json:"dimo_s3_url,omitempty" toml:"dimo_s3_url" yaml:"dimo_s3_url,omitempty"`
+	Color         string      `boil:"color" json:"color" toml:"color" yaml:"color"`
+	NotExactImage bool        `boil:"not_exact_image" json:"not_exact_image" toml:"not_exact_image" yaml:"not_exact_image"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt     time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DefinitionID  string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
 
 	R *imageR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L imageL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ImageColumns = struct {
-	ID                 string
-	DeviceDefinitionID string
-	FuelAPIID          string
-	Width              string
-	Height             string
-	SourceURL          string
-	DimoS3URL          string
-	Color              string
-	NotExactImage      string
-	CreatedAt          string
-	UpdatedAt          string
+	ID            string
+	FuelAPIID     string
+	Width         string
+	Height        string
+	SourceURL     string
+	DimoS3URL     string
+	Color         string
+	NotExactImage string
+	CreatedAt     string
+	UpdatedAt     string
+	DefinitionID  string
 }{
-	ID:                 "id",
-	DeviceDefinitionID: "device_definition_id",
-	FuelAPIID:          "fuel_api_id",
-	Width:              "width",
-	Height:             "height",
-	SourceURL:          "source_url",
-	DimoS3URL:          "dimo_s3_url",
-	Color:              "color",
-	NotExactImage:      "not_exact_image",
-	CreatedAt:          "created_at",
-	UpdatedAt:          "updated_at",
+	ID:            "id",
+	FuelAPIID:     "fuel_api_id",
+	Width:         "width",
+	Height:        "height",
+	SourceURL:     "source_url",
+	DimoS3URL:     "dimo_s3_url",
+	Color:         "color",
+	NotExactImage: "not_exact_image",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
+	DefinitionID:  "definition_id",
 }
 
 var ImageTableColumns = struct {
-	ID                 string
-	DeviceDefinitionID string
-	FuelAPIID          string
-	Width              string
-	Height             string
-	SourceURL          string
-	DimoS3URL          string
-	Color              string
-	NotExactImage      string
-	CreatedAt          string
-	UpdatedAt          string
+	ID            string
+	FuelAPIID     string
+	Width         string
+	Height        string
+	SourceURL     string
+	DimoS3URL     string
+	Color         string
+	NotExactImage string
+	CreatedAt     string
+	UpdatedAt     string
+	DefinitionID  string
 }{
-	ID:                 "images.id",
-	DeviceDefinitionID: "images.device_definition_id",
-	FuelAPIID:          "images.fuel_api_id",
-	Width:              "images.width",
-	Height:             "images.height",
-	SourceURL:          "images.source_url",
-	DimoS3URL:          "images.dimo_s3_url",
-	Color:              "images.color",
-	NotExactImage:      "images.not_exact_image",
-	CreatedAt:          "images.created_at",
-	UpdatedAt:          "images.updated_at",
+	ID:            "images.id",
+	FuelAPIID:     "images.fuel_api_id",
+	Width:         "images.width",
+	Height:        "images.height",
+	SourceURL:     "images.source_url",
+	DimoS3URL:     "images.dimo_s3_url",
+	Color:         "images.color",
+	NotExactImage: "images.not_exact_image",
+	CreatedAt:     "images.created_at",
+	UpdatedAt:     "images.updated_at",
+	DefinitionID:  "images.definition_id",
 }
 
 // Generated where
@@ -133,41 +133,41 @@ func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNu
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var ImageWhere = struct {
-	ID                 whereHelperstring
-	DeviceDefinitionID whereHelperstring
-	FuelAPIID          whereHelpernull_String
-	Width              whereHelpernull_Int
-	Height             whereHelpernull_Int
-	SourceURL          whereHelperstring
-	DimoS3URL          whereHelpernull_String
-	Color              whereHelperstring
-	NotExactImage      whereHelperbool
-	CreatedAt          whereHelpertime_Time
-	UpdatedAt          whereHelpertime_Time
+	ID            whereHelperstring
+	FuelAPIID     whereHelpernull_String
+	Width         whereHelpernull_Int
+	Height        whereHelpernull_Int
+	SourceURL     whereHelperstring
+	DimoS3URL     whereHelpernull_String
+	Color         whereHelperstring
+	NotExactImage whereHelperbool
+	CreatedAt     whereHelpertime_Time
+	UpdatedAt     whereHelpertime_Time
+	DefinitionID  whereHelperstring
 }{
-	ID:                 whereHelperstring{field: "\"device_definitions_api\".\"images\".\"id\""},
-	DeviceDefinitionID: whereHelperstring{field: "\"device_definitions_api\".\"images\".\"device_definition_id\""},
-	FuelAPIID:          whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"fuel_api_id\""},
-	Width:              whereHelpernull_Int{field: "\"device_definitions_api\".\"images\".\"width\""},
-	Height:             whereHelpernull_Int{field: "\"device_definitions_api\".\"images\".\"height\""},
-	SourceURL:          whereHelperstring{field: "\"device_definitions_api\".\"images\".\"source_url\""},
-	DimoS3URL:          whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"dimo_s3_url\""},
-	Color:              whereHelperstring{field: "\"device_definitions_api\".\"images\".\"color\""},
-	NotExactImage:      whereHelperbool{field: "\"device_definitions_api\".\"images\".\"not_exact_image\""},
-	CreatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"created_at\""},
-	UpdatedAt:          whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"updated_at\""},
+	ID:            whereHelperstring{field: "\"device_definitions_api\".\"images\".\"id\""},
+	FuelAPIID:     whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"fuel_api_id\""},
+	Width:         whereHelpernull_Int{field: "\"device_definitions_api\".\"images\".\"width\""},
+	Height:        whereHelpernull_Int{field: "\"device_definitions_api\".\"images\".\"height\""},
+	SourceURL:     whereHelperstring{field: "\"device_definitions_api\".\"images\".\"source_url\""},
+	DimoS3URL:     whereHelpernull_String{field: "\"device_definitions_api\".\"images\".\"dimo_s3_url\""},
+	Color:         whereHelperstring{field: "\"device_definitions_api\".\"images\".\"color\""},
+	NotExactImage: whereHelperbool{field: "\"device_definitions_api\".\"images\".\"not_exact_image\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"created_at\""},
+	UpdatedAt:     whereHelpertime_Time{field: "\"device_definitions_api\".\"images\".\"updated_at\""},
+	DefinitionID:  whereHelperstring{field: "\"device_definitions_api\".\"images\".\"definition_id\""},
 }
 
 // ImageRels is where relationship names are stored.
 var ImageRels = struct {
-	DeviceDefinition string
+	Definition string
 }{
-	DeviceDefinition: "DeviceDefinition",
+	Definition: "Definition",
 }
 
 // imageR is where relationships are stored.
 type imageR struct {
-	DeviceDefinition *DeviceDefinition `boil:"DeviceDefinition" json:"DeviceDefinition" toml:"DeviceDefinition" yaml:"DeviceDefinition"`
+	Definition *DeviceDefinition `boil:"Definition" json:"Definition" toml:"Definition" yaml:"Definition"`
 }
 
 // NewStruct creates a new relationship struct
@@ -175,19 +175,19 @@ func (*imageR) NewStruct() *imageR {
 	return &imageR{}
 }
 
-func (r *imageR) GetDeviceDefinition() *DeviceDefinition {
+func (r *imageR) GetDefinition() *DeviceDefinition {
 	if r == nil {
 		return nil
 	}
-	return r.DeviceDefinition
+	return r.Definition
 }
 
 // imageL is where Load methods for each relationship are stored.
 type imageL struct{}
 
 var (
-	imageAllColumns            = []string{"id", "device_definition_id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color", "not_exact_image", "created_at", "updated_at"}
-	imageColumnsWithoutDefault = []string{"id", "device_definition_id", "source_url", "color"}
+	imageAllColumns            = []string{"id", "fuel_api_id", "width", "height", "source_url", "dimo_s3_url", "color", "not_exact_image", "created_at", "updated_at", "definition_id"}
+	imageColumnsWithoutDefault = []string{"id", "source_url", "color", "definition_id"}
 	imageColumnsWithDefault    = []string{"fuel_api_id", "width", "height", "dimo_s3_url", "not_exact_image", "created_at", "updated_at"}
 	imagePrimaryKeyColumns     = []string{"id"}
 	imageGeneratedColumns      = []string{}
@@ -498,10 +498,10 @@ func (q imageQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 	return count > 0, nil
 }
 
-// DeviceDefinition pointed to by the foreign key.
-func (o *Image) DeviceDefinition(mods ...qm.QueryMod) deviceDefinitionQuery {
+// Definition pointed to by the foreign key.
+func (o *Image) Definition(mods ...qm.QueryMod) deviceDefinitionQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DeviceDefinitionID),
+		qm.Where("\"name_slug\" = ?", o.DefinitionID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -509,9 +509,9 @@ func (o *Image) DeviceDefinition(mods ...qm.QueryMod) deviceDefinitionQuery {
 	return DeviceDefinitions(queryMods...)
 }
 
-// LoadDeviceDefinition allows an eager lookup of values, cached into the
+// LoadDefinition allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeImage interface{}, mods queries.Applicator) error {
+func (imageL) LoadDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeImage interface{}, mods queries.Applicator) error {
 	var slice []*Image
 	var object *Image
 
@@ -542,7 +542,7 @@ func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, 
 		if object.R == nil {
 			object.R = &imageR{}
 		}
-		args[object.DeviceDefinitionID] = struct{}{}
+		args[object.DefinitionID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -550,7 +550,7 @@ func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, 
 				obj.R = &imageR{}
 			}
 
-			args[obj.DeviceDefinitionID] = struct{}{}
+			args[obj.DefinitionID] = struct{}{}
 
 		}
 	}
@@ -568,7 +568,7 @@ func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, 
 
 	query := NewQuery(
 		qm.From(`device_definitions_api.device_definitions`),
-		qm.WhereIn(`device_definitions_api.device_definitions.id in ?`, argsSlice...),
+		qm.WhereIn(`device_definitions_api.device_definitions.name_slug in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -605,22 +605,22 @@ func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, 
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.DeviceDefinition = foreign
+		object.R.Definition = foreign
 		if foreign.R == nil {
 			foreign.R = &deviceDefinitionR{}
 		}
-		foreign.R.Images = append(foreign.R.Images, object)
+		foreign.R.DefinitionImages = append(foreign.R.DefinitionImages, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.DeviceDefinitionID == foreign.ID {
-				local.R.DeviceDefinition = foreign
+			if local.DefinitionID == foreign.NameSlug {
+				local.R.Definition = foreign
 				if foreign.R == nil {
 					foreign.R = &deviceDefinitionR{}
 				}
-				foreign.R.Images = append(foreign.R.Images, local)
+				foreign.R.DefinitionImages = append(foreign.R.DefinitionImages, local)
 				break
 			}
 		}
@@ -629,10 +629,10 @@ func (imageL) LoadDeviceDefinition(ctx context.Context, e boil.ContextExecutor, 
 	return nil
 }
 
-// SetDeviceDefinition of the image to the related item.
-// Sets o.R.DeviceDefinition to related.
-// Adds o to related.R.Images.
-func (o *Image) SetDeviceDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
+// SetDefinition of the image to the related item.
+// Sets o.R.Definition to related.
+// Adds o to related.R.DefinitionImages.
+func (o *Image) SetDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -642,10 +642,10 @@ func (o *Image) SetDeviceDefinition(ctx context.Context, exec boil.ContextExecut
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"device_definitions_api\".\"images\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"device_definition_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"definition_id"}),
 		strmangle.WhereClause("\"", "\"", 2, imagePrimaryKeyColumns),
 	)
-	values := []interface{}{related.ID, o.ID}
+	values := []interface{}{related.NameSlug, o.ID}
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -656,21 +656,21 @@ func (o *Image) SetDeviceDefinition(ctx context.Context, exec boil.ContextExecut
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.DeviceDefinitionID = related.ID
+	o.DefinitionID = related.NameSlug
 	if o.R == nil {
 		o.R = &imageR{
-			DeviceDefinition: related,
+			Definition: related,
 		}
 	} else {
-		o.R.DeviceDefinition = related
+		o.R.Definition = related
 	}
 
 	if related.R == nil {
 		related.R = &deviceDefinitionR{
-			Images: ImageSlice{o},
+			DefinitionImages: ImageSlice{o},
 		}
 	} else {
-		related.R.Images = append(related.R.Images, o)
+		related.R.DefinitionImages = append(related.R.DefinitionImages, o)
 	}
 
 	return nil

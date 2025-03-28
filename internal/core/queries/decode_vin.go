@@ -114,6 +114,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
+	// todo refactor: func hydrateResponseFromVinNumber(...)
 	if vinDecodeNumber != nil {
 		// get from tableland, probably don't need this here anymore
 		//tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, vinDecodeNumber.DefinitionID, dc.dbs().Reader)
@@ -278,7 +279,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	ddExists := true
-	legacyKSUID := ""
 	// if dd not found in tableland, we want to creat it
 	if tblDef == nil {
 		// metadata will only be set on create
@@ -302,14 +302,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", modelSlug)
 			// set the response definition id from the newly created DD
 			resp.DefinitionId = dd.NameSlug
-			legacyKSUID = dd.ID
 		} else {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 			return nil, err
 		}
 	} else {
 		resp.DefinitionId = tblDef.ID // we can use the one from tableland since that exists
-		legacyKSUID = tblDef.KSUID
 	}
 
 	// match style - only process style if name is longer than 1
@@ -328,14 +326,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 		if errors.Is(err, sql.ErrNoRows) {
 			style = &models.DeviceStyle{
-				ID:                 ksuid.New().String(),
-				DeviceDefinitionID: legacyKSUID,
-				DefinitionID:       resp.DefinitionId,
-				Name:               vinInfo.StyleName,
-				ExternalStyleID:    externalStyleID,
-				Source:             string(vinInfo.Source),
-				SubModel:           vinInfo.SubModel,
-				Metadata:           vinInfo.MetaData,
+				ID:              ksuid.New().String(),
+				DefinitionID:    resp.DefinitionId,
+				Name:            vinInfo.StyleName,
+				ExternalStyleID: externalStyleID,
+				Source:          string(vinInfo.Source),
+				SubModel:        vinInfo.SubModel,
+				Metadata:        vinInfo.MetaData,
 			}
 			// style level powertrain
 			pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo)
@@ -407,16 +404,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// resolve images
-	images, _ := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(legacyKSUID)).All(ctx, dc.dbs().Reader)
+	images, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
 	localLog.Debug().Msgf("Current Images : %d", len(images))
 
 	if len(images) == 0 {
-		err = dc.associateImagesToDeviceDefinition(ctx, legacyKSUID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
+		err = dc.associateImagesToDeviceDefinition(ctx, resp.DefinitionId, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 2)
 		if err != nil {
 			localLog.Err(err).Send()
 		}
 
-		err = dc.associateImagesToDeviceDefinition(ctx, legacyKSUID, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
+		err = dc.associateImagesToDeviceDefinition(ctx, resp.DefinitionId, vinInfo.Make, vinInfo.Model, int(resp.Year), 2, 6)
 		if err != nil {
 			localLog.Err(err).Send()
 		}
@@ -425,10 +422,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// why are we doing this if already have something similar above?
 	if !ddExists {
 		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(resp.DefinitionId),
-			qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+			qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles),
 			qm.Load(models.DeviceDefinitionRels.DeviceType),
 			qm.Load(models.DeviceDefinitionRels.DeviceMake),
-			qm.Load(models.DeviceDefinitionRels.Images)).One(ctx, dc.dbs().Reader)
+			qm.Load(models.DeviceDefinitionRels.DefinitionImages)).One(ctx, dc.dbs().Reader)
 		if err != nil {
 			return nil, errors.Wrap(err, "error when get dd for update powertraintype")
 		}
@@ -546,7 +543,7 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel stri
 	return vinInfo, nil
 }
 
-func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, deviceDefinitionID, mk, model string, year int, prodID int, prodFormat int) error {
+func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID, mk, model string, year int, prodID int, prodFormat int) error {
 
 	img, err := dc.fuelAPIService.FetchDeviceImages(mk, model, year, prodID, prodFormat)
 	if err != nil {
@@ -559,7 +556,7 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 	// loop through all img (color variations)
 	for _, device := range img.Images {
 		p.ID = ksuid.New().String()
-		p.DeviceDefinitionID = deviceDefinitionID
+		p.DefinitionID = definitionID
 		p.FuelAPIID = null.StringFrom(img.FuelAPIID)
 		p.Width = null.IntFrom(img.Width)
 		p.Height = null.IntFrom(img.Height)
@@ -568,9 +565,9 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 		p.Color = device.Color
 		p.NotExactImage = img.NotExactImage
 
-		err = p.Upsert(ctx, dc.dbs().Writer, true, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
+		err = p.Upsert(ctx, dc.dbs().Writer, true, []string{models.ImageColumns.DefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 		if err != nil {
-			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", deviceDefinitionID, year, mk, model)
+			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", definitionID, year, mk, model)
 			continue
 		}
 	}
