@@ -37,10 +37,8 @@ func (ch GetDeviceDefinitionWithoutImageQueryHandler) Handle(ctx context.Context
 
 	all, err := repoModel.DeviceDefinitions(
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
-		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
-		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(repoModel.DeviceDefinitionRels.DefinitionDeviceStyles),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceType),
 		qm.Where("not exists (select 1 from images im where im.device_definition_id = device_definitions.id)")).
 		All(ctx, ch.DBS().Reader)

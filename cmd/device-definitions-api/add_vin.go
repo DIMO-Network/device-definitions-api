@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"os"
 	"strconv"
 	"strings"
@@ -62,21 +63,21 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitSuccess
 	}
 	processedVIN := shared.VIN(vin)
-	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi())).One(ctx, pdb.DBS().Reader)
+	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi()), qm.Load(models.WmiRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println("could not find WMI for vin")
 		return subcommands.ExitFailure
 	}
 	vinNumber := models.VinNumber{
-		Vin:            vin,
-		Wmi:            processedVIN.Wmi(),
-		VDS:            processedVIN.VDS(),
-		CheckDigit:     processedVIN.CheckDigit(),
-		SerialNumber:   processedVIN.SerialNumber(),
-		Vis:            processedVIN.VIS(),
-		DeviceMakeID:   wmi.DeviceMakeID,
-		DecodeProvider: null.StringFrom("manual"),
-		Year:           processedVIN.Year(),
+		Vin:              vin,
+		Wmi:              processedVIN.Wmi(),
+		VDS:              processedVIN.VDS(),
+		CheckDigit:       processedVIN.CheckDigit(),
+		SerialNumber:     processedVIN.SerialNumber(),
+		Vis:              processedVIN.VIS(),
+		ManufacturerName: wmi.R.DeviceMake.Name,
+		DecodeProvider:   null.StringFrom("manual"),
+		Year:             processedVIN.Year(),
 	}
 	if vinNumber.Year == 0 || vinNumber.Year < 2008 || vinNumber.Year > time.Now().Year() {
 		year, err := cmdLineInput("enter model year")
@@ -98,7 +99,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	}
 
 	deviceDefinition, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Model.EQ(model),
-		models.DeviceDefinitionWhere.DeviceMakeID.EQ(vinNumber.DeviceMakeID),
+		models.DeviceDefinitionWhere.DeviceMakeID.EQ(wmi.R.DeviceMake.ID),
 		models.DeviceDefinitionWhere.Year.EQ(int16(vinNumber.Year))).One(ctx, pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))

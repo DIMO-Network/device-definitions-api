@@ -123,9 +123,9 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
-	bigInt := big.NewInt(int64(manufacturer.TokenID))
-	tblDD, err := e.GetDefinitionTableland(ctx, bigInt, ID)
-	return tblDD, bigInt, err
+	manufacturerID := big.NewInt(int64(manufacturer.TokenID))
+	tblDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
+	return tblDD, manufacturerID, err
 }
 
 func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {
@@ -717,9 +717,9 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 
 func GetDefaultImageURL(dd models.DeviceDefinition) string {
 	imgURI := ""
-	if dd.R != nil && dd.R.Images != nil {
+	if dd.R != nil && dd.R.DefinitionImages != nil {
 		w := 0
-		for _, image := range dd.R.Images {
+		for _, image := range dd.R.DefinitionImages {
 			extra := 0
 			if !image.NotExactImage {
 				extra = 2000 // we want to give preference to exact images

@@ -118,9 +118,9 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
 func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 	img := ""
-	if dd.R.Images != nil {
+	if dd.R.DefinitionImages != nil {
 		w := 0
-		for _, image := range dd.R.Images {
+		for _, image := range dd.R.DefinitionImages {
 			extra := 0
 			if !image.NotExactImage {
 				extra = 2000 // we want to give preference to exact images
@@ -203,10 +203,10 @@ func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
 //		}
 //	}
 //
-//	if dd.R.DeviceStyles != nil {
-//		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DeviceStyles)
+//	if dd.R.DefinitionDeviceStyles != nil {
+//		rp.Type.SubModels = SubModelsFromStylesDB(dd.R.DefinitionDeviceStyles)
 //
-//		for _, ds := range dd.R.DeviceStyles {
+//		for _, ds := range dd.R.DefinitionDeviceStyles {
 //			deviceStyle := models.DeviceStyle{
 //				ID:                 ds.ID,
 //				DeviceDefinitionID: ds.DeviceDefinitionID,
@@ -277,36 +277,16 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	// pull out the device type device attributes, egGetDev. vehicle information
 	rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
 
-	if dd.R.DeviceIntegrations != nil {
-		for _, di := range dd.R.DeviceIntegrations {
-			deviceIntegration := models.DeviceIntegration{
-				ID:     di.R.Integration.ID,
-				Type:   di.R.Integration.Type,
-				Style:  di.R.Integration.Style,
-				Vendor: di.R.Integration.Vendor,
-				Region: di.Region,
-			}
-
-			if di.Features.Valid {
-				var deviceIntegrationFeature []models.DeviceIntegrationFeature
-				if err := di.Features.Unmarshal(&deviceIntegrationFeature); err == nil {
-					//nolint
-					deviceIntegration.Features = deviceIntegrationFeature
-				}
-			}
-		}
-	}
-
-	if dd.R.DeviceStyles != nil {
-		for _, ds := range dd.R.DeviceStyles {
+	if dd.R.DefinitionDeviceStyles != nil {
+		for _, ds := range dd.R.DefinitionDeviceStyles {
 			deviceStyle := models.DeviceStyle{
-				ID:                 ds.ID,
-				DeviceDefinitionID: ds.DeviceDefinitionID,
-				ExternalStyleID:    ds.ExternalStyleID,
-				Name:               ds.Name,
-				Source:             ds.Source,
-				SubModel:           ds.SubModel,
-				Metadata:           GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
+				ID:              ds.ID,
+				DefinitionID:    ds.DefinitionID,
+				ExternalStyleID: ds.ExternalStyleID,
+				Name:            ds.Name,
+				Source:          ds.Source,
+				SubModel:        ds.SubModel,
+				Metadata:        GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
 			}
 
 			if ds.HardwareTemplateID.Valid {

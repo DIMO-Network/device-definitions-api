@@ -15,7 +15,7 @@ import (
 )
 
 type GetDeviceStyleByDeviceDefinitionIDQuery struct {
-	DeviceDefinitionID string `json:"device_definition_id"`
+	DefinitionID string `json:"definition_id"`
 }
 
 func (*GetDeviceStyleByDeviceDefinitionIDQuery) Key() string {
@@ -34,7 +34,7 @@ func (ch GetDeviceStyleByDeviceDefinitionIDQueryHandler) Handle(ctx context.Cont
 
 	qry := query.(*GetDeviceStyleByDeviceDefinitionIDQuery)
 
-	styles, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(qry.DeviceDefinitionID)).All(ctx, ch.DBS().Reader)
+	styles, err := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(qry.DefinitionID)).All(ctx, ch.DBS().Reader)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.InternalError{
@@ -47,12 +47,12 @@ func (ch GetDeviceStyleByDeviceDefinitionIDQueryHandler) Handle(ctx context.Cont
 
 	for _, v := range styles {
 		deviceStyle := coremodels.GetDeviceStyleQueryResult{
-			ID:                 v.ID,
-			DeviceDefinitionID: v.DeviceDefinitionID,
-			Name:               v.Name,
-			ExternalStyleID:    v.ExternalStyleID,
-			Source:             v.Source,
-			SubModel:           v.SubModel,
+			ID:              v.ID,
+			DefinitionID:    v.DefinitionID,
+			Name:            v.Name,
+			ExternalStyleID: v.ExternalStyleID,
+			Source:          v.Source,
+			SubModel:        v.SubModel,
 		}
 
 		if v.HardwareTemplateID.Valid {

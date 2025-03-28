@@ -41,14 +41,14 @@ func (s *GetDeviceDefinitionAllQueryHandlerSuite) TearDownTest() {
 
 func (s *GetDeviceDefinitionAllQueryHandlerSuite) TestGetDeviceDefinitionAll_Success() {
 	ctx := context.Background()
-	deviceDefinitionID := "2D5YSfCcPYW4pTs3NaaqDioUyyl"
+	definitionID := "toyota_hummer_2020"
 	mk := "Toyota"
 	makeID := "1"
 	model := "Hummer"
 	year := 2020
 
 	dd := &models.DeviceDefinition{
-		ID:       deviceDefinitionID,
+		ID:       definitionID,
 		Model:    model,
 		Year:     int16(year),
 		Verified: true,
@@ -62,29 +62,14 @@ func (s *GetDeviceDefinitionAllQueryHandlerSuite) TestGetDeviceDefinitionAll_Suc
 	dd.R.DeviceType = &models.DeviceType{
 		ID: ksuid.New().String(),
 	}
-	dd.R.DeviceStyles = append(dd.R.DeviceStyles, &models.DeviceStyle{
-		ID:                 ksuid.New().String(),
-		ExternalStyleID:    ksuid.New().String(),
-		DeviceDefinitionID: deviceDefinitionID,
-		Name:               "Hard Top 4dr SUV AWD",
-		Source:             "edmunds",
-		SubModel:           "Hard Top",
+	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &models.DeviceStyle{
+		ID:              ksuid.New().String(),
+		ExternalStyleID: ksuid.New().String(),
+		DefinitionID:    definitionID,
+		Name:            "Hard Top 4dr SUV AWD",
+		Source:          "edmunds",
+		SubModel:        "Hard Top",
 	})
-
-	deviceIntegration := &models.DeviceIntegration{
-		DeviceDefinitionID: deviceDefinitionID,
-		IntegrationID:      ksuid.New().String(),
-		Region:             "Asia",
-	}
-	deviceIntegration.R = deviceIntegration.R.NewStruct()
-	deviceIntegration.R.Integration = &models.Integration{
-		ID:     ksuid.New().String(),
-		Vendor: "Azure",
-		Type:   "test",
-		Style:  "test",
-	}
-
-	dd.R.DeviceIntegrations = append(dd.R.DeviceIntegrations, deviceIntegration)
 
 	var dds []*models.DeviceDefinition
 	dds = append(dds, dd)
@@ -95,11 +80,11 @@ func (s *GetDeviceDefinitionAllQueryHandlerSuite) TestGetDeviceDefinitionAll_Suc
 	result := qryResult.(*grpc.GetDeviceDefinitionResponse)
 
 	s.NoError(err)
-	s.Equal(result.DeviceDefinitions[0].DeviceDefinitionId, deviceDefinitionID)
+	s.Equal(result.DeviceDefinitions[0].DeviceDefinitionId, definitionID)
 
-	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Name, dd.R.DeviceStyles[0].Name)
-	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].ExternalStyleId, dd.R.DeviceStyles[0].ExternalStyleID)
-	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Source, dd.R.DeviceStyles[0].Source)
-	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].SubModel, dd.R.DeviceStyles[0].SubModel)
+	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Name, dd.R.DefinitionDeviceStyles[0].Name)
+	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].ExternalStyleId, dd.R.DefinitionDeviceStyles[0].ExternalStyleID)
+	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].Source, dd.R.DefinitionDeviceStyles[0].Source)
+	s.Equal(result.DeviceDefinitions[0].DeviceStyles[0].SubModel, dd.R.DefinitionDeviceStyles[0].SubModel)
 
 }

@@ -40,10 +40,8 @@ func (ch GetDeviceDefinitionBySourceQueryHandler) Handle(ctx context.Context, qu
 
 	all, err := repoModel.DeviceDefinitions(
 		qm.Where("external_ids->>? IS NOT NULL", qry.Source),
-		qm.Load(repoModel.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceMake),
-		qm.Load(qm.Rels(repoModel.DeviceDefinitionRels.DeviceIntegrations, repoModel.DeviceIntegrationRels.Integration)),
-		qm.Load(repoModel.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(repoModel.DeviceDefinitionRels.DefinitionDeviceStyles),
 		qm.Load(repoModel.DeviceDefinitionRels.DeviceType)).All(ctx, ch.DBS().Reader)
 
 	if err != nil {

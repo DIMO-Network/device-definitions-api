@@ -58,21 +58,6 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) CreateOrUpdate(ctx, dd, de
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdate", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).CreateOrUpdate), ctx, dd, deviceStyles, deviceIntegrations)
 }
 
-// FetchDeviceCompatibility mocks base method.
-func (m *MockDeviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchDeviceCompatibility", ctx, makeID, integrationID, region, cursor, size)
-	ret0, _ := ret[0].(models.DeviceDefinitionSlice)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchDeviceCompatibility indicates an expected call of FetchDeviceCompatibility.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) FetchDeviceCompatibility(ctx, makeID, integrationID, region, cursor, size any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchDeviceCompatibility", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).FetchDeviceCompatibility), ctx, makeID, integrationID, region, cursor, size)
-}
-
 // GetAll mocks base method.
 func (m *MockDeviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()

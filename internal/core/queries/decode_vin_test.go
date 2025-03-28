@@ -331,7 +331,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	assert.Equal(s.T(), vinInfoResp.FuelTankCapacityGal, gjson.GetBytes(ddCreated.Metadata.JSON, "vehicle_info.fuel_tank_capacity_gal").Float())
 
 	// validate images was created
-	ddImages, err := models.Images(models.ImageWhere.DeviceDefinitionID.EQ(ddCreated.ID)).All(s.ctx, s.pdb.DBS().Reader)
+	ddImages, err := models.Images(models.ImageWhere.DefinitionID.EQ(ddCreated.NameSlug)).All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
 	s.Assert().NotEmpty(ddImages)
 }
@@ -407,7 +407,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	// db setup
-	ds := dbtesthelper.SetupCreateStyle(s.T(), dd.ID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
+	ds := dbtesthelper.SetupCreateStyle(s.T(), definitionID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -613,16 +613,16 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	// insert into vin numbers
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
-		Vin:            vin,
-		Wmi:            v.Wmi(),
-		VDS:            v.VDS(),
-		CheckDigit:     v.CheckDigit(),
-		SerialNumber:   v.SerialNumber(),
-		Vis:            v.VIS(),
-		DeviceMakeID:   dm.ID,
-		DefinitionID:   dd.NameSlug,
-		Year:           2021,
-		DecodeProvider: null.StringFrom("drivly"),
+		Vin:              vin,
+		Wmi:              v.Wmi(),
+		VDS:              v.VDS(),
+		CheckDigit:       v.CheckDigit(),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              v.VIS(),
+		ManufacturerName: dm.Name,
+		DefinitionID:     dd.NameSlug,
+		Year:             2021,
+		DecodeProvider:   null.StringFrom("drivly"),
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)

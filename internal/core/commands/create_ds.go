@@ -10,7 +10,7 @@ import (
 )
 
 type CreateDeviceStyleCommand struct {
-	DeviceDefinitionID string `json:"device_definition_id"`
+	DefinitionID       string `json:"definition_id"`
 	Name               string `json:"name"`
 	ExternalStyleID    string `json:"external_style_id"`
 	Source             string `json:"source"`
@@ -37,14 +37,14 @@ func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query medi
 
 	command := query.(*CreateDeviceStyleCommand)
 
-	ds, err := ch.repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.HardwareTemplateID)
+	ds, err := ch.repository.Create(ctx, command.DefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.HardwareTemplateID)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// Remove Cache
-	ch.ddCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
+	ch.ddCache.DeleteDeviceDefinitionCacheByID(ctx, command.DefinitionID)
 
 	return CreateDeviceStyleCommandResult{ID: ds.ID}, nil
 }

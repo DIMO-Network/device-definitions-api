@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
@@ -52,18 +51,6 @@ func (ch GetDeviceDefinitionWithRelsQueryHandler) Handle(ctx context.Context, qu
 
 	// build object for integrations that have all the info
 	var integrations []GetDeviceDefinitionWithRelsQueryResult
-	if dd.R != nil {
-		for _, di := range dd.R.DeviceIntegrations {
-			integrations = append(integrations, GetDeviceDefinitionWithRelsQueryResult{
-				ID:           di.R.Integration.ID,
-				Type:         di.R.Integration.Type,
-				Style:        di.R.Integration.Style,
-				Vendor:       di.R.Integration.Vendor,
-				Region:       di.Region,
-				Capabilities: common.JSONOrDefault(di.Features),
-			})
-		}
-	}
 
 	return integrations, nil
 }

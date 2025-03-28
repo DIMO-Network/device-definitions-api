@@ -44,7 +44,6 @@ type DeviceDefinitionRepository interface {
 	GetWithIntegrations(ctx context.Context, id string) (*models.DeviceDefinition, error)
 	GetOrCreate(ctx context.Context, tx *sql.Tx, source string, extID string, makeOrID string, model string, year int, deviceTypeID string, metaData null.JSON, verified bool, hardwareTemplateID *string) (*models.DeviceDefinition, error)
 	CreateOrUpdate(ctx context.Context, dd *models.DeviceDefinition, deviceStyles []*models.DeviceStyle, deviceIntegrations []*models.DeviceIntegration) (*models.DeviceDefinition, error)
-	FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error)
 }
 
 type deviceDefinitionRepository struct {
@@ -64,12 +63,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.Images),
-	}
-	if loadIntegrations {
-		qms = append(qms,
-			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
 	}
 
 	query := models.DeviceDefinitions(qms...)
@@ -92,12 +86,7 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 		models.DeviceDefinitionWhere.Year.EQ(int16(year)),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.Images),
-	}
-	if loadIntegrations {
-		qms = append(qms,
-			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
 	}
 
 	query := models.DeviceDefinitions(qms...)
@@ -119,12 +108,7 @@ func (r *deviceDefinitionRepository) GetBySlugName(ctx context.Context, slug str
 		models.DeviceDefinitionWhere.NameSlug.EQ(slug),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.Images),
-	}
-	if loadIntegrations {
-		qms = append(qms,
-			qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
-			qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)))
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
 	}
 
 	query := models.DeviceDefinitions(qms...)
@@ -143,11 +127,9 @@ func (r *deviceDefinitionRepository) GetBySlugName(ctx context.Context, slug str
 func (r *deviceDefinitionRepository) GetAll(ctx context.Context) ([]*models.DeviceDefinition, error) {
 
 	dd, err := models.DeviceDefinitions(
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.Images),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("device_make_id, model, year")).All(ctx, r.DBS().Reader)
 
@@ -167,10 +149,8 @@ func (r *deviceDefinitionRepository) GetDevicesByMakeYearRange(ctx context.Conte
 		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
 		models.DeviceDefinitionWhere.Year.GTE(int16(yearStart)),
 		models.DeviceDefinitionWhere.Year.LTE(int16(yearEnd)),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
 		models.DeviceDefinitionWhere.Verified.EQ(true),
 		qm.OrderBy("model, year")).All(ctx, r.DBS().Reader)
 
@@ -220,12 +200,10 @@ func (r *deviceDefinitionRepository) GetByID(ctx context.Context, id string) (*m
 
 	dd, err := models.DeviceDefinitions(
 		models.DeviceDefinitionWhere.ID.EQ(id),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
-		qm.Load(models.DeviceDefinitionRels.Images),
-		qm.Load(qm.Rels(models.DeviceDefinitionRels.DeviceIntegrations, models.DeviceIntegrationRels.Integration)),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles)).
+		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
+		qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles)).
 		One(ctx, r.DBS().Reader)
 
 	if err != nil {
@@ -247,7 +225,6 @@ func (r *deviceDefinitionRepository) GetWithIntegrations(ctx context.Context, id
 
 	dd, err := models.DeviceDefinitions(
 		qm.Where("id = ?", id),
-		qm.Load(models.DeviceDefinitionRels.DeviceIntegrations),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake),
 		qm.Load("DeviceIntegrations.Integration")).
 		One(ctx, r.DBS().Reader)
@@ -436,7 +413,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 	if len(deviceStyles) > 0 {
 		// Remove Device Styles
-		_, err := models.DeviceStyles(models.DeviceStyleWhere.DeviceDefinitionID.EQ(dd.ID)).
+		_, err := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(dd.NameSlug)).
 			DeleteAll(ctx, tx)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.InternalError{
@@ -454,7 +431,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 			subModels := &models.DeviceStyle{
 				ID:                 deviceStyleID,
-				DeviceDefinitionID: dd.ID,
+				DefinitionID:       dd.NameSlug,
 				Name:               ds.Name,
 				ExternalStyleID:    ds.ExternalStyleID,
 				Source:             ds.Source,
@@ -524,58 +501,4 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 	}
 
 	return dd, nil
-}
-
-func (r *deviceDefinitionRepository) FetchDeviceCompatibility(ctx context.Context, makeID, integrationID, region, cursor string, size int64) (models.DeviceDefinitionSlice, error) {
-	const cutoffYear = 2006
-	boil.DebugMode = true
-	var yearQuery int16
-	var modelQuery string
-	if size == 0 {
-		size = 10
-	}
-	if cursor != "" {
-		res, err := models.DeviceDefinitions(
-			models.DeviceDefinitionWhere.ID.EQ(cursor),
-		).One(ctx, r.DBS().Reader)
-		if err != nil {
-			return nil, &exceptions.InternalError{Err: err}
-		}
-		yearQuery = res.Year
-		modelQuery = res.Model
-	}
-	qms := []qm.QueryMod{
-		qm.InnerJoin(
-			models.TableNames.DeviceIntegrations + " ON " + models.DeviceDefinitionTableColumns.ID + " = " + models.DeviceIntegrationTableColumns.DeviceDefinitionID,
-		),
-		models.DeviceDefinitionWhere.DeviceMakeID.EQ(makeID),
-		models.DeviceDefinitionWhere.Year.GTE(cutoffYear),
-		models.DeviceIntegrationWhere.Features.IsNotNull(),
-		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
-		models.DeviceIntegrationWhere.Region.EQ(region),
-	}
-
-	if yearQuery != 0 && modelQuery != "" {
-		qms = append(qms, qm.And(
-			"("+models.DeviceDefinitionColumns.Model+" = ? AND "+models.DeviceDefinitionColumns.Year+" > ? OR "+models.DeviceDefinitionColumns.Model+" > ?)",
-			modelQuery, yearQuery, modelQuery,
-		))
-	}
-
-	qms = append(qms, qm.Load(
-		models.DeviceDefinitionRels.DeviceIntegrations,
-		models.DeviceIntegrationWhere.IntegrationID.EQ(integrationID),
-		models.DeviceIntegrationWhere.Region.EQ(region),
-		models.DeviceIntegrationWhere.Features.IsNotNull(),
-	))
-	qms = append(qms, qm.OrderBy("? ASC, ? DESC", models.DeviceDefinitionColumns.Model, models.DeviceDefinitionColumns.Year))
-	qms = append(qms, qm.Limit(int(size)))
-
-	query := models.DeviceDefinitions(qms...)
-	res, err := query.All(ctx, r.DBS().Reader)
-	if err != nil {
-		return nil, &exceptions.InternalError{Err: err}
-	}
-
-	return res, nil
 }
