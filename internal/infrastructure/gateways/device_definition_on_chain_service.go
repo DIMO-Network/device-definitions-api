@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"io"
 	"math/big"
 	"net/http"
@@ -61,9 +62,11 @@ type deviceDefinitionOnChainService struct {
 	chainID     *big.Int
 	identityAPI IdentityAPI
 	inmemCache  *cache.Cache
+	dbs         func() *db.ReaderWriter
 }
 
-func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client, chainID *big.Int, sender sender.Sender) DeviceDefinitionOnChainService {
+func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolog.Logger, client *ethclient.Client,
+	chainID *big.Int, sender sender.Sender, dbs func() *db.ReaderWriter) DeviceDefinitionOnChainService {
 	return &deviceDefinitionOnChainService{
 		settings:    settings,
 		logger:      logger,
@@ -72,6 +75,7 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 		sender:      sender,
 		identityAPI: NewIdentityAPIService(logger, settings, nil),
 		inmemCache:  cache.New(128*time.Hour, 1*time.Hour),
+		dbs:         dbs,
 	}
 }
 
@@ -410,7 +414,16 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 	trx := tx.Hash().Hex()
 	e.logger.Info().Msgf("Executed InsertDeviceDefinition %s with Trx %s in ManufacturerID %s", deviceInputs.Id, trx, bigManufID)
 
-	// todo store the transaction here
+	dbTrx := models.DefinitionTransaction{
+		TransactionHash: trx,
+		DefinitionID:    dd.NameSlug,
+		ManufacturerID:  bigManufID.Int64(),
+	}
+	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
+	if err != nil {
+		return nil, err
+	}
+
 	return &trx, nil
 }
 

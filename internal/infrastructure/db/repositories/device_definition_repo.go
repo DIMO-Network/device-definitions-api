@@ -6,9 +6,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
-
 	"github.com/volatiletech/sqlboiler/v4/queries"
+	"strings"
 
 	"github.com/DIMO-Network/shared"
 
@@ -484,19 +483,9 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 
 	// Create onchain
 	if dd.R != nil && dd.R.DeviceMake != nil {
-		trx, err := r.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
-		if err == nil && trx != nil {
-			trxArray := strings.Split(*trx, ",")
-			if dd.TRXHashHex != nil {
-				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
-			} else {
-				dd.TRXHashHex = trxArray
-			}
-			if _, err := dd.Update(ctx, r.DBS().Writer.DB, boil.Infer()); err != nil {
-				return nil, &exceptions.InternalError{
-					Err: err,
-				}
-			}
+		_, err := r.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
+		if err != nil {
+			return nil, &exceptions.InternalError{Err: err}
 		}
 	}
 

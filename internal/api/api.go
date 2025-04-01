@@ -64,7 +64,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
 	}
-	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
+	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send, pdb.DBS)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
