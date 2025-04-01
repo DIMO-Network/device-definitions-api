@@ -538,6 +538,15 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 	trx := tx.Hash().Hex()
 
 	e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s in ManufacturerID %s", input.Id, trx, bigManufID)
+	dbTrx := models.DefinitionTransaction{
+		TransactionHash: trx,
+		DefinitionID:    existingTblDD.NameSlug,
+		ManufacturerID:  bigManufID.Int64(),
+	}
+	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
+	if err != nil {
+		return nil, err
+	}
 
 	return &trx, nil
 }
@@ -642,6 +651,15 @@ func (e *deviceDefinitionOnChainService) Delete(ctx context.Context, manufacture
 	trx := tx.Hash().Hex()
 
 	e.logger.Info().Msgf("Executed DeleteDeviceDefinition %s with Trx %s in ManufacturerID %s", id, trx, bigManufID)
+	dbTrx := models.DefinitionTransaction{
+		TransactionHash: trx,
+		DefinitionID:    existingTblDD.NameSlug,
+		ManufacturerID:  bigManufID.Int64(),
+	}
+	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
+	if err != nil {
+		return nil, err
+	}
 
 	return &trx, nil
 }
