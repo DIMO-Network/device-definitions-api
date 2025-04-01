@@ -96,10 +96,11 @@ message DeviceStyle {
   string source = 2;
   string name = 3;
   string sub_model = 4;
-  string device_definition_id = 5;
+  string device_definition_id = 5 [deprecated=true];
   string external_style_id = 6;
-  string hardware_template_id = 7;
+  string hardware_template_id = 7 [deprecated=true];
   repeated DeviceTypeAttribute device_attributes = 8;
+  string definition_id = 9;
 }
 
 message DeviceMake {
@@ -314,12 +315,13 @@ message FilterDeviceDefinitionsReponse {
 }
 
 message CreateDeviceStyleRequest {
-  string device_definition_id = 1;
+  string device_definition_id = 1 [deprecated=true];
   string name = 2;
   string external_style_id = 3;
   string source = 4;
   string sub_model = 5;
-  string hardware_template_id = 6;
+  string hardware_template_id = 6 [deprecated=true];
+  string definition_id = 7;
 }
 
 message GetIntegrationRequest {
@@ -380,11 +382,12 @@ message UpdateDeviceMakeRequest {
 message UpdateDeviceStyleRequest {
   string id = 1;
   string name = 2;
-  string device_definition_id = 3;
+  string device_definition_id = 3 [deprecated=true];
   string external_style_id = 4;
   string source = 5;
   string sub_model = 6;
-  string hardware_template_id = 7;
+  string hardware_template_id = 7 [deprecated=true];
+  string definition_id = 8;
 }
 
 message GetDeviceStyleFilterRequest {

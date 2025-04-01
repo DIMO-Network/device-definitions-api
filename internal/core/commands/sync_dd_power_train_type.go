@@ -43,7 +43,7 @@ func (ch SyncPowerTrainTypeCommandHandler) Handle(ctx context.Context, query med
 
 	all, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Verified.EQ(true),
 		models.DeviceDefinitionWhere.DeviceTypeID.EQ(null.StringFrom(command.DeviceTypeID)),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).All(ctx, ch.DBS().Reader)
 	if err != nil {

@@ -157,7 +157,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		deviceDefinitionID := dd.ID
 		name := common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model)
 		imageUrl := ""
-		for _, image := range dd.R.Images {
+		for _, image := range dd.R.DefinitionImages {
 			imageUrl = image.SourceURL
 			break
 		}

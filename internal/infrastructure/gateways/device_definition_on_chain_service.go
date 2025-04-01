@@ -410,6 +410,7 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 	trx := tx.Hash().Hex()
 	e.logger.Info().Msgf("Executed InsertDeviceDefinition %s with Trx %s in ManufacturerID %s", deviceInputs.Id, trx, bigManufID)
 
+	// todo store the transaction here
 	return &trx, nil
 }
 

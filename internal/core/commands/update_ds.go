@@ -16,12 +16,12 @@ import (
 
 type UpdateDeviceStyleCommand struct {
 	ID                 string `json:"id"`
-	DeviceDefinitionID string `json:"device_definition_id"`
 	Name               string `json:"name"`
 	ExternalStyleID    string `json:"external_style_id"`
 	Source             string `json:"source"`
 	SubModel           string `json:"sub_model"`
 	HardwareTemplateID string `json:"hardware_template_id,omitempty"`
+	DefinitionID       string `json:"definition_id,omitempty"`
 }
 
 type UpdateDeviceStyleCommandResult struct {
@@ -54,8 +54,8 @@ func (ch UpdateDeviceStyleCommandHandler) Handle(ctx context.Context, query medi
 
 	if ds == nil {
 		ds = &models.DeviceStyle{
-			ID:                 command.ID,
-			DeviceDefinitionID: command.DeviceDefinitionID,
+			ID:           command.ID,
+			DefinitionID: command.DefinitionID,
 		}
 	}
 

@@ -47,9 +47,9 @@ type deviceData struct {
 }
 
 type model struct {
-	Model              string
-	Year               int
-	DeviceDefinitionID string
+	Model        string
+	Year         int
+	DefinitionID string
 }
 
 func fetchFuelAPIImages(ctx context.Context, logger zerolog.Logger, settings *config.Settings) error {
@@ -89,7 +89,7 @@ func writeToTable(ctx context.Context, store db.Store, logger zerolog.Logger, fs
 			// loop through all img (color variations)
 			for _, device := range img.Images {
 				p.ID = ksuid.New().String()
-				p.DeviceDefinitionID = d.Models[n].DeviceDefinitionID
+				p.DefinitionID = d.Models[n].DefinitionID
 				p.FuelAPIID = null.StringFrom(img.FuelAPIID)
 				p.Width = null.IntFrom(img.Width)
 				p.Height = null.IntFrom(img.Height)
@@ -98,7 +98,7 @@ func writeToTable(ctx context.Context, store db.Store, logger zerolog.Logger, fs
 				p.Color = device.Color
 				p.NotExactImage = img.NotExactImage
 
-				err = p.Upsert(ctx, store.DBS().Writer, true, []string{models.ImageColumns.DeviceDefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
+				err = p.Upsert(ctx, store.DBS().Writer, true, []string{models.ImageColumns.DefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 				if err != nil {
 					return err
 				}
@@ -126,7 +126,7 @@ func getDeviceData(ctx context.Context, d db.Store) ([]deviceData, error) {
 		}
 		devices[n] = deviceData{Make: mk.NameSlug, Models: make([]model, len(mdls))}
 		for i, mdl := range mdls {
-			devices[n].Models[i] = model{Model: mdl.ModelSlug, Year: int(mdl.Year), DeviceDefinitionID: mdl.ID}
+			devices[n].Models[i] = model{Model: mdl.ModelSlug, Year: int(mdl.Year), DefinitionID: mdl.NameSlug}
 		}
 	}
 

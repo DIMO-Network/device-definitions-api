@@ -111,9 +111,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 			CreatedAt:    deviceDefinition.CreatedAt.UnixMilli(),
 			UpdatedAt:    deviceDefinition.UpdatedAt.UnixMilli(),
 			Metadata:     string(deviceDefinition.Metadata.JSON),
-			Source:       deviceDefinition.Source.String,
 			Verified:     deviceDefinition.Verified,
-			External:     deviceDefinition.ExternalID.String,
 			DeviceMakeId: deviceDefinition.DeviceMakeID,
 			Make:         deviceDefinition.Make,
 			ExternalIds:  extIDs,
@@ -282,7 +280,7 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 
 func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIDsQuery{
-		DeviceDefinitionID: in.Ids,
+		DefinitionID: in.Ids,
 	})
 
 	return qryResult.(*p_grpc.GetDeviceImagesResponse), nil
@@ -384,30 +382,6 @@ func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_gr
 	return &p_grpc.BaseResponse{Id: result.ID}, nil
 }
 
-func (s *GrpcDefinitionsService) CreateDeviceIntegration(ctx context.Context, in *p_grpc.CreateDeviceIntegrationRequest) (*p_grpc.BaseResponse, error) {
-
-	command := &commands.CreateDeviceIntegrationCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		IntegrationID:      in.IntegrationId,
-		Region:             in.Region,
-	}
-
-	if len(in.Features) > 0 {
-		for _, feature := range in.Features {
-			command.Features = append(command.Features, &coremodels.UpdateDeviceIntegrationFeatureAttribute{
-				FeatureKey:   feature.FeatureKey,
-				SupportLevel: int16(feature.SupportLevel),
-			})
-		}
-	}
-
-	commandResult, _ := s.Mediator.Send(ctx, command)
-
-	result := commandResult.(commands.CreateDeviceIntegrationCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
 		Make:      in.Make,
@@ -463,12 +437,11 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Conte
 func (s *GrpcDefinitionsService) CreateDeviceStyle(ctx context.Context, in *p_grpc.CreateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
 
 	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateDeviceStyleCommand{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Name:               in.Name,
-		ExternalStyleID:    in.ExternalStyleId,
-		Source:             in.Source,
-		SubModel:           in.SubModel,
-		HardwareTemplateID: in.HardwareTemplateId,
+		DefinitionID:    in.DefinitionId,
+		Name:            in.Name,
+		ExternalStyleID: in.ExternalStyleId,
+		Source:          in.Source,
+		SubModel:        in.SubModel,
 	})
 
 	result := commandResult.(commands.CreateDeviceStyleCommandResult)
@@ -484,13 +457,12 @@ func (s *GrpcDefinitionsService) GetDeviceStyleByID(ctx context.Context, in *p_g
 
 	ds := qryResult.(coremodels.GetDeviceStyleQueryResult)
 	result := &p_grpc.DeviceStyle{
-		Id:                 ds.ID,
-		Source:             ds.Source,
-		SubModel:           ds.SubModel,
-		Name:               ds.Name,
-		ExternalStyleId:    ds.ExternalStyleID,
-		DeviceDefinitionId: ds.DeviceDefinitionID,
-		HardwareTemplateId: ds.HardwareTemplateID,
+		Id:              ds.ID,
+		Source:          ds.Source,
+		SubModel:        ds.SubModel,
+		Name:            ds.Name,
+		ExternalStyleId: ds.ExternalStyleID,
+		DefinitionId:    ds.DefinitionID,
 	}
 
 	if len(ds.DeviceDefinition.DeviceAttributes) > 0 {
@@ -512,7 +484,7 @@ func (s *GrpcDefinitionsService) GetDeviceStyleByID(ctx context.Context, in *p_g
 func (s *GrpcDefinitionsService) GetDeviceStylesByDeviceDefinitionID(ctx context.Context, in *p_grpc.GetDeviceStyleByDeviceDefinitionIDRequest) (*p_grpc.GetDeviceStyleResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByDeviceDefinitionIDQuery{
-		DeviceDefinitionID: in.Id,
+		DefinitionID: in.Id,
 	})
 
 	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
@@ -521,61 +493,13 @@ func (s *GrpcDefinitionsService) GetDeviceStylesByDeviceDefinitionID(ctx context
 
 	for _, ds := range styles {
 		result.DeviceStyles = append(result.DeviceStyles, &p_grpc.DeviceStyle{
-			Id:                 ds.ID,
-			Source:             ds.Source,
-			SubModel:           ds.SubModel,
-			Name:               ds.Name,
-			ExternalStyleId:    ds.ExternalStyleID,
-			DeviceDefinitionId: ds.DeviceDefinitionID,
-			HardwareTemplateId: ds.HardwareTemplateID,
+			Id:              ds.ID,
+			Source:          ds.Source,
+			SubModel:        ds.SubModel,
+			Name:            ds.Name,
+			ExternalStyleId: ds.ExternalStyleID,
+			DefinitionId:    ds.DefinitionID,
 		})
-	}
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceStylesByFilter(ctx context.Context, in *p_grpc.GetDeviceStyleFilterRequest) (*p_grpc.GetDeviceStyleResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByFilterQuery{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Name:               in.Name,
-		SubModel:           in.SubModel,
-	})
-
-	styles := qryResult.([]coremodels.GetDeviceStyleQueryResult)
-
-	result := &p_grpc.GetDeviceStyleResponse{}
-
-	for _, ds := range styles {
-		result.DeviceStyles = append(result.DeviceStyles, &p_grpc.DeviceStyle{
-			Id:                 ds.ID,
-			Source:             ds.Source,
-			SubModel:           ds.SubModel,
-			Name:               ds.Name,
-			ExternalStyleId:    ds.ExternalStyleID,
-			DeviceDefinitionId: ds.DeviceDefinitionID,
-			HardwareTemplateId: ds.HardwareTemplateID,
-		})
-	}
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceStyleByExternalID(ctx context.Context, in *p_grpc.GetDeviceStyleByIDRequest) (*p_grpc.DeviceStyle, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceStyleByExternalIDQuery{
-		ExternalDeviceID: in.Id,
-	})
-
-	ds := qryResult.(coremodels.GetDeviceStyleQueryResult)
-	result := &p_grpc.DeviceStyle{
-		Id:                 ds.ID,
-		Source:             ds.Source,
-		SubModel:           ds.SubModel,
-		Name:               ds.Name,
-		ExternalStyleId:    ds.ExternalStyleID,
-		DeviceDefinitionId: ds.DeviceDefinitionID,
-		HardwareTemplateId: ds.HardwareTemplateID,
 	}
 
 	return result, nil
@@ -584,13 +508,12 @@ func (s *GrpcDefinitionsService) GetDeviceStyleByExternalID(ctx context.Context,
 func (s *GrpcDefinitionsService) UpdateDeviceStyle(ctx context.Context, in *p_grpc.UpdateDeviceStyleRequest) (*p_grpc.BaseResponse, error) {
 
 	command := &commands.UpdateDeviceStyleCommand{
-		ID:                 in.Id,
-		Name:               in.Name,
-		ExternalStyleID:    in.ExternalStyleId,
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Source:             in.Source,
-		SubModel:           in.SubModel,
-		HardwareTemplateID: in.HardwareTemplateId,
+		ID:              in.Id,
+		Name:            in.Name,
+		ExternalStyleID: in.ExternalStyleId,
+		DefinitionID:    in.DefinitionId,
+		Source:          in.Source,
+		SubModel:        in.SubModel,
 	}
 
 	commandResult, _ := s.Mediator.Send(ctx, command)
