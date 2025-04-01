@@ -174,7 +174,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
@@ -302,7 +301,6 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Require().NoError(err)
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(ddCreated.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -434,7 +432,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
 	s.Assert().Equal(ds.ID, result.DeviceStyleId)
 
 	// validate metadata was not changed - currently we only support updating it if no vehicle_info, if there is data leave as is
@@ -531,7 +529,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -590,7 +588,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2023), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -636,7 +634,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	s.NotNil(result, "expected result not nil")
 	s.Assert().Equal(int32(2021), result.Year)
 	s.Assert().Equal(dd.NameSlug, result.DefinitionId)
-	s.Assert().Equal(dm.ID, result.DeviceMakeId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -795,7 +793,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	assert.NotNil(s.T(), qryResult)
 	result := qryResult.(*p_grpc.DecodeVinResponse)
 	assert.Equal(s.T(), int32(2022), result.Year)
-	assert.Equal(s.T(), dm.ID, result.DeviceMakeId)
+	assert.Equal(s.T(), dm.Name, result.Manufacturer)
 	assert.Equal(s.T(), "probably smartcar", result.Source)
 	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +28,7 @@ type CacheDeviceDefinitionSuite struct {
 	pdb                                db.Store
 	container                          testcontainers.Container
 	repository                         repositories.DeviceDefinitionRepository
-	mockRedis                          *mocks.MockRedisCacheService
+	mockRedis                          *mock_gateways.MockRedisCacheService
 	ctx                                context.Context
 	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
 
@@ -53,7 +52,7 @@ func (s *CacheDeviceDefinitionSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
 
-	s.mockRedis = mocks.NewMockRedisCacheService(s.ctrl)
+	s.mockRedis = mock_gateways.NewMockRedisCacheService(s.ctrl)
 	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 	s.mockDeviceMakesRepo = mock_repository.NewMockDeviceMakeRepository(s.ctrl)
 

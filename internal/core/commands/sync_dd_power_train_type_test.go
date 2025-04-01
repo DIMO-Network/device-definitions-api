@@ -76,7 +76,7 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Su
 	assert.Equal(s.T(), result.Status, true)
 
 	ddUpdated, _ := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(dd.ID),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, s.pdb.DBS().Writer)
 
@@ -89,9 +89,7 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Su
 				break
 			}
 		}
-
 	}
-
 }
 
 func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_With_Force_Success() {
@@ -114,7 +112,7 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Wi
 	assert.Equal(s.T(), result.Status, true)
 
 	ddUpdated, _ := models.DeviceDefinitions(models.DeviceDefinitionWhere.ID.EQ(dd.ID),
-		qm.Load(models.DeviceDefinitionRels.DeviceStyles),
+		qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles),
 		qm.Load(models.DeviceDefinitionRels.DeviceType),
 		qm.Load(models.DeviceDefinitionRels.DeviceMake)).One(ctx, s.pdb.DBS().Writer)
 
@@ -129,18 +127,17 @@ func (s *SyncPowerTrainTypeCommandHandlerSuite) TestSyncPowerTrainTypeCommand_Wi
 		}
 
 	}
-
 }
 
 func setupDeviceDefinitionForPowerTrain(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t, dm, modelName, year, pdb)
 	img := models.Image{
-		ID:                 ksuid.New().String(),
-		DeviceDefinitionID: dd.ID,
-		Width:              null.IntFrom(640),
-		Height:             null.IntFrom(480),
-		SourceURL:          "https://some-image.com/img.jpg",
+		ID:           ksuid.New().String(),
+		DefinitionID: dd.NameSlug,
+		Width:        null.IntFrom(640),
+		Height:       null.IntFrom(480),
+		SourceURL:    "https://some-image.com/img.jpg",
 	}
 	err := img.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
@@ -152,11 +149,11 @@ func setupDeviceDefinition(t *testing.T, pdb db.Store, makeName string, modelNam
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(t, dm, modelName, year, pdb)
 	img := models.Image{
-		ID:                 ksuid.New().String(),
-		DeviceDefinitionID: dd.ID,
-		Width:              null.IntFrom(640),
-		Height:             null.IntFrom(480),
-		SourceURL:          "https://some-image.com/img.jpg",
+		ID:           ksuid.New().String(),
+		DefinitionID: dd.NameSlug,
+		Width:        null.IntFrom(640),
+		Height:       null.IntFrom(480),
+		SourceURL:    "https://some-image.com/img.jpg",
 	}
 	err := img.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)

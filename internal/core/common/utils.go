@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -406,44 +407,42 @@ func BuildDeviceDefinitionName(year int16, mk string, model string) string {
 	return fmt.Sprintf("%d %s %s", year, mk, model)
 }
 
-func BuildDeviceIntegrationFeatureAttribute(attributes []*models.UpdateDeviceIntegrationFeatureAttribute, dt []*repoModel.IntegrationFeature) ([]map[string]interface{}, error) {
-	// attribute info
-	if attributes == nil {
-		return nil, nil
-	}
-
-	results := make([]map[string]interface{}, len(dt))
-
-	filterProperty := func(key string, items []*models.UpdateDeviceIntegrationFeatureAttribute) *models.UpdateDeviceIntegrationFeatureAttribute {
-		for _, attribute := range items {
-			if key == attribute.FeatureKey {
-				return attribute
-			}
-		}
-		return nil
-	}
-
-	const DefaultSupportLevel int = 0
-
-	for i, prop := range dt {
-		property := filterProperty(prop.FeatureKey, attributes)
-		metaData := make(map[string]interface{})
-		if property != nil {
-			metaData["featureKey"] = property.FeatureKey
-			metaData["supportLevel"] = property.SupportLevel
-		} else {
-			metaData["featureKey"] = prop.FeatureKey
-			metaData["supportLevel"] = DefaultSupportLevel
-		}
-		results[i] = metaData
-	}
-
-	return results, nil
-}
-
 func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
 	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
+}
+
+func CheckTransactionStatus(txHash, apiKey string, useAmoy bool) (bool, error) {
+	baseURL := "https://api.polygonscan.com"
+	if useAmoy {
+		baseURL = "https://amoy.polygonscan.com"
+	}
+	url := fmt.Sprintf("%s/api?module=transaction&action=gettxreceiptstatus&txhash=%s&apikey=%s", baseURL, txHash, apiKey)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var txStatus TxStatusResponse
+	if err := json.NewDecoder(resp.Body).Decode(&txStatus); err != nil {
+		return false, err
+	}
+
+	// Check the transaction status
+	if txStatus.Status == "1" && txStatus.Result.Status == "1" {
+		return true, nil
+	}
+	return false, nil
+}
+
+type TxStatusResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Result  struct {
+		Status string `json:"status"`
+	} `json:"result"`
 }

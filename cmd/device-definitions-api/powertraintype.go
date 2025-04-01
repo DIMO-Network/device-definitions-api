@@ -55,7 +55,7 @@ func (p *powerTrainTypeCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...i
 		p.logger.Fatal().Err(err).Msg("Failed to create sender.")
 	}
 
-	onChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send)
+	onChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send, pdb.DBS)
 
 	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &p.logger, onChainService)
 	if err != nil {

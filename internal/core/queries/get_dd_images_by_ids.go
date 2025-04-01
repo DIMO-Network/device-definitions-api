@@ -74,9 +74,9 @@ func (ch GetDeviceDefinitionImagesByIDsQueryHandler) Handle(ctx context.Context,
 	return response, nil
 }
 
-func findImage(images []*grpc.DeviceImage, width int, ddID string) *grpc.DeviceImage {
+func findImage(images []*grpc.DeviceImage, width int, definitionID string) *grpc.DeviceImage {
 	for _, image := range images {
-		if image.Width == int32(width) && image.DeviceDefinitionId == ddID {
+		if image.Width == int32(width) && image.DefinitionId == definitionID {
 			return image
 		}
 	}

@@ -192,7 +192,7 @@ func (c *deviceDefinitionCacheService) GetDeviceDefinitionByMakeModelAndYears(ct
 		}
 	}
 
-	dd, err := c.Repository.GetByMakeModelAndYears(ctx, mk, model, year, true)
+	dd, err := c.Repository.GetByMakeModelAndYears(ctx, mk, model, year)
 
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (c *deviceDefinitionCacheService) GetDeviceDefinitionBySlug(ctx context.Con
 		}
 	}
 
-	dd, err := c.Repository.GetBySlugAndYear(ctx, slug, year, true)
+	dd, err := c.Repository.GetBySlugAndYear(ctx, slug, year)
 
 	if err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ func (c *deviceDefinitionCacheService) GetDeviceDefinitionBySlugName(ctx context
 		}
 	}
 
-	dd, err := c.Repository.GetBySlugName(ctx, slug, true)
+	dd, err := c.Repository.GetBySlugName(ctx, slug)
 
 	if err != nil {
 		return nil, err

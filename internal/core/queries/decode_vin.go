@@ -5,10 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/tidwall/gjson"
 
 	"github.com/tidwall/sjson"
 
@@ -191,7 +192,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 		}
 
-		resp.DeviceMakeId = dm.ID
+		resp.DeviceMakeId = dm.ID //nolint
+		resp.Manufacturer = dm.Name
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.Source = vinDecodeNumber.DecodeProvider.String
 		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], null.JSON{}, null.JSON{})
@@ -223,7 +225,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if dbWMI.R.DeviceMake != nil && dbWMI.R.DeviceMake.Name == "Tesla" {
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
 			resp.Manufacturer = "Tesla"
-			resp.DeviceMakeId = dbWMI.R.DeviceMake.ID
+			resp.DeviceMakeId = dbWMI.R.DeviceMake.ID //nolint
 		}
 	}
 	// not a tesla, regular decode path
@@ -261,11 +263,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return resp, nil
 		}
 	}
-	resp.DeviceMakeId = dbWMI.DeviceMakeID
+	resp.DeviceMakeId = dbWMI.DeviceMakeID //nolint
+	resp.Manufacturer = vinInfo.Make
 	resp.Source = string(vinInfo.Source)
 	resp.Year = vinInfo.Year
 	resp.Model = vinInfo.Model
-	resp.Manufacturer = vinInfo.Make
 
 	modelSlug := shared.SlugString(vinInfo.Model)
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))

@@ -6,11 +6,12 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"

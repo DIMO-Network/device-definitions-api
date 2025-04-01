@@ -165,14 +165,7 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateDeviceDefinition_Creates_Aut
 
 	dd, err := s.repository.GetOrCreate(ctx, nil, source, "", mk, model, year, "vehicle", null.JSON{}, false, &hardwareTemplateID)
 	s.NoError(err)
-	integration, err := models.Integrations(models.IntegrationWhere.Vendor.EQ(common.AutoPiVendor)).One(ctx, s.pdb.DBS().Reader)
-	s.NoError(err)
-	dis, err := dd.DeviceIntegrations(models.DeviceIntegrationWhere.IntegrationID.EQ(integration.ID)).All(ctx, s.pdb.DBS().Reader)
-	s.NoError(err)
-	assert.Len(s.T(), dis, 2)
 
-	assert.Equal(s.T(), common.AmericasRegion.String(), dis[0].Region)
-	assert.Contains(s.T(), common.EuropeRegion.String(), dis[1].Region)
 	assert.Equal(s.T(), dd.DeviceMakeID, dm.ID)
 }
 
@@ -268,12 +261,12 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 
 	// add new style
 	newStyles = append(newStyles, &models.DeviceStyle{
-		ID:                 ksuid.New().String(),
-		Name:               "New Style",
-		DeviceDefinitionID: dd.ID,
-		Source:             "New Source",
-		SubModel:           "New SubModel",
-		ExternalStyleID:    ksuid.New().String(),
+		ID:              ksuid.New().String(),
+		Name:            "New Style",
+		DefinitionID:    dd.NameSlug,
+		Source:          "New Source",
+		SubModel:        "New SubModel",
+		ExternalStyleID: ksuid.New().String(),
 	})
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
@@ -286,38 +279,6 @@ func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_Wit
 	assert.Equal(s.T(), dd.Model, dd2.Model)
 	assert.Equal(s.T(), dd.Year, dd2.Year)
 	assert.Equal(s.T(), dd.Source, dd2.Source)
-}
-
-func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_NewIntegration_Success() {
-	ctx := context.Background()
-
-	model := "Hilux"
-	mk := "Toyota"
-	year := 2022
-
-	i := setupIntegrationForDeviceIntegration(s.T(), s.pdb)
-	dd := setupDeviceDefinitionWithIntegrations(s.T(), s.pdb, mk, model, year)
-
-	newDeviceIntegrations := []*models.DeviceIntegration{}
-
-	for _, integration := range dd.R.DeviceIntegrations {
-		newDeviceIntegrations = append(newDeviceIntegrations, integration)
-	}
-
-	// add new integrations
-	newDeviceIntegrations = append(newDeviceIntegrations, &models.DeviceIntegration{
-		IntegrationID:      i.ID,
-		DeviceDefinitionID: dd.ID,
-		Region:             "east-us",
-	})
-
-	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
-
-	dd2, err := s.repository.CreateOrUpdate(ctx, dd, []*models.DeviceStyle{}, newDeviceIntegrations)
-
-	s.NoError(err)
-	assert.Equal(s.T(), dd.ID, dd2.ID)
 }
 
 func (s *DeviceDefinitionRepositorySuite) TestCreateOrUpdateDeviceDefinition_With_Vehicle_DeviceTypes_Success() {
@@ -359,7 +320,7 @@ func (s *DeviceDefinitionRepositorySuite) TestGetDeviceDefinition_By_Slug_Succes
 
 	dd := setupDeviceDefinition(s.T(), s.pdb, mk, model, year)
 	// current logic returns existing DD if duplicate
-	dd2, err := s.repository.GetBySlugAndYear(ctx, dd.ModelSlug, year, true)
+	dd2, err := s.repository.GetBySlugAndYear(ctx, dd.ModelSlug, year)
 
 	s.NoError(err)
 	assert.Equal(s.T(), dd2.ID, dd.ID)
@@ -373,7 +334,7 @@ func (s *DeviceDefinitionRepositorySuite) TestGetDeviceDefinition_Nil_By_Slug_Su
 	mk := "Toyota"
 	year := 2022
 
-	dd, _ := s.repository.GetBySlugAndYear(ctx, mk, year, true)
+	dd, _ := s.repository.GetBySlugAndYear(ctx, mk, year)
 
 	s.Nil(dd)
 }
@@ -395,20 +356,6 @@ func setupDeviceDefinitionWithStyles(t *testing.T, pdb db.Store, makeName string
 	dd.R = dd.R.NewStruct()
 	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &ds1)
 	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &ds2)
-	dd.R.DeviceMake = &dm
-
-	return dd
-}
-
-func setupDeviceDefinitionWithIntegrations(t *testing.T, pdb db.Store, makeName string, modelName string, year int) *models.DeviceDefinition {
-	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
-	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
-
-	i := dbtesthelper.SetupCreateHardwareIntegration(t, pdb)
-	di := dbtesthelper.SetupCreateDeviceIntegration(t, dd, i.ID, "Americas", pdb)
-
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceIntegrations = append(dd.R.DeviceIntegrations, di)
 	dd.R.DeviceMake = &dm
 
 	return dd

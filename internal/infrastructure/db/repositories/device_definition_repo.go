@@ -6,8 +6,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/queries"
 	"strings"
+
+	"github.com/volatiletech/sqlboiler/v4/queries"
 
 	"github.com/DIMO-Network/shared"
 
@@ -34,9 +35,9 @@ type GetDeviceCompatibilityRequest struct {
 
 type DeviceDefinitionRepository interface {
 	GetByID(ctx context.Context, id string) (*models.DeviceDefinition, error)
-	GetByMakeModelAndYears(ctx context.Context, mk string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
-	GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error)
-	GetBySlugName(ctx context.Context, slug string, loadIntegrations bool) (*models.DeviceDefinition, error)
+	GetByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.DeviceDefinition, error)
+	GetBySlugAndYear(ctx context.Context, slug string, year int) (*models.DeviceDefinition, error)
+	GetBySlugName(ctx context.Context, slug string) (*models.DeviceDefinition, error)
 	GetAll(ctx context.Context) ([]*models.DeviceDefinition, error)
 	GetDevicesByMakeYearRange(ctx context.Context, makeID string, yearStart, yearEnd int32) ([]*models.DeviceDefinition, error)
 	GetDevicesMMY(ctx context.Context) ([]*DeviceMMYJoinQueryOutput, error)
@@ -54,7 +55,7 @@ func NewDeviceDefinitionRepository(dbs func() *db.ReaderWriter, deviceDefinition
 	return &deviceDefinitionRepository{DBS: dbs, deviceDefinitionOnChainService: deviceDefinitionOnChainService}
 }
 
-func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, mk string, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, mk string, model string, year int) (*models.DeviceDefinition, error) {
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		qm.Where("dm.name ilike ?", mk),
@@ -78,7 +79,7 @@ func (r *deviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context,
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int) (*models.DeviceDefinition, error) {
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		models.DeviceDefinitionWhere.ModelSlug.EQ(slug),
@@ -101,7 +102,7 @@ func (r *deviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug 
 	return dd, nil
 }
 
-func (r *deviceDefinitionRepository) GetBySlugName(ctx context.Context, slug string, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (r *deviceDefinitionRepository) GetBySlugName(ctx context.Context, slug string) (*models.DeviceDefinition, error) {
 	qms := []qm.QueryMod{
 		qm.InnerJoin("device_definitions_api.device_makes dm on dm.id = device_definitions.device_make_id"),
 		models.DeviceDefinitionWhere.NameSlug.EQ(slug),

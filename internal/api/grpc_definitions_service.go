@@ -368,20 +368,6 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Cont
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) CreateIntegration(ctx context.Context, in *p_grpc.CreateIntegrationRequest) (*p_grpc.BaseResponse, error) {
-
-	commandResult, _ := s.Mediator.Send(ctx, &commands.CreateIntegrationCommand{
-		Vendor:  in.Vendor,
-		Style:   in.Style,
-		Type:    in.Type,
-		TokenID: int(in.TokenId),
-	})
-
-	result := commandResult.(commands.CreateIntegrationCommandResult)
-
-	return &p_grpc.BaseResponse{Id: result.ID}, nil
-}
-
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
 		Make:      in.Make,

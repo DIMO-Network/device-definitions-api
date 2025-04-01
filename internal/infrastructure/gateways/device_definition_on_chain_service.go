@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"io"
 	"math/big"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/patrickmn/go-cache"
 
@@ -212,7 +213,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
-	bigManufID := manufacturerID.Big.Int(new(big.Int))
+	bigManufID := manufacturerID.Int(new(big.Int))
 	tableName, err := e.getTablelandTableName(ctx, bigManufID)
 	if err != nil {
 		return nil, err

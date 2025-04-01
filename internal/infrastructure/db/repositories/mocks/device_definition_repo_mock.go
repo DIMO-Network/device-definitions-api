@@ -89,48 +89,48 @@ func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByID(ctx, id any) *gomo
 }
 
 // GetByMakeModelAndYears mocks base method.
-func (m *MockDeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, mk, model string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetByMakeModelAndYears(ctx context.Context, mk, model string, year int) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByMakeModelAndYears", ctx, mk, model, year, loadIntegrations)
+	ret := m.ctrl.Call(m, "GetByMakeModelAndYears", ctx, mk, model, year)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByMakeModelAndYears indicates an expected call of GetByMakeModelAndYears.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx, mk, model, year, loadIntegrations any) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetByMakeModelAndYears(ctx, mk, model, year any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByMakeModelAndYears), ctx, mk, model, year, loadIntegrations)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMakeModelAndYears", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetByMakeModelAndYears), ctx, mk, model, year)
 }
 
 // GetBySlugAndYear mocks base method.
-func (m *MockDeviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetBySlugAndYear(ctx context.Context, slug string, year int) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBySlugAndYear", ctx, slug, year, loadIntegrations)
+	ret := m.ctrl.Call(m, "GetBySlugAndYear", ctx, slug, year)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBySlugAndYear indicates an expected call of GetBySlugAndYear.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug, year, loadIntegrations any) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugAndYear(ctx, slug, year any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugAndYear", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugAndYear), ctx, slug, year, loadIntegrations)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugAndYear", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugAndYear), ctx, slug, year)
 }
 
 // GetBySlugName mocks base method.
-func (m *MockDeviceDefinitionRepository) GetBySlugName(ctx context.Context, slug string, loadIntegrations bool) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionRepository) GetBySlugName(ctx context.Context, slug string) (*models.DeviceDefinition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBySlugName", ctx, slug, loadIntegrations)
+	ret := m.ctrl.Call(m, "GetBySlugName", ctx, slug)
 	ret0, _ := ret[0].(*models.DeviceDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBySlugName indicates an expected call of GetBySlugName.
-func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugName(ctx, slug, loadIntegrations any) *gomock.Call {
+func (mr *MockDeviceDefinitionRepositoryMockRecorder) GetBySlugName(ctx, slug any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugName", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugName), ctx, slug, loadIntegrations)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySlugName", reflect.TypeOf((*MockDeviceDefinitionRepository)(nil).GetBySlugName), ctx, slug)
 }
 
 // GetDevicesByMakeYearRange mocks base method.
