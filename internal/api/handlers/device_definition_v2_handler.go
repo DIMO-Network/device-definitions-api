@@ -10,7 +10,7 @@ import (
 )
 
 // GetDeviceDefinitionV2ByID godoc
-// @Summary gets a device definition
+// @Summary gets a device definition from tableland (on-chain records)
 // @ID GetDeviceDefinitionV2ByID
 // @Description gets a device definition
 // @Tags device-definitions
@@ -34,7 +34,7 @@ func GetDeviceDefinitionV2ByID(m mediator.Mediator) fiber.Handler {
 }
 
 // GetDeviceDefinitionV2All godoc
-// @Summary gets all device definitions by Makes, models, and years
+// @Summary gets all device definitions by Makes, models, and years, from tableland (on-chain records)
 // @ID GetDeviceDefinitionV2All
 // @Description gets a device definition
 // @Param  make path string true "device make name"

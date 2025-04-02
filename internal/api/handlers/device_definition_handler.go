@@ -62,13 +62,13 @@ type DecodeVINResponse struct {
 }
 
 // GetDeviceDefinitionByID godoc
-// @Summary gets a device definition
+// @Summary gets a device definition, optionally from tableland (on-chain records) if use an mmy style id.
 // @ID GetDeviceDefinitionByID
 // @Description gets a device definition
 // @Tags device-definitions
-// @Param  id path string true "device definition id"
+// @Param  id path string true "device definition id or mmy definition_id eg. ford_escape_2020"
 // @Produce json
-// @Success 200 {object} models.GetDeviceDefinitionQueryResult
+// @Success 200 {object} gateways.DeviceDefinitionTablelandModel
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions/{id} [get]
