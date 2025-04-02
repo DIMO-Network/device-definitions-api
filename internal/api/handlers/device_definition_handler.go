@@ -183,27 +183,3 @@ func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
-
-// GetDeviceDefinitionAutocomplete godoc
-// @Summary gets device definitions autocomplete
-// @ID GetDeviceDefinitionAutocomplete
-// @Description gets a device definition Autocomplete
-// @Tags device-definitions
-// @Param  query query string true "query filter"
-// @Accept json
-// @Produce json
-// @Success 200 {object} queries.GetAllDeviceDefinitionByAutocompleteQueryResult
-// @Failure 500
-// @Router /device-definitions/autocomplete [get]
-func GetDeviceDefinitionAutocomplete(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-
-		q := c.Query("query")
-
-		query := &queries.GetAllDeviceDefinitionByAutocompleteQuery{Query: q}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}

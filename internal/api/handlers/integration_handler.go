@@ -10,28 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetDeviceIntegrationsByID godoc
-// @Summary gets all the available integrations for a device definition.
-// @ID GetDeviceIntegrationsByID
-// @Description gets all the available integrations for a device definition. Includes the capabilities of the device with the integration
-// @Tags device-definitions
-// @Param  id path string true "device definition id"
-// @Produce json
-// @Success 200
-// @Failure 404
-// @Failure 500
-// @Router /device-definitions/{id}/integrations [get]
-func GetDeviceIntegrationsByID(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		id := c.Params("id")
-		query := &queries.GetDeviceDefinitionWithRelsQuery{DeviceDefinitionID: id}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
 // GetIntegrations godoc
 // @Summary gets list of integrations we have defined.
 // @ID GetIntegrations
