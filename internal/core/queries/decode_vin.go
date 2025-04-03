@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tidwall/gjson"
-
 	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -252,6 +250,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			err = errors.New("failed to decode, vinInfo is nil")
 		}
 		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
+		// todo track failed decodes
 		return nil, err
 	}
 	// we may have already gotten this above
@@ -280,135 +279,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
 
-	ddExists := true
-	// if dd not found in tableland, we want to creat it
-	if tblDef == nil {
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, *dd)
-
-		// no need for all this since we just create on chain
-		if errors.Is(err, sql.ErrNoRows) {
-			// this method creates on-chain as well as in dd database
-			dd, err := dc.ddRepository.GetOrCreate(ctx, txVinNumbers,
-				string(vinInfo.Source),
-				shared.SlugString(vinInfo.Model+strconv.Itoa(int(vinInfo.Year))),
-				dbWMI.DeviceMakeID,
-				vinInfo.Model,
-				int(resp.Year),
-				common.DefaultDeviceType,
-				vinInfo.MetaData,
-				true,
-				nil)
-			if err != nil {
-				metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-				return nil, errors.Wrap(err, "error creating new device definition from decoded vin")
-			}
-			ddExists = false
-			localLog.Info().Msgf("creating new DD as did not find DD from vin decode with model slug: %s", modelSlug)
-			// set the response definition id from the newly created DD
-			resp.DefinitionId = dd.NameSlug
-		} else {
-			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			return nil, err
-		}
-	} else {
-		resp.DefinitionId = tblDef.ID // we can use the one from tableland since that exists
-	}
-
-	// match style - only process style if name is longer than 1
-	if len(vinInfo.StyleName) < 2 {
-		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
-	} else {
-		externalStyleID := shared.SlugString(vinInfo.StyleName)
-		// see if match existing style exists. First search is based on db device_definition_style_idx
-		style, err := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(resp.DefinitionId),
-			models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
-			models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID)).One(ctx, dc.dbs().Reader)
-		if errors.Is(err, sql.ErrNoRows) {
-			style, err = models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(resp.DefinitionId),
-				models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName)).One(ctx, dc.dbs().Reader)
-		}
-
-		if errors.Is(err, sql.ErrNoRows) {
-			style = &models.DeviceStyle{
-				ID:              ksuid.New().String(),
-				DefinitionID:    resp.DefinitionId,
-				Name:            vinInfo.StyleName,
-				ExternalStyleID: externalStyleID,
-				Source:          string(vinInfo.Source),
-				SubModel:        vinInfo.SubModel,
-				Metadata:        vinInfo.MetaData,
-			}
-			// style level powertrain
-			pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo)
-			if pt != "" {
-				metadataWithPT, metadataErr := sjson.SetBytes(vinInfo.MetaData.JSON, common.PowerTrainType, pt)
-				if metadataErr == nil {
-					style.Metadata = null.JSONFrom(metadataWithPT)
-				}
-				// todo unit test for this getting set in this scenario
-				resp.Powertrain = pt
-			}
-			// todo test error: device definition does not exist in the database
-			errStyle := style.Insert(ctx, txVinNumbers, boil.Infer())
-			if errStyle != nil {
-				localLog.Err(errStyle).Msgf("error creating style with values: %+v", style)
-				return nil, errStyle
-			}
-			localLog.Info().Msgf("creating new device_style as did not find one for: %s", shared.SlugString(vinInfo.StyleName))
-			resp.DeviceStyleId = style.ID
-
-		} else if err == nil {
-			resp.DeviceStyleId = style.ID
-		}
-	}
-
-	// insert vin_numbers
-	vinDecodeNumber = &models.VinNumber{
-		Vin:              vin.String(),
-		ManufacturerName: resp.Manufacturer,
-		Wmi:              wmi,
-		VDS:              vin.VDS(),
-		Vis:              vin.VIS(),
-		CheckDigit:       vin.CheckDigit(),
-		SerialNumber:     vin.SerialNumber(),
-		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
-		Year:             int(resp.Year),
-		DefinitionID:     resp.DefinitionId,
-	}
-	if len(resp.DeviceStyleId) > 0 {
-		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
-	}
-	if vinInfo.Source == coremodels.DrivlyProvider && len(vinInfo.Raw) > 0 {
-		vinDecodeNumber.DrivlyData = null.JSONFrom(vinInfo.Raw)
-	}
-	if vinInfo.Source == coremodels.VincarioProvider && len(vinInfo.Raw) > 0 {
-		vinDecodeNumber.VincarioData = null.JSONFrom(vinInfo.Raw)
-	}
-	if vinInfo.Source == coremodels.AutoIsoProvider && len(vinInfo.Raw) > 0 {
-		vinDecodeNumber.AutoisoData = null.JSONFrom(vinInfo.Raw)
-	}
-	if vinInfo.Source == coremodels.DATGroupProvider && len(vinInfo.Raw) > 0 {
-		vinDecodeNumber.DatgroupData = null.JSONFrom(vinInfo.Raw)
-	}
-
-	localLog.Info().Str("device_definition_id", resp.DefinitionId).
-		Str("style_id", resp.DeviceStyleId).
-		Str("wmi", wmi).
-		Str("vds", vin.VDS()).
-		Str("vis", vin.VIS()).
-		Str("check_digit", vin.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
-	// note we use a transaction here all throughout and commit at the end
-	if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
-		localLog.Err(err).
-			Str("device_definition_id", resp.DefinitionId).
-			Msg("failed to insert to vin_numbers")
-	}
-	err = txVinNumbers.Commit()
-	if err != nil {
-		return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
-	}
-
-	// resolve images
+	// add images if we don't have any for this definition_id
 	images, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
 	localLog.Debug().Msgf("Current Images : %d", len(images))
 
@@ -424,107 +295,172 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		}
 	}
 
-	// why are we doing this if already have something similar above?
-	if !ddExists {
-		dd, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(resp.DefinitionId),
-			qm.Load(models.DeviceDefinitionRels.DefinitionDeviceStyles),
-			qm.Load(models.DeviceDefinitionRels.DeviceType),
-			qm.Load(models.DeviceDefinitionRels.DeviceMake),
-			qm.Load(models.DeviceDefinitionRels.DefinitionImages)).One(ctx, dc.dbs().Reader)
-		if err != nil {
-			return nil, errors.Wrap(err, "error when get dd for update powertraintype")
-		}
-
-		// set the dd metadata if nothing there, if fails just continue. this is needed in current setup
-		if !gjson.GetBytes(dd.Metadata.JSON, dt.Metadatakey).Exists() {
-			// todo - future: merge metadata properties. Also set style specific metadata - multiple places
-			dd.Metadata = vinInfo.MetaData
-			_, _ = dd.Update(ctx, dc.dbs().Writer, boil.Whitelist(models.DeviceDefinitionColumns.Metadata, models.DeviceDefinitionColumns.UpdatedAt))
-			// todo- future: add powertrain - but this can be style specific - vincario gets us primary FuelType
-		}
-
-		metadataKey := dd.R.DeviceType.Metadatakey
-		var metadataAttributes map[string]any
-
-		if err := dd.Metadata.Unmarshal(&metadataAttributes); err == nil {
-			metaData := make(map[string]interface{})
-			if metadataAttributes == nil {
-				metadataAttributes = make(map[string]interface{})
-				var deviceTypeAttributes map[string][]coremodels.GetDeviceTypeAttributeQueryResult
-				if err := dd.R.DeviceType.Properties.Unmarshal(&deviceTypeAttributes); err == nil {
-					for _, deviceAttribute := range deviceTypeAttributes["properties"] {
-						metaData[deviceAttribute.Name] = deviceAttribute.DefaultValue
-					}
-				}
-
-				metadataAttributes[metadataKey] = metaData
-			}
-		}
-
-		if metadataAttributes != nil {
-			if metadataValue, ok := metadataAttributes[metadataKey]; ok {
-				for key, value := range metadataValue.(map[string]interface{}) {
-					if key == common.PowerTrainType {
-						powerTrainTypeValue := value
-						if powerTrainTypeValue == nil || powerTrainTypeValue == "" {
-							drivlyData := null.JSON{}
-							vincarioData := null.JSON{}
-							if vinInfo.Source == coremodels.DrivlyProvider {
-								drivlyData = vinInfo.MetaData
-							} else {
-								vincarioData = vinInfo.MetaData
-							}
-							powerTrainTypeValue, err = dc.powerTrainTypeService.ResolvePowerTrainType(dd.R.DeviceMake.NameSlug, dd.ModelSlug, drivlyData, vincarioData)
-							if err != nil {
-								dc.logger.Error().Err(err).Msg("Error when resolve Powertrain")
-							}
-						}
-
-						metadataAttributes[metadataKey].(map[string]interface{})[common.PowerTrainType] = powerTrainTypeValue
-					}
-				}
-			}
-		}
-
-		err = dd.Metadata.Marshal(metadataAttributes)
-		if err != nil {
-			return nil, err
-		}
-
-		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
-
-		// todo this is already being done in above block
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dd.R.DeviceMake, *dd)
-		if err != nil {
-			localLog.Err(err).Msg("failed to create or update DD on chain")
-		}
-		if err == nil {
-			trxArray := strings.Split(*trx, ",")
-			if dd.TRXHashHex != nil {
-				dd.TRXHashHex = append(dd.TRXHashHex, trxArray...)
-			} else {
-				dd.TRXHashHex = trxArray
-			}
-		}
-
-		if err = dd.Upsert(ctx, dc.dbs().Writer, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
-			return nil, err
-		}
-		if trx != nil {
-			resp.NewTrxHash = *trx
-		}
-	}
-
-	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
-
-	// if powertrain not set yet, try resolving for it
-	if resp.Powertrain == "" {
-		split := strings.Split(resp.DefinitionId, "_")
-		pt, _ := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
+	// figure out powertrain
+	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo)
+	if pt != "" {
 		resp.Powertrain = pt
 	}
 
+	// if dd not found in tableland, we want to create it
+	if tblDef != nil {
+		resp.DefinitionId = tblDef.ID
+	} else {
+		// if any images were added above, they will be in the database
+		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
+		// todo load up some metadata from what was decoded. Powertrain too
+		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
+
+		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, gateways.DeviceDefinitionTablelandModel{
+			ID:         tid,
+			KSUID:      ksuid.New().String(),
+			Model:      resp.Model,
+			Year:       int(resp.Year),
+			DeviceType: common.DefaultDeviceType,
+			ImageURI:   common.GetDefaultImageURL(latestImages),
+			Metadata:   md,
+		})
+		if err != nil {
+			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+			return nil, errors.Wrap(err, "error creating new device definition on-chain from decoded vin")
+		}
+		resp.NewTrxHash = *trx
+	}
+
+	// match style - only process style if name is longer than 1
+	if len(vinInfo.StyleName) < 2 {
+		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
+	} else {
+		var styleErr error
+		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, resp.Powertrain)
+		if styleErr != nil {
+			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vin: %s. continuing", vin.String())
+		}
+	}
+
+	// insert vin_numbers
+	errVinNumber := dc.saveVinDecodeNumber(ctx, vin, vinInfo, resp)
+	if errVinNumber != nil {
+		return nil, errors.Wrap(errVinNumber, "error saving vin_number")
+	}
+
+	localLog.Info().Str("device_definition_id", resp.DefinitionId).
+		Str("style_id", resp.DeviceStyleId).
+		Str("wmi", wmi).
+		Str("vds", vin.VDS()).
+		Str("vis", vin.VIS()).
+		Str("check_digit", vin.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
+
+	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
+
 	return resp, nil
+}
+
+func resolveMetadataFromInfo(powertrain string, vinInfo *coremodels.VINDecodingInfoData) *gateways.DeviceDefinitionMetadata {
+	md := gateways.DeviceDefinitionMetadata{DeviceAttributes: make([]gateways.DeviceTypeAttribute, 0)}
+	if powertrain != "" {
+		md.DeviceAttributes = append(md.DeviceAttributes, gateways.DeviceTypeAttribute{
+			Name:  common.PowerTrainType,
+			Value: powertrain,
+		})
+	}
+	//vinInfo.Raw // what can we do with this?
+	// thing is that the metadata field names are defined in the device type, but we should have some defaults mapped
+	// drivly or vincario json field -> dimo metadata field name
+
+	return &md
+}
+
+// processDeviceStyle saves new styles if needed to db and returns the style database ID
+func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo *coremodels.VINDecodingInfoData, definitionID, powertrain string) (string, error) {
+	externalStyleID := shared.SlugString(vinInfo.StyleName)
+
+	// Step 1: Try to find an existing style
+	style, err := models.DeviceStyles(
+		models.DeviceStyleWhere.DefinitionID.EQ(definitionID),
+		models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
+		models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID),
+	).One(ctx, dc.dbs().Reader)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// Step 2: If not found, try searching by name
+		style, err = models.DeviceStyles(
+			models.DeviceStyleWhere.DefinitionID.EQ(definitionID),
+			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName),
+		).One(ctx, dc.dbs().Reader)
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// Step 3: Create a new style if it doesn't exist
+		style = &models.DeviceStyle{
+			ID:              ksuid.New().String(),
+			DefinitionID:    definitionID,
+			Name:            vinInfo.StyleName,
+			ExternalStyleID: externalStyleID,
+			Source:          string(vinInfo.Source),
+			SubModel:        vinInfo.SubModel,
+			Metadata:        vinInfo.MetaData,
+		}
+
+		// Resolve powertrain and add to metadata if applicable
+		if powertrain != "" {
+			metadataWithPT, metadataErr := sjson.SetBytes(vinInfo.MetaData.JSON, common.PowerTrainType, powertrain)
+			if metadataErr == nil {
+				style.Metadata = null.JSONFrom(metadataWithPT)
+			}
+		}
+
+		// Insert the new style into the database
+		errStyle := style.Insert(ctx, dc.dbs().Writer, boil.Infer())
+		if errStyle != nil {
+			return "", errors.Wrapf(errStyle, "error creating style with values: %+v", style)
+		}
+	}
+	return style.ID, nil
+}
+
+func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin shared.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
+	vinDecodeNumber := &models.VinNumber{
+		Vin:              vin.String(),
+		ManufacturerName: resp.Manufacturer,
+		Wmi:              vin.Wmi(),
+		VDS:              vin.VDS(),
+		Vis:              vin.VIS(),
+		CheckDigit:       vin.CheckDigit(),
+		SerialNumber:     vin.SerialNumber(),
+		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
+		Year:             int(resp.Year),
+		DefinitionID:     resp.DefinitionId,
+	}
+
+	// Optional fields based on response and VIN info
+	if len(resp.DeviceStyleId) > 0 {
+		vinDecodeNumber.StyleID = null.StringFrom(resp.DeviceStyleId)
+	}
+
+	switch vinInfo.Source {
+	case coremodels.DrivlyProvider:
+		if len(vinInfo.Raw) > 0 {
+			vinDecodeNumber.DrivlyData = null.JSONFrom(vinInfo.Raw)
+		}
+	case coremodels.VincarioProvider:
+		if len(vinInfo.Raw) > 0 {
+			vinDecodeNumber.VincarioData = null.JSONFrom(vinInfo.Raw)
+		}
+	case coremodels.AutoIsoProvider:
+		if len(vinInfo.Raw) > 0 {
+			vinDecodeNumber.AutoisoData = null.JSONFrom(vinInfo.Raw)
+		}
+	case coremodels.DATGroupProvider:
+		if len(vinInfo.Raw) > 0 {
+			vinDecodeNumber.DatgroupData = null.JSONFrom(vinInfo.Raw)
+		}
+	}
+
+	// Insert VIN decode number into the database
+	if err := vinDecodeNumber.Insert(ctx, dc.dbs().Writer, boil.Infer()); err != nil {
+		return errors.Wrapf(err, "error inserting vin_number with values: %+v", vinDecodeNumber)
+	}
+	return nil
 }
 
 // vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set

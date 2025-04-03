@@ -117,11 +117,11 @@ func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
 }
 
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
-func GetDefaultImageURL(dd *repoModel.DeviceDefinition) string {
+func GetDefaultImageURL(images []*repoModel.Image) string {
 	img := ""
-	if dd.R.DefinitionImages != nil {
+	if images != nil {
 		w := 0
-		for _, image := range dd.R.DefinitionImages {
+		for _, image := range images {
 			extra := 0
 			if !image.NotExactImage {
 				extra = 2000 // we want to give preference to exact images

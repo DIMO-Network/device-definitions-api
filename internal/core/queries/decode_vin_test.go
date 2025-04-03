@@ -799,6 +799,51 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
 }
 
+func TestResolveMetadataFromInfo(t *testing.T) {
+	testCases := []struct {
+		name       string
+		powertrain string
+		vinInfo    *coremodels.VINDecodingInfoData
+		expectedMD *gateways.DeviceDefinitionMetadata
+	}{
+		{
+			name:       "valid powertrain and vinInfo",
+			powertrain: "BEV",
+			vinInfo:    &coremodels.VINDecodingInfoData{StyleName: "Test Style"},
+			expectedMD: &gateways.DeviceDefinitionMetadata{
+				DeviceAttributes: []gateways.DeviceTypeAttribute{
+					{Name: "powertrain_type", Value: "BEV"},
+				},
+			},
+		},
+		{
+			name:       "empty powertrain",
+			powertrain: "",
+			vinInfo:    &coremodels.VINDecodingInfoData{StyleName: "Test Style"},
+			expectedMD: &gateways.DeviceDefinitionMetadata{
+				DeviceAttributes: []gateways.DeviceTypeAttribute{},
+			},
+		},
+		{
+			name:       "nil vinInfo",
+			powertrain: "PHEV",
+			vinInfo:    nil,
+			expectedMD: &gateways.DeviceDefinitionMetadata{
+				DeviceAttributes: []gateways.DeviceTypeAttribute{
+					{Name: "powertrain_type", Value: "PHEV"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualMD := resolveMetadataFromInfo(tc.powertrain, tc.vinInfo)
+			assert.Equal(t, tc.expectedMD, actualMD)
+		})
+	}
+}
+
 func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
