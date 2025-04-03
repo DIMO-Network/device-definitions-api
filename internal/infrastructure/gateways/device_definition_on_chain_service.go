@@ -3,6 +3,7 @@ package gateways
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,8 +28,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	common2 "github.com/DIMO-Network/device-definitions-api/internal/core/common"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -45,12 +44,12 @@ import (
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
-	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error)
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
 	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, *big.Int, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error)
-	Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]DeviceDefinitionTablelandModel, error)
+	Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
@@ -81,17 +80,13 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 }
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
 	tablelandDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
 	if err != nil {
 		return nil, err
 	}
 
-	if tablelandDD != nil {
-		return transformToDefinition(*tablelandDD), nil
-	}
-
-	return nil, nil
+	return tablelandDD, nil
 }
 
 func (e *deviceDefinitionOnChainService) getTablelandTableName(ctx context.Context, manufacturerID *big.Int) (string, error) {
@@ -178,38 +173,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 	return &modelTableland[0], nil
 }
 
-func transformToDefinition(tblDD DeviceDefinitionTablelandModel) *models.DeviceDefinition {
-	data := &models.DeviceDefinition{
-		ID:           tblDD.ID,
-		Year:         int16(tblDD.Year),
-		Model:        tblDD.Model,
-		DeviceTypeID: null.StringFrom(tblDD.DeviceType),
-	}
-
-	if tblDD.Metadata != nil && len(tblDD.Metadata.DeviceAttributes) > 0 {
-		deviceTypeInfo := make(map[string]interface{})
-		metaData := make(map[string]interface{})
-
-		for _, attr := range tblDD.Metadata.DeviceAttributes {
-			metaData[attr.Name] = attr.Value
-		}
-
-		jsonKey := common2.VehicleMetadataKey
-		if tblDD.DeviceType == "aftermarket_device" {
-			jsonKey = common2.AftermarketMetadataKey
-		}
-
-		deviceTypeInfo[jsonKey] = metaData
-		j, err := json.Marshal(deviceTypeInfo)
-		if err == nil {
-			data.Metadata = null.JSONFrom(j)
-		}
-	}
-
-	return data
-}
-
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]DeviceDefinitionTablelandModel, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -246,12 +210,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 		return nil, err
 	}
 
-	result := make([]*models.DeviceDefinition, len(modelTableland))
-	for i, item := range modelTableland {
-		result[i] = transformToDefinition(item)
-	}
-
-	return result, nil
+	return modelTableland, nil
 }
 
 func (e *deviceDefinitionOnChainService) QueryTableland(queryParams map[string]string, result interface{}) error {
@@ -298,7 +257,7 @@ const (
 )
 
 // Create does a create for tableland, on-chain operation - checks if already exists
-func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
@@ -362,33 +321,21 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 		return nil, fmt.Errorf("failed create NewRegistryTransactor: %w", err)
 	}
 
-	if dd.DeviceTypeID.String == "" {
+	if dd.DeviceType == "" {
 		return nil, fmt.Errorf("dd DeviceTypeId is required")
 	}
 
 	deviceInputs := contracts.DeviceDefinitionInput{
-		Id:         dd.NameSlug,
+		Id:         dd.ID,
 		Model:      dd.Model,
 		Year:       big.NewInt(int64(dd.Year)),
 		Ksuid:      dd.ID,
-		DeviceType: dd.DeviceTypeID.String,
-		ImageURI:   GetDefaultImageURL(dd),
+		DeviceType: dd.DeviceType,
+		ImageURI:   GetDefaultImageURL(ctx, dd.ID, e.dbs().Reader.DB),
 	}
 
-	mdKey := common2.VehicleMetadataKey
-	if dd.DeviceTypeID.String == "aftermarket_device" {
-		mdKey = common2.AftermarketMetadataKey
-	}
-
-	if dd.Metadata.Valid {
-		attributes := GetDeviceAttributesTyped(dd.Metadata, mdKey)
-		type deviceAttributes struct {
-			DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
-		}
-		deviceAttributesStruct := deviceAttributes{
-			DeviceAttributes: attributes,
-		}
-		jsonData, _ := json.Marshal(deviceAttributesStruct)
+	if dd.Metadata != nil {
+		jsonData, _ := json.Marshal(dd.Metadata)
 		deviceInputs.Metadata = string(jsonData)
 	}
 
@@ -417,7 +364,7 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 
 	dbTrx := models.DefinitionTransaction{
 		TransactionHash: trx,
-		DefinitionID:    dd.NameSlug,
+		DefinitionID:    dd.ID,
 		ManufacturerID:  bigManufID.Int64(),
 	}
 	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
@@ -540,7 +487,7 @@ func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacture
 	e.logger.Info().Msgf("Executed UpdateDeviceDefinition %s with Trx %s in ManufacturerID %s", input.Id, trx, bigManufID)
 	dbTrx := models.DefinitionTransaction{
 		TransactionHash: trx,
-		DefinitionID:    existingTblDD.NameSlug,
+		DefinitionID:    existingTblDD.ID,
 		ManufacturerID:  bigManufID.Int64(),
 	}
 	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
@@ -653,7 +600,7 @@ func (e *deviceDefinitionOnChainService) Delete(ctx context.Context, manufacture
 	e.logger.Info().Msgf("Executed DeleteDeviceDefinition %s with Trx %s in ManufacturerID %s", id, trx, bigManufID)
 	dbTrx := models.DefinitionTransaction{
 		TransactionHash: trx,
-		DefinitionID:    existingTblDD.NameSlug,
+		DefinitionID:    existingTblDD.ID,
 		ManufacturerID:  bigManufID.Int64(),
 	}
 	err = dbTrx.Insert(ctx, e.dbs().Writer, boil.Infer())
@@ -748,11 +695,16 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 	return respAttrs
 }
 
-func GetDefaultImageURL(dd models.DeviceDefinition) string {
+func GetDefaultImageURL(ctx context.Context, definitionID string, db2 *sql.DB) string {
+
+	all, err := models.Images(models.ImageWhere.DefinitionID.EQ(definitionID)).All(ctx, db2)
+	if err != nil {
+		return ""
+	}
 	imgURI := ""
-	if dd.R != nil && dd.R.DefinitionImages != nil {
+	if all != nil {
 		w := 0
-		for _, image := range dd.R.DefinitionImages {
+		for _, image := range all {
 			extra := 0
 			if !image.NotExactImage {
 				extra = 2000 // we want to give preference to exact images

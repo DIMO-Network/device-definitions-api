@@ -405,7 +405,7 @@ func (r *deviceDefinitionRepository) CreateOrUpdate(ctx context.Context, dd *mod
 		dd.HardwareTemplateID = null.StringFrom(common.DefautlAutoPiTemplate)
 	}
 
-	if err := dd.Upsert(ctx, tx, true, []string{models.DeviceDefinitionColumns.ID}, boil.Infer(), boil.Infer()); err != nil {
+	if err := dd.Upsert(ctx, tx, true, []string{models.DeviceDefinitionColumns.NameSlug}, boil.Infer(), boil.Infer()); err != nil {
 		return nil, &exceptions.InternalError{
 			Err: err,
 		}

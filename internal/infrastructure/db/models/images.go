@@ -132,6 +132,15 @@ func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelperbool struct{ field string }
+
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var ImageWhere = struct {
 	ID            whereHelperstring
 	FuelAPIID     whereHelpernull_String
@@ -160,26 +169,15 @@ var ImageWhere = struct {
 
 // ImageRels is where relationship names are stored.
 var ImageRels = struct {
-	Definition string
-}{
-	Definition: "Definition",
-}
+}{}
 
 // imageR is where relationships are stored.
 type imageR struct {
-	Definition *DeviceDefinition `boil:"Definition" json:"Definition" toml:"Definition" yaml:"Definition"`
 }
 
 // NewStruct creates a new relationship struct
 func (*imageR) NewStruct() *imageR {
 	return &imageR{}
-}
-
-func (r *imageR) GetDefinition() *DeviceDefinition {
-	if r == nil {
-		return nil
-	}
-	return r.Definition
 }
 
 // imageL is where Load methods for each relationship are stored.
@@ -496,184 +494,6 @@ func (q imageQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 	}
 
 	return count > 0, nil
-}
-
-// Definition pointed to by the foreign key.
-func (o *Image) Definition(mods ...qm.QueryMod) deviceDefinitionQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"name_slug\" = ?", o.DefinitionID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DeviceDefinitions(queryMods...)
-}
-
-// LoadDefinition allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (imageL) LoadDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeImage interface{}, mods queries.Applicator) error {
-	var slice []*Image
-	var object *Image
-
-	if singular {
-		var ok bool
-		object, ok = maybeImage.(*Image)
-		if !ok {
-			object = new(Image)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeImage)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeImage))
-			}
-		}
-	} else {
-		s, ok := maybeImage.(*[]*Image)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeImage)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeImage))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &imageR{}
-		}
-		args[object.DefinitionID] = struct{}{}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &imageR{}
-			}
-
-			args[obj.DefinitionID] = struct{}{}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.device_definitions`),
-		qm.WhereIn(`device_definitions_api.device_definitions.name_slug in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceDefinition")
-	}
-
-	var resultSlice []*DeviceDefinition
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceDefinition")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_definitions")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_definitions")
-	}
-
-	if len(deviceDefinitionAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Definition = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceDefinitionR{}
-		}
-		foreign.R.DefinitionImages = append(foreign.R.DefinitionImages, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.DefinitionID == foreign.NameSlug {
-				local.R.Definition = foreign
-				if foreign.R == nil {
-					foreign.R = &deviceDefinitionR{}
-				}
-				foreign.R.DefinitionImages = append(foreign.R.DefinitionImages, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetDefinition of the image to the related item.
-// Sets o.R.Definition to related.
-// Adds o to related.R.DefinitionImages.
-func (o *Image) SetDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"device_definitions_api\".\"images\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"definition_id"}),
-		strmangle.WhereClause("\"", "\"", 2, imagePrimaryKeyColumns),
-	)
-	values := []interface{}{related.NameSlug, o.ID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.DefinitionID = related.NameSlug
-	if o.R == nil {
-		o.R = &imageR{
-			Definition: related,
-		}
-	} else {
-		o.R.Definition = related
-	}
-
-	if related.R == nil {
-		related.R = &deviceDefinitionR{
-			DefinitionImages: ImageSlice{o},
-		}
-	} else {
-		related.R.DefinitionImages = append(related.R.DefinitionImages, o)
-	}
-
-	return nil
 }
 
 // Images retrieves all the records using an executor.

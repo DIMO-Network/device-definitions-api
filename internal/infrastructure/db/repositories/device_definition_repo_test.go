@@ -350,8 +350,8 @@ func setupDeviceDefinitionWithStyles(t *testing.T, pdb db.Store, makeName string
 	dm := dbtesthelper.SetupCreateMake(t, makeName, pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(t, dm, modelName, year, pdb)
 
-	ds1 := dbtesthelper.SetupCreateStyle(t, dd.ID, "4dr SUV 4WD", "edmunds", "Wagon", pdb)
-	ds2 := dbtesthelper.SetupCreateStyle(t, dd.ID, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
+	ds1 := dbtesthelper.SetupCreateStyle(t, dd.NameSlug, "4dr SUV 4WD", "edmunds", "Wagon", pdb)
+	ds2 := dbtesthelper.SetupCreateStyle(t, dd.NameSlug, "Hard Top 2dr SUV AWD", "edmunds", "Open Top", pdb)
 
 	dd.R = dd.R.NewStruct()
 	dd.R.DefinitionDeviceStyles = append(dd.R.DefinitionDeviceStyles, &ds1)

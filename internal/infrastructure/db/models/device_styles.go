@@ -115,29 +115,19 @@ var DeviceStyleWhere = struct {
 
 // DeviceStyleRels is where relationship names are stored.
 var DeviceStyleRels = struct {
-	Definition      string
 	StyleVinNumbers string
 }{
-	Definition:      "Definition",
 	StyleVinNumbers: "StyleVinNumbers",
 }
 
 // deviceStyleR is where relationships are stored.
 type deviceStyleR struct {
-	Definition      *DeviceDefinition `boil:"Definition" json:"Definition" toml:"Definition" yaml:"Definition"`
-	StyleVinNumbers VinNumberSlice    `boil:"StyleVinNumbers" json:"StyleVinNumbers" toml:"StyleVinNumbers" yaml:"StyleVinNumbers"`
+	StyleVinNumbers VinNumberSlice `boil:"StyleVinNumbers" json:"StyleVinNumbers" toml:"StyleVinNumbers" yaml:"StyleVinNumbers"`
 }
 
 // NewStruct creates a new relationship struct
 func (*deviceStyleR) NewStruct() *deviceStyleR {
 	return &deviceStyleR{}
-}
-
-func (r *deviceStyleR) GetDefinition() *DeviceDefinition {
-	if r == nil {
-		return nil
-	}
-	return r.Definition
 }
 
 func (r *deviceStyleR) GetStyleVinNumbers() VinNumberSlice {
@@ -463,17 +453,6 @@ func (q deviceStyleQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
-// Definition pointed to by the foreign key.
-func (o *DeviceStyle) Definition(mods ...qm.QueryMod) deviceDefinitionQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"name_slug\" = ?", o.DefinitionID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DeviceDefinitions(queryMods...)
-}
-
 // StyleVinNumbers retrieves all the vin_number's VinNumbers with an executor via style_id column.
 func (o *DeviceStyle) StyleVinNumbers(mods ...qm.QueryMod) vinNumberQuery {
 	var queryMods []qm.QueryMod
@@ -486,126 +465,6 @@ func (o *DeviceStyle) StyleVinNumbers(mods ...qm.QueryMod) vinNumberQuery {
 	)
 
 	return VinNumbers(queryMods...)
-}
-
-// LoadDefinition allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (deviceStyleL) LoadDefinition(ctx context.Context, e boil.ContextExecutor, singular bool, maybeDeviceStyle interface{}, mods queries.Applicator) error {
-	var slice []*DeviceStyle
-	var object *DeviceStyle
-
-	if singular {
-		var ok bool
-		object, ok = maybeDeviceStyle.(*DeviceStyle)
-		if !ok {
-			object = new(DeviceStyle)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeDeviceStyle)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeDeviceStyle))
-			}
-		}
-	} else {
-		s, ok := maybeDeviceStyle.(*[]*DeviceStyle)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeDeviceStyle)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeDeviceStyle))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &deviceStyleR{}
-		}
-		args[object.DefinitionID] = struct{}{}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &deviceStyleR{}
-			}
-
-			args[obj.DefinitionID] = struct{}{}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.device_definitions`),
-		qm.WhereIn(`device_definitions_api.device_definitions.name_slug in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceDefinition")
-	}
-
-	var resultSlice []*DeviceDefinition
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceDefinition")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_definitions")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_definitions")
-	}
-
-	if len(deviceDefinitionAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Definition = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceDefinitionR{}
-		}
-		foreign.R.DefinitionDeviceStyles = append(foreign.R.DefinitionDeviceStyles, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.DefinitionID == foreign.NameSlug {
-				local.R.Definition = foreign
-				if foreign.R == nil {
-					foreign.R = &deviceDefinitionR{}
-				}
-				foreign.R.DefinitionDeviceStyles = append(foreign.R.DefinitionDeviceStyles, local)
-				break
-			}
-		}
-	}
-
-	return nil
 }
 
 // LoadStyleVinNumbers allows an eager lookup of values, cached into the
@@ -716,53 +575,6 @@ func (deviceStyleL) LoadStyleVinNumbers(ctx context.Context, e boil.ContextExecu
 				break
 			}
 		}
-	}
-
-	return nil
-}
-
-// SetDefinition of the deviceStyle to the related item.
-// Sets o.R.Definition to related.
-// Adds o to related.R.DefinitionDeviceStyles.
-func (o *DeviceStyle) SetDefinition(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceDefinition) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"device_definitions_api\".\"device_styles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"definition_id"}),
-		strmangle.WhereClause("\"", "\"", 2, deviceStylePrimaryKeyColumns),
-	)
-	values := []interface{}{related.NameSlug, o.ID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.DefinitionID = related.NameSlug
-	if o.R == nil {
-		o.R = &deviceStyleR{
-			Definition: related,
-		}
-	} else {
-		o.R.Definition = related
-	}
-
-	if related.R == nil {
-		related.R = &deviceDefinitionR{
-			DefinitionDeviceStyles: DeviceStyleSlice{o},
-		}
-	} else {
-		related.R.DefinitionDeviceStyles = append(related.R.DefinitionDeviceStyles, o)
 	}
 
 	return nil

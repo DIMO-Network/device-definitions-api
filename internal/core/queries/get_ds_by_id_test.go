@@ -40,12 +40,12 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 	ddWithPt.Metadata = null.JSONFrom([]byte(`{"vehicle_info": {"powertrain_type": "ICE"}}`))
 	_, err = ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err)
-	dsHybridOverride := dbtesthelper.SetupCreateStyle(t, ddWithPt.ID, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
+	dsHybridOverride := dbtesthelper.SetupCreateStyle(t, ddWithPt.NameSlug, "4dr Hatchback (1.8L 4cyl gas/electric hybrid CVT)", "drivly", "1", pdb)
 
 	rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd)
 	require.NoError(t, err)
-	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.ID).Times(3).Return(rp, nil)       // expect 3 times call since used in 3 tests
-	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), ddWithPt.ID).Times(1).Return(rp, nil) // expect 1 times call since used in 1 tests
+	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), dd.NameSlug).Times(3).Return(rp, nil)       // expect 3 times call since used in 3 tests
+	ddCacheSvc.EXPECT().GetDeviceDefinitionByID(gomock.Any(), ddWithPt.NameSlug).Times(1).Return(rp, nil) // expect 1 times call since used in 1 tests
 
 	tests := []struct {
 		name           string
@@ -80,9 +80,9 @@ func TestGetDeviceStyleByIDQueryHandler_Handle(t *testing.T) {
 
 			result := got.(coremodels.GetDeviceStyleQueryResult)
 			if result.ID == dsHybridOverride.ID {
-				assert.Equal(t, ddWithPt.ID, result.DefinitionID)
+				assert.Equal(t, ddWithPt.NameSlug, result.DefinitionID)
 			} else {
-				assert.Equal(t, dd.ID, result.DefinitionID)
+				assert.Equal(t, dd.NameSlug, result.DefinitionID)
 			}
 			pt := ""
 			for _, attribute := range result.DeviceDefinition.DeviceAttributes {

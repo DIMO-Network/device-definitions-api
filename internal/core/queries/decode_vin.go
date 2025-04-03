@@ -283,7 +283,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	ddExists := true
 	// if dd not found in tableland, we want to creat it
 	if tblDef == nil {
-		// metadata will only be set on create
+		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, *dd)
+
+		// no need for all this since we just create on chain
 		if errors.Is(err, sql.ErrNoRows) {
 			// this method creates on-chain as well as in dd database
 			dd, err := dc.ddRepository.GetOrCreate(ctx, txVinNumbers,

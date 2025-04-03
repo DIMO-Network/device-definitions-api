@@ -168,7 +168,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	RegisterDeviceDefinitionsRoutes(app, *m, jwtAuth)
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
-	RegisterDeviceMakesRoutes(app, *m)
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
