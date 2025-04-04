@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"net/http"
 	"sort"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 )
 
@@ -50,25 +50,6 @@ func SubModelsFromStylesDB(styles repoModel.DeviceStyleSlice) []string {
 	}
 	sort.Strings(sm)
 	return sm
-}
-
-/* Terminal colors */
-
-var Red = "\033[31m"
-var Reset = "\033[0m"
-var Green = "\033[32m"
-var Purple = "\033[35m"
-
-func PrintMMY(definition *repoModel.DeviceDefinition, color string, includeSource bool) string {
-	mk := ""
-	if definition.R != nil && definition.R.DeviceMake != nil {
-		mk = definition.R.DeviceMake.Name
-	}
-	if !includeSource {
-		return fmt.Sprintf("%s%d %s %s%s", color, definition.Year, mk, definition.Model, Reset)
-	}
-	return fmt.Sprintf("%s%d %s %s %s(source: %s)%s",
-		color, definition.Year, mk, definition.Model, Purple, definition.Source.String, Reset)
 }
 
 func BuildExternalIDs(externalIDsJSON null.JSON) []*models.ExternalID {
@@ -251,24 +232,20 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 	return respAttrs
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*models.GetDeviceDefinitionQueryResult, error) {
-	if dd.R == nil || dd.R.DeviceMake == nil || dd.R.DeviceType == nil {
-		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
+func BuildFromDeviceDefinitionToQueryResult(dd *gateways.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []repoModel.DeviceStyle, trx []repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
+	mdBytes := []byte("{}")
+	if dd.Metadata != nil {
+		mdBytes, _ = json.Marshal(dd.Metadata)
 	}
 	rp := &models.GetDeviceDefinitionQueryResult{
 		DeviceDefinitionID: dd.ID,
-		NameSlug:           dd.NameSlug,
-		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
+		NameSlug:           dd.ID,
+		Name:               BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model),
 		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
-		DeviceMake: models.DeviceMake{
-			ID:              dd.R.DeviceMake.ID,
-			Name:            dd.R.DeviceMake.Name,
-			LogoURL:         dd.R.DeviceMake.LogoURL,
-			OemPlatformName: dd.R.DeviceMake.OemPlatformName,
-			NameSlug:        dd.R.DeviceMake.NameSlug,
-		},
-		Metadata: dd.Metadata.JSON,
-		Verified: dd.Verified,
+		DeviceMake:         *dm,
+		Metadata:           mdBytes,
+		Verified:           true,
+		ImageURL:           dd.ImageURI,
 	}
 
 	// build object for integrations that have all the info
@@ -276,10 +253,10 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
 
 	// pull out the device type device attributes, egGetDev. vehicle information
-	rp.DeviceAttributes = GetDeviceAttributesTyped(dd.Metadata, dd.R.DeviceType.Metadatakey)
+	rp.DeviceAttributes = GetDeviceAttributesTyped(null.JSONFrom(mdBytes), dd.DeviceType)
 
-	if dd.R.DefinitionDeviceStyles != nil {
-		for _, ds := range dd.R.DefinitionDeviceStyles {
+	if dss != nil {
+		for _, ds := range dss {
 			deviceStyle := models.DeviceStyle{
 				ID:              ds.ID,
 				DefinitionID:    ds.DefinitionID,
@@ -287,7 +264,7 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 				Name:            ds.Name,
 				Source:          ds.Source,
 				SubModel:        ds.SubModel,
-				Metadata:        GetDeviceAttributesTyped(ds.Metadata, dd.R.DeviceType.Metadatakey),
+				Metadata:        GetDeviceAttributesTyped(ds.Metadata, dd.DeviceType),
 			}
 
 			if ds.HardwareTemplateID.Valid {
@@ -297,11 +274,12 @@ func BuildFromDeviceDefinitionToQueryResult(dd *repoModel.DeviceDefinition) (*mo
 			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
 		}
 	}
-	// trying pulling most recent images, pick the biggest one and where not exact image = false
-	rp.ImageURL = GetDefaultImageURL(dd)
 
-	if dd.TRXHashHex != nil {
-		rp.Transactions = dd.TRXHashHex
+	if trx != nil {
+		rp.Transactions = make([]string, len(trx))
+		for i, transaction := range trx {
+			rp.Transactions[i] = transaction.TransactionHash
+		}
 	}
 
 	return rp, nil

@@ -6,13 +6,11 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ericlagergren/decimal"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -68,21 +66,7 @@ func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, 
 	response := &grpc.GetDeviceDefinitionResponse{}
 	for _, v := range all {
 
-		v.R = v.R.NewStruct()
-		v.R.DeviceMake = &models.DeviceMake{
-			ID:              dm.ID,
-			Name:            dm.Name,
-			CreatedAt:       dm.CreatedAt,
-			UpdatedAt:       dm.UpdatedAt,
-			LogoURL:         dm.LogoURL,
-			OemPlatformName: dm.OemPlatformName,
-			NameSlug:        dm.NameSlug,
-			Metadata:        null.JSONFrom(dm.Metadata),
-		}
-		v.R.DeviceType = &models.DeviceType{
-			Metadatakey: common.VehicleMetadataKey,
-		}
-		dd, err := common.BuildFromDeviceDefinitionToQueryResult(v)
+		dd, err := common.BuildFromDeviceDefinitionToQueryResult(&v, dm)
 		if err != nil {
 			return nil, err
 		}
