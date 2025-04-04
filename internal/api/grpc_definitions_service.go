@@ -38,6 +38,7 @@ func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func
 
 //** Device Definitions
 
+// GetDeviceDefinitionByID used by: dimo-admin, cs-platform, valuations-api
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByIDsQuery{
@@ -49,16 +50,7 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByID(ctx context.Context, in
 	return result, nil
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlug(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugQuery{
-		DefinitionID: in.Slug,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionItemResponse)
-	return result, nil
-}
-
+// GetDeviceDefinitionByMMY used by: dimo-admin, cs-platform, devices-api
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByMMY(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMMYRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByMakeModelYearQuery{
@@ -120,6 +112,7 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 	return result, nil
 }
 
+// CreateDeviceDefinition used by: dimo-admin
 func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
 	// todo we could call the command directly, but maintain testability, what about the update, could it share logic
 	command := &commands.CreateDeviceDefinitionCommand{
@@ -145,53 +138,6 @@ func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in 
 	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
 
 	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID, NameSlug: result.NameSlug}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionAll(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionAllResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionGroupQuery{})
-
-	result := &p_grpc.GetDeviceDefinitionAllResponse{}
-
-	allDevices := qryResult.([]queries.GetAllDeviceDefinitionGroupQueryResult)
-
-	for _, device := range allDevices {
-		item := &p_grpc.GetDeviceDefinitionAllItemResponse{Make: device.Make}
-
-		for _, model := range device.Models {
-			itemModel := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModels{
-				Model: model.Model,
-			}
-
-			for _, modelYear := range model.Years {
-				itemYear := &p_grpc.GetDeviceDefinitionAllItemResponse_GetDeviceModelYears{
-					Year:               int32(modelYear.Year),
-					DeviceDefinitionID: modelYear.DeviceDefinitionID,
-				}
-				itemModel.Years = append(itemModel.Years, itemYear)
-			}
-
-			item.Models = append(item.Models, itemModel)
-		}
-
-		result.Items = append(result.Items, item)
-	}
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitions(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionQuery{})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDevicesMMYQuery{})
-	result := qryResult.(*p_grpc.GetDevicesMMYResponse)
-	return result, nil
 }
 
 // UpdateDeviceDefinition is used by admin tool to update tableland properties of a dd, and a couple augmented properties
@@ -235,20 +181,6 @@ func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in 
 	}
 
 	return &p_grpc.BaseResponse{Id: in.DeviceDefinitionId}, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionImagesByIDsQuery{
-		DefinitionID: in.Ids,
-	})
-
-	return qryResult.(*p_grpc.GetDeviceImagesResponse), nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionsWithHardwareTemplate(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDevicesMMYResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDefinitionsWithHWTemplateQuery{})
-
-	return qryResult.(*p_grpc.GetDevicesMMYResponse), nil
 }
 
 //** Integrations
@@ -302,31 +234,7 @@ func (s *GrpcDefinitionsService) GetIntegrationByTokenID(ctx context.Context, in
 	return s.prepareIntegrationResponse(item)
 }
 
-func (s *GrpcDefinitionsService) GetDeviceDefinitionIntegration(ctx context.Context, in *p_grpc.GetDeviceDefinitionIntegrationRequest) (*p_grpc.GetDeviceDefinitionIntegrationResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithRelsQuery{
-		DeviceDefinitionID: in.Id,
-	})
-
-	queryResult := qryResult.([]queries.GetDeviceDefinitionWithRelsQueryResult)
-
-	result := &p_grpc.GetDeviceDefinitionIntegrationResponse{}
-
-	for _, queryResult := range queryResult {
-		result.Integrations = append(result.Integrations, &p_grpc.DeviceIntegration{
-			Integration: &p_grpc.Integration{
-				Id:     queryResult.ID,
-				Type:   queryResult.Type,
-				Style:  queryResult.Style,
-				Vendor: queryResult.Vendor,
-			},
-			Region: queryResult.Region,
-		})
-	}
-
-	return result, nil
-}
-
+// GetDeviceDefinitionByMakeAndYearRange used by: dimo-admin and cs-support-platform
 func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx context.Context, in *p_grpc.GetDeviceDefinitionByMakeAndYearRangeRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionByMakeYearRangeQuery{
 		Make:      in.Make,
@@ -336,44 +244,6 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByMakeAndYearRange(ctx conte
 
 	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionOnChainByID(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionOnChainByIDQuery{
-		DeviceDefinitionID: in.Ids[0],
-		MakeSlug:           in.MakeSlug,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionsOnChain(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetAllDeviceDefinitionOnChainQuery{
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Year:               int(in.Year),
-		Model:              in.Model,
-		MakeSlug:           in.MakeSlug,
-		PageSize:           in.PageSize,
-		PageIndex:          in.PageIndex,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionBySlugName(ctx context.Context, in *p_grpc.GetDeviceDefinitionBySlugNameRequest) (*p_grpc.GetDeviceDefinitionItemResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionBySlugNameQuery{
-		Slug: in.Slug,
-	})
-
-	dd := qryResult.(*coremodels.GetDeviceDefinitionQueryResult)
-	result := common.BuildFromQueryResultToGRPC(dd)
 	return result, nil
 }
 
@@ -469,30 +339,6 @@ func (s *GrpcDefinitionsService) UpdateDeviceStyle(ctx context.Context, in *p_gr
 }
 
 //** Makes / Manufacturers
-
-func (s *GrpcDefinitionsService) GetDeviceMakeByName(ctx context.Context, in *p_grpc.GetDeviceMakeByNameRequest) (*p_grpc.DeviceMake, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeByNameQuery{
-		Name: in.Name,
-	})
-
-	deviceMake := qryResult.(coremodels.DeviceMake)
-
-	result := &p_grpc.DeviceMake{
-		Id:              deviceMake.ID,
-		Name:            deviceMake.Name,
-		NameSlug:        deviceMake.NameSlug,
-		LogoUrl:         deviceMake.LogoURL.String,
-		OemPlatformName: deviceMake.OemPlatformName.String,
-	}
-
-	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, deviceMake.Name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", deviceMake.Name)
-	}
-	result.TokenId = manufacturerID.Uint64()
-
-	return result, nil
-}
 
 func (s *GrpcDefinitionsService) GetDeviceMakeBySlug(ctx context.Context, in *p_grpc.GetDeviceMakeBySlugRequest) (*p_grpc.DeviceMake, error) {
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceMakeBySlugQuery{
