@@ -3,17 +3,14 @@ package queries
 import (
 	"context"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"math/big"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/volatiletech/null/v8"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -29,11 +26,10 @@ func (*GetDeviceMakeByTokenIDQuery) Key() string { return "GetDeviceMakeByTokenI
 type GetDeviceMakeByTokenIDQueryHandler struct {
 	DBS           func() *db.ReaderWriter
 	queryInstance *contracts.Registry
-	ddCache       services.DeviceDefinitionCacheService
 }
 
-func NewGetDeviceMakeByTokenIDQueryHandler(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry, ddCache services.DeviceDefinitionCacheService) GetDeviceMakeByTokenIDQueryHandler {
-	return GetDeviceMakeByTokenIDQueryHandler{DBS: dbs, queryInstance: registryInstance, ddCache: ddCache}
+func NewGetDeviceMakeByTokenIDQueryHandler(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry) GetDeviceMakeByTokenIDQueryHandler {
+	return GetDeviceMakeByTokenIDQueryHandler{DBS: dbs, queryInstance: registryInstance}
 }
 
 func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -54,14 +50,11 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 			Err: fmt.Errorf("failed to get manufacturer name by token id: %s", qry.TokenID),
 		}
 	}
-	dm, err := ch.ddCache.GetDeviceMakeByName(ctx, manufName)
-	if err != nil {
-		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device make by name: %s", manufName),
-		}
-	}
 
-	metadata := common.BuildDeviceMakeMetadata(null.JSONFrom(dm.Metadata))
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(manufName)).One(ctx, ch.DBS().Reader)
+	if err != nil {
+		return nil, &exceptions.InternalError{Err: err}
+	}
 
 	result := &p_grpc.DeviceMake{
 		Id:              dm.ID,
@@ -70,7 +63,6 @@ func (ch GetDeviceMakeByTokenIDQueryHandler) Handle(ctx context.Context, query m
 		OemPlatformName: dm.OemPlatformName.String,
 		NameSlug:        dm.NameSlug,
 		TokenId:         ti.Uint64(),
-		Metadata:        common.DeviceMakeMetadataToGRPC(metadata),
 		CreatedAt:       timestamppb.New(dm.CreatedAt),
 		UpdatedAt:       timestamppb.New(dm.UpdatedAt),
 	}

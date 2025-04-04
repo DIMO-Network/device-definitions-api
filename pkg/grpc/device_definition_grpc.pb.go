@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	DeviceDefinitionService_GetDeviceDefinitionByID_FullMethodName                 = "/grpc.DeviceDefinitionService/GetDeviceDefinitionByID"
 	DeviceDefinitionService_GetDeviceDefinitionByMMY_FullMethodName                = "/grpc.DeviceDefinitionService/GetDeviceDefinitionByMMY"
-	DeviceDefinitionService_GetDeviceMakeByName_FullMethodName                     = "/grpc.DeviceDefinitionService/GetDeviceMakeByName"
 	DeviceDefinitionService_GetDeviceMakeBySlug_FullMethodName                     = "/grpc.DeviceDefinitionService/GetDeviceMakeBySlug"
 	DeviceDefinitionService_GetDeviceMakeByTokenID_FullMethodName                  = "/grpc.DeviceDefinitionService/GetDeviceMakeByTokenID"
 	DeviceDefinitionService_GetDeviceMakes_FullMethodName                          = "/grpc.DeviceDefinitionService/GetDeviceMakes"
@@ -57,7 +56,6 @@ const (
 type DeviceDefinitionServiceClient interface {
 	GetDeviceDefinitionByID(ctx context.Context, in *GetDeviceDefinitionRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
-	GetDeviceMakeByName(ctx context.Context, in *GetDeviceMakeByNameRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakeBySlug(ctx context.Context, in *GetDeviceMakeBySlugRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakeByTokenID(ctx context.Context, in *GetDeviceMakeByTokenIdRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceMakeResponse, error)
@@ -106,15 +104,6 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByID(ctx context.Cont
 func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error) {
 	out := new(GetDeviceDefinitionItemResponse)
 	err := c.cc.Invoke(ctx, DeviceDefinitionService_GetDeviceDefinitionByMMY_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deviceDefinitionServiceClient) GetDeviceMakeByName(ctx context.Context, in *GetDeviceMakeByNameRequest, opts ...grpc.CallOption) (*DeviceMake, error) {
-	out := new(DeviceMake)
-	err := c.cc.Invoke(ctx, DeviceDefinitionService_GetDeviceMakeByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +350,6 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByMakeAndYearRange(ct
 type DeviceDefinitionServiceServer interface {
 	GetDeviceDefinitionByID(context.Context, *GetDeviceDefinitionRequest) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error)
-	GetDeviceMakeByName(context.Context, *GetDeviceMakeByNameRequest) (*DeviceMake, error)
 	GetDeviceMakeBySlug(context.Context, *GetDeviceMakeBySlugRequest) (*DeviceMake, error)
 	GetDeviceMakeByTokenID(context.Context, *GetDeviceMakeByTokenIdRequest) (*DeviceMake, error)
 	GetDeviceMakes(context.Context, *emptypb.Empty) (*GetDeviceMakeResponse, error)
@@ -400,9 +388,6 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByID(contex
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByMMY not implemented")
-}
-func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakeByName(context.Context, *GetDeviceMakeByNameRequest) (*DeviceMake, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceMakeByName not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceMakeBySlug(context.Context, *GetDeviceMakeBySlugRequest) (*DeviceMake, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceMakeBySlug not implemented")
@@ -528,24 +513,6 @@ func _DeviceDefinitionService_GetDeviceDefinitionByMMY_Handler(srv interface{}, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByMMY(ctx, req.(*GetDeviceDefinitionByMMYRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeviceDefinitionService_GetDeviceMakeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDeviceMakeByNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceMakeByName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceDefinitionService_GetDeviceMakeByName_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceMakeByName(ctx, req.(*GetDeviceMakeByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1032,10 +999,6 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDeviceDefinitionByMMY",
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionByMMY_Handler,
-		},
-		{
-			MethodName: "GetDeviceMakeByName",
-			Handler:    _DeviceDefinitionService_GetDeviceMakeByName_Handler,
 		},
 		{
 			MethodName: "GetDeviceMakeBySlug",

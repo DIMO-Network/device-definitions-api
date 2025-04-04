@@ -27,12 +27,11 @@ type GetDeviceStyleByIDQuery struct {
 func (*GetDeviceStyleByIDQuery) Key() string { return "GetDeviceStyleByIDQuery" }
 
 type GetDeviceStyleByIDQueryHandler struct {
-	DBS     func() *db.ReaderWriter
-	DDCache services.DeviceDefinitionCacheService
+	DBS func() *db.ReaderWriter
 }
 
-func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, cache services.DeviceDefinitionCacheService) GetDeviceStyleByIDQueryHandler {
-	return GetDeviceStyleByIDQueryHandler{DBS: dbs, DDCache: cache}
+func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter) GetDeviceStyleByIDQueryHandler {
+	return GetDeviceStyleByIDQueryHandler{DBS: dbs}
 }
 
 func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {

@@ -2,12 +2,11 @@ package services
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"testing"
 
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
-
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/stretchr/testify/assert"
@@ -35,9 +34,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	// used for test case where get powertrain from dd
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
-	ddWithPt.Metadata = null.JSONFrom([]byte(`{"vehicle_info": {"powertrain_type": "BEV"}}`))
-	_, err := ddWithPt.Update(ctx, pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
+	ddWithPt.Metadata.DeviceAttributes = append(ddWithPt.Metadata.DeviceAttributes, gateways.DeviceTypeAttribute{
+		Name:  "powertrain_type",
+		Value: "BEV",
+	})
 
 	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger, onChainSvc)
 	require.NoError(t, err)

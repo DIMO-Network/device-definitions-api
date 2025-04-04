@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/shared/db"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/DIMO-Network/shared"
 	"github.com/volatiletech/null/v8"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -35,18 +34,21 @@ type vinDecodingService struct {
 	drivlyAPISvc       gateways.DrivlyAPIService
 	vincarioAPISvc     gateways.VincarioAPIService
 	logger             *zerolog.Logger
-	repository         repositories.DeviceDefinitionRepository
 	autoIsoAPIService  gateways.AutoIsoAPIService
 	DATGroupAPIService gateways.DATGroupAPIService
+	onChainSvc         gateways.DeviceDefinitionOnChainService
+	dbs                func() *db.ReaderWriter
 }
 
-func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger, repository repositories.DeviceDefinitionRepository, datGroupAPIService gateways.DATGroupAPIService) VINDecodingService {
-	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger, repository: repository, DATGroupAPIService: datGroupAPIService}
+func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
+	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter) VINDecodingService {
+	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger,
+		onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
 }
 
 func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error) {
 
-	const DefaultDeviceDefinitionID = "22N2y6TCaDBYPUsXJb3u02bqN2I"
+	const DefaultDefinitionID = "ford_escape_2020"
 
 	result := &models.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
@@ -59,11 +61,11 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, err := c.repository.GetByID(ctx, DefaultDeviceDefinitionID)
+		dd, _, err := c.onChainSvc.GetDefinitionByID(ctx, DefaultDefinitionID, c.dbs().Reader)
 		if err != nil {
 			return nil, err
 		}
-		result = buildFromDD(vin, dd)
+		result = buildFromDDForTestVIN(vin, dd)
 		return result, nil
 	}
 
@@ -313,21 +315,15 @@ func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
 
-func buildFromDD(vin string, info *repoModel.DeviceDefinition) *models.VINDecodingInfoData {
+// buildFromDDForTestVIN meant for use with test VIN's
+func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandModel) *models.VINDecodingInfoData {
+	makeSlug := strings.Split(info.ID, "_")[0]
 
 	v := &models.VINDecodingInfoData{
 		VIN:   vin,
 		Year:  int32(info.Year),
-		Make:  info.R.DeviceMake.Name,
+		Make:  strings.ToUpper(makeSlug[:1]) + makeSlug[1:],
 		Model: info.Model,
-	}
-
-	if len(info.R.DefinitionDeviceStyles) > 0 {
-		v.StyleName = info.R.DefinitionDeviceStyles[0].Name
-	}
-
-	if info.ExternalID.Valid {
-		v.ExternalID = info.ExternalID.String
 	}
 
 	return v
