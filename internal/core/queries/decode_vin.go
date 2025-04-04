@@ -38,7 +38,6 @@ type DecodeVINQueryHandler struct {
 	dbs                            func() *db.ReaderWriter
 	vinDecodingService             services.VINDecodingService
 	logger                         *zerolog.Logger
-	ddRepository                   repositories.DeviceDefinitionRepository
 	vinRepository                  repositories.VINRepository
 	fuelAPIService                 gateways.FuelAPIService
 	powerTrainTypeService          services.PowerTrainTypeService
@@ -57,7 +56,7 @@ func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
 
 func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService services.VINDecodingService,
 	vinRepository repositories.VINRepository,
-	repository repositories.DeviceDefinitionRepository, logger *zerolog.Logger,
+	logger *zerolog.Logger,
 	fuelAPIService gateways.FuelAPIService,
 	powerTrainTypeService services.PowerTrainTypeService,
 	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DecodeVINQueryHandler {
@@ -65,7 +64,6 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 		dbs:                            dbs,
 		vinDecodingService:             vinDecodingService,
 		logger:                         logger,
-		ddRepository:                   repository,
 		vinRepository:                  vinRepository,
 		fuelAPIService:                 fuelAPIService,
 		powerTrainTypeService:          powerTrainTypeService,

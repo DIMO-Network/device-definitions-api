@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 )
 
@@ -20,24 +19,26 @@ type AutoIsoAPIService interface {
 }
 
 type autoIsoAPIService struct {
-	Settings      *config.Settings
 	httpClientVIN shared.HTTPClientWrapper
+	autoIsoAPIUid string
+	autoIsoAPIKey string
 }
 
-func NewAutoIsoAPIService(settings *config.Settings) AutoIsoAPIService {
-	if settings.AutoIsoAPIUid == "" || settings.AutoIsoAPIKey == "" {
+func NewAutoIsoAPIService(autoIsoAPIUid, autoIsoAPIKey string) AutoIsoAPIService {
+	if autoIsoAPIUid == "" || autoIsoAPIKey == "" {
 		panic("Drivly configuration not set")
 	}
 	hcwv, _ := shared.NewHTTPClientWrapper("http://bp.autoiso.pl", "", 10*time.Second, nil, false)
 
 	return &autoIsoAPIService{
-		Settings:      settings,
 		httpClientVIN: hcwv,
+		autoIsoAPIUid: autoIsoAPIUid,
+		autoIsoAPIKey: autoIsoAPIKey,
 	}
 }
 
 func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
-	input := ai.Settings.AutoIsoAPIUid + ai.Settings.AutoIsoAPIKey + vin
+	input := ai.autoIsoAPIUid + ai.autoIsoAPIKey + vin
 	// has with md5
 	hasher := md5.New()
 	hasher.Write([]byte(input))
