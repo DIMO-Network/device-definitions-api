@@ -8,18 +8,16 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/shared/db"
-	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/friendsofgo/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"
 )
@@ -75,10 +73,11 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByMMY(ctx context.Context, i
 	return result, nil
 }
 
+// GetFilteredDeviceDefinition used by: admin, cs-support-platform
 func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
+
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
-		MakeID:             in.MakeId,
-		IntegrationID:      in.IntegrationId,
+		MakeSlug:           in.MakeSlug,
 		DeviceDefinitionID: in.DeviceDefinitionId,
 		Year:               int(in.Year),
 		Model:              in.Model,
@@ -117,30 +116,6 @@ func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context
 			ExternalIds:  extIDs,
 		})
 	}
-
-	return result, nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionBySource(in *p_grpc.GetDeviceDefinitionBySourceRequest, stream p_grpc.DeviceDefinitionService_GetDeviceDefinitionBySourceServer) error {
-	qryResult, _ := s.Mediator.Send(context.Background(), &queries.GetDeviceDefinitionBySourceQuery{
-		Source: in.Source,
-	})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
-
-	for _, dd := range result.DeviceDefinitions {
-		if err := stream.Send(dd); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *GrpcDefinitionsService) GetDeviceDefinitionWithoutImages(ctx context.Context, _ *emptypb.Empty) (*p_grpc.GetDeviceDefinitionResponse, error) {
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionWithoutImageQuery{})
-
-	result := qryResult.(*p_grpc.GetDeviceDefinitionResponse)
 
 	return result, nil
 }
@@ -222,60 +197,44 @@ func (s *GrpcDefinitionsService) GetDevicesMMY(ctx context.Context, _ *emptypb.E
 // UpdateDeviceDefinition is used by admin tool to update tableland properties of a dd, and a couple augmented properties
 func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
 	// if verified = true, send update request to tableland
-
-	dbDD, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.NameSlug.EQ(in.DeviceDefinitionId)).One(ctx, s.dbs.Reader)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to find device definition")
-	}
-	dm, err := models.FindDeviceMake(ctx, s.dbs.Reader, dbDD.DeviceMakeID)
+	dm, err := models.FindDeviceMake(ctx, s.dbs.Reader, in.DeviceMakeId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find device make")
 	}
-	// on chain portion of update
-	trxHash := new(string)
-	if dbDD.Verified {
-		// check for any changes
-		manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, dm.Name)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", dm.Name)
-		}
-		ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, manufacturerID, in.DeviceDefinitionId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
-		}
-		shouldUpdate := false
-		metadata := gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes)
-		tblMetadata, err := json.Marshal(ddTbland.Metadata)
-		if err != nil {
-			s.logger.Err(err).Msgf("failed to unmarshall metadata for: %s", in.DeviceDefinitionId)
-		}
-		if string(tblMetadata) != metadata || ddTbland.DeviceType != in.DeviceTypeId || ddTbland.KSUID != dbDD.ID || ddTbland.ImageURI != in.ImageUrl {
-			shouldUpdate = true
-		}
-		if shouldUpdate {
-			trxHash, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionUpdateInput{
-				Id:         in.DeviceDefinitionId, // name slug
-				Metadata:   metadata,
-				Ksuid:      dbDD.ID,
-				DeviceType: in.DeviceTypeId,
-				ImageURI:   in.ImageUrl,
-			})
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to update device definition on chain")
-			}
-		}
-	}
-	// database portion of update, note we only update properties that are not on-chain as we intend to deprecate duplicate fields
-	dbDD.Verified = in.Verified
-	dbDD.HardwareTemplateID = null.StringFrom(in.HardwareTemplateId)
-	if trxHash != nil {
-		dbDD.TRXHashHex = append(dbDD.TRXHashHex, *trxHash)
-	}
-	_, err = dbDD.Update(ctx, s.dbs.Writer, boil.Infer())
+	// get manufacturer from chain
+	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, dm.Name)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to update device definition")
+		return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", dm.Name)
 	}
-	return &p_grpc.BaseResponse{Id: dbDD.NameSlug}, nil
+	ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, manufacturerID, in.DeviceDefinitionId) // repurposed for definitionID
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
+	}
+	shouldUpdate := false
+	metadata := gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes)
+	tblMetadata, err := json.Marshal(ddTbland.Metadata)
+	if err != nil {
+		s.logger.Err(err).Msgf("failed to unmarshall metadata for: %s", in.DeviceDefinitionId)
+	}
+	// check for any changes
+	if string(tblMetadata) != metadata || ddTbland.DeviceType != in.DeviceTypeId || ddTbland.ImageURI != in.ImageUrl {
+		shouldUpdate = true
+	}
+	if shouldUpdate {
+		// on chain portion of update
+		_, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionUpdateInput{
+			Id:         in.DeviceDefinitionId, // name slug
+			Metadata:   metadata,
+			Ksuid:      ddTbland.KSUID,
+			DeviceType: in.DeviceTypeId,
+			ImageURI:   in.ImageUrl,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to update device definition on chain")
+		}
+	}
+
+	return &p_grpc.BaseResponse{Id: in.DeviceDefinitionId}, nil
 }
 
 func (s *GrpcDefinitionsService) GetDeviceImagesByIDs(ctx context.Context, in *p_grpc.GetDeviceDefinitionRequest) (*p_grpc.GetDeviceImagesResponse, error) {

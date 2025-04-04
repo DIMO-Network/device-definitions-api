@@ -282,9 +282,9 @@ message GetDeviceDefinitionAllItemResponse {
 }
 
 message FilterDeviceDefinitionRequest {
-  string make_id = 1;
-  string integration_id = 2;
-  string deviceDefinition_id = 3;
+  string make_id = 1 [deprecated=true];
+  string integration_id = 2 [deprecated=true];
+  string deviceDefinition_id = 3 [deprecated=true];
   int32 year = 4;
   string model = 5;
   repeated string verified_vin_list = 6;
@@ -484,8 +484,6 @@ service DeviceDefinitionService {
   rpc GetDevicesMMY(google.protobuf.Empty) returns (GetDevicesMMYResponse);
   rpc GetDeviceDefinitionsWithHardwareTemplate(google.protobuf.Empty) returns (GetDevicesMMYResponse);
   rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
-  rpc GetDeviceDefinitionBySource(GetDeviceDefinitionBySourceRequest) returns (stream GetDeviceDefinitionItemResponse);
-  rpc GetDeviceDefinitionWithoutImages(google.protobuf.Empty) returns (GetDeviceDefinitionResponse);
   rpc GetDeviceDefinitionAll(google.protobuf.Empty) returns (GetDeviceDefinitionAllResponse);
   rpc GetDeviceMakeByName(GetDeviceMakeByNameRequest) returns (DeviceMake);
   rpc GetDeviceMakeBySlug(GetDeviceMakeBySlugRequest) returns (DeviceMake);

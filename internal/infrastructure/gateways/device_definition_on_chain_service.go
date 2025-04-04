@@ -43,6 +43,7 @@ import (
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
+	GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error)
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
@@ -119,7 +120,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	}
 	manufacturerSlug := split[0]
 	// call out to identity-api w/ caching
-	manufacturer, err := e.getManufacturer(ctx, manufacturerSlug, reader)
+	manufacturer, err := e.GetManufacturer(ctx, manufacturerSlug, reader)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
@@ -128,7 +129,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	return tblDD, manufacturerID, err
 }
 
-func (e *deviceDefinitionOnChainService) getManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {
+func (e *deviceDefinitionOnChainService) GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {
 	value, found := e.inmemCache.Get(manufacturerSlug)
 	if found {
 		return value.(*Manufacturer), nil

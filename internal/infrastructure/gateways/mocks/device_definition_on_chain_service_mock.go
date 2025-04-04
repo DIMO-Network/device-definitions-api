@@ -46,7 +46,7 @@ func (m *MockDeviceDefinitionOnChainService) EXPECT() *MockDeviceDefinitionOnCha
 }
 
 // Create mocks base method.
-func (m *MockDeviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models.DeviceDefinition) (*string, error) {
+func (m *MockDeviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd gateways.DeviceDefinitionTablelandModel) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, mk, dd)
 	ret0, _ := ret[0].(*string)
@@ -107,10 +107,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDefinitionTableland
 }
 
 // GetDeviceDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*gateways.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeviceDefinitionByID", ctx, manufacturerID, ID)
-	ret0, _ := ret[0].(*models.DeviceDefinition)
+	ret0, _ := ret[0].(*gateways.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -122,10 +122,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionByI
 }
 
 // GetDeviceDefinitions mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]*models.DeviceDefinition, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]gateways.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeviceDefinitions", ctx, manufacturerID, ID, model, year, pageIndex, pageSize)
-	ret0, _ := ret[0].([]*models.DeviceDefinition)
+	ret0, _ := ret[0].([]gateways.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -134,6 +134,21 @@ func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Co
 func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitions(ctx, manufacturerID, ID, model, year, pageIndex, pageSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetDeviceDefinitions), ctx, manufacturerID, ID, model, year, pageIndex, pageSize)
+}
+
+// GetManufacturer mocks base method.
+func (m *MockDeviceDefinitionOnChainService) GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*gateways.Manufacturer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManufacturer", ctx, manufacturerSlug, reader)
+	ret0, _ := ret[0].(*gateways.Manufacturer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManufacturer indicates an expected call of GetManufacturer.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturer(ctx, manufacturerSlug, reader any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturer", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetManufacturer), ctx, manufacturerSlug, reader)
 }
 
 // Update mocks base method.

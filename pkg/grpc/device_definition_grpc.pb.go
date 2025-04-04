@@ -26,8 +26,6 @@ const (
 	DeviceDefinitionService_GetDevicesMMY_FullMethodName                            = "/grpc.DeviceDefinitionService/GetDevicesMMY"
 	DeviceDefinitionService_GetDeviceDefinitionsWithHardwareTemplate_FullMethodName = "/grpc.DeviceDefinitionService/GetDeviceDefinitionsWithHardwareTemplate"
 	DeviceDefinitionService_GetDeviceDefinitionByMMY_FullMethodName                 = "/grpc.DeviceDefinitionService/GetDeviceDefinitionByMMY"
-	DeviceDefinitionService_GetDeviceDefinitionBySource_FullMethodName              = "/grpc.DeviceDefinitionService/GetDeviceDefinitionBySource"
-	DeviceDefinitionService_GetDeviceDefinitionWithoutImages_FullMethodName         = "/grpc.DeviceDefinitionService/GetDeviceDefinitionWithoutImages"
 	DeviceDefinitionService_GetDeviceDefinitionAll_FullMethodName                   = "/grpc.DeviceDefinitionService/GetDeviceDefinitionAll"
 	DeviceDefinitionService_GetDeviceMakeByName_FullMethodName                      = "/grpc.DeviceDefinitionService/GetDeviceMakeByName"
 	DeviceDefinitionService_GetDeviceMakeBySlug_FullMethodName                      = "/grpc.DeviceDefinitionService/GetDeviceMakeBySlug"
@@ -73,8 +71,6 @@ type DeviceDefinitionServiceClient interface {
 	GetDevicesMMY(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDevicesMMYResponse, error)
 	GetDeviceDefinitionsWithHardwareTemplate(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDevicesMMYResponse, error)
 	GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error)
-	GetDeviceDefinitionBySource(ctx context.Context, in *GetDeviceDefinitionBySourceRequest, opts ...grpc.CallOption) (DeviceDefinitionService_GetDeviceDefinitionBySourceClient, error)
-	GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionAll(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionAllResponse, error)
 	GetDeviceMakeByName(ctx context.Context, in *GetDeviceMakeByNameRequest, opts ...grpc.CallOption) (*DeviceMake, error)
 	GetDeviceMakeBySlug(ctx context.Context, in *GetDeviceMakeBySlugRequest, opts ...grpc.CallOption) (*DeviceMake, error)
@@ -166,47 +162,6 @@ func (c *deviceDefinitionServiceClient) GetDeviceDefinitionsWithHardwareTemplate
 func (c *deviceDefinitionServiceClient) GetDeviceDefinitionByMMY(ctx context.Context, in *GetDeviceDefinitionByMMYRequest, opts ...grpc.CallOption) (*GetDeviceDefinitionItemResponse, error) {
 	out := new(GetDeviceDefinitionItemResponse)
 	err := c.cc.Invoke(ctx, DeviceDefinitionService_GetDeviceDefinitionByMMY_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deviceDefinitionServiceClient) GetDeviceDefinitionBySource(ctx context.Context, in *GetDeviceDefinitionBySourceRequest, opts ...grpc.CallOption) (DeviceDefinitionService_GetDeviceDefinitionBySourceClient, error) {
-	stream, err := c.cc.NewStream(ctx, &DeviceDefinitionService_ServiceDesc.Streams[0], DeviceDefinitionService_GetDeviceDefinitionBySource_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &deviceDefinitionServiceGetDeviceDefinitionBySourceClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type DeviceDefinitionService_GetDeviceDefinitionBySourceClient interface {
-	Recv() (*GetDeviceDefinitionItemResponse, error)
-	grpc.ClientStream
-}
-
-type deviceDefinitionServiceGetDeviceDefinitionBySourceClient struct {
-	grpc.ClientStream
-}
-
-func (x *deviceDefinitionServiceGetDeviceDefinitionBySourceClient) Recv() (*GetDeviceDefinitionItemResponse, error) {
-	m := new(GetDeviceDefinitionItemResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *deviceDefinitionServiceClient) GetDeviceDefinitionWithoutImages(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetDeviceDefinitionResponse, error) {
-	out := new(GetDeviceDefinitionResponse)
-	err := c.cc.Invoke(ctx, DeviceDefinitionService_GetDeviceDefinitionWithoutImages_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -520,8 +475,6 @@ type DeviceDefinitionServiceServer interface {
 	GetDevicesMMY(context.Context, *emptypb.Empty) (*GetDevicesMMYResponse, error)
 	GetDeviceDefinitionsWithHardwareTemplate(context.Context, *emptypb.Empty) (*GetDevicesMMYResponse, error)
 	GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error)
-	GetDeviceDefinitionBySource(*GetDeviceDefinitionBySourceRequest, DeviceDefinitionService_GetDeviceDefinitionBySourceServer) error
-	GetDeviceDefinitionWithoutImages(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error)
 	GetDeviceDefinitionAll(context.Context, *emptypb.Empty) (*GetDeviceDefinitionAllResponse, error)
 	GetDeviceMakeByName(context.Context, *GetDeviceMakeByNameRequest) (*DeviceMake, error)
 	GetDeviceMakeBySlug(context.Context, *GetDeviceMakeBySlugRequest) (*DeviceMake, error)
@@ -579,12 +532,6 @@ func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionsWithHardwa
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionByMMY(context.Context, *GetDeviceDefinitionByMMYRequest) (*GetDeviceDefinitionItemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionByMMY not implemented")
-}
-func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionBySource(*GetDeviceDefinitionBySourceRequest, DeviceDefinitionService_GetDeviceDefinitionBySourceServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionBySource not implemented")
-}
-func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionWithoutImages(context.Context, *emptypb.Empty) (*GetDeviceDefinitionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionWithoutImages not implemented")
 }
 func (UnimplementedDeviceDefinitionServiceServer) GetDeviceDefinitionAll(context.Context, *emptypb.Empty) (*GetDeviceDefinitionAllResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceDefinitionAll not implemented")
@@ -803,45 +750,6 @@ func _DeviceDefinitionService_GetDeviceDefinitionByMMY_Handler(srv interface{}, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionByMMY(ctx, req.(*GetDeviceDefinitionByMMYRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeviceDefinitionService_GetDeviceDefinitionBySource_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetDeviceDefinitionBySourceRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionBySource(m, &deviceDefinitionServiceGetDeviceDefinitionBySourceServer{stream})
-}
-
-type DeviceDefinitionService_GetDeviceDefinitionBySourceServer interface {
-	Send(*GetDeviceDefinitionItemResponse) error
-	grpc.ServerStream
-}
-
-type deviceDefinitionServiceGetDeviceDefinitionBySourceServer struct {
-	grpc.ServerStream
-}
-
-func (x *deviceDefinitionServiceGetDeviceDefinitionBySourceServer) Send(m *GetDeviceDefinitionItemResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _DeviceDefinitionService_GetDeviceDefinitionWithoutImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionWithoutImages(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceDefinitionService_GetDeviceDefinitionWithoutImages_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceDefinitionServiceServer).GetDeviceDefinitionWithoutImages(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1472,10 +1380,6 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionByMMY_Handler,
 		},
 		{
-			MethodName: "GetDeviceDefinitionWithoutImages",
-			Handler:    _DeviceDefinitionService_GetDeviceDefinitionWithoutImages_Handler,
-		},
-		{
 			MethodName: "GetDeviceDefinitionAll",
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionAll_Handler,
 		},
@@ -1608,12 +1512,6 @@ var DeviceDefinitionService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DeviceDefinitionService_GetDeviceDefinitionsOnChain_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "GetDeviceDefinitionBySource",
-			Handler:       _DeviceDefinitionService_GetDeviceDefinitionBySource_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "pkg/grpc/device_definition.proto",
 }
