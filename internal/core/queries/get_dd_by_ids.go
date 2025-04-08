@@ -3,14 +3,15 @@ package queries
 import (
 	"context"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared/db"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -23,17 +24,16 @@ type GetDeviceDefinitionByIDsQuery struct {
 func (*GetDeviceDefinitionByIDsQuery) Key() string { return "GetDeviceDefinitionByIDsQuery" }
 
 type GetDeviceDefinitionByIDsQueryHandler struct {
-	DDCache    services.DeviceDefinitionCacheService
+	dbs        func() *db.ReaderWriter
 	log        *zerolog.Logger
-	repository repositories.DeviceDefinitionRepository
+	onChainSvc gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetDeviceDefinitionByIDsQueryHandler(cache services.DeviceDefinitionCacheService, log *zerolog.Logger,
-	repository repositories.DeviceDefinitionRepository) GetDeviceDefinitionByIDsQueryHandler {
+func NewGetDeviceDefinitionByIDsQueryHandler(log *zerolog.Logger, onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDsQueryHandler {
 	return GetDeviceDefinitionByIDsQueryHandler{
-		DDCache:    cache,
+		onChainSvc: onChainSvc,
 		log:        log,
-		repository: repository,
+		dbs:        dbs,
 	}
 }
 
@@ -52,7 +52,7 @@ func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query
 	}
 
 	for _, ddid := range qry.DeviceDefinitionID {
-		dd, err := ch.repository.GetByID(ctx, ddid)
+		dd, manufId, err := ch.onChainSvc.GetDefinitionByID(ctx, ddid, ch.dbs().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,18 @@ func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query
 				Err: fmt.Errorf("could not find device definition id: %s", ddid),
 			}
 		}
-		rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd)
+		// todo refactor this out, same pattern in a couple places
+		makeName, err := ch.onChainSvc.GetManufacturerNameByID(ctx, manufId)
+		if err != nil {
+			return nil, err
+		}
+		dm, err := models.DeviceMakes(models.DeviceMakeWhere.Name.EQ(makeName)).One(ctx, ch.dbs().Reader)
+		if err != nil {
+			return nil, err
+		}
+		dss, _ := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(ddid)).All(ctx, ch.dbs().Reader)
+		trx, _ := models.DefinitionTransactions(models.DefinitionTransactionWhere.DefinitionID.EQ(ddid)).All(ctx, ch.dbs().Reader)
+		rp, err := common.BuildFromDeviceDefinitionToQueryResult(dd, coremodels.ConvertDeviceMakeFromDB(dm), dss, trx)
 		if err != nil {
 			return nil, err
 		}

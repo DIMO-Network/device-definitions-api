@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 )
 
@@ -26,11 +25,10 @@ func (*CreateDeviceStyleCommand) Key() string { return "CreateDeviceStyleCommand
 
 type CreateDeviceStyleCommandHandler struct {
 	repository repositories.DeviceStyleRepository
-	ddCache    services.DeviceDefinitionCacheService
 }
 
-func NewCreateDeviceStyleCommandHandler(repository repositories.DeviceStyleRepository, cache services.DeviceDefinitionCacheService) CreateDeviceStyleCommandHandler {
-	return CreateDeviceStyleCommandHandler{repository: repository, ddCache: cache}
+func NewCreateDeviceStyleCommandHandler(repository repositories.DeviceStyleRepository) CreateDeviceStyleCommandHandler {
+	return CreateDeviceStyleCommandHandler{repository: repository}
 }
 
 func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -42,9 +40,6 @@ func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query medi
 	if err != nil {
 		return nil, err
 	}
-
-	// Remove Cache
-	ch.ddCache.DeleteDeviceDefinitionCacheByID(ctx, command.DefinitionID)
 
 	return CreateDeviceStyleCommandResult{ID: ds.ID}, nil
 }

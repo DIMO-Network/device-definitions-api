@@ -151,6 +151,21 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturer(ctx, m
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturer", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetManufacturer), ctx, manufacturerSlug, reader)
 }
 
+// GetManufacturerNameByID mocks base method.
+func (m *MockDeviceDefinitionOnChainService) GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManufacturerNameByID", ctx, manufacturerID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManufacturerNameByID indicates an expected call of GetManufacturerNameByID.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturerNameByID(ctx, manufacturerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturerNameByID", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetManufacturerNameByID), ctx, manufacturerID)
+}
+
 // Update mocks base method.
 func (m *MockDeviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error) {
 	m.ctrl.T.Helper()

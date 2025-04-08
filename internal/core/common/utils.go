@@ -232,7 +232,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 	return respAttrs
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *gateways.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []repoModel.DeviceStyle, trx []repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
+func BuildFromDeviceDefinitionToQueryResult(dd *gateways.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []*repoModel.DeviceStyle, trx []*repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
 	mdBytes := []byte("{}")
 	if dd.Metadata != nil {
 		mdBytes, _ = json.Marshal(dd.Metadata)

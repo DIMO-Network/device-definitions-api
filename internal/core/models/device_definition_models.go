@@ -3,6 +3,7 @@ package models
 
 import (
 	"encoding/json"
+	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"math/big"
 	"time"
 
@@ -110,4 +111,19 @@ type DeviceMakeMetadata struct {
 
 type GetDeviceDefinitionHardwareTemplateQueryResult struct {
 	TemplateID string `json:"template_id"`
+}
+
+func ConvertDeviceMakeFromDB(dmDb *repoModel.DeviceMake) *DeviceMake {
+	if dmDb == nil {
+		return nil
+	}
+	return &DeviceMake{
+		ID:              dmDb.ID,
+		Name:            dmDb.Name,
+		LogoURL:         dmDb.LogoURL,
+		OemPlatformName: dmDb.OemPlatformName,
+		NameSlug:        dmDb.NameSlug,
+		CreatedAt:       dmDb.CreatedAt,
+		UpdatedAt:       dmDb.UpdatedAt,
+	}
 }

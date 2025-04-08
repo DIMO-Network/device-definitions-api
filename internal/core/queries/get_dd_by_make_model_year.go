@@ -3,10 +3,16 @@ package queries
 import (
 	"context"
 	"fmt"
-
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/db"
+	"github.com/ericlagergren/decimal"
+	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type GetDeviceDefinitionByMakeModelYearQuery struct {
@@ -20,26 +26,48 @@ func (*GetDeviceDefinitionByMakeModelYearQuery) Key() string {
 }
 
 type GetDeviceDefinitionByMakeModelYearQueryHandler struct {
-	DDCache services.DeviceDefinitionCacheService
+	dbs        func() *db.ReaderWriter
+	onChainSvc gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetDeviceDefinitionByMakeModelYearQueryHandler(cache services.DeviceDefinitionCacheService) GetDeviceDefinitionByMakeModelYearQueryHandler {
+func NewGetDeviceDefinitionByMakeModelYearQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByMakeModelYearQueryHandler {
 	return GetDeviceDefinitionByMakeModelYearQueryHandler{
-		DDCache: cache,
+		onChainSvc: onChainSvc,
+		dbs:        dbs,
 	}
 }
 
 func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetDeviceDefinitionByMakeModelYearQuery)
+	makeSlug := shared.SlugString(qry.Make)
+	manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, makeSlug, ch.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
 
-	dd, _ := ch.DDCache.GetDeviceDefinitionByMakeModelAndYears(ctx, qry.Make, qry.Model, qry.Year)
+	manufacturerID := types.NewNullDecimal(decimal.New(int64(manufacturer.TokenID), 0))
+	definitions, err := ch.onChainSvc.GetDeviceDefinitions(ctx, manufacturerID, "", qry.Model, qry.Year, 0, 100)
+	if err != nil {
+		return nil, err
+	}
 
-	if dd == nil {
+	if definitions == nil || len(definitions) == 0 {
 		return nil, &exceptions.NotFoundError{
 			Err: fmt.Errorf("could not find device definition with MMY: %s %s %d", qry.Make, qry.Model, qry.Year),
 		}
 	}
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, ch.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
+	dss, _ := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(definitions[0].ID)).All(ctx, ch.dbs().Reader)
+	trx, _ := models.DefinitionTransactions(models.DefinitionTransactionWhere.DefinitionID.EQ(definitions[0].ID)).All(ctx, ch.dbs().Reader)
 
-	return dd, nil
+	queryResult, err := common.BuildFromDeviceDefinitionToQueryResult(&definitions[0], coremodels.ConvertDeviceMakeFromDB(dm), dss, trx)
+	if err != nil {
+		return nil, err
+	}
+
+	return queryResult, nil
 }

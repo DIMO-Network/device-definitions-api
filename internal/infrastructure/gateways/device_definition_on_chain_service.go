@@ -44,6 +44,7 @@ import (
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
 	GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error)
+	GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error)
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
@@ -104,12 +105,22 @@ func (e *deviceDefinitionOnChainService) getTablelandTableName(ctx context.Conte
 	}
 
 	tableName, err := queryInstance.GetDeviceDefinitionTableName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
+
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to getTablelandTableName for %d", manufacturerID.Uint64())
 	}
 	e.inmemCache.Set(cacheKey, tableName, time.Hour*300)
 
 	return tableName, nil
+}
+
+func (e *deviceDefinitionOnChainService) GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error) {
+	contractAddress := e.settings.EthereumRegistryAddress
+	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	if err != nil {
+		return "", fmt.Errorf("failed to establish NewRegistry: %w", err)
+	}
+	return queryInstance.GetManufacturerNameById(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerID)
 }
 
 // GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
