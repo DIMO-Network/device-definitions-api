@@ -5,13 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"strings"
 
 	"github.com/tidwall/gjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -27,11 +26,12 @@ type GetDeviceStyleByIDQuery struct {
 func (*GetDeviceStyleByIDQuery) Key() string { return "GetDeviceStyleByIDQuery" }
 
 type GetDeviceStyleByIDQueryHandler struct {
-	DBS func() *db.ReaderWriter
+	DBS        func() *db.ReaderWriter
+	onChainSvc gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter) GetDeviceStyleByIDQueryHandler {
-	return GetDeviceStyleByIDQueryHandler{DBS: dbs}
+func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, onchainSvc gateways.DeviceDefinitionOnChainService) GetDeviceStyleByIDQueryHandler {
+	return GetDeviceStyleByIDQueryHandler{DBS: dbs, onChainSvc: onchainSvc}
 }
 
 func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -49,7 +49,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, ds.DefinitionID)
+	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, ds.DefinitionID, ch.DBS().Reader)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),
@@ -65,7 +65,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		SubModel:           ds.SubModel,
 		HardwareTemplateID: ds.HardwareTemplateID.String,
 		DeviceDefinition: coremodels.GetDeviceDefinitionStyleQueryResult{
-			DeviceAttributes: dd.DeviceAttributes, // copy any attributes from parent DD
+			DeviceAttributes: coremodels.ConvertMetadataToDeviceAttributes(dd.Metadata), // copy any attributes from parent DD
 		},
 	}
 	// first see if style metadata has powertrain, most cases will be blank
@@ -105,11 +105,12 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 	// if no powertrain attribute found, set it, defaulting to parent DD if nothing resulted from above logic
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
-			ddPt := gjson.GetBytes(dd.Metadata, common.PowerTrainType).String()
-			if len(ddPt) > 0 {
-				powerTrainType = ddPt
-			} else {
-				powerTrainType = models.PowertrainICE // default to ICE if nothing found
+			powerTrainType = models.PowertrainICE // default to ICE if nothing found
+			for _, attribute := range dd.Metadata.DeviceAttributes {
+				if attribute.Name == common.PowerTrainType {
+					powerTrainType = attribute.Value
+					break
+				}
 			}
 		}
 		deviceStyleResult.DeviceDefinition.DeviceAttributes = append(deviceStyleResult.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
