@@ -166,6 +166,21 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturerNameByI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturerNameByID", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).GetManufacturerNameByID), ctx, manufacturerID)
 }
 
+// QueryDefinitionsCustom mocks base method.
+func (m *MockDeviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID types.NullDecimal, whereClause string, pageIndex int) ([]gateways.DeviceDefinitionTablelandModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryDefinitionsCustom", ctx, manufacturerID, whereClause, pageIndex)
+	ret0, _ := ret[0].([]gateways.DeviceDefinitionTablelandModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryDefinitionsCustom indicates an expected call of QueryDefinitionsCustom.
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) QueryDefinitionsCustom(ctx, manufacturerID, whereClause, pageIndex any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryDefinitionsCustom", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).QueryDefinitionsCustom), ctx, manufacturerID, whereClause, pageIndex)
+}
+
 // Update mocks base method.
 func (m *MockDeviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error) {
 	m.ctrl.T.Helper()

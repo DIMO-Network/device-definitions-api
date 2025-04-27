@@ -54,6 +54,7 @@ type DeviceDefinitionOnChainService interface {
 	Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
+	QueryDefinitionsCustom(ctx context.Context, manufacturerID types.NullDecimal, whereClause string, pageIndex int) ([]DeviceDefinitionTablelandModel, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -212,6 +213,31 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	}
 
 	statement := fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", tableName, whereClause, pageSize, pageIndex)
+
+	queryParams := map[string]string{
+		"statement": statement,
+	}
+
+	var modelTableland []DeviceDefinitionTablelandModel
+	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
+		return nil, err
+	}
+
+	return modelTableland, nil
+}
+
+// QueryDefinitionsCustom queries tableland definitions oem table based on manuf ID. Always page size of 50, but you can alter the page index
+func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID types.NullDecimal, whereClause string, pageIndex int) ([]DeviceDefinitionTablelandModel, error) {
+	if manufacturerID.IsZero() {
+		return nil, fmt.Errorf("manufacturerID cannot be 0")
+	}
+	bigManufID := manufacturerID.Int(new(big.Int))
+	tableName, err := e.getTablelandTableName(ctx, bigManufID)
+	if err != nil {
+		return nil, err
+	}
+
+	statement := fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", tableName, whereClause, 50, pageIndex)
 
 	queryParams := map[string]string{
 		"statement": statement,

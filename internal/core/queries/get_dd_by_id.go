@@ -3,9 +3,10 @@ package queries
 import (
 	"context"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 )
 
@@ -16,12 +17,14 @@ type GetDeviceDefinitionByIDQuery struct {
 func (*GetDeviceDefinitionByIDQuery) Key() string { return "GetDeviceDefinitionByIdQuery" }
 
 type GetDeviceDefinitionByIDQueryHandler struct {
-	DDCache services.DeviceDefinitionCacheService
+	dbs        func() *db.ReaderWriter
+	onChainSvc gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetDeviceDefinitionByIDQueryHandler(cache services.DeviceDefinitionCacheService) GetDeviceDefinitionByIDQueryHandler {
+func NewGetDeviceDefinitionByIDQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryHandler {
 	return GetDeviceDefinitionByIDQueryHandler{
-		DDCache: cache,
+		onChainSvc: onChainSvc,
+		dbs:        dbs,
 	}
 }
 
@@ -29,7 +32,7 @@ func (ch GetDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context, query 
 
 	qry := query.(*GetDeviceDefinitionByIDQuery)
 
-	dd, err := ch.DDCache.GetDeviceDefinitionByID(ctx, qry.DeviceDefinitionID)
+	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DeviceDefinitionID, ch.dbs().Reader)
 
 	if err != nil {
 		return nil, err

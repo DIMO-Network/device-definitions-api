@@ -2,10 +2,11 @@ package queries
 
 import (
 	"context"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 )
 
@@ -20,20 +21,28 @@ func (*GetAllDeviceDefinitionByMakeYearRangeQuery) Key() string {
 }
 
 type GetAllDeviceDefinitionByMakeYearRangeQueryHandler struct {
-	Repository repositories.DeviceDefinitionRepository
+	dbs        func() *db.ReaderWriter
+	onChainSvc gateways.DeviceDefinitionOnChainService
 }
 
-func NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(repository repositories.DeviceDefinitionRepository) GetAllDeviceDefinitionByMakeYearRangeQueryHandler {
+func NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetAllDeviceDefinitionByMakeYearRangeQueryHandler {
 	return GetAllDeviceDefinitionByMakeYearRangeQueryHandler{
-		Repository: repository,
+		dbs:        dbs,
+		onChainSvc: onChainSvc,
 	}
 }
 
 func (ch GetAllDeviceDefinitionByMakeYearRangeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetAllDeviceDefinitionByMakeYearRangeQuery)
+	manufacturer, err2 := ch.onChainSvc.GetManufacturer(ctx, qry.Make, ch.dbs().Reader)
+	if err2 != nil {
+		return nil, err2
+	}
+	// todo need to use queryTableland and do custom query for this one
 
-	all, err := ch.Repository.GetDevicesByMakeYearRange(ctx, qry.Make, qry.StartYear, qry.EndYear)
+	all, err := ch.onChainSvc.GetDeviceDefinitions(ctx, manufacturer.TokenID, "", "", qry.StartYear)
+	//all, err := ch.Repository.GetDevicesByMakeYearRange(ctx, qry.Make, qry.StartYear, qry.EndYear)
 
 	if err != nil {
 		return nil, err
