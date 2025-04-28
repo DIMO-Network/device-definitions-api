@@ -2,8 +2,12 @@ package queries
 
 import (
 	"context"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/shared"
 	"github.com/DIMO-Network/shared/db"
+	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
@@ -33,24 +37,38 @@ func NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(onChainSvc gateways.De
 }
 
 func (ch GetAllDeviceDefinitionByMakeYearRangeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-
 	qry := query.(*GetAllDeviceDefinitionByMakeYearRangeQuery)
-	manufacturer, err2 := ch.onChainSvc.GetManufacturer(ctx, qry.Make, ch.dbs().Reader)
-	if err2 != nil {
-		return nil, err2
-	}
-	// todo need to use queryTableland and do custom query for this one
-
-	all, err := ch.onChainSvc.GetDeviceDefinitions(ctx, manufacturer.TokenID, "", "", qry.StartYear)
-	//all, err := ch.Repository.GetDevicesByMakeYearRange(ctx, qry.Make, qry.StartYear, qry.EndYear)
-
+	makeSlug := shared.SlugString(qry.Make)
+	manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, makeSlug, ch.dbs().Reader)
 	if err != nil {
 		return nil, err
 	}
 
+	var conditions []string
+	if qry.StartYear > 0 {
+		conditions = append(conditions, "year >= "+string(qry.StartYear))
+	}
+	if qry.EndYear > qry.StartYear {
+		conditions = append(conditions, "year <= "+string(qry.EndYear))
+	}
+	whereClause := strings.Join(conditions, " AND ")
+	if whereClause != "" {
+		whereClause = " WHERE " + whereClause
+	}
+
+	all, err := ch.onChainSvc.QueryDefinitionsCustom(ctx, manufacturer.TokenID, whereClause, 0)
+	if err != nil {
+		return nil, err
+	}
+	dmDb, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, ch.dbs().Reader)
+	if err != nil {
+		return nil, err
+	}
+	dm := coremodels.ConvertDeviceMakeFromDB(dmDb)
+
 	response := &grpc.GetDeviceDefinitionResponse{}
 	for _, v := range all {
-		dd, err := common.BuildFromDeviceDefinitionToQueryResult(v)
+		dd, err := common.BuildFromDeviceDefinitionToQueryResult(&v, dm, nil, nil)
 		if err != nil {
 			return nil, err
 		}
