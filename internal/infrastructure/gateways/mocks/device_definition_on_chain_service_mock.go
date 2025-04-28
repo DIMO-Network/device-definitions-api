@@ -167,7 +167,7 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturerNameByI
 }
 
 // QueryDefinitionsCustom mocks base method.
-func (m *MockDeviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID types.NullDecimal, whereClause string, pageIndex int) ([]gateways.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]gateways.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryDefinitionsCustom", ctx, manufacturerID, whereClause, pageIndex)
 	ret0, _ := ret[0].([]gateways.DeviceDefinitionTablelandModel)

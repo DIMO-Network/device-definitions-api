@@ -65,7 +65,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		SubModel:           ds.SubModel,
 		HardwareTemplateID: ds.HardwareTemplateID.String,
 		DeviceDefinition: coremodels.GetDeviceDefinitionStyleQueryResult{
-			DeviceAttributes: coremodels.ConvertMetadataToDeviceAttributes(dd.Metadata), // copy any attributes from parent DD
+			DeviceAttributes: common.ConvertMetadataToDeviceAttributes(dd.Metadata), // copy any attributes from parent DD
 		},
 	}
 	// first see if style metadata has powertrain, most cases will be blank

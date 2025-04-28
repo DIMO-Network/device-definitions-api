@@ -417,6 +417,44 @@ func CheckTransactionStatus(txHash, apiKey string, useAmoy bool) (bool, error) {
 	return false, nil
 }
 
+func ConvertMetadataToDeviceAttributes(metadata *gateways.DeviceDefinitionMetadata) []models.DeviceTypeAttribute {
+	// Depending on your types, you might have to perform additional conversion logic.
+	// Here we're simply returning the metadata as-is for assignment, but if your
+	// DeviceAttributes require a specific structure, you'll have to adjust this.
+	dta := []models.DeviceTypeAttribute{}
+	if metadata == nil {
+		return dta
+	}
+	for _, attribute := range metadata.DeviceAttributes {
+		dta = append(dta, models.DeviceTypeAttribute{
+			Name:        attribute.Name,
+			Label:       attribute.Name,
+			Description: attribute.Name,
+			Type:        "",
+			Required:    false,
+			Value:       attribute.Value,
+			Option:      nil,
+		})
+	}
+	return dta
+}
+
+func ConvertDeviceTypeAttrsToDefinitionMetadata(attributes []*models.UpdateDeviceTypeAttribute) *gateways.DeviceDefinitionMetadata {
+	ddm := &gateways.DeviceDefinitionMetadata{
+		DeviceAttributes: make([]gateways.DeviceTypeAttribute, len(attributes)),
+	}
+	if len(attributes) == 0 {
+		return nil
+	}
+	for i, attr := range attributes {
+		ddm.DeviceAttributes[i] = gateways.DeviceTypeAttribute{
+			Name:  attr.Name,
+			Value: attr.Value,
+		}
+	}
+	return ddm
+}
+
 type TxStatusResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`

@@ -45,6 +45,10 @@ func NewFuelAPIService(settings *config.Settings, logger *zerolog.Logger) FuelAP
 	return fa
 }
 
+// FetchDeviceImages retrieves images for a specific device based on make, model, year, product ID, and product format.
+// If an exact match isn't found, it attempts fallback searches by removing the year or simplifying the model name.
+// Returns the images found along with a flag indicating if the exact year image was unavailable, or an error on failure.
+// prodID typically is 2, prodFormat either 2 or 6
 func (fs *fuelAPIService) FetchDeviceImages(mk, mdl string, yr int, prodID int, prodFormat int) (FuelDeviceImages, error) {
 	notExactImage := false // if we pull image where year doesn't match
 	// search for exact MMY image

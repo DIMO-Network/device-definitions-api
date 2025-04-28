@@ -231,7 +231,7 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 	if manufacturerID == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
-	
+
 	bigManufID := big.NewInt(int64(manufacturerID))
 	tableName, err := e.getTablelandTableName(ctx, bigManufID)
 	if err != nil {
@@ -295,7 +295,7 @@ const (
 	TablelandErrors   = "Tableland_Error_Request"
 )
 
-// Create does a create for tableland, on-chain operation - checks if already exists
+// Create does a create for tableland, on-chain operation - checks if already exists, inserts transaction in db. returns the onchain transaction
 func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
@@ -363,6 +363,9 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 	if dd.DeviceType == "" {
 		return nil, fmt.Errorf("dd DeviceTypeId is required")
 	}
+	if dd.ImageURI == "" {
+		dd.ImageURI = GetDefaultImageURL(ctx, dd.ID, e.dbs().Reader.DB)
+	}
 
 	deviceInputs := contracts.DeviceDefinitionInput{
 		Id:         dd.ID,
@@ -370,7 +373,7 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 		Year:       big.NewInt(int64(dd.Year)),
 		Ksuid:      dd.ID,
 		DeviceType: dd.DeviceType,
-		ImageURI:   GetDefaultImageURL(ctx, dd.ID, e.dbs().Reader.DB),
+		ImageURI:   dd.ImageURI,
 	}
 
 	if dd.Metadata != nil {

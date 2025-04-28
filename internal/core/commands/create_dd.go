@@ -5,6 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/rs/zerolog"
+	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/DIMO-Network/shared"
 	"github.com/volatiletech/null/v8"
@@ -18,7 +22,6 @@ import (
 	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/pkg/errors"
 )
 
@@ -36,20 +39,26 @@ type CreateDeviceDefinitionCommand struct {
 }
 
 type CreateDeviceDefinitionCommandResult struct {
-	ID       string `json:"id"`
-	NameSlug string `json:"name_slug"`
+	ID            string  `json:"id"`
+	NameSlug      string  `json:"name_slug"`
+	TransactionID *string `json:"transaction_id"`
 }
 
 func (*CreateDeviceDefinitionCommand) Key() string { return "CreateDeviceDefinitionCommand" }
 
 type CreateDeviceDefinitionCommandHandler struct {
-	Repository            repositories.DeviceDefinitionRepository
-	DBS                   func() *db.ReaderWriter
+	onChainSvc            gateways.DeviceDefinitionOnChainService
+	dbs                   func() *db.ReaderWriter
 	powerTrainTypeService services.PowerTrainTypeService
+	fuelAPI               gateways.FuelAPIService
+	logger                *zerolog.Logger
 }
 
-func NewCreateDeviceDefinitionCommandHandler(repository repositories.DeviceDefinitionRepository, dbs func() *db.ReaderWriter, powerTrainTypeService services.PowerTrainTypeService) CreateDeviceDefinitionCommandHandler {
-	return CreateDeviceDefinitionCommandHandler{Repository: repository, DBS: dbs, powerTrainTypeService: powerTrainTypeService}
+func NewCreateDeviceDefinitionCommandHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter,
+	powerTrainTypeService services.PowerTrainTypeService, fuelAPI gateways.FuelAPIService, logger *zerolog.Logger) CreateDeviceDefinitionCommandHandler {
+	return CreateDeviceDefinitionCommandHandler{onChainSvc: onChainSvc, dbs: dbs,
+		powerTrainTypeService: powerTrainTypeService,
+		fuelAPI:               fuelAPI, logger: logger}
 }
 
 func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -60,7 +69,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	// Resolve attributes by device types
-	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.DBS().Reader)
+	_, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(command.DeviceTypeID)).One(ctx, ch.dbs().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.ValidationError{
@@ -69,6 +78,18 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device types"),
+		}
+	}
+
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(shared.SlugString(command.Make))).One(ctx, ch.dbs().Reader)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &exceptions.ValidationError{
+				Err: fmt.Errorf("make: %s not found when updating a definition", command.Make),
+			}
+		}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device makes"),
 		}
 	}
 
@@ -98,21 +119,59 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 		}
 	}
-
-	// attribute info
-	deviceTypeInfo, err := common.BuildDeviceTypeAttributes(command.DeviceAttributes, dt)
+	// resolve image with fuel
+	images, err := ch.fuelAPI.FetchDeviceImages(command.Make, command.Model, command.Year, 2, 2)
 	if err != nil {
-		return nil, err
+		ch.logger.Warn().Err(err).Msgf("failed to get images for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
-	if len(command.HardwareTemplateID) == 0 {
-		command.HardwareTemplateID = "130"
+	ddTbl := gateways.DeviceDefinitionTablelandModel{
+		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(command.Model), int16(command.Year)),
+		KSUID:      ksuid.New().String(),
+		Model:      command.Model,
+		Year:       command.Year,
+		DeviceType: command.DeviceTypeID,
+		ImageURI:   getDefaultImage(images),
+		Metadata:   common.ConvertDeviceTypeAttrsToDefinitionMetadata(command.DeviceAttributes),
 	}
 
-	dd, err := ch.Repository.GetOrCreate(ctx, nil, command.Source, "", command.Make, command.Model, command.Year, command.DeviceTypeID, deviceTypeInfo, command.Verified, &command.HardwareTemplateID)
+	create, err := ch.onChainSvc.Create(ctx, *dm, ddTbl)
 	if err != nil {
-		return nil, err
-	} // todo does mediator eat this error?
+		return nil, err // todo does mediator eat this error?
+	}
+	err = ch.associateImagesToDeviceDefinition(ctx, ddTbl.ID, images)
+	if err != nil {
+		ch.logger.Err(err).Msgf("failed to add images to database for: %s %d %s", command.Make, command.Year, command.Model)
+	}
 
-	return CreateDeviceDefinitionCommandResult{ID: dd.ID, NameSlug: dd.NameSlug}, nil
+	return CreateDeviceDefinitionCommandResult{ID: ddTbl.ID, NameSlug: ddTbl.ID, TransactionID: create}, nil
+}
+
+func (ch CreateDeviceDefinitionCommandHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID string, img gateways.FuelDeviceImages) error {
+	var p models.Image
+	// loop through all img (color variations)
+	for _, device := range img.Images {
+		p.ID = ksuid.New().String()
+		p.DefinitionID = definitionID
+		p.FuelAPIID = null.StringFrom(img.FuelAPIID)
+		p.Width = null.IntFrom(img.Width)
+		p.Height = null.IntFrom(img.Height)
+		p.SourceURL = device.SourceURL
+		//p.DimoS3URL = null.StringFrom("") // dont set it so it is null
+		p.Color = device.Color
+		p.NotExactImage = img.NotExactImage
+
+		err := p.Upsert(ctx, ch.dbs().Writer, true, []string{models.ImageColumns.DefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getDefaultImage(img gateways.FuelDeviceImages) string {
+	for _, image := range img.Images {
+		return image.SourceURL
+	}
+	return ""
 }
