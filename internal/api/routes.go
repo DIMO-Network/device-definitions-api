@@ -17,7 +17,6 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator, auth
 	app.Get("/device-definitions/:id", handlers.GetDeviceDefinitionByID(m)).Name("device-definitions-by-id")
 
 	app.Get("/v2/device-definitions/:make/all", handlers.GetDeviceDefinitionV2All(m)).Name("device-definitions-all-v2")
-	app.Get("/v2/device-definitions/:make/:id", handlers.GetDeviceDefinitionV2ByID(m)).Name("device-definitions-by-id-v2")
 	// oems by external integration, used by mobile app
 	app.Get("/manufacturers/integrations/smartcar", handlers.GetSmartcarManufacturers()).Name("device-definitions-smartcar")
 

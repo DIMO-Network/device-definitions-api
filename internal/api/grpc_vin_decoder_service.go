@@ -21,11 +21,10 @@ func NewGrpcVinDecoderService(mediator mediator.Mediator, logger *zerolog.Logger
 
 func (s *GrpcVinDecoderService) DecodeVin(ctx context.Context, in *p_grpc.DecodeVinRequest) (*p_grpc.DecodeVinResponse, error) {
 	qryResult, err := s.Mediator.Send(ctx, &queries.DecodeVINQuery{
-		VIN:          in.Vin,
-		KnownModel:   in.KnownModel,
-		KnownYear:    in.KnownYear,
-		Country:      in.Country,
-		DefinitionID: in.DefinitionId,
+		VIN:        in.Vin,
+		KnownModel: in.KnownModel,
+		KnownYear:  in.KnownYear,
+		Country:    in.Country,
 	})
 	if err != nil {
 		return nil, err

@@ -4,10 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
+	"github.com/DIMO-Network/shared"
 	"time"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -19,7 +20,6 @@ import (
 	"github.com/typesense/typesense-go/typesense"
 	"github.com/typesense/typesense-go/typesense/api"
 	"github.com/typesense/typesense-go/typesense/api/pointer"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 // syncDeviceDefinitionSearchCmd cli command to sync to typesense
@@ -28,6 +28,7 @@ type syncDeviceDefinitionSearchCmd struct {
 	settings config.Settings
 
 	createIndex bool
+	sender      sender.Sender
 }
 
 func (*syncDeviceDefinitionSearchCmd) Name() string { return "sync-device-definitions-search" }
@@ -47,20 +48,27 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
+	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+	//queryInstance, err := contracts.NewRegistry(p.settings.EthereumRegistryAddress, ethClient)
+	//if err != nil {
+	//	p.logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
+	//}
+
+	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+
 	client := typesense.NewClient(
 		typesense.WithServer(p.settings.SearchServiceAPIURL.String()),
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
 	collectionName := p.settings.SearchServiceIndexName
-
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-	queryInstance, err := contracts.NewRegistry(p.settings.EthereumRegistryAddress, ethClient)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
-	}
 
 	if p.createIndex {
 
@@ -142,69 +150,89 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 	fmt.Printf("Starting processing definitions\n")
 
-	all, err := models.DeviceDefinitions(qm.Load(models.DeviceDefinitionRels.DeviceMake),
-		qm.Load(models.DeviceDefinitionRels.DefinitionImages),
-		models.DeviceDefinitionWhere.Verified.EQ(true)).All(ctx, pdb.DBS().Reader)
+	makes, err := models.DeviceMakes().All(ctx, pdb.DBS().Reader)
 	if err != nil {
 		p.logger.Fatal().Err(err).Send()
 	}
-	makes := map[string]int64{}
 
 	var documents []SearchEntryItem
-	// todo this should come from tableland - problem is iterating over all the tables, or do it via identity-api
-	for _, dd := range all {
-		id := dd.NameSlug
-		deviceDefinitionID := dd.ID
-		name := common.BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model)
-		imageUrl := ""
-		for _, image := range dd.R.DefinitionImages {
-			imageUrl = image.SourceURL
-			break
-		}
-		modelName := dd.Model
-		modelSlug := dd.ModelSlug
-
-		year := dd.Year
-		if year < 2005 {
-			continue // do not sync old cars into search
+	// iterate over all makes, then query tableland
+	for _, dm := range makes {
+		manufacturer, err := onChainSvc.GetManufacturer(ctx, dm.NameSlug, pdb.DBS().Reader)
+		if err != nil {
+			p.logger.Fatal().Err(err).Send()
 		}
 
-		makeName := dd.R.DeviceMake.Name
-		makeSlug := dd.R.DeviceMake.NameSlug
-		manufacturerTokenID := int64(0)
-		if val, ok := makes[makeName]; ok {
-			manufacturerTokenID = val
-		} else {
-			manufacturerID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, makeName)
-			if err != nil {
-				p.logger.Fatal().Err(err).Msgf("unable to get manufacturer id by name: %s", makeName)
+		definitions, err := fetchAllDefinitions(ctx, onChainSvc, manufacturer.TokenID, "")
+		if err != nil {
+			p.logger.Fatal().Err(err).Send()
+		}
+
+		for _, dd := range definitions {
+			id := dd.ID
+			deviceDefinitionID := dd.ID
+			name := common.BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model)
+			imageUrl := dd.ImageURI
+			modelName := dd.Model
+			modelSlug := shared.SlugString(dd.Model)
+
+			year := dd.Year
+			if year < 2007 {
+				continue // do not sync old cars into search
 			}
-			makes[makeName] = manufacturerID.Int64()
-			manufacturerTokenID = manufacturerID.Int64()
-		}
 
-		newDocument := SearchEntryItem{
-			ID:                  id,
-			DeviceDefinitionID:  deviceDefinitionID,
-			DefinitionID:        dd.NameSlug,
-			Name:                name,
-			Make:                makeName,
-			MakeSlug:            makeSlug,
-			ManufacturerTokenID: int(manufacturerTokenID),
-			Model:               modelName,
-			ModelSlug:           modelSlug,
-			Year:                int(year),
-			ImageURL:            imageUrl,
-			Score:               1,
-		}
+			makeName := dm.Name
+			makeSlug := dm.NameSlug
+			manufacturerTokenID := manufacturer.TokenID
 
-		documents = append(documents, newDocument)
+			newDocument := SearchEntryItem{
+				ID:                  id,
+				DeviceDefinitionID:  deviceDefinitionID,
+				DefinitionID:        dd.ID,
+				Name:                name,
+				Make:                makeName,
+				MakeSlug:            makeSlug,
+				ManufacturerTokenID: manufacturerTokenID,
+				Model:               modelName,
+				ModelSlug:           modelSlug,
+				Year:                year,
+				ImageURL:            imageUrl,
+				Score:               1,
+			}
+
+			documents = append(documents, newDocument)
+		}
 	}
 
 	err = uploadWithAPI(client, documents, p.settings.SearchServiceIndexName)
 
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
+}
+
+func fetchAllDefinitions(ctx context.Context, onChainSvc gateways.DeviceDefinitionOnChainService, manufacturerID int, whereClause string) ([]gateways.DeviceDefinitionTablelandModel, error) {
+	pageIndex := 0
+	var allDefinitions []gateways.DeviceDefinitionTablelandModel
+
+	for {
+		definitions, err := onChainSvc.QueryDefinitionsCustom(ctx, manufacturerID, whereClause, pageIndex)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append the current page of definitions to allDefinitions.
+		allDefinitions = append(allDefinitions, definitions...)
+
+		// If you receive less than 50 results then you've likely reached the end.
+		if len(definitions) < 50 {
+			break
+		}
+
+		// Move to the next page.
+		pageIndex++
+	}
+
+	return allDefinitions, nil
 }
 
 func uploadWithAPI(client *typesense.Client, entries []SearchEntryItem, collectionName string) error {

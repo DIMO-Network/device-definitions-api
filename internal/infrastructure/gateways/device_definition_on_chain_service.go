@@ -238,7 +238,7 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 		return nil, err
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM %s%s LIMIT %d OFFSET %d", tableName, whereClause, 50, pageIndex)
+	statement := fmt.Sprintf("SELECT * FROM %s %s LIMIT %d OFFSET %d", tableName, whereClause, 50, pageIndex)
 
 	queryParams := map[string]string{
 		"statement": statement,

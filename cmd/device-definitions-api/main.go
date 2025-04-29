@@ -42,6 +42,7 @@ func main() {
 		Str("app", settings.ServiceName).
 		Str("git-sha1", gitSha1).
 		Logger()
+	sigSender, err := createSender(ctx, &settings, &logger)
 
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
@@ -49,13 +50,12 @@ func main() {
 	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
-	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings}, "")
+	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings, sender: sigSender}, "")
 	subcommands.Register(&deleteDefinition{logger: logger, settings: settings}, "")
 	subcommands.Register(&syncR1CompatibiltyCmd{logger: logger, settings: settings}, "")
 
 	if len(os.Args) == 1 {
 		// Run API & everythying else
-		sigSender, err := createSender(ctx, &settings, &logger)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Failed to create sender.")
 		}

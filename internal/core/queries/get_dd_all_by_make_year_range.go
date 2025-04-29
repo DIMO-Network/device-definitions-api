@@ -53,7 +53,7 @@ func (ch GetAllDeviceDefinitionByMakeYearRangeQueryHandler) Handle(ctx context.C
 	}
 	whereClause := strings.Join(conditions, " AND ")
 	if whereClause != "" {
-		whereClause = " WHERE " + whereClause
+		whereClause = "WHERE " + whereClause
 	}
 
 	all, err := ch.onChainSvc.QueryDefinitionsCustom(ctx, manufacturer.TokenID, whereClause, 0)
