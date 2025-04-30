@@ -4,10 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"time"
+
+	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/DIMO-Network/shared"
-	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -210,9 +212,9 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	return subcommands.ExitSuccess
 }
 
-func fetchAllDefinitions(ctx context.Context, onChainSvc gateways.DeviceDefinitionOnChainService, manufacturerID int, whereClause string) ([]gateways.DeviceDefinitionTablelandModel, error) {
+func fetchAllDefinitions(ctx context.Context, onChainSvc gateways.DeviceDefinitionOnChainService, manufacturerID int, whereClause string) ([]models2.DeviceDefinitionTablelandModel, error) {
 	pageIndex := 0
-	var allDefinitions []gateways.DeviceDefinitionTablelandModel
+	var allDefinitions []models2.DeviceDefinitionTablelandModel
 
 	for {
 		definitions, err := onChainSvc.QueryDefinitionsCustom(ctx, manufacturerID, whereClause, pageIndex)

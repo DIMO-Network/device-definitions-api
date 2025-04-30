@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"net/http"
 	"sort"
 	"strings"
@@ -121,7 +120,7 @@ func GetDefaultImageURL(images []*repoModel.Image) string {
 //		return nil, errors.New("DeviceMake relation cannot be nil, must be loaded in relation R.DeviceMake")
 //	}
 //	rp := &models.GetDeviceDefinitionQueryResult{
-//		DeviceDefinitionID: dd.ID,
+//		DefinitionID: dd.ID,
 //		ExternalID:         dd.ExternalID.String,
 //		Name:               BuildDeviceDefinitionName(dd.Year, dd.R.DeviceMake.Name, dd.Model),
 //		Source:             dd.Source.String,
@@ -191,7 +190,7 @@ func GetDefaultImageURL(images []*repoModel.Image) string {
 //		for _, ds := range dd.R.DefinitionDeviceStyles {
 //			deviceStyle := models.DeviceStyle{
 //				ID:                 ds.ID,
-//				DeviceDefinitionID: ds.DeviceDefinitionID,
+//				DefinitionID: ds.DefinitionID,
 //				ExternalStyleID:    ds.ExternalStyleID,
 //				Name:               ds.Name,
 //				Source:             ds.Source,
@@ -212,15 +211,15 @@ func GetDefaultImageURL(images []*repoModel.Image) string {
 //	return rp, nil
 //}
 
-func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTypeAttribute {
-	var respAttrs []models.DeviceTypeAttribute
+func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTypeAttributeEditor {
+	var respAttrs []models.DeviceTypeAttributeEditor
 	var ai map[string]any
 	if err := metadata.Unmarshal(&ai); err == nil {
 		if ai != nil {
 			if a, ok := ai[key]; ok && a != nil {
 				attributes := ai[key].(map[string]any)
 				for key, value := range attributes {
-					respAttrs = append(respAttrs, models.DeviceTypeAttribute{
+					respAttrs = append(respAttrs, models.DeviceTypeAttributeEditor{
 						Name:  key,
 						Value: fmt.Sprint(value),
 					})
@@ -232,7 +231,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 	return respAttrs
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *gateways.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []*repoModel.DeviceStyle, trx []*repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
+func BuildFromDeviceDefinitionToQueryResult(dd *models.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []*repoModel.DeviceStyle, trx []*repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
 	mdBytes := []byte("{}")
 	if dd.Metadata != nil {
 		mdBytes, _ = json.Marshal(dd.Metadata)
@@ -250,29 +249,27 @@ func BuildFromDeviceDefinitionToQueryResult(dd *gateways.DeviceDefinitionTablela
 
 	// build object for integrations that have all the info
 	rp.DeviceStyles = []models.DeviceStyle{}
-	rp.DeviceAttributes = []models.DeviceTypeAttribute{}
+	rp.DeviceAttributes = []models.DeviceTypeAttributeEditor{}
 
 	// pull out the device type device attributes, egGetDev. vehicle information
 	rp.DeviceAttributes = GetDeviceAttributesTyped(null.JSONFrom(mdBytes), dd.DeviceType)
 
-	if dss != nil {
-		for _, ds := range dss {
-			deviceStyle := models.DeviceStyle{
-				ID:              ds.ID,
-				DefinitionID:    ds.DefinitionID,
-				ExternalStyleID: ds.ExternalStyleID,
-				Name:            ds.Name,
-				Source:          ds.Source,
-				SubModel:        ds.SubModel,
-				Metadata:        GetDeviceAttributesTyped(ds.Metadata, dd.DeviceType),
-			}
-
-			if ds.HardwareTemplateID.Valid {
-				deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
-			}
-
-			rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
+	for _, ds := range dss {
+		deviceStyle := models.DeviceStyle{
+			ID:              ds.ID,
+			DefinitionID:    ds.DefinitionID,
+			ExternalStyleID: ds.ExternalStyleID,
+			Name:            ds.Name,
+			Source:          ds.Source,
+			SubModel:        ds.SubModel,
+			Metadata:        GetDeviceAttributesTyped(ds.Metadata, dd.DeviceType),
 		}
+
+		if ds.HardwareTemplateID.Valid {
+			deviceStyle.HardwareTemplateID = ds.HardwareTemplateID.String
+		}
+
+		rp.DeviceStyles = append(rp.DeviceStyles, deviceStyle)
 	}
 
 	if trx != nil {
@@ -417,16 +414,16 @@ func CheckTransactionStatus(txHash, apiKey string, useAmoy bool) (bool, error) {
 	return false, nil
 }
 
-func ConvertMetadataToDeviceAttributes(metadata *gateways.DeviceDefinitionMetadata) []models.DeviceTypeAttribute {
+func ConvertMetadataToDeviceAttributes(metadata *models.DeviceDefinitionMetadata) []models.DeviceTypeAttributeEditor {
 	// Depending on your types, you might have to perform additional conversion logic.
 	// Here we're simply returning the metadata as-is for assignment, but if your
 	// DeviceAttributes require a specific structure, you'll have to adjust this.
-	dta := []models.DeviceTypeAttribute{}
+	dta := []models.DeviceTypeAttributeEditor{}
 	if metadata == nil {
 		return dta
 	}
 	for _, attribute := range metadata.DeviceAttributes {
-		dta = append(dta, models.DeviceTypeAttribute{
+		dta = append(dta, models.DeviceTypeAttributeEditor{
 			Name:        attribute.Name,
 			Label:       attribute.Name,
 			Description: attribute.Name,
@@ -439,15 +436,15 @@ func ConvertMetadataToDeviceAttributes(metadata *gateways.DeviceDefinitionMetada
 	return dta
 }
 
-func ConvertDeviceTypeAttrsToDefinitionMetadata(attributes []*models.UpdateDeviceTypeAttribute) *gateways.DeviceDefinitionMetadata {
-	ddm := &gateways.DeviceDefinitionMetadata{
-		DeviceAttributes: make([]gateways.DeviceTypeAttribute, len(attributes)),
+func ConvertDeviceTypeAttrsToDefinitionMetadata(attributes []*models.UpdateDeviceTypeAttribute) *models.DeviceDefinitionMetadata {
+	ddm := &models.DeviceDefinitionMetadata{
+		DeviceAttributes: make([]models.DeviceTypeAttribute, len(attributes)),
 	}
 	if len(attributes) == 0 {
 		return nil
 	}
 	for i, attr := range attributes {
-		ddm.DeviceAttributes[i] = gateways.DeviceTypeAttribute{
+		ddm.DeviceAttributes[i] = models.DeviceTypeAttribute{
 			Name:  attr.Name,
 			Value: attr.Value,
 		}

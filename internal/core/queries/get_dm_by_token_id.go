@@ -3,9 +3,10 @@ package queries
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"math/big"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

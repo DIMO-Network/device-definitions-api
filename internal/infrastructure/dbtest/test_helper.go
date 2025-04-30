@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"os"
 	"testing"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/shared"
 
@@ -139,9 +140,9 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 	}
 }
 
-func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *gateways.DeviceDefinitionTablelandModel {
+func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	SetupCreateDeviceType(t, pdb)
-	dd := &gateways.DeviceDefinitionTablelandModel{
+	dd := &coremodels.DeviceDefinitionTablelandModel{
 		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
 		KSUID:      ksuid.New().String(),
 		Model:      model,
@@ -153,10 +154,10 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 	return dd
 }
 
-func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *gateways.DeviceDefinitionTablelandModel {
+func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
-	dd.Metadata = &gateways.DeviceDefinitionMetadata{
-		DeviceAttributes: []gateways.DeviceTypeAttribute{
+	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
 			{
 				Name:  "fuel_type",
 				Value: "defaultValue",
@@ -179,10 +180,10 @@ func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMa
 	return dd
 }
 
-func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *gateways.DeviceDefinitionTablelandModel {
+func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
-	dd.Metadata = &gateways.DeviceDefinitionMetadata{
-		DeviceAttributes: []gateways.DeviceTypeAttribute{
+	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
 			{
 				Name:  "fuel_type",
 				Value: "defaultValue",

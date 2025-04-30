@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -52,7 +53,7 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 		return nil, err
 	}
 
-	if definitions == nil || len(definitions) == 0 {
+	if len(definitions) == 0 {
 		return nil, &exceptions.NotFoundError{
 			Err: fmt.Errorf("could not find device definition with MMY: %s %s %d", qry.Make, qry.Model, qry.Year),
 		}

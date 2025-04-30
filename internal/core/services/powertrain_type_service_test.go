@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"testing"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
@@ -34,7 +35,7 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	// used for test case where get powertrain from dd
 	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
 	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
-	ddWithPt.Metadata.DeviceAttributes = append(ddWithPt.Metadata.DeviceAttributes, gateways.DeviceTypeAttribute{
+	ddWithPt.Metadata.DeviceAttributes = append(ddWithPt.Metadata.DeviceAttributes, models.DeviceTypeAttribute{
 		Name:  "powertrain_type",
 		Value: "BEV",
 	})

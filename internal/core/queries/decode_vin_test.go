@@ -313,15 +313,15 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().NotEmpty(ddImages)
 }
 
-func buildTestTblDD(definitionID, model string, year int) *gateways.DeviceDefinitionTablelandModel {
-	return &gateways.DeviceDefinitionTablelandModel{
+func buildTestTblDD(definitionID, model string, year int) *coremodels.DeviceDefinitionTablelandModel {
+	return &coremodels.DeviceDefinitionTablelandModel{
 		ID:         definitionID,
 		KSUID:      ksuid.New().String(),
 		Model:      model,
 		Year:       year,
 		DeviceType: "vehicle",
 		ImageURI:   "",
-		Metadata: &gateways.DeviceDefinitionMetadata{DeviceAttributes: []gateways.DeviceTypeAttribute{
+		Metadata: &coremodels.DeviceDefinitionMetadata{DeviceAttributes: []coremodels.DeviceTypeAttribute{
 			{Name: "powertrain_type", Value: "ICE"},
 		}},
 	}
@@ -778,14 +778,14 @@ func TestResolveMetadataFromInfo(t *testing.T) {
 		name       string
 		powertrain string
 		vinInfo    *coremodels.VINDecodingInfoData
-		expectedMD *gateways.DeviceDefinitionMetadata
+		expectedMD *coremodels.DeviceDefinitionMetadata
 	}{
 		{
 			name:       "valid powertrain and vinInfo",
 			powertrain: "BEV",
 			vinInfo:    &coremodels.VINDecodingInfoData{StyleName: "Test Style"},
-			expectedMD: &gateways.DeviceDefinitionMetadata{
-				DeviceAttributes: []gateways.DeviceTypeAttribute{
+			expectedMD: &coremodels.DeviceDefinitionMetadata{
+				DeviceAttributes: []coremodels.DeviceTypeAttribute{
 					{Name: "powertrain_type", Value: "BEV"},
 				},
 			},
@@ -794,16 +794,16 @@ func TestResolveMetadataFromInfo(t *testing.T) {
 			name:       "empty powertrain",
 			powertrain: "",
 			vinInfo:    &coremodels.VINDecodingInfoData{StyleName: "Test Style"},
-			expectedMD: &gateways.DeviceDefinitionMetadata{
-				DeviceAttributes: []gateways.DeviceTypeAttribute{},
+			expectedMD: &coremodels.DeviceDefinitionMetadata{
+				DeviceAttributes: []coremodels.DeviceTypeAttribute{},
 			},
 		},
 		{
 			name:       "nil vinInfo",
 			powertrain: "PHEV",
 			vinInfo:    nil,
-			expectedMD: &gateways.DeviceDefinitionMetadata{
-				DeviceAttributes: []gateways.DeviceTypeAttribute{
+			expectedMD: &coremodels.DeviceDefinitionMetadata{
+				DeviceAttributes: []coremodels.DeviceTypeAttribute{
 					{Name: "powertrain_type", Value: "PHEV"},
 				},
 			},

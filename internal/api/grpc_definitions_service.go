@@ -69,13 +69,13 @@ func (s *GrpcDefinitionsService) GetDeviceDefinitionByMMY(ctx context.Context, i
 func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
 
 	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
-		MakeSlug:           in.MakeSlug,
-		DeviceDefinitionID: in.DeviceDefinitionId,
-		Year:               int(in.Year),
-		Model:              in.Model,
-		VerifiedVinList:    in.VerifiedVinList,
-		PageIndex:          int(in.PageIndex),
-		PageSize:           int(in.PageSize),
+		DefinitionID:    in.DefinitionId,
+		MakeSlug:        in.MakeSlug,
+		Year:            int(in.Year),
+		Model:           in.Model,
+		VerifiedVinList: in.VerifiedVinList,
+		PageIndex:       int(in.PageIndex),
+		PageSize:        int(in.PageSize),
 	})
 
 	ddResult := qryResult.([]queries.DeviceDefinitionQueryResponse)

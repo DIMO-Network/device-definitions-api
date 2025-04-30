@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 

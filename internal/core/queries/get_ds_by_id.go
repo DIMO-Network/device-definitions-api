@@ -5,8 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/tidwall/gjson"
 
@@ -113,7 +114,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 				}
 			}
 		}
-		deviceStyleResult.DeviceDefinition.DeviceAttributes = append(deviceStyleResult.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttribute{
+		deviceStyleResult.DeviceDefinition.DeviceAttributes = append(deviceStyleResult.DeviceDefinition.DeviceAttributes, coremodels.DeviceTypeAttributeEditor{
 			Name:        common.PowerTrainType,
 			Description: common.PowerTrainType,
 			Type:        common.DefaultDeviceType,

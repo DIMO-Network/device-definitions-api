@@ -137,7 +137,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	// If DeviceDefinitionID passed in, override VIN decoding
+	// If DefinitionID passed in, override VIN decoding
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
 		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
@@ -308,7 +308,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// todo load up some metadata from what was decoded. Powertrain too
 		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
 
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, gateways.DeviceDefinitionTablelandModel{
+		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, coremodels.DeviceDefinitionTablelandModel{
 			ID:         tid,
 			KSUID:      ksuid.New().String(),
 			Model:      resp.Model,
@@ -353,14 +353,15 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	return resp, nil
 }
 
-func resolveMetadataFromInfo(powertrain string, vinInfo *coremodels.VINDecodingInfoData) *gateways.DeviceDefinitionMetadata {
-	md := gateways.DeviceDefinitionMetadata{DeviceAttributes: make([]gateways.DeviceTypeAttribute, 0)}
+func resolveMetadataFromInfo(powertrain string, vinInfo *coremodels.VINDecodingInfoData) *coremodels.DeviceDefinitionMetadata {
+	md := coremodels.DeviceDefinitionMetadata{DeviceAttributes: make([]coremodels.DeviceTypeAttribute, 0)}
 	if powertrain != "" {
-		md.DeviceAttributes = append(md.DeviceAttributes, gateways.DeviceTypeAttribute{
+		md.DeviceAttributes = append(md.DeviceAttributes, coremodels.DeviceTypeAttribute{
 			Name:  common.PowerTrainType,
 			Value: powertrain,
 		})
 	}
+	// todo: iterate over vininfo and generate tableland dd metadata
 	//vinInfo.Raw // what can we do with this?
 	// thing is that the metadata field names are defined in the device type, but we should have some defaults mapped
 	// drivly or vincario json field -> dimo metadata field name

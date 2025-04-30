@@ -6,9 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"reflect"
 	"time"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"

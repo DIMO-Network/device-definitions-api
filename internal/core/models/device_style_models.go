@@ -13,5 +13,5 @@ type GetDeviceStyleQueryResult struct {
 }
 
 type GetDeviceDefinitionStyleQueryResult struct {
-	DeviceAttributes []DeviceTypeAttribute `json:"deviceAttributes"`
+	DeviceAttributes []DeviceTypeAttributeEditor `json:"deviceAttributes"`
 }

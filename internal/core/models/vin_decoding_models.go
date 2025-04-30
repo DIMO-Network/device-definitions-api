@@ -1,10 +1,12 @@
+//nolint:tagliatelle
 package models
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/volatiletech/null/v8"
 	"strings"
+
+	"github.com/volatiletech/null/v8"
 )
 
 type DecodeProviderEnum string
@@ -32,7 +34,6 @@ type VINDecodingInfoData struct {
 	FuelType   string
 }
 
-//nolint:tagliatelle - don't lint here because they return data mixing json case
 type AutoIsoVINResponse struct {
 	Version          string `json:"version"`
 	Vin              string `json:"vin"`
@@ -394,6 +395,7 @@ type DATGroupInfoResponse struct {
 	VINEquipment      []DATGroupEquipment `json:"vinEquipments"`
 }
 
+// nolint
 type DATGroupEquipment struct {
 	DatEquipmentId          string `json:"datEquipmentId"`
 	ManufacturerEquipmentId string `json:"manufacturerEquipmentId"`

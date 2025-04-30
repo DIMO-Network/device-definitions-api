@@ -4,32 +4,28 @@ package queries
 import (
 	"context"
 	"encoding/json"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/ericlagergren/decimal"
-	"github.com/volatiletech/sqlboiler/v4/types"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/ericlagergren/decimal"
+	"github.com/volatiletech/sqlboiler/v4/types"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/volatiletech/null/v8"
 )
 
-const (
-	innerJoinQueryFormat = "%s on %s.%s = %s.%s"
-	andEqQueryFormat     = "%s = '%s'"
-	andLikeQueryFormat   = "%s ilike '%s'"
-)
-
 type GetDeviceDefinitionByDynamicFilterQuery struct {
-	DeviceDefinitionID string   `json:"device_definition_id"`
-	Year               int      `json:"year"`
-	Model              string   `json:"model"`
-	VerifiedVinList    []string `json:"verified_vin_list"`
-	PageIndex          int      `json:"page_index"`
-	PageSize           int      `json:"page_size"`
-	MakeSlug           string
+	DefinitionID    string   `json:"definition_id"`
+	Year            int      `json:"year"`
+	Model           string   `json:"model"`
+	VerifiedVinList []string `json:"verified_vin_list"`
+	PageIndex       int      `json:"page_index"`
+	PageSize        int      `json:"page_size"`
+	MakeSlug        string
 }
 
 type DeviceDefinitionQueryResponse struct {
@@ -69,8 +65,8 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 
 	qry := query.(*GetDeviceDefinitionByDynamicFilterQuery)
 
-	if len(qry.DeviceDefinitionID) > 1 {
-		dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DeviceDefinitionID, ch.DBS().Reader)
+	if len(qry.DefinitionID) > 1 {
+		dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DefinitionID, ch.DBS().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +99,7 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 
 }
 
-func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQueryResponse(ctx context.Context, dd *gateways.DeviceDefinitionTablelandModel) DeviceDefinitionQueryResponse {
+func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQueryResponse(ctx context.Context, dd *models.DeviceDefinitionTablelandModel) DeviceDefinitionQueryResponse {
 	if dd == nil {
 		return DeviceDefinitionQueryResponse{}
 	}

@@ -215,6 +215,7 @@ message FilterDeviceDefinitionRequest {
   int32 page_index = 7;
   int32 page_size = 8;
   string make_slug = 9;
+  string definition_id = 10;
 }
 
 message GetFilteredDeviceDefinitionsResponse {

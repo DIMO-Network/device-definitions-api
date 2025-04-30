@@ -6,11 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/shared/db"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/shared/db"
 
 	"github.com/DIMO-Network/shared"
 	"github.com/volatiletech/null/v8"
@@ -316,7 +317,7 @@ func buildDrivlyStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 }
 
 // buildFromDDForTestVIN meant for use with test VIN's
-func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandModel) *coremodels.VINDecodingInfoData {
+func buildFromDDForTestVIN(vin string, info *coremodels.DeviceDefinitionTablelandModel) *coremodels.VINDecodingInfoData {
 	makeSlug := strings.Split(info.ID, "_")[0]
 
 	v := &coremodels.VINDecodingInfoData{

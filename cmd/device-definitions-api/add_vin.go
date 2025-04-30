@@ -6,15 +6,16 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 

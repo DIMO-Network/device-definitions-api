@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/patrickmn/go-cache"
@@ -46,15 +48,15 @@ type DeviceDefinitionOnChainService interface {
 	GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error)
 	GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error)
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
-	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
-	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, *big.Int, error)
-	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]DeviceDefinitionTablelandModel, error)
-	Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error)
+	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error)
+	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error)
+	Create(ctx context.Context, mk models.DeviceMake, dd models2.DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
-	QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]DeviceDefinitionTablelandModel, error)
+	QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -83,7 +85,7 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 }
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
 	tablelandDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
 	if err != nil {
 		return nil, err
@@ -125,7 +127,7 @@ func (e *deviceDefinitionOnChainService) GetManufacturerNameByID(ctx context.Con
 }
 
 // GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
-func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*DeviceDefinitionTablelandModel, *big.Int, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error) {
 	split := strings.Split(ID, "_")
 	if len(split) != 3 {
 		return nil, nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
@@ -159,7 +161,7 @@ func (e *deviceDefinitionOnChainService) GetManufacturer(ctx context.Context, ma
 }
 
 // GetDefinitionTableland gets dd from tableland with a select statement and returns tbl object
-func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -175,7 +177,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 		"statement": statement,
 	}
 
-	var modelTableland []DeviceDefinitionTablelandModel
+	var modelTableland []models2.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, errors.Wrapf(err, "failed to query tableland, manufacturer: %d", manufacturerID.Int64())
 	}
@@ -186,7 +188,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 	return &modelTableland[0], nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -218,7 +220,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 		"statement": statement,
 	}
 
-	var modelTableland []DeviceDefinitionTablelandModel
+	var modelTableland []models2.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
@@ -227,7 +229,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 }
 
 // QueryDefinitionsCustom queries tableland definitions oem table based on manuf ID. Always page size of 50, but you can alter the page index
-func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -244,7 +246,7 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 		"statement": statement,
 	}
 
-	var modelTableland []DeviceDefinitionTablelandModel
+	var modelTableland []models2.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
@@ -296,7 +298,7 @@ const (
 )
 
 // Create does a create for tableland, on-chain operation - checks if already exists, inserts transaction in db. returns the onchain transaction
-func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd DeviceDefinitionTablelandModel) (*string, error) {
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models2.DeviceDefinitionTablelandModel) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
@@ -653,17 +655,17 @@ func (e *deviceDefinitionOnChainService) Delete(ctx context.Context, manufacture
 	return &trx, nil
 }
 
-func validateAttributes(current, newAttrs []DeviceTypeAttribute) ([]DeviceTypeAttribute, []DeviceTypeAttribute) {
+func validateAttributes(current, newAttrs []models2.DeviceTypeAttribute) ([]models2.DeviceTypeAttribute, []models2.DeviceTypeAttribute) {
 	currentMap := attributesToMap(current)
 	newMap := attributesToMap(newAttrs)
 
-	var newOrModifiedAttributes []DeviceTypeAttribute
-	var removedAttributes []DeviceTypeAttribute
+	var newOrModifiedAttributes []models2.DeviceTypeAttribute
+	var removedAttributes []models2.DeviceTypeAttribute
 
 	// Find new or changed attributes
 	for name, newValue := range newMap {
 		if currentValue, exists := currentMap[name]; !exists || currentValue != newValue {
-			newOrModifiedAttributes = append(newOrModifiedAttributes, DeviceTypeAttribute{
+			newOrModifiedAttributes = append(newOrModifiedAttributes, models2.DeviceTypeAttribute{
 				Name:  name,
 				Value: newValue,
 			})
@@ -673,7 +675,7 @@ func validateAttributes(current, newAttrs []DeviceTypeAttribute) ([]DeviceTypeAt
 	// Find deleted attributes
 	for name, currentValue := range currentMap {
 		if _, exists := newMap[name]; !exists {
-			removedAttributes = append(removedAttributes, DeviceTypeAttribute{
+			removedAttributes = append(removedAttributes, models2.DeviceTypeAttribute{
 				Name:  name,
 				Value: currentValue,
 			})
@@ -683,7 +685,7 @@ func validateAttributes(current, newAttrs []DeviceTypeAttribute) ([]DeviceTypeAt
 	return newOrModifiedAttributes, removedAttributes
 }
 
-func attributesToMap(attributes []DeviceTypeAttribute) map[string]string {
+func attributesToMap(attributes []models2.DeviceTypeAttribute) map[string]string {
 	attrMap := make(map[string]string)
 	for _, attr := range attributes {
 		attrMap[attr.Name] = attr.Value
@@ -715,8 +717,8 @@ func NewKeyedTransactorWithChainID(context context.Context, send sender.Sender, 
 	}, nil
 }
 
-func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttribute {
-	var respAttrs []DeviceTypeAttribute
+func GetDeviceAttributesTyped(metadata null.JSON, key string) []models2.DeviceTypeAttribute {
+	var respAttrs []models2.DeviceTypeAttribute
 	var ai map[string]any
 	if err := metadata.Unmarshal(&ai); err == nil {
 		if ai != nil {
@@ -725,7 +727,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []DeviceTypeAttrib
 				for key, value := range attributes {
 					v := fmt.Sprint(value)
 					if len(v) > 0 {
-						respAttrs = append(respAttrs, DeviceTypeAttribute{
+						respAttrs = append(respAttrs, models2.DeviceTypeAttribute{
 							Name:  key,
 							Value: v,
 						})
@@ -762,59 +764,14 @@ func GetDefaultImageURL(ctx context.Context, definitionID string, db2 *sql.DB) s
 
 // note: below code is duplicated in identity-api
 
-type DeviceDefinitionTablelandModel struct {
-	ID         string                    `json:"id"`
-	KSUID      string                    `json:"ksuid"`
-	Model      string                    `json:"model"`
-	Year       int                       `json:"year"`
-	DeviceType string                    `json:"devicetype"`
-	ImageURI   string                    `json:"imageuri"`
-	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
-}
-
-type DeviceDefinitionMetadata struct {
-	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
-}
-
-type DeviceTypeAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-// UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
-func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
-	type Alias DeviceDefinitionTablelandModel // Create an alias to avoid recursion
-
-	aux := &struct {
-		Metadata json.RawMessage `json:"metadata"`
-		*Alias
-	}{
-		Alias: (*Alias)(d),
-	}
-
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if len(aux.Metadata) > 0 && string(aux.Metadata) != `""` {
-		metadata := new(DeviceDefinitionMetadata)
-		if err := json.Unmarshal(aux.Metadata, metadata); err != nil {
-			return err
-		}
-		d.Metadata = metadata
-	}
-
-	return nil
-}
-
 // BuildDeviceTypeAttributesTbland converts a list of DeviceTypeAttributeRequest to a JSON string for the given device type ID.
 // It works the same as BuildDeviceTypeAttributes but the metadatakey is always "device_attributes" and does no attribute name validation
 func BuildDeviceTypeAttributesTbland(attributes []*grpc.DeviceTypeAttributeRequest) string {
 	if attributes == nil {
 		return ""
 	}
-	deviceTypeInfo := DeviceDefinitionMetadata{}
-	metaData := make([]DeviceTypeAttribute, len(attributes))
+	deviceTypeInfo := models2.DeviceDefinitionMetadata{}
+	metaData := make([]models2.DeviceTypeAttribute, len(attributes))
 	for i, prop := range attributes {
 		metaData[i].Name = prop.Name
 		metaData[i].Value = prop.Value

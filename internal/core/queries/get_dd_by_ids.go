@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 	"fmt"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -52,7 +53,7 @@ func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query
 	}
 
 	for _, ddid := range qry.DeviceDefinitionID {
-		dd, manufId, err := ch.onChainSvc.GetDefinitionByID(ctx, ddid, ch.dbs().Reader)
+		dd, manufID, err := ch.onChainSvc.GetDefinitionByID(ctx, ddid, ch.dbs().Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +63,7 @@ func (ch GetDeviceDefinitionByIDsQueryHandler) Handle(ctx context.Context, query
 			}
 		}
 		// todo refactor this out, same pattern in a couple places
-		makeName, err := ch.onChainSvc.GetManufacturerNameByID(ctx, manufId)
+		makeName, err := ch.onChainSvc.GetManufacturerNameByID(ctx, manufID)
 		if err != nil {
 			return nil, err
 		}

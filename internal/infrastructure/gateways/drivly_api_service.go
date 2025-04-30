@@ -3,9 +3,10 @@ package gateways
 import (
 	"encoding/json"
 	"fmt"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"io"
 	"time"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"

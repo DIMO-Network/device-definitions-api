@@ -3,12 +3,13 @@ package gateways
 import (
 	"bytes"
 	"fmt"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/shared"
 	"github.com/antchfx/xmlquery"

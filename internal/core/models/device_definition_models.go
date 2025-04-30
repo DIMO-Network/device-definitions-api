@@ -3,28 +3,29 @@ package models
 
 import (
 	"encoding/json"
-	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"math/big"
 	"time"
+
+	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 
 	"github.com/volatiletech/null/v8"
 )
 
 type GetDeviceDefinitionQueryResult struct {
-	DeviceDefinitionID string                `json:"deviceDefinitionId"`
-	NameSlug           string                `json:"nameSlug"`
-	Name               string                `json:"name"`
-	ImageURL           string                `json:"imageUrl"`
-	HardwareTemplateID string                `json:"hardware_template_id"`
-	DeviceMake         DeviceMake            `json:"make"`
-	Metadata           []byte                `json:"metadata"`
-	Verified           bool                  `json:"verified"`
-	DeviceStyles       []DeviceStyle         `json:"deviceStyles"`
-	DeviceAttributes   []DeviceTypeAttribute `json:"deviceAttributes"`
-	Transactions       []string              `json:"transactions"`
+	DeviceDefinitionID string                      `json:"deviceDefinitionId"`
+	NameSlug           string                      `json:"nameSlug"`
+	Name               string                      `json:"name"`
+	ImageURL           string                      `json:"imageUrl"`
+	HardwareTemplateID string                      `json:"hardware_template_id"`
+	DeviceMake         DeviceMake                  `json:"make"`
+	Metadata           []byte                      `json:"metadata"`
+	Verified           bool                        `json:"verified"`
+	DeviceStyles       []DeviceStyle               `json:"deviceStyles"`
+	DeviceAttributes   []DeviceTypeAttributeEditor `json:"deviceAttributes"`
+	Transactions       []string                    `json:"transactions"`
 }
 
-type DeviceTypeAttribute struct {
+type DeviceTypeAttributeEditor struct {
 	Name        string   `json:"name"`
 	Label       string   `json:"label"`
 	Description string   `json:"description"`
@@ -77,14 +78,14 @@ type DeviceIntegrationFeature struct {
 }
 
 type DeviceStyle struct {
-	ID                 string                `json:"id"`
-	DefinitionID       string                `json:"definitionId"`
-	Name               string                `json:"name"`
-	ExternalStyleID    string                `json:"externalStyleId"`
-	Source             string                `json:"source"`
-	SubModel           string                `json:"subModel"`
-	HardwareTemplateID string                `json:"hardware_template_id"`
-	Metadata           []DeviceTypeAttribute `json:"metadata"`
+	ID                 string                      `json:"id"`
+	DefinitionID       string                      `json:"definitionId"`
+	Name               string                      `json:"name"`
+	ExternalStyleID    string                      `json:"externalStyleId"`
+	Source             string                      `json:"source"`
+	SubModel           string                      `json:"subModel"`
+	HardwareTemplateID string                      `json:"hardware_template_id"`
+	Metadata           []DeviceTypeAttributeEditor `json:"metadata"`
 }
 
 type DeviceMake struct {
@@ -126,4 +127,52 @@ func ConvertDeviceMakeFromDB(dmDb *repoModel.DeviceMake) *DeviceMake {
 		CreatedAt:       dmDb.CreatedAt,
 		UpdatedAt:       dmDb.UpdatedAt,
 	}
+}
+
+// DeviceDefinitionTablelandModel model returned by on-chain sql lite from tableland
+type DeviceDefinitionTablelandModel struct {
+	ID         string                    `json:"id"`
+	KSUID      string                    `json:"ksuid"`
+	Model      string                    `json:"model"`
+	Year       int                       `json:"year"`
+	DeviceType string                    `json:"devicetype"`
+	ImageURI   string                    `json:"imageuri"`
+	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
+}
+
+// DeviceDefinitionMetadata part of tableland DD: includes a list of device-specific attributes.
+type DeviceDefinitionMetadata struct {
+	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
+}
+
+// DeviceTypeAttribute part of tableland DD: name and value key pair of attributes
+type DeviceTypeAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// UnmarshalJSON customizes the unmarshaling of DeviceDefinitionTablelandModel to handle cases where metadata is an empty string.
+func (d *DeviceDefinitionTablelandModel) UnmarshalJSON(data []byte) error {
+	type Alias DeviceDefinitionTablelandModel // Create an alias to avoid recursion
+
+	aux := &struct {
+		Metadata json.RawMessage `json:"metadata"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if len(aux.Metadata) > 0 && string(aux.Metadata) != `""` {
+		metadata := new(DeviceDefinitionMetadata)
+		if err := json.Unmarshal(aux.Metadata, metadata); err != nil {
+			return err
+		}
+		d.Metadata = metadata
+	}
+
+	return nil
 }

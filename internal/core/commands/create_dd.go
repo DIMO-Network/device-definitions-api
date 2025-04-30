@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
@@ -125,7 +126,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		ch.logger.Warn().Err(err).Msgf("failed to get images for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
-	ddTbl := gateways.DeviceDefinitionTablelandModel{
+	ddTbl := coremodels.DeviceDefinitionTablelandModel{
 		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(command.Model), int16(command.Year)),
 		KSUID:      ksuid.New().String(),
 		Model:      command.Model,
