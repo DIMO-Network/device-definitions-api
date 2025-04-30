@@ -368,3 +368,36 @@ func (vir *DrivlyVINResponse) GetExternalID() string {
 	// cant use shared.SlugString due to import cycle
 	return strings.ReplaceAll(strings.ToLower(fmt.Sprintf("%s-%s-%s", vir.Make, vir.Model, vir.Year)), " ", "")
 }
+
+type DATGroupInfoResponse struct {
+	VIN              string `json:"vin"`
+	DatECode         string `json:"datecode"`
+	SalesDescription string `json:"salesDescription"`
+	VehicleTypeName  string `json:"vehicleTypeName"`
+	// make
+	ManufacturerName string `json:"manufacturerName"`
+	BaseModelName    string `json:"baseModelName"`
+	SubModelName     string `json:"subModelName"`
+	// this is the model name we want to use
+	MainTypeGroupName string `json:"mainTypeGroupName"`
+	VinAccuracy       int    `json:"vinAccuracy"`
+
+	// when we're unable to get exact year
+	YearLow  int `json:"yearLow"`
+	YearHigh int `json:"yearHigh"`
+	// we don't always get the exact year
+	Year int `json:"year"`
+
+	SeriesEquipment   []DATGroupEquipment `json:"seriesEquipment"`
+	SpecialEquipment  []DATGroupEquipment `json:"specialEquipment"`
+	DATECodeEquipment []DATGroupEquipment `json:"datECodeEquipment"`
+	VINEquipment      []DATGroupEquipment `json:"vinEquipments"`
+}
+
+type DATGroupEquipment struct {
+	DatEquipmentId          string `json:"datEquipmentId"`
+	ManufacturerEquipmentId string `json:"manufacturerEquipmentId"`
+	// if Vin Equipment, this comes from ShortName
+	ManufacturerDescription string `json:"manufacturerDescription"`
+	Description             string `json:"description"`
+}

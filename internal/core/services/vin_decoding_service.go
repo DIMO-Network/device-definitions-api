@@ -329,7 +329,7 @@ func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandM
 	return v
 }
 
-func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*coremodels.VINDecodingInfoData, error) {
+func buildFromDATGroup(info *coremodels.DATGroupInfoResponse) (*coremodels.VINDecodingInfoData, error) {
 	if info == nil {
 		return nil, fmt.Errorf("nil dat group info")
 	}

@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/testcontainers/testcontainers-go"
 
@@ -212,7 +211,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 	const vin = "ZFADEXTESTSTUB001"
 	const country = "TR"
 
-	vinInfoResp := &gateways.DATGroupInfoResponse{
+	vinInfoResp := &coremodels.DATGroupInfoResponse{
 		VIN:               vin,
 		MainTypeGroupName: "Test",
 		Year:              2023,

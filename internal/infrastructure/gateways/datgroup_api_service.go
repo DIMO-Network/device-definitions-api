@@ -3,6 +3,7 @@ package gateways
 import (
 	"bytes"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"io"
 	"net/http"
 	"strconv"
@@ -20,7 +21,7 @@ import (
 
 //go:generate mockgen -source datgroup_api_service.go -destination mocks/datgroup_api_service_mock.go -package mocks
 type DATGroupAPIService interface {
-	GetVINv2(vin string, country string) (*DATGroupInfoResponse, error)
+	GetVINv2(vin string, country string) (*coremodels.DATGroupInfoResponse, error)
 }
 
 type datGroupAPIService struct {
@@ -35,7 +36,7 @@ func NewDATGroupAPIService(settings *config.Settings, logger *zerolog.Logger) DA
 	}
 }
 
-func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupInfoResponse, error) {
+func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*coremodels.DATGroupInfoResponse, error) {
 	if userCountryISO2 == "" || len(userCountryISO2) != 2 {
 		userCountryISO2 = "US"
 	}
@@ -115,7 +116,7 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*DATGroupIn
 	return infoResponse, err
 }
 
-func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInfoResponse, error) {
+func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*coremodels.DATGroupInfoResponse, error) {
 	doc, err := xmlquery.Parse(strings.NewReader(datgroupRespXML))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse response XML")
@@ -125,7 +126,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 		return nil, errors.New("failed to find vehicle xml node")
 	}
 
-	response := &DATGroupInfoResponse{
+	response := &coremodels.DATGroupInfoResponse{
 		VIN:               vin,
 		DatECode:          getXMLValue(vehicle, "//ns1:DatECode"),
 		SalesDescription:  getXMLValue(vehicle, "//ns1:SalesDescription"),
@@ -170,7 +171,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 	}
 
 	for _, seNode := range seNodes {
-		equipment := DATGroupEquipment{
+		equipment := coremodels.DATGroupEquipment{
 			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
 			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerEquipmentId"),
 			ManufacturerDescription: getXMLValue(seNode, "//ns1:ManufacturerDescription"),
@@ -193,7 +194,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 	}
 
 	for _, seNode := range spNodes {
-		equipment := DATGroupEquipment{
+		equipment := coremodels.DATGroupEquipment{
 			DatEquipmentId:          getXMLValue(seNode, "//ns1:DatEquipmentId"),
 			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerEquipmentId"),
 			ManufacturerDescription: getXMLValue(seNode, "//ns1:ManufacturerDescription"),
@@ -216,7 +217,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 	}
 
 	for _, seNode := range decNodes {
-		equipment := DATGroupEquipment{
+		equipment := coremodels.DATGroupEquipment{
 			DatEquipmentId: getXMLValue(seNode, "//ns1:DatEquipmentId"),
 			Description:    getXMLValue(seNode, "//ns1:Description"),
 		}
@@ -237,7 +238,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*DATGroupInf
 	}
 
 	for _, seNode := range vinNodes {
-		equipment := DATGroupEquipment{
+		equipment := coremodels.DATGroupEquipment{
 			ManufacturerEquipmentId: getXMLValue(seNode, "//ns1:ManufacturerCode"),
 			ManufacturerDescription: getXMLValue(seNode, "//ns1:ShortName"),
 		}
@@ -273,37 +274,4 @@ func extractYears(s string) (int, int, error) {
 	}
 
 	return startYear, endYear, nil
-}
-
-type DATGroupInfoResponse struct {
-	VIN              string `json:"vin"`
-	DatECode         string `json:"datecode"`
-	SalesDescription string `json:"salesDescription"`
-	VehicleTypeName  string `json:"vehicleTypeName"`
-	// make
-	ManufacturerName string `json:"manufacturerName"`
-	BaseModelName    string `json:"baseModelName"`
-	SubModelName     string `json:"subModelName"`
-	// this is the model name we want to use
-	MainTypeGroupName string `json:"mainTypeGroupName"`
-	VinAccuracy       int    `json:"vinAccuracy"`
-
-	// when we're unable to get exact year
-	YearLow  int `json:"yearLow"`
-	YearHigh int `json:"yearHigh"`
-	// we don't always get the exact year
-	Year int `json:"year"`
-
-	SeriesEquipment   []DATGroupEquipment `json:"seriesEquipment"`
-	SpecialEquipment  []DATGroupEquipment `json:"specialEquipment"`
-	DATECodeEquipment []DATGroupEquipment `json:"datECodeEquipment"`
-	VINEquipment      []DATGroupEquipment `json:"vinEquipments"`
-}
-
-type DATGroupEquipment struct {
-	DatEquipmentId          string `json:"datEquipmentId"`
-	ManufacturerEquipmentId string `json:"manufacturerEquipmentId"`
-	// if Vin Equipment, this comes from ShortName
-	ManufacturerDescription string `json:"manufacturerDescription"`
-	Description             string `json:"description"`
 }
