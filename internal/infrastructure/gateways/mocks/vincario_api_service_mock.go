@@ -5,13 +5,14 @@
 //
 //	mockgen -source vincario_api_service.go -destination mocks/vincario_api_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
 import (
 	reflect "reflect"
 
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,10 +40,10 @@ func (m *MockVincarioAPIService) EXPECT() *MockVincarioAPIServiceMockRecorder {
 }
 
 // DecodeVIN mocks base method.
-func (m *MockVincarioAPIService) DecodeVIN(vin string) (*gateways.VincarioInfoResponse, error) {
+func (m *MockVincarioAPIService) DecodeVIN(vin string) (*models.VincarioInfoResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DecodeVIN", vin)
-	ret0, _ := ret[0].(*gateways.VincarioInfoResponse)
+	ret0, _ := ret[0].(*models.VincarioInfoResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -83,7 +83,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	const makeID = "Ford"
 	const country = "US"
 
-	vinInfoResp := &gateways.DrivlyVINResponse{
+	vinInfoResp := &coremodels.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                makeID,
@@ -135,7 +135,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	const makeID = "Test"
 	const country = "US"
 
-	vincarioResp := &gateways.VincarioInfoResponse{
+	vincarioResp := &coremodels.VincarioInfoResponse{
 		VIN:                vin,
 		ModelYear:          2021,
 		Make:               makeID,
@@ -172,7 +172,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	const vin = "WAUZZZKM04D018683"
 	const country = "US"
 
-	vinInfoResp := &gateways.AutoIsoVINResponse{}
+	vinInfoResp := &coremodels.AutoIsoVINResponse{}
 	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
 
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))

@@ -6,19 +6,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
 )
 
 //go:generate mockgen -source vincario_api_service.go -destination mocks/vincario_api_service_mock.go -package mocks
 type VincarioAPIService interface {
-	DecodeVIN(vin string) (*VincarioInfoResponse, error)
+	DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, error)
 }
 
 type vincarioAPIService struct {
@@ -40,7 +39,7 @@ func NewVincarioAPIService(settings *config.Settings, log *zerolog.Logger) Vinca
 	}
 }
 
-func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, error) {
+func (va *vincarioAPIService) DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, error) {
 	id := "decode"
 
 	urlPath := vincarioPathBuilder(vin, id, va.settings.VincarioAPIKey, va.settings.VincarioAPISecret)
@@ -58,7 +57,7 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*VincarioInfoResponse, erro
 	}
 	defer resp.Body.Close()
 
-	infoResp := VincarioInfoResponse{}
+	infoResp := coremodels.VincarioInfoResponse{}
 	for _, s2 := range data.Decode {
 		// find the property in the struct with the label name in the key metadata
 		err := setStructPropertiesByMetadataKey(&infoResp, s2.Label, s2.Value)
@@ -129,101 +128,4 @@ type tempResponse struct {
 		Value any    `json:"value"`
 		ID    int    `json:"id,omitempty"`
 	} `json:"decode"`
-}
-
-type VincarioInfoResponse struct {
-	VIN                      string   `key:"VIN"`
-	VehicleID                int      `key:"Vehicle ID"`
-	Make                     string   `key:"Make"`
-	Model                    string   `key:"Model"`
-	ModelYear                int      `key:"Model Year"`
-	ProductType              string   `key:"Product Type"`
-	Body                     string   `key:"Body"`
-	Series                   string   `key:"Series"`
-	Drive                    string   `key:"Drive"`
-	EngineDisplacement       int      `key:"Engine Displacement (ccm)"`
-	FuelType                 string   `key:"Fuel Type - Primary"`
-	EngineCode               string   `key:"Engine Code"`
-	Transmission             string   `key:"Transmission"`
-	NumberOfGears            int      `key:"Number of Gears"`
-	EmissionStandard         string   `key:"Emission Standard"`
-	PlantCountry             string   `key:"Plant Country"`
-	ProductionStopped        int      `key:"Production Stopped"`
-	EngineManufacturer       string   `key:"Engine Manufacturer"`
-	EngineType               string   `key:"Engine Type"`
-	AverageCO2Emission       float64  `key:"Average CO2 Emission (g/km)"`
-	NumberOfWheels           int      `key:"Number Wheels"`
-	NumberOfAxles            int      `key:"Number of Axles"`
-	NumberOfDoors            int      `key:"Number of Doors"`
-	FrontBrakes              string   `key:"Front Brakes"`
-	RearBrakes               string   `key:"Rear Brakes"`
-	BrakeSystem              string   `key:"Brake System"`
-	SteeringType             string   `key:"Steering Type"`
-	WheelSize                string   `key:"Wheel Size"`
-	WheelSizeArray           []string `key:"Wheel Size Array"`
-	Wheelbase                int      `key:"Wheelbase (mm)"`
-	WheelbaseArray           []int    `key:"Wheelbase Array (mm)"`
-	Height                   int      `key:"Height (mm)"`
-	Length                   int      `key:"Length (mm)"`
-	Width                    int      `key:"Width (mm)"`
-	RearOverhang             int      `key:"Rear Overhang (mm)"`
-	FrontOverhang            int      `key:"Front Overhang (mm)"`
-	TrackFront               int      `key:"Track Front (mm)"`
-	TrackRear                int      `key:"Track Rear (mm)"`
-	MaxSpeed                 int      `key:"Max Speed (km/h)"`
-	WeightEmpty              int      `key:"Weight Empty (kg)"`
-	MaxWeight                int      `key:"Max Weight (kg)"`
-	MaxRoofLoad              int      `key:"Max roof load (kg)"`
-	TrailerLoadWithoutBrakes int      `key:"Permitted trailer load without brakes (kg)"`
-	CheckDigit               string   `key:"Check Digit"`
-	SequentialNumber         string   `key:"Sequential Number"`
-}
-
-// GetStyle returns a standard style string built from the data we have
-func (v *VincarioInfoResponse) GetStyle() string {
-	s := ""
-	if len(v.FuelType) > 0 {
-		s += v.FuelType + " "
-	}
-	if len(v.EngineType) > 0 {
-		s += v.EngineType + " "
-	}
-	if len(v.Transmission) > 0 {
-		s += v.Transmission + " "
-	}
-	if v.NumberOfGears > 0 {
-		s += fmt.Sprintf("%d-speed", v.NumberOfGears)
-	}
-
-	return strings.TrimSpace(s)
-}
-
-// GetSubModel returns the Body type from Vincario, which we can use as the sub model.
-func (v *VincarioInfoResponse) GetSubModel() string {
-	return strings.TrimSpace(v.Body)
-}
-
-// GetMetadata returns a map of metadata for the vehicle, in standard format.
-func (v *VincarioInfoResponse) GetMetadata() (null.JSON, error) {
-
-	metadata := map[string]interface{}{
-		"fuel_type":              v.FuelType,
-		"driven_wheels":          v.Drive,
-		"number_of_doors":        v.NumberOfDoors,
-		"base_msrp":              nil,
-		"epa_class":              v.EmissionStandard,
-		"vehicle_type":           v.Body,
-		"mpg_highway":            nil,
-		"mpg_city":               nil,
-		"fuel_tank_capacity_gal": nil,
-		"mpg":                    nil,
-	}
-
-	bytes, err := json.Marshal(metadata)
-
-	if err != nil {
-		return null.JSON{}, err
-	}
-
-	return null.JSONFrom(bytes), nil
 }

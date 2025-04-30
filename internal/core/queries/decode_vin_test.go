@@ -92,7 +92,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.DrivlyVINResponse{
+	vinInfoResp := &coremodels.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -202,7 +202,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.ID, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.DrivlyVINResponse{
+	vinInfoResp := &coremodels.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -335,7 +335,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.DrivlyVINResponse{
+	vinInfoResp := &coremodels.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -431,7 +431,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	s.Require().NoError(err)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
-	vinInfoResp := &gateways.DrivlyVINResponse{
+	vinInfoResp := &coremodels.DrivlyVINResponse{
 		Vin:                 vin,
 		Year:                "2021",
 		Make:                dm.Name,
@@ -818,6 +818,6 @@ func TestResolveMetadataFromInfo(t *testing.T) {
 	}
 }
 
-func buildStyleName(vinInfo *gateways.DrivlyVINResponse) string {
+func buildStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }

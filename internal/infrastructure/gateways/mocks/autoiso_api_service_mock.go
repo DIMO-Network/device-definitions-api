@@ -5,13 +5,14 @@
 //
 //	mockgen -source autoiso_api_service.go -destination mocks/autoiso_api_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
 import (
 	reflect "reflect"
 
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,10 +40,10 @@ func (m *MockAutoIsoAPIService) EXPECT() *MockAutoIsoAPIServiceMockRecorder {
 }
 
 // GetVIN mocks base method.
-func (m *MockAutoIsoAPIService) GetVIN(vin string) (*gateways.AutoIsoVINResponse, error) {
+func (m *MockAutoIsoAPIService) GetVIN(vin string) (*models.AutoIsoVINResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVIN", vin)
-	ret0, _ := ret[0].(*gateways.AutoIsoVINResponse)
+	ret0, _ := ret[0].(*models.AutoIsoVINResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -1,4 +1,3 @@
-//nolint:tagliatelle
 package gateways
 
 import (
@@ -6,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +15,7 @@ import (
 
 //go:generate mockgen -source autoiso_api_service.go -destination mocks/autoiso_api_service_mock.go -package mocks
 type AutoIsoAPIService interface {
-	GetVIN(vin string) (*AutoIsoVINResponse, error)
+	GetVIN(vin string) (*coremodels.AutoIsoVINResponse, error)
 }
 
 type autoIsoAPIService struct {
@@ -37,7 +37,7 @@ func NewAutoIsoAPIService(autoIsoAPIUid, autoIsoAPIKey string) AutoIsoAPIService
 	}
 }
 
-func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
+func (ai *autoIsoAPIService) GetVIN(vin string) (*coremodels.AutoIsoVINResponse, error) {
 	input := ai.autoIsoAPIUid + ai.autoIsoAPIKey + vin
 	// has with md5
 	hasher := md5.New()
@@ -49,7 +49,7 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	v := &AutoIsoVINResponse{}
+	v := &coremodels.AutoIsoVINResponse{}
 	err = json.Unmarshal(res, v)
 	if err != nil {
 		return nil, err
@@ -69,174 +69,4 @@ func (ai *autoIsoAPIService) GetVIN(vin string) (*AutoIsoVINResponse, error) {
 	}
 
 	return v, nil
-}
-
-type AutoIsoVINResponse struct {
-	Version          string `json:"version"`
-	Vin              string `json:"vin"`
-	APIStatus        string `json:"apiStatus"`
-	ResponseDate     string `json:"responseDate"`
-	FunctionName     string `json:"functionName"`
-	FunctionResponse struct {
-		Data struct {
-			API struct {
-				CoreVersion     string `json:"core_version"`
-				EndpointVersion int    `json:"endpoint_version"`
-				JSONVersion     string `json:"json_version"`
-				APIType         string `json:"api_type"`
-				APICache        string `json:"api_cache"`
-				DataPrecision   int    `json:"data_precision"`
-				DataMatching    string `json:"data_matching"`
-				LexLang         string `json:"lex_lang"`
-			} `json:"api"`
-			Analyze struct {
-				VinOrginal struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"vin_orginal"`
-				VinCorrected struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"vin_corrected"`
-				VinYear struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"vin_year"`
-				VinSerial struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"vin_serial"`
-				Checkdigit struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"checkdigit"`
-			} `json:"analyze"`
-			Decoder struct {
-				Make struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"make"`
-				Model struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"model"`
-				ModelYear struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"model_year"`
-				Body struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"body"`
-				FuelType struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"fuel_type"`
-				VehicleType struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"vehicle_type"`
-				Doors struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"doors"`
-				EngineDisplCm3 struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_displ_cm3"`
-				EngineDisplL struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_displ_l"`
-				EnginePowerHp struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_power_hp"`
-				EnginePowerKw struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_power_kw"`
-				EngineConf struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_conf"`
-				EngineType struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_type"`
-				EngineVersion struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_version"`
-				EngineHead struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_head"`
-				EngineValves struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_valves"`
-				EngineCylinders struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_cylinders"`
-				EngineDisplCid struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_displ_cid"`
-				EngineTurbo struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"engine_turbo"`
-				DriveType struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"drive_type"`
-				GearboxType struct {
-					Desc  string `json:"desc"`
-					Value string `json:"value"`
-				} `json:"gearbox_type"`
-				EmissionStd struct {
-					Desc   string `json:"desc"`
-					Value  string `json:"value"`
-					Co2Gkm string `json:"co2_gkm"`
-				} `json:"emission_std"`
-			} `json:"decoder"`
-		} `json:"data"`
-	} `json:"functionResponse"`
-	LicenseInfo struct {
-		LicenseNumber         string `json:"licenseNumber"`
-		ValidTo               string `json:"validTo"`
-		RemainingCredits      int    `json:"remainingCredits"`
-		RemainingMonthlyLimit int    `json:"remainingMonthlyLimit"`
-		RemainingDailyLimit   int    `json:"remainingDailyLimit"`
-	} `json:"licenseInfo"`
-}
-
-// GetStyle returns a standard style string built from the data we have
-func (v *AutoIsoVINResponse) GetStyle() string {
-	s := ""
-	// eg. Diesel
-	if len(v.FunctionResponse.Data.Decoder.FuelType.Value) > 0 {
-		s += v.FunctionResponse.Data.Decoder.FuelType.Value + " "
-	}
-	// eg. TDI
-	if len(v.FunctionResponse.Data.Decoder.EngineVersion.Value) > 0 {
-		s += v.FunctionResponse.Data.Decoder.EngineVersion.Value + " "
-	}
-	// eg. Manual
-	if len(v.FunctionResponse.Data.Decoder.GearboxType.Value) > 0 {
-		s += v.FunctionResponse.Data.Decoder.GearboxType.Value + " "
-	}
-	// eg. FWD / AWD
-	if len(v.FunctionResponse.Data.Decoder.DriveType.Value) > 0 {
-		s += v.FunctionResponse.Data.Decoder.DriveType.Value + " "
-	}
-
-	return strings.TrimSpace(s)
-}
-
-// GetSubModel returns the Body type, which we can use as the sub model.
-func (v *AutoIsoVINResponse) GetSubModel() string {
-	return strings.TrimSpace(v.FunctionResponse.Data.Decoder.Body.Value)
 }

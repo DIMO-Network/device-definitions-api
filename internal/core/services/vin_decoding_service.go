@@ -21,13 +21,13 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 )
 
 type VINDecodingService interface {
 	// GetVIN decodes a vin using one of the providers passed in or if AllProviders applies an ordered logic. Only pass TeslaProvider if know it is a Tesla.
-	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error)
+	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error)
 }
 
 type vinDecodingService struct {
@@ -46,11 +46,11 @@ func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISv
 		onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
 }
 
-func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error) {
+func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error) {
 
 	const DefaultDefinitionID = "ford_escape_2020"
 
-	result := &models.VINDecodingInfoData{}
+	result := &coremodels.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
 	if !ValidateVIN(vin) {
 		return nil, fmt.Errorf("invalid vin: %s", vin)
@@ -70,23 +70,23 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 	}
 
 	switch provider {
-	case models.TeslaProvider:
+	case coremodels.TeslaProvider:
 		v := shared.VIN(vin)
 		metadata := map[string]interface{}{
 			"fuel_type":       "electric",
-			"powertrain_type": models.BEV.String(),
+			"powertrain_type": coremodels.BEV.String(),
 		}
 		bytes, _ := json.Marshal(metadata)
-		result = &models.VINDecodingInfoData{
+		result = &coremodels.VINDecodingInfoData{
 			VIN:      vin,
 			Year:     int32(v.Year()),
 			Make:     "Tesla",
 			Model:    v.TeslaModel(),
-			Source:   models.TeslaProvider,
+			Source:   coremodels.TeslaProvider,
 			FuelType: "electric",
 			MetaData: null.JSONFrom(bytes),
 		}
-	case models.DrivlyProvider:
+	case coremodels.DrivlyProvider:
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
@@ -95,7 +95,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 		}
-	case models.VincarioProvider:
+	case coremodels.VincarioProvider:
 		vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
@@ -104,7 +104,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, err
 		}
-	case models.AutoIsoProvider:
+	case coremodels.AutoIsoProvider:
 		vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
@@ -113,7 +113,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, err
 		}
-	case models.DATGroupProvider:
+	case coremodels.DATGroupProvider:
 		// todo lookup country for two letter equiv
 		vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
 		if err != nil {
@@ -123,7 +123,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		if err != nil {
 			return nil, err
 		}
-	case models.AllProviders:
+	case coremodels.AllProviders:
 		// todo if tesla, just build from tesla and use model
 
 		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
@@ -205,7 +205,7 @@ func ValidateVIN(vin string) bool {
 	return regex.MatchString(vin)
 }
 
-func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*models.UpdateDeviceTypeAttribute {
+func buildDrivlyVINInfoToUpdateAttr(vinInfo *coremodels.DrivlyVINResponse) []*coremodels.UpdateDeviceTypeAttribute {
 	seekAttributes := map[string]string{
 		// {device attribute, must match device_types.properties}: {vin info from drivly}
 		"mpg_city":               "mpgCity",
@@ -221,13 +221,13 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 		"driven_wheels":          "drive",
 	}
 	marshal, _ := json.Marshal(vinInfo)
-	var udta []*models.UpdateDeviceTypeAttribute
+	var udta []*coremodels.UpdateDeviceTypeAttribute
 
 	for dtAttrKey, drivlyKey := range seekAttributes {
 		v := gjson.GetBytes(marshal, drivlyKey).String()
 		// if v valid, ok etc
 		if len(v) > 0 && v != "0" && v != "0.0000" {
-			udta = append(udta, &models.UpdateDeviceTypeAttribute{
+			udta = append(udta, &coremodels.UpdateDeviceTypeAttribute{
 				Name:  dtAttrKey,
 				Value: v,
 			})
@@ -237,7 +237,7 @@ func buildDrivlyVINInfoToUpdateAttr(vinInfo *gateways.DrivlyVINResponse) []*mode
 	return udta
 }
 
-func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInfoData, error) {
+func buildFromAutoIso(info *coremodels.AutoIsoVINResponse) (*coremodels.VINDecodingInfoData, error) {
 	raw, _ := json.Marshal(info)
 	if info == nil {
 		return nil, fmt.Errorf("vin info was nil")
@@ -246,12 +246,12 @@ func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInf
 	if err != nil {
 		return nil, fmt.Errorf("invalid decode year: %+v", *info)
 	}
-	v := &models.VINDecodingInfoData{
+	v := &coremodels.VINDecodingInfoData{
 		VIN:        info.Vin,
 		Year:       int32(yr),
 		Make:       strings.TrimSpace(info.FunctionResponse.Data.Decoder.Make.Value),
 		Model:      strings.TrimSpace(info.FunctionResponse.Data.Decoder.Model.Value),
-		Source:     models.AutoIsoProvider,
+		Source:     coremodels.AutoIsoProvider,
 		ExternalID: info.Vin,
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
@@ -264,14 +264,14 @@ func buildFromAutoIso(info *gateways.AutoIsoVINResponse) (*models.VINDecodingInf
 	return v, nil
 }
 
-func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecodingInfoData, error) {
+func buildFromVincario(info *coremodels.VincarioInfoResponse) (*coremodels.VINDecodingInfoData, error) {
 	raw, _ := json.Marshal(info)
-	v := &models.VINDecodingInfoData{
+	v := &coremodels.VINDecodingInfoData{
 		VIN:        info.VIN,
 		Year:       int32(info.ModelYear),
 		Make:       strings.TrimSpace(info.Make),
 		Model:      strings.TrimSpace(info.Model),
-		Source:     models.VincarioProvider,
+		Source:     coremodels.VincarioProvider,
 		ExternalID: strconv.Itoa(info.VehicleID),
 		StyleName:  info.GetStyle(),
 		SubModel:   info.GetSubModel(),
@@ -290,18 +290,18 @@ func buildFromVincario(info *gateways.VincarioInfoResponse) (*models.VINDecoding
 	return v, nil
 }
 
-func buildFromDrivly(info *gateways.DrivlyVINResponse) (*models.VINDecodingInfoData, error) {
+func buildFromDrivly(info *coremodels.DrivlyVINResponse) (*coremodels.VINDecodingInfoData, error) {
 	raw, _ := json.Marshal(info)
 	yrInt, _ := strconv.Atoi(info.Year)
 
-	v := &models.VINDecodingInfoData{
+	v := &coremodels.VINDecodingInfoData{
 		VIN:        info.Vin,
 		Year:       int32(yrInt),
 		Make:       info.Make,
 		Model:      info.Model,
 		StyleName:  buildDrivlyStyleName(info),
 		ExternalID: info.GetExternalID(),
-		Source:     models.DrivlyProvider,
+		Source:     coremodels.DrivlyProvider,
 		Raw:        raw,
 		FuelType:   info.Fuel,
 	}
@@ -311,15 +311,15 @@ func buildFromDrivly(info *gateways.DrivlyVINResponse) (*models.VINDecodingInfoD
 	return v, nil
 }
 
-func buildDrivlyStyleName(vinInfo *gateways.DrivlyVINResponse) string {
+func buildDrivlyStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
 
 // buildFromDDForTestVIN meant for use with test VIN's
-func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandModel) *models.VINDecodingInfoData {
+func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandModel) *coremodels.VINDecodingInfoData {
 	makeSlug := strings.Split(info.ID, "_")[0]
 
-	v := &models.VINDecodingInfoData{
+	v := &coremodels.VINDecodingInfoData{
 		VIN:   vin,
 		Year:  int32(info.Year),
 		Make:  strings.ToUpper(makeSlug[:1]) + makeSlug[1:],
@@ -329,16 +329,16 @@ func buildFromDDForTestVIN(vin string, info *gateways.DeviceDefinitionTablelandM
 	return v
 }
 
-func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecodingInfoData, error) {
+func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*coremodels.VINDecodingInfoData, error) {
 	if info == nil {
 		return nil, fmt.Errorf("nil dat group info")
 	}
-	v := &models.VINDecodingInfoData{
+	v := &coremodels.VINDecodingInfoData{
 		VIN:        info.VIN,
 		Year:       int32(info.Year),
 		Make:       strings.TrimSpace(info.ManufacturerName),
 		Model:      strings.TrimSpace(info.MainTypeGroupName),
-		Source:     models.DATGroupProvider,
+		Source:     coremodels.DATGroupProvider,
 		ExternalID: info.DatECode,
 		StyleName:  info.SubModelName,
 		SubModel:   info.BaseModelName,
@@ -350,7 +350,7 @@ func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecoding
 
 	// todo need some more introspection from more examples
 	//if strings.Contains(string(raw), "High-voltage battery") {
-	//	v.FuelType = models.BEV.String()
+	//	v.FuelType = coremodels.BEV.String()
 	//}
 
 	if err := validateVinDecoding(v); err != nil {
@@ -361,7 +361,7 @@ func buildFromDATGroup(info *gateways.DATGroupInfoResponse) (*models.VINDecoding
 }
 
 // validateVinDecoding returns an error if year, model name, make, etc seem like bad data
-func validateVinDecoding(vdi *models.VINDecodingInfoData) error {
+func validateVinDecoding(vdi *coremodels.VINDecodingInfoData) error {
 	if vdi == nil {
 		return fmt.Errorf("vin info was nil")
 	}
