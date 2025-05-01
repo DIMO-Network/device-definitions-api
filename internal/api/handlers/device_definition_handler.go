@@ -68,7 +68,7 @@ type DecodeVINResponse struct {
 // @Tags device-definitions
 // @Param  id path string true "device definition id or mmy definition_id eg. ford_escape_2020"
 // @Produce json
-// @Success 200 {object} gateways.DeviceDefinitionTablelandModel
+// @Success 200 {object} models.DeviceDefinitionTablelandModel
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions/{id} [get]

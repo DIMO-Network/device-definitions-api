@@ -353,7 +353,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	return resp, nil
 }
 
-func resolveMetadataFromInfo(powertrain string, vinInfo *coremodels.VINDecodingInfoData) *coremodels.DeviceDefinitionMetadata {
+func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoData) *coremodels.DeviceDefinitionMetadata {
 	md := coremodels.DeviceDefinitionMetadata{DeviceAttributes: make([]coremodels.DeviceTypeAttribute, 0)}
 	if powertrain != "" {
 		md.DeviceAttributes = append(md.DeviceAttributes, coremodels.DeviceTypeAttribute{
@@ -361,10 +361,6 @@ func resolveMetadataFromInfo(powertrain string, vinInfo *coremodels.VINDecodingI
 			Value: powertrain,
 		})
 	}
-	// todo: iterate over vininfo and generate tableland dd metadata
-	//vinInfo.Raw // what can we do with this?
-	// thing is that the metadata field names are defined in the device type, but we should have some defaults mapped
-	// drivly or vincario json field -> dimo metadata field name
 
 	return &md
 }

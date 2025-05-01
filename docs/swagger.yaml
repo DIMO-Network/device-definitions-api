@@ -1,108 +1,34 @@
 definitions:
-  big.Int:
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake:
+  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionMetadata:
     properties:
-      created_at:
-        type: string
-      id:
-        type: string
-      logo_url:
-        $ref: '#/definitions/null.String'
-      metadata:
-        items:
-          type: integer
-        type: array
-      metadataTyped:
-        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMakeMetadata'
-      name:
-        type: string
-      nameSlug:
-        type: string
-      oem_platform_name:
-        $ref: '#/definitions/null.String'
-      tokenId:
-        $ref: '#/definitions/big.Int'
-      updated_at:
-        type: string
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMakeMetadata:
-    properties:
-      ride_guide_link:
-        type: string
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle:
-    properties:
-      definitionId:
-        type: string
-      externalStyleId:
-        type: string
-      hardware_template_id:
-        type: string
-      id:
-        type: string
-      metadata:
+      device_attributes:
         items:
           $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute'
         type: array
-      name:
+    type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionTablelandModel:
+    properties:
+      devicetype:
         type: string
-      source:
+      id:
         type: string
-      subModel:
+      imageuri:
         type: string
+      ksuid:
+        type: string
+      metadata:
+        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionMetadata'
+      model:
+        type: string
+      year:
+        type: integer
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute:
     properties:
-      description:
-        type: string
-      label:
-        type: string
       name:
-        type: string
-      options:
-        items:
-          type: string
-        type: array
-      required:
-        type: boolean
-      type:
         type: string
       value:
         type: string
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult:
-    properties:
-      deviceAttributes:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceTypeAttribute'
-        type: array
-      deviceDefinitionId:
-        type: string
-      deviceStyles:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceStyle'
-        type: array
-      hardware_template_id:
-        type: string
-      imageUrl:
-        type: string
-      make:
-        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceMake'
-      metadata:
-        items:
-          type: integer
-        type: array
-      name:
-        type: string
-      nameSlug:
-        type: string
-      transactions:
-        items:
-          type: string
-        type: array
-      verified:
-        type: boolean
     type: object
   github_com_DIMO-Network_device-definitions-api_internal_core_queries.CompatibilitySheetRow:
     properties:
@@ -205,37 +131,6 @@ definitions:
       year:
         type: integer
     type: object
-  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata:
-    properties:
-      device_attributes:
-        items:
-          $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute'
-        type: array
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel:
-    properties:
-      devicetype:
-        type: string
-      id:
-        type: string
-      imageuri:
-        type: string
-      ksuid:
-        type: string
-      metadata:
-        $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionMetadata'
-      model:
-        type: string
-      year:
-        type: integer
-    type: object
-  github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceTypeAttribute:
-    properties:
-      name:
-        type: string
-      value:
-        type: string
-    type: object
   internal_api_handlers.DecodeVINRequest:
     properties:
       countryCode:
@@ -254,13 +149,6 @@ definitions:
           hash from the insert statement. Check this has completed before querying
           the ID
         type: string
-    type: object
-  null.String:
-    properties:
-      string:
-        type: string
-      valid:
-        type: boolean
     type: object
 info:
   contact: {}
@@ -300,7 +188,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_infrastructure_gateways.DeviceDefinitionTablelandModel'
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionTablelandModel'
         "404":
           description: Not Found
         "500":
@@ -496,35 +384,6 @@ paths:
         "500":
           description: Internal Server Error
       summary: gets all supported manufacturers for the smartcar external integration
-      tags:
-      - device-definitions
-  /v2/device-definitions/{make}/{id}:
-    get:
-      description: gets a device definition
-      operationId: GetDeviceDefinitionV2ByID
-      parameters:
-      - description: device make name
-        in: path
-        name: make
-        required: true
-        type: string
-      - description: device definition id
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.GetDeviceDefinitionQueryResult'
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-      summary: gets a device definition from tableland (on-chain records)
       tags:
       - device-definitions
   /v2/device-definitions/{make}/all:
