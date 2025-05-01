@@ -137,6 +137,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
+	// todo: this should be a separate specific gRPC endpoint for setting or updating vin number to DD mapping
 	// If DefinitionID passed in, override VIN decoding
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
@@ -251,6 +252,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// todo track failed decodes
 		return nil, err
 	}
+	// todo: WMI's may be re-used by multiple OEM's of same parent OEM
 	// we may have already gotten this above
 	if dbWMI == nil {
 		dbWMI, err = dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
@@ -268,6 +270,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	modelSlug := shared.SlugString(vinInfo.Model)
 	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
+	resp.DefinitionId = tid
+
 	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
 	if errTbl != nil {
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
@@ -503,7 +507,7 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 
 		err = p.Upsert(ctx, dc.dbs().Writer, true, []string{models.ImageColumns.DefinitionID, models.ImageColumns.SourceURL}, boil.Infer(), boil.Infer())
 		if err != nil {
-			dc.logger.Warn().Msgf("fail insert device image for: %s %d %s %s", definitionID, year, mk, model)
+			dc.logger.Warn().Err(err).Msgf("fail insert device image for: %s %d %s %s", definitionID, year, mk, model)
 			continue
 		}
 	}

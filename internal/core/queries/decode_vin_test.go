@@ -280,7 +280,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 		Width:     1,
 		Images:    []gateways.FuelImage{image},
 	}
-	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages("Ford", "Escape", 2021, gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -736,12 +736,10 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 
 	definitionID := "ford_bronco_2022"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "bronco", gomock.AssignableToTypeOf(null.JSON{}), gomock.AssignableToTypeOf(null.JSON{}))
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(gomock.Any()).Return("ICE")
 
-	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID, gomock.Any()).Return(
-		buildTestTblDD(definitionID, "Escape", 2017), nil, nil)
+		buildTestTblDD(definitionID, "Bronco", 20222), nil, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -771,6 +769,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	assert.Equal(s.T(), dm.Name, result.Manufacturer)
 	assert.Equal(s.T(), "probably smartcar", result.Source)
 	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
+	assert.Equal(s.T(), result.NewTrxHash, "")
 }
 
 func TestResolveMetadataFromInfo(t *testing.T) {
