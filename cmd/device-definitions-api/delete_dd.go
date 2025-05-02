@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	dd_common "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -65,7 +66,7 @@ func (p *deleteDefinition) Execute(ctx context.Context, _ *flag.FlagSet, _ ...in
 	if err != nil {
 		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
 	}
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send)
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send, pdb.DBS)
 
 	id := os.Args[len(os.Args)-1]
 
@@ -80,7 +81,7 @@ func (p *deleteDefinition) Execute(ctx context.Context, _ *flag.FlagSet, _ ...in
 		for !trxFinished {
 			loops++
 			time.Sleep(time.Second * 2)
-			trxFinished, err = checkTransactionStatus(*trx, p.settings.PolygonScanAPIKey)
+			trxFinished, err = dd_common.CheckTransactionStatus(*trx, p.settings.PolygonScanAPIKey, !p.settings.IsProd())
 			if err != nil {
 				fmt.Println("Error checking transaction status: ", err)
 			}

@@ -4,62 +4,64 @@ import (
 	_ "embed" // import the embed package
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_deviceDefinitionOnChainService_validateAttributes(t *testing.T) {
 	tests := []struct {
 		name              string
-		currentAttributes []DeviceTypeAttribute
-		newAttributes     []DeviceTypeAttribute
-		expectedNewOrMod  []DeviceTypeAttribute
-		expectedRemoved   []DeviceTypeAttribute
+		currentAttributes []models.DeviceTypeAttribute
+		newAttributes     []models.DeviceTypeAttribute
+		expectedNewOrMod  []models.DeviceTypeAttribute
+		expectedRemoved   []models.DeviceTypeAttribute
 	}{
 		{
 			name: "add new attribute",
-			currentAttributes: []DeviceTypeAttribute{
+			currentAttributes: []models.DeviceTypeAttribute{
 				{Name: "driven_wheels", Value: "AWD"},
 				{Name: "manufacturer_code", Value: "K3S"},
 			},
-			newAttributes: []DeviceTypeAttribute{
+			newAttributes: []models.DeviceTypeAttribute{
 				{Name: "driven_wheels", Value: "AWD"},
 				{Name: "manufacturer_code", Value: "K3S"},
 				{Name: "number_of_doors", Value: "4"},
 			},
-			expectedNewOrMod: []DeviceTypeAttribute{
+			expectedNewOrMod: []models.DeviceTypeAttribute{
 				{Name: "number_of_doors", Value: "4"},
 			},
-			expectedRemoved: []DeviceTypeAttribute{},
+			expectedRemoved: []models.DeviceTypeAttribute{},
 		},
 		{
 			name: "remove current attribute",
-			currentAttributes: []DeviceTypeAttribute{
+			currentAttributes: []models.DeviceTypeAttribute{
 				{Name: "driven_wheels", Value: "AWD"},
 				{Name: "manufacturer_code", Value: "K3S"},
 			},
-			newAttributes: []DeviceTypeAttribute{
+			newAttributes: []models.DeviceTypeAttribute{
 				{Name: "powertrain_type", Value: "BEV"},
 			},
-			expectedNewOrMod: []DeviceTypeAttribute{
+			expectedNewOrMod: []models.DeviceTypeAttribute{
 				{Name: "powertrain_type", Value: "BEV"},
 			},
-			expectedRemoved: []DeviceTypeAttribute{
+			expectedRemoved: []models.DeviceTypeAttribute{
 				{Name: "driven_wheels", Value: "AWD"},
 				{Name: "manufacturer_code", Value: "K3S"},
 			},
 		},
 		{
 			name: "update current attribute",
-			currentAttributes: []DeviceTypeAttribute{
+			currentAttributes: []models.DeviceTypeAttribute{
 				{Name: "fuel_type", Value: "AWD"},
 			},
-			newAttributes: []DeviceTypeAttribute{
+			newAttributes: []models.DeviceTypeAttribute{
 				{Name: "fuel_type", Value: "Electric"},
 			},
-			expectedNewOrMod: []DeviceTypeAttribute{
+			expectedNewOrMod: []models.DeviceTypeAttribute{
 				{Name: "fuel_type", Value: "Electric"},
 			},
-			expectedRemoved: []DeviceTypeAttribute{},
+			expectedRemoved: []models.DeviceTypeAttribute{},
 		},
 	}
 

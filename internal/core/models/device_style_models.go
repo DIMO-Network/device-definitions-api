@@ -3,7 +3,7 @@ package models
 
 type GetDeviceStyleQueryResult struct {
 	ID                 string                              `json:"id"`
-	DeviceDefinitionID string                              `json:"device_definition_id"`
+	DefinitionID       string                              `json:"definition_id"`
 	DeviceDefinition   GetDeviceDefinitionStyleQueryResult `json:"device_definition"`
 	Name               string                              `json:"name"`
 	ExternalStyleID    string                              `json:"external_style_id"`
@@ -13,5 +13,5 @@ type GetDeviceStyleQueryResult struct {
 }
 
 type GetDeviceDefinitionStyleQueryResult struct {
-	DeviceAttributes []DeviceTypeAttribute `json:"deviceAttributes"`
+	DeviceAttributes []DeviceTypeAttributeEditor `json:"deviceAttributes"`
 }

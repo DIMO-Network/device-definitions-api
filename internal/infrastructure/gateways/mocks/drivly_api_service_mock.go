@@ -5,13 +5,14 @@
 //
 //	mockgen -source drivly_api_service.go -destination mocks/drivly_api_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
 import (
 	reflect "reflect"
 
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,10 +40,10 @@ func (m *MockDrivlyAPIService) EXPECT() *MockDrivlyAPIServiceMockRecorder {
 }
 
 // GetVINInfo mocks base method.
-func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*gateways.DrivlyVINResponse, error) {
+func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*models.DrivlyVINResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVINInfo", vin)
-	ret0, _ := ret[0].(*gateways.DrivlyVINResponse)
+	ret0, _ := ret[0].(*models.DrivlyVINResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

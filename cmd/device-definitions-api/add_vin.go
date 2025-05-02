@@ -6,10 +6,18 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"math/big"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -25,6 +33,8 @@ import (
 type addVINCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
+
+	sender sender.Sender
 }
 
 func (*addVINCmd) Name() string     { return "addvin" }
@@ -52,6 +62,17 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
+	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+
 	vinDecodeNumber, err := models.FindVinNumber(ctx, pdb.DBS().Reader, vin)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		p.logger.Fatal().Err(err).Send()
@@ -62,21 +83,21 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitSuccess
 	}
 	processedVIN := shared.VIN(vin)
-	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi())).One(ctx, pdb.DBS().Reader)
+	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi()), qm.Load(models.WmiRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println("could not find WMI for vin")
 		return subcommands.ExitFailure
 	}
 	vinNumber := models.VinNumber{
-		Vin:            vin,
-		Wmi:            processedVIN.Wmi(),
-		VDS:            processedVIN.VDS(),
-		CheckDigit:     processedVIN.CheckDigit(),
-		SerialNumber:   processedVIN.SerialNumber(),
-		Vis:            processedVIN.VIS(),
-		DeviceMakeID:   wmi.DeviceMakeID,
-		DecodeProvider: null.StringFrom("manual"),
-		Year:           processedVIN.Year(),
+		Vin:              vin,
+		Wmi:              processedVIN.Wmi(),
+		VDS:              processedVIN.VDS(),
+		CheckDigit:       processedVIN.CheckDigit(),
+		SerialNumber:     processedVIN.SerialNumber(),
+		Vis:              processedVIN.VIS(),
+		ManufacturerName: wmi.R.DeviceMake.Name,
+		DecodeProvider:   null.StringFrom("manual"),
+		Year:             processedVIN.Year(),
 	}
 	if vinNumber.Year == 0 || vinNumber.Year < 2008 || vinNumber.Year > time.Now().Year() {
 		year, err := cmdLineInput("enter model year")
@@ -97,14 +118,19 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitFailure
 	}
 
-	deviceDefinition, err := models.DeviceDefinitions(models.DeviceDefinitionWhere.Model.EQ(model),
-		models.DeviceDefinitionWhere.DeviceMakeID.EQ(vinNumber.DeviceMakeID),
-		models.DeviceDefinitionWhere.Year.EQ(int16(vinNumber.Year))).One(ctx, pdb.DBS().Reader)
+	manufacturer, err := onChainSvc.GetManufacturer(ctx, wmi.R.DeviceMake.NameSlug, pdb.DBS().Reader)
+	if err != nil {
+		fmt.Println(err.Error())
+		return subcommands.ExitFailure
+	}
+	definitionID := common.DeviceDefinitionSlug(wmi.R.DeviceMake.NameSlug, shared.SlugString(model), int16(vinNumber.Year))
+	deviceDefinition, err := onChainSvc.GetDefinitionTableland(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
+
 	if err != nil {
 		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))
 		return subcommands.ExitFailure
 	}
-	vinNumber.DefinitionID = deviceDefinition.NameSlug
+	vinNumber.DefinitionID = deviceDefinition.ID
 
 	err = vinNumber.Insert(ctx, pdb.DBS().Writer, boil.Infer())
 	if err != nil {

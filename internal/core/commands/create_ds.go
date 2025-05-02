@@ -5,12 +5,11 @@ import (
 	"context"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 )
 
 type CreateDeviceStyleCommand struct {
-	DeviceDefinitionID string `json:"device_definition_id"`
+	DefinitionID       string `json:"definition_id"`
 	Name               string `json:"name"`
 	ExternalStyleID    string `json:"external_style_id"`
 	Source             string `json:"source"`
@@ -26,25 +25,21 @@ func (*CreateDeviceStyleCommand) Key() string { return "CreateDeviceStyleCommand
 
 type CreateDeviceStyleCommandHandler struct {
 	repository repositories.DeviceStyleRepository
-	ddCache    services.DeviceDefinitionCacheService
 }
 
-func NewCreateDeviceStyleCommandHandler(repository repositories.DeviceStyleRepository, cache services.DeviceDefinitionCacheService) CreateDeviceStyleCommandHandler {
-	return CreateDeviceStyleCommandHandler{repository: repository, ddCache: cache}
+func NewCreateDeviceStyleCommandHandler(repository repositories.DeviceStyleRepository) CreateDeviceStyleCommandHandler {
+	return CreateDeviceStyleCommandHandler{repository: repository}
 }
 
 func (ch CreateDeviceStyleCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	command := query.(*CreateDeviceStyleCommand)
 
-	ds, err := ch.repository.Create(ctx, command.DeviceDefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.HardwareTemplateID)
+	ds, err := ch.repository.Create(ctx, command.DefinitionID, command.Name, command.ExternalStyleID, command.Source, command.SubModel, command.HardwareTemplateID)
 
 	if err != nil {
 		return nil, err
 	}
-
-	// Remove Cache
-	ch.ddCache.DeleteDeviceDefinitionCacheByID(ctx, command.DeviceDefinitionID)
 
 	return CreateDeviceStyleCommandResult{ID: ds.ID}, nil
 }

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
 
 package grpc;
@@ -7,14 +9,12 @@ package grpc;
 message DecodeVinRequest {
   string vin = 1;
   string country = 2;
-  string knownModel = 3;
-  int32 knownYear = 4;
-  string device_definition_id = 5 [deprecated = true];
-  string definition_id = 6;
+  string known_model = 3;
+  int32 known_year = 4;
 }
 
 message DecodeVinResponse {
-  string device_make_id = 1;
+  string device_make_id = 1 [deprecated=true];
   string device_style_id = 3;
   int32 year = 4;
   string source = 5;
@@ -22,8 +22,16 @@ message DecodeVinResponse {
   string new_trx_hash = 8;
   // new human readable tableland id
   string definition_id = 9;
+  string model = 10;
+  string manufacturer = 11;
+}
+
+message ChangeDecodingRequest {
+  string vin = 1;
+  string target_definition_id = 2;
 }
 
 service VinDecoderService {
   rpc DecodeVin(DecodeVinRequest) returns (DecodeVinResponse);
+  rpc ChangeDecoding(ChangeDecodingRequest) returns (google.protobuf.Empty);
 }

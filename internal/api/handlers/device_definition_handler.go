@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"strconv"
+	"strings"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
@@ -61,91 +62,28 @@ type DecodeVINResponse struct {
 }
 
 // GetDeviceDefinitionByID godoc
-// @Summary gets a device definition
+// @Summary gets a device definition, optionally from tableland (on-chain records) if use an mmy style id.
 // @ID GetDeviceDefinitionByID
 // @Description gets a device definition
 // @Tags device-definitions
-// @Param  id path string true "device definition id"
+// @Param  id path string true "device definition id or mmy definition_id eg. ford_escape_2020"
 // @Produce json
-// @Success 200 {object} models.GetDeviceDefinitionQueryResult
+// @Success 200 {object} models.DeviceDefinitionTablelandModel
 // @Failure 404
 // @Failure 500
 // @Router /device-definitions/{id} [get]
 func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
+		// check if not ksuid, eg. MMY based definition_id
+		split := strings.Split(id, "_")
+		if len(split) == 3 {
+			query := &queries.GetDeviceDefinitionByIDQueryV2{DefinitionID: id}
+			result, _ := m.Send(c.UserContext(), query)
+			return c.Status(fiber.StatusOK).JSON(result)
+		}
+
 		query := &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: id}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
-// GetDeviceDefinitionByIDv2 godoc
-// @Summary gets a device definition by the new slug id eg. ford_escape_2021
-// @ID GetDeviceDefinitionByIDv2
-// @Description gets a device definition by the new slug id eg. ford_escape_2021
-// @Tags device-definitions
-// @Param  id path string true "slug definition id eg. ford_escape_2021"
-// @Produce json
-// @Success 200 {object} gateways.DeviceDefinitionTablelandModel
-// @Failure 404
-// @Failure 500
-// @Router /v2/device-definitions/{id} [get]
-func GetDeviceDefinitionByIDv2(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		id := c.Params("id")
-		query := &queries.GetDeviceDefinitionByIDQueryV2{DefinitionID: id}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
-// GetDeviceDefinitionAll godoc
-// @Summary gets all device definitions by Makes, models, and years
-// @ID GetDeviceDefinitionAll
-// @Description gets a device definition
-// @Tags device-definitions
-// @Accept json
-// @Produce json
-// @Success 200
-// @Failure 500
-// @Router /device-definitions/all [get]
-func GetDeviceDefinitionAll(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		query := &queries.GetAllDeviceDefinitionQuery{}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
-// GetDeviceDefinitionByMMY godoc
-// @Summary gets a specific device definition by make model and year.
-// @ID GetDeviceDefinitionByMMY
-// @Description gets a specific device definition by make model and year.
-// @Tags device-definitions
-// @Param  make query string true "make"
-// @Param  model query string true "model"
-// @Param  year query number true "year"
-// @Produce json
-// @Success 200 {object} models.GetDeviceDefinitionQueryResult
-// @Failure 404
-// @Failure 500
-// @Router /device-definitions [get]
-func GetDeviceDefinitionByMMY(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		mk := c.Query("make")
-		model := c.Query("model")
-		year := c.Query("year")
-		yrInt, _ := strconv.Atoi(year)
-
-		query := &queries.GetDeviceDefinitionByMakeModelYearQuery{Make: mk, Model: model, Year: yrInt}
-
 		result, _ := m.Send(c.UserContext(), query)
 
 		return c.Status(fiber.StatusOK).JSON(result)
@@ -239,30 +177,6 @@ func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
 		pageSizeInt, _ := strconv.Atoi(pageSize)
 
 		query := &queries.GetAllDeviceDefinitionBySearchQuery{Query: q, Make: mk, Model: model, Year: yrInt, PageSize: pageSizeInt, Page: pageInt}
-
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
-	}
-}
-
-// GetDeviceDefinitionAutocomplete godoc
-// @Summary gets device definitions autocomplete
-// @ID GetDeviceDefinitionAutocomplete
-// @Description gets a device definition Autocomplete
-// @Tags device-definitions
-// @Param  query query string true "query filter"
-// @Accept json
-// @Produce json
-// @Success 200 {object} queries.GetAllDeviceDefinitionByAutocompleteQueryResult
-// @Failure 500
-// @Router /device-definitions/autocomplete [get]
-func GetDeviceDefinitionAutocomplete(m mediator.Mediator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-
-		q := c.Query("query")
-
-		query := &queries.GetAllDeviceDefinitionByAutocompleteQuery{Query: q}
 
 		result, _ := m.Send(c.UserContext(), query)
 

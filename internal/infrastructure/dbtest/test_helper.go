@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+
 	"github.com/DIMO-Network/shared"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -138,133 +140,72 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 	}
 }
 
-func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
-	dt := SetupCreateDeviceType(t, pdb)
-	dd := &models.DeviceDefinition{
-		ID:           ksuid.New().String(),
-		DeviceMakeID: dm.ID,
-		Model:        model,
-		Year:         int16(year),
-		Verified:     true,
-		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    shared.SlugString(model),
-		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
+func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+	SetupCreateDeviceType(t, pdb)
+	dd := &coremodels.DeviceDefinitionTablelandModel{
+		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
+		KSUID:      ksuid.New().String(),
+		Model:      model,
+		Year:       year,
+		DeviceType: common.DefaultDeviceType,
+		ImageURI:   "",
 	}
-	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &dm
-	dd.R.DeviceType = dt
 
 	return dd
 }
 
-func SetupCreateDeviceDefinitionTeslaModel(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
-	dt := SetupCreateDeviceType(t, pdb)
-	dd := &models.DeviceDefinition{
-		ID:           "22N2y6TCaDBYPUsXJb3u02bqN2I",
-		DeviceMakeID: dm.ID,
-		Model:        model,
-		Year:         int16(year),
-		Verified:     true,
-		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    shared.SlugString(model),
-		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
+func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
+	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
+			{
+				Name:  "fuel_type",
+				Value: "defaultValue",
+			},
+			{
+				Name:  "driven_wheels",
+				Value: "4",
+			},
+			{
+				Name:  "number_of_doors",
+				Value: "4",
+			},
+			{
+				Name:  "mpg",
+				Value: "defaultValue",
+			},
+		},
 	}
-
-	deviceTypeInfo := make(map[string]interface{})
-	metaData := make(map[string]interface{})
-	var ai map[string][]interface{}
-	defaultValue := "defaultValue"
-	if err := dt.Properties.Unmarshal(&ai); err == nil {
-		metaData["fuel_type"] = defaultValue
-		metaData["driven_wheels"] = "4"
-		metaData["number_of_doors"] = "4"
-		metaData["mpg"] = defaultValue
-	}
-	deviceTypeInfo[dt.Metadatakey] = metaData
-	_ = dd.Metadata.Marshal(deviceTypeInfo)
-
-	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &dm
-	dd.R.DeviceType = dt
 
 	return dd
 }
 
-func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
-	dt := SetupCreateDeviceType(t, pdb)
-	dd := &models.DeviceDefinition{
-		ID:           ksuid.New().String(),
-		DeviceMakeID: dm.ID,
-		Model:        model,
-		Year:         int16(year),
-		Verified:     true,
-		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    shared.SlugString(model),
-		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
+func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
+	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
+			{
+				Name:  "fuel_type",
+				Value: "defaultValue",
+			},
+			{
+				Name:  "driven_wheels",
+				Value: "4",
+			},
+			{
+				Name:  "number_of_doors",
+				Value: "4",
+			},
+			{
+				Name:  "mpg",
+				Value: "defaultValue",
+			},
+			{
+				Name:  "powertrain_type",
+				Value: "ICE",
+			},
+		},
 	}
-
-	deviceTypeInfo := make(map[string]interface{})
-	metaData := make(map[string]interface{})
-	var ai map[string][]interface{}
-	defaultValue := "defaultValue"
-	if err := dt.Properties.Unmarshal(&ai); err == nil {
-		metaData["fuel_type"] = defaultValue
-		metaData["driven_wheels"] = "4"
-		metaData["number_of_doors"] = "4"
-		metaData["mpg"] = defaultValue
-	}
-	deviceTypeInfo[dt.Metadatakey] = metaData
-	_ = dd.Metadata.Marshal(deviceTypeInfo)
-
-	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &dm
-	dd.R.DeviceType = dt
-
-	return dd
-}
-
-func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *models.DeviceDefinition {
-	dt := SetupCreateDeviceType(t, pdb)
-	dd := &models.DeviceDefinition{
-		ID:           ksuid.New().String(),
-		DeviceMakeID: dm.ID,
-		Model:        model,
-		Year:         int16(year),
-		Verified:     true,
-		DeviceTypeID: null.StringFrom(dt.ID),
-		ModelSlug:    shared.SlugString(model),
-		NameSlug:     common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
-	}
-
-	deviceTypeInfo := make(map[string]interface{})
-	metaData := make(map[string]interface{})
-	var ai map[string][]interface{}
-	defaultValue := "defaultValue"
-	if err := dt.Properties.Unmarshal(&ai); err == nil {
-		metaData["fuel_type"] = defaultValue
-		metaData["driven_wheels"] = "4"
-		metaData["number_of_doors"] = "4"
-		metaData["mpg"] = defaultValue
-		metaData["powertrain_type"] = "ICE"
-	}
-	deviceTypeInfo[dt.Metadatakey] = metaData
-	_ = dd.Metadata.Marshal(deviceTypeInfo)
-
-	err := dd.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	dd.R = dd.R.NewStruct()
-	dd.R.DeviceMake = &dm
-	dd.R.DeviceType = dt
 
 	return dd
 }
@@ -292,14 +233,14 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	return dm
 }
 
-func SetupCreateStyle(t *testing.T, deviceDefinitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
+func SetupCreateStyle(t *testing.T, definitionID string, name string, source string, subModel string, pdb db.Store) models.DeviceStyle {
 	ds := models.DeviceStyle{
-		ID:                 ksuid.New().String(),
-		Name:               name,
-		DeviceDefinitionID: deviceDefinitionID,
-		Source:             source,
-		SubModel:           subModel,
-		ExternalStyleID:    ksuid.New().String(),
+		ID:              ksuid.New().String(),
+		Name:            name,
+		DefinitionID:    definitionID,
+		Source:          source,
+		SubModel:        subModel,
+		ExternalStyleID: ksuid.New().String(),
 	}
 	err := ds.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")
@@ -388,30 +329,6 @@ func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integrat
 	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
-}
-
-func SetupCreateDeviceIntegration(t *testing.T, dd *models.DeviceDefinition, integrationID string, region string, pdb db.Store) *models.DeviceIntegration {
-	di := &models.DeviceIntegration{
-		DeviceDefinitionID: dd.ID,
-		IntegrationID:      integrationID,
-		Region:             region,
-	}
-	err := di.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	return di
-}
-
-func SetupIntegrationFeature(t *testing.T, pdb db.Store) *models.IntegrationFeature {
-	feature := &models.IntegrationFeature{
-		FeatureKey:      ksuid.New().String(),
-		DisplayName:     ksuid.New().String(),
-		ElasticProperty: ksuid.New().String(),
-		FeatureWeight:   null.Float64From(1),
-		CSSIcon:         null.StringFrom("css"),
-	}
-	err := feature.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err)
-	return feature
 }
 
 func Logger() *zerolog.Logger {

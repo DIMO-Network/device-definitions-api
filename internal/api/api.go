@@ -27,7 +27,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/db"
-	"github.com/DIMO-Network/shared/redis"
 	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
@@ -43,7 +42,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	pdb.WaitForDB(logger)
 
 	// redis
-	redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
+	//redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
 
 	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
 	if err != nil {
@@ -59,26 +58,23 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	drivlyAPIService := gateways.NewDrivlyAPIService(settings)
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
-	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings)
+	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings.AutoIsoAPIUid, settings.AutoIsoAPIKey)
 	registryInstance, err := contracts.NewRegistry(settings.EthereumRegistryAddress, ethClient)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
 	}
-	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send)
+	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send, pdb.DBS)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
-	deviceDefinitionRepository := repositories.NewDeviceDefinitionRepository(pdb.DBS, ddOnChainService)
-	makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
-	deviceIntegrationRepository := repositories.NewDeviceIntegrationRepository(pdb.DBS)
+	//makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
 	deviceMakeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	vinRepository := repositories.NewVINRepository(pdb.DBS, registryInstance)
 
 	//cache services
-	ddCacheService := services.NewDeviceDefinitionCacheService(redisCache, deviceDefinitionRepository, deviceMakeRepository, ddOnChainService, registryInstance)
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, deviceDefinitionRepository, datGroupWSService)
-	powerTrainTypeService, err := services.NewPowerTrainTypeService(pdb.DBS, "powertrain_type_rule.yaml", &logger, ddOnChainService)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, ddOnChainService, datGroupWSService, pdb.DBS)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService("powertrain_type_rule.yaml", &logger, ddOnChainService)
 	searchService := search.NewTypesenseAPIService(settings, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
@@ -89,34 +85,23 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionGroupQueryHandler(deviceDefinitionRepository, makeRepository)),
-		mediator.WithHandler(&queries.GetDevicesMMYQuery{}, queries.NewGetDevicesMMYQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIDsQuery{}, queries.NewGetDeviceDefinitionByIDsQueryHandler(ddCacheService, &logger, deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionWithRelsQuery{}, queries.NewGetDeviceDefinitionWithRelsQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionBySlugQuery{}, queries.NewGetDeviceDefinitionBySlugQueryHandler(ddOnChainService, pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionBySlugNameQuery{}, queries.NewGetDeviceDefinitionBySlugNameQueryHandler(ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionBySourceQuery{}, queries.NewGetDeviceDefinitionBySourceQueryHandler(pdb.DBS, &logger)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionWithoutImageQuery{}, queries.NewGetDeviceDefinitionWithoutImageQueryHandler(pdb.DBS, &logger)),
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionQuery{}, queries.NewGetAllDeviceDefinitionQueryHandler(deviceDefinitionRepository)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddOnChainService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDsQuery{}, queries.NewGetDeviceDefinitionByIDsQueryHandler(&logger, ddOnChainService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddOnChainService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS, ddOnChainService)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationByIDQuery{}, queries.NewGetIntegrationByIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS, ddCacheService)),
+		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS, ddOnChainService)),
 		mediator.WithHandler(&queries.GetDeviceStyleByFilterQuery{}, queries.NewGetDeviceStyleByFilterQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByDeviceDefinitionIDQuery{}, queries.NewGetDeviceStyleByDeviceDefinitionIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByExternalIDQuery{}, queries.NewGetDeviceStyleByExternalIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceMakeByNameQuery{}, queries.NewGetDeviceMakeByNameQueryHandler(pdb.DBS, ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceMakeBySlugQuery{}, queries.NewGetDeviceMakeBySlugQueryHandler(pdb.DBS, ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceMakeByTokenIDQuery{}, queries.NewGetDeviceMakeByTokenIDQueryHandler(pdb.DBS, registryInstance, ddCacheService)),
-		mediator.WithHandler(&queries.GetAllDeviceMakeQuery{}, queries.NewGetAllDeviceMakeQueryHandler(pdb.DBS, ddCacheService)),
+		mediator.WithHandler(&queries.GetDeviceMakeBySlugQuery{}, queries.NewGetDeviceMakeBySlugQueryHandler(pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceMakeByTokenIDQuery{}, queries.NewGetDeviceMakeByTokenIDQueryHandler(pdb.DBS, registryInstance)),
+		mediator.WithHandler(&queries.GetAllDeviceMakeQuery{}, queries.NewGetAllDeviceMakeQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionImagesByIDsQuery{}, queries.NewGetDeviceDefinitionImagesByIDsQueryHandler(pdb.DBS, &logger)),
-		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(deviceDefinitionRepository, pdb.DBS, powerTrainTypeService)),
-		mediator.WithHandler(&commands.CreateDeviceIntegrationCommand{}, commands.NewCreateDeviceIntegrationCommandHandler(deviceIntegrationRepository, pdb.DBS, ddCacheService, deviceDefinitionRepository)),
-		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository, ddCacheService)),
-		mediator.WithHandler(&commands.CreateIntegrationCommand{}, commands.NewCreateIntegrationCommandHandler(pdb.DBS)),
+		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(ddOnChainService, pdb.DBS, powerTrainTypeService, fuelAPIService, &logger)),
+		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository)),
 		mediator.WithHandler(&commands.CreateDeviceMakeCommand{}, commands.NewCreateDeviceMakeCommandHandler(deviceMakeRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceMakeCommand{}, commands.NewUpdateDeviceMakeCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.UpdateDeviceStyleCommand{}, commands.NewUpdateDeviceStyleCommandHandler(pdb.DBS)),
@@ -125,26 +110,21 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&commands.CreateDeviceTypeCommand{}, commands.NewCreateDeviceTypeCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.DeleteDeviceTypeCommand{}, commands.NewDeleteDeviceTypeCommandHandler(pdb.DBS)),
 
-		mediator.WithHandler(&queries.GetAllIntegrationFeatureQuery{}, queries.NewGetAllIntegrationFeatureQuery(pdb.DBS)),
-		mediator.WithHandler(&queries.GetIntegrationFeatureByIDQuery{}, queries.NewGetIntegrationFeatureByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
 
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService)),
 
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionByMakeYearRangeQuery{}, queries.NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(deviceDefinitionRepository)),
-
-		mediator.WithHandler(&queries.GetDefinitionsWithHWTemplateQuery{}, queries.NewGetDefinitionsWithHWTemplateQueryHandler(pdb.DBS, &logger)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionByMakeYearRangeQuery{}, queries.NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(ddOnChainService, pdb.DBS)),
 
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
-			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, deviceDefinitionRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService),
-			queries.NewGetDeviceDefinitionByIDQueryHandler(ddCacheService),
+			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService),
+			queries.NewGetDeviceDefinitionByIDQueryHandler(ddOnChainService, pdb.DBS),
 		)),
 
 		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
 
-		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, ddOnChainService, ddCacheService)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionOnChainByIDQuery{}, queries.NewGetDeviceDefinitionOnChainByIDQueryHandler(ddCacheService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetAllDeviceDefinitionOnChainQuery{}, queries.NewGetAllDeviceDefinitionOnChainQueryHandler(pdb.DBS, ddOnChainService)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionBySearchQuery{}, queries.NewGetAllDeviceDefinitionBySearchQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetR1CompatibilitySearch{}, queries.NewGetR1CompatibilitySearchQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionByAutocompleteQuery{}, queries.NewGetAllDeviceDefinitionByAutocompleteQueryHandler(searchService)),
@@ -173,7 +153,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	RegisterDeviceDefinitionsRoutes(app, *m, jwtAuth)
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
-	RegisterDeviceMakesRoutes(app, *m)
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 

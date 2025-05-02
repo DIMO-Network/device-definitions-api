@@ -5,13 +5,14 @@
 //
 //	mockgen -source datgroup_api_service.go -destination mocks/datgroup_api_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
 import (
 	reflect "reflect"
 
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,10 +40,10 @@ func (m *MockDATGroupAPIService) EXPECT() *MockDATGroupAPIServiceMockRecorder {
 }
 
 // GetVINv2 mocks base method.
-func (m *MockDATGroupAPIService) GetVINv2(vin, country string) (*gateways.DATGroupInfoResponse, error) {
+func (m *MockDATGroupAPIService) GetVINv2(vin, country string) (*models.DATGroupInfoResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVINv2", vin, country)
-	ret0, _ := ret[0].(*gateways.DATGroupInfoResponse)
+	ret0, _ := ret[0].(*models.DATGroupInfoResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
