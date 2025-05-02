@@ -90,11 +90,11 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	}
 	vinNumber := models.VinNumber{
 		Vin:              vin,
-		Wmi:              processedVIN.Wmi(),
-		VDS:              processedVIN.VDS(),
-		CheckDigit:       processedVIN.CheckDigit(),
+		Wmi:              null.StringFrom(processedVIN.Wmi()),
+		VDS:              null.StringFrom(processedVIN.VDS()),
 		SerialNumber:     processedVIN.SerialNumber(),
-		Vis:              processedVIN.VIS(),
+		CheckDigit:       null.StringFrom(processedVIN.CheckDigit()),
+		Vis:              null.StringFrom(processedVIN.VIS()),
 		ManufacturerName: wmi.R.DeviceMake.Name,
 		DecodeProvider:   null.StringFrom("manual"),
 		Year:             processedVIN.Year(),

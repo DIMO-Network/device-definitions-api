@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"testing"
@@ -190,8 +191,48 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 }
 
-// using existing WMI
+// todo two new test: WMI oem conflict, same WMI for different Make name
 
+// Japan
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_existingVIN() {
+	const vin = "ZWR90-8000186" // toyota something or other
+
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Toyota", s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Yaris", 2024, s.pdb)
+
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		SerialNumber:     "8000186",
+		ManufacturerName: dm.Name,
+		DefinitionID:     dd.ID,
+		Year:             2024,
+		DecodeProvider:   null.StringFrom("manual"),
+	}
+	err := vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+	// mock setup for powertrain lookup, which is in the vin decode response
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID, gomock.Any()).Return(
+		&coremodels.DeviceDefinitionTablelandModel{
+			ID:         dd.ID,
+			Model:      dd.Model,
+			Year:       dd.Year,
+			DeviceType: common.DefaultDeviceType,
+			Metadata: &coremodels.DeviceDefinitionMetadata{DeviceAttributes: []coremodels.DeviceTypeAttribute{
+				{Name: "powertrain_type", Value: "ICE"},
+			}},
+		}, big.NewInt(1), nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+
+	s.NotNil(result, "expected result not nil")
+	s.Assert().Equal(int32(2024), result.Year)
+	s.Assert().Equal(dd.ID, result.DefinitionId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
+}
+
+// using existing WMI
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
@@ -300,7 +341,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().True(vn.DrivlyData.Valid)
 	s.Assert().Equal(2021, vn.Year)
 	s.Assert().Equal(definitionID, vn.DefinitionID)
-	s.Assert().Equal(wmi, vn.Wmi)
+	s.Assert().Equal(wmi, vn.Wmi.String)
 	s.Assert().Equal("drivly", vn.DecodeProvider.String)
 	s.Assert().Equal(vin, vn.Vin)
 	s.Assert().Equal(vinInfoResp.Model, gjson.GetBytes(vn.DrivlyData.JSON, "model").String())
@@ -585,11 +626,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
 		Vin:              vin,
-		Wmi:              v.Wmi(),
-		VDS:              v.VDS(),
-		CheckDigit:       v.CheckDigit(),
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
 		SerialNumber:     v.SerialNumber(),
-		Vis:              v.VIS(),
+		Vis:              null.StringFrom(v.VIS()),
 		ManufacturerName: dm.Name,
 		DefinitionID:     dd.ID,
 		Year:             2021,
@@ -597,8 +638,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
-	// when we get the vin already found, we lookup the powertrain using powertrain service
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", vinNumb.DrivlyData, vinNumb.VincarioData)
+	// mock needed for powertrain lookup
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID, gomock.Any()).Return(
+		&coremodels.DeviceDefinitionTablelandModel{
+			ID:         dd.ID,
+			Model:      dd.Model,
+			Year:       dd.Year,
+			DeviceType: common.DefaultDeviceType,
+			Metadata: &coremodels.DeviceDefinitionMetadata{DeviceAttributes: []coremodels.DeviceTypeAttribute{
+				{Name: "powertrain_type", Value: "ICE"},
+			}},
+		}, big.NewInt(1), nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
