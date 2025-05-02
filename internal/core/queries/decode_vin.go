@@ -14,8 +14,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -197,12 +195,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	// check if this is a Tesla VIN, if not just follow regular path
 	vinInfo := &coremodels.VINDecodingInfoData{}
-	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi), qm.Load(models.WmiRels.DeviceMake)).One(ctx, dc.dbs().Reader)
+	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
-		if dbWMI.R.DeviceMake != nil && dbWMI.R.DeviceMake.Name == "Tesla" {
+		if dbWMI.ManufacturerName == "Tesla" {
 			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
 			resp.Manufacturer = "Tesla"
-			resp.DeviceMakeId = dbWMI.R.DeviceMake.ID //nolint
 		}
 	}
 	// not a tesla, regular decode path
@@ -232,24 +229,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// todo track failed decodes
 		return nil, err
 	}
-	// todo: WMI's may be re-used by multiple OEM's of same parent OEM
-	// we may have already gotten this above
+	// WMI's may be re-used by multiple OEM's of same parent OEM, but just create it if needed
 	if dbWMI == nil {
-		dbWMI, err = dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
+		_, err = dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
 		if err != nil {
-			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+			// just log, Japan chasis numbers won't really work with this anyways
 			dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
-			return resp, nil
 		}
 	}
-	resp.DeviceMakeId = dbWMI.DeviceMakeID //nolint
 	resp.Manufacturer = vinInfo.Make
 	resp.Source = string(vinInfo.Source)
 	resp.Year = vinInfo.Year
 	resp.Model = vinInfo.Model
 
 	modelSlug := shared.SlugString(vinInfo.Model)
-	tid := common.DeviceDefinitionSlug(dbWMI.R.DeviceMake.NameSlug, modelSlug, int16(vinInfo.Year))
+	tid := common.DeviceDefinitionSlug(shared.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
 	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
@@ -487,12 +481,14 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin sha
 func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
 	vinInfo := &coremodels.VINDecodingInfoData{}
 	vinInfo.VIN = vin.String()
-	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi()),
-		qm.Load(models.WmiRels.DeviceMake)).One(context.Background(), dc.dbs().Reader)
+	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(context.Background(), dc.dbs().Reader)
 	if err != nil {
 		return nil, errors.Wrap(err, "vinInfoFromKnown: could not get WMI from vin wmi "+vin.Wmi())
 	}
-	vinInfo.Make = wmi.R.DeviceMake.Name
+	if len(wmis) > 1 {
+		return nil, fmt.Errorf("vinInfoFromKnown: more than one WMI found for vin wmi %s", vin.Wmi())
+	}
+	vinInfo.Make = wmis[0].ManufacturerName
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
 	vinInfo.Source = "probably smartcar"

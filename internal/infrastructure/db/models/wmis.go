@@ -23,63 +23,59 @@ import (
 
 // Wmi is an object representing the database table.
 type Wmi struct {
-	Wmi          string    `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
-	DeviceMakeID string    `boil:"device_make_id" json:"device_make_id" toml:"device_make_id" yaml:"device_make_id"`
-	CreatedAt    time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	Wmi              string    `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
+	CreatedAt        time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ManufacturerName string    `boil:"manufacturer_name" json:"manufacturer_name" toml:"manufacturer_name" yaml:"manufacturer_name"`
 
 	R *wmiR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L wmiL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var WmiColumns = struct {
-	Wmi          string
-	DeviceMakeID string
-	CreatedAt    string
-	UpdatedAt    string
+	Wmi              string
+	CreatedAt        string
+	UpdatedAt        string
+	ManufacturerName string
 }{
-	Wmi:          "wmi",
-	DeviceMakeID: "device_make_id",
-	CreatedAt:    "created_at",
-	UpdatedAt:    "updated_at",
+	Wmi:              "wmi",
+	CreatedAt:        "created_at",
+	UpdatedAt:        "updated_at",
+	ManufacturerName: "manufacturer_name",
 }
 
 var WmiTableColumns = struct {
-	Wmi          string
-	DeviceMakeID string
-	CreatedAt    string
-	UpdatedAt    string
+	Wmi              string
+	CreatedAt        string
+	UpdatedAt        string
+	ManufacturerName string
 }{
-	Wmi:          "wmis.wmi",
-	DeviceMakeID: "wmis.device_make_id",
-	CreatedAt:    "wmis.created_at",
-	UpdatedAt:    "wmis.updated_at",
+	Wmi:              "wmis.wmi",
+	CreatedAt:        "wmis.created_at",
+	UpdatedAt:        "wmis.updated_at",
+	ManufacturerName: "wmis.manufacturer_name",
 }
 
 // Generated where
 
 var WmiWhere = struct {
-	Wmi          whereHelperstring
-	DeviceMakeID whereHelperstring
-	CreatedAt    whereHelpertime_Time
-	UpdatedAt    whereHelpertime_Time
+	Wmi              whereHelperstring
+	CreatedAt        whereHelpertime_Time
+	UpdatedAt        whereHelpertime_Time
+	ManufacturerName whereHelperstring
 }{
-	Wmi:          whereHelperstring{field: "\"device_definitions_api\".\"wmis\".\"wmi\""},
-	DeviceMakeID: whereHelperstring{field: "\"device_definitions_api\".\"wmis\".\"device_make_id\""},
-	CreatedAt:    whereHelpertime_Time{field: "\"device_definitions_api\".\"wmis\".\"created_at\""},
-	UpdatedAt:    whereHelpertime_Time{field: "\"device_definitions_api\".\"wmis\".\"updated_at\""},
+	Wmi:              whereHelperstring{field: "\"device_definitions_api\".\"wmis\".\"wmi\""},
+	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"wmis\".\"created_at\""},
+	UpdatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"wmis\".\"updated_at\""},
+	ManufacturerName: whereHelperstring{field: "\"device_definitions_api\".\"wmis\".\"manufacturer_name\""},
 }
 
 // WmiRels is where relationship names are stored.
 var WmiRels = struct {
-	DeviceMake string
-}{
-	DeviceMake: "DeviceMake",
-}
+}{}
 
 // wmiR is where relationships are stored.
 type wmiR struct {
-	DeviceMake *DeviceMake `boil:"DeviceMake" json:"DeviceMake" toml:"DeviceMake" yaml:"DeviceMake"`
 }
 
 // NewStruct creates a new relationship struct
@@ -87,21 +83,14 @@ func (*wmiR) NewStruct() *wmiR {
 	return &wmiR{}
 }
 
-func (r *wmiR) GetDeviceMake() *DeviceMake {
-	if r == nil {
-		return nil
-	}
-	return r.DeviceMake
-}
-
 // wmiL is where Load methods for each relationship are stored.
 type wmiL struct{}
 
 var (
-	wmiAllColumns            = []string{"wmi", "device_make_id", "created_at", "updated_at"}
-	wmiColumnsWithoutDefault = []string{"wmi", "device_make_id"}
+	wmiAllColumns            = []string{"wmi", "created_at", "updated_at", "manufacturer_name"}
+	wmiColumnsWithoutDefault = []string{"wmi", "manufacturer_name"}
 	wmiColumnsWithDefault    = []string{"created_at", "updated_at"}
-	wmiPrimaryKeyColumns     = []string{"wmi", "device_make_id"}
+	wmiPrimaryKeyColumns     = []string{"wmi", "manufacturer_name"}
 	wmiGeneratedColumns      = []string{}
 )
 
@@ -410,184 +399,6 @@ func (q wmiQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, 
 	return count > 0, nil
 }
 
-// DeviceMake pointed to by the foreign key.
-func (o *Wmi) DeviceMake(mods ...qm.QueryMod) deviceMakeQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DeviceMakeID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DeviceMakes(queryMods...)
-}
-
-// LoadDeviceMake allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (wmiL) LoadDeviceMake(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWmi interface{}, mods queries.Applicator) error {
-	var slice []*Wmi
-	var object *Wmi
-
-	if singular {
-		var ok bool
-		object, ok = maybeWmi.(*Wmi)
-		if !ok {
-			object = new(Wmi)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeWmi)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeWmi))
-			}
-		}
-	} else {
-		s, ok := maybeWmi.(*[]*Wmi)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeWmi)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeWmi))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &wmiR{}
-		}
-		args[object.DeviceMakeID] = struct{}{}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &wmiR{}
-			}
-
-			args[obj.DeviceMakeID] = struct{}{}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`device_definitions_api.device_makes`),
-		qm.WhereIn(`device_definitions_api.device_makes.id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DeviceMake")
-	}
-
-	var resultSlice []*DeviceMake
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DeviceMake")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for device_makes")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_makes")
-	}
-
-	if len(deviceMakeAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.DeviceMake = foreign
-		if foreign.R == nil {
-			foreign.R = &deviceMakeR{}
-		}
-		foreign.R.Wmis = append(foreign.R.Wmis, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.DeviceMakeID == foreign.ID {
-				local.R.DeviceMake = foreign
-				if foreign.R == nil {
-					foreign.R = &deviceMakeR{}
-				}
-				foreign.R.Wmis = append(foreign.R.Wmis, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetDeviceMake of the wmi to the related item.
-// Sets o.R.DeviceMake to related.
-// Adds o to related.R.Wmis.
-func (o *Wmi) SetDeviceMake(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DeviceMake) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"device_definitions_api\".\"wmis\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"device_make_id"}),
-		strmangle.WhereClause("\"", "\"", 2, wmiPrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.Wmi, o.DeviceMakeID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.DeviceMakeID = related.ID
-	if o.R == nil {
-		o.R = &wmiR{
-			DeviceMake: related,
-		}
-	} else {
-		o.R.DeviceMake = related
-	}
-
-	if related.R == nil {
-		related.R = &deviceMakeR{
-			Wmis: WmiSlice{o},
-		}
-	} else {
-		related.R.Wmis = append(related.R.Wmis, o)
-	}
-
-	return nil
-}
-
 // Wmis retrieves all the records using an executor.
 func Wmis(mods ...qm.QueryMod) wmiQuery {
 	mods = append(mods, qm.From("\"device_definitions_api\".\"wmis\""))
@@ -601,7 +412,7 @@ func Wmis(mods ...qm.QueryMod) wmiQuery {
 
 // FindWmi retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, deviceMakeID string, selectCols ...string) (*Wmi, error) {
+func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, manufacturerName string, selectCols ...string) (*Wmi, error) {
 	wmiObj := &Wmi{}
 
 	sel := "*"
@@ -609,10 +420,10 @@ func FindWmi(ctx context.Context, exec boil.ContextExecutor, wmi string, deviceM
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"device_make_id\"=$2", sel,
+		"select %s from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"manufacturer_name\"=$2", sel,
 	)
 
-	q := queries.Raw(query, wmi, deviceMakeID)
+	q := queries.Raw(query, wmi, manufacturerName)
 
 	err := q.Bind(ctx, exec, wmiObj)
 	if err != nil {
@@ -994,7 +805,7 @@ func (o *Wmi) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, err
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), wmiPrimaryKeyMapping)
-	sql := "DELETE FROM \"device_definitions_api\".\"wmis\" WHERE \"wmi\"=$1 AND \"device_make_id\"=$2"
+	sql := "DELETE FROM \"device_definitions_api\".\"wmis\" WHERE \"wmi\"=$1 AND \"manufacturer_name\"=$2"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1091,7 +902,7 @@ func (o WmiSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Wmi) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindWmi(ctx, exec, o.Wmi, o.DeviceMakeID)
+	ret, err := FindWmi(ctx, exec, o.Wmi, o.ManufacturerName)
 	if err != nil {
 		return err
 	}
@@ -1130,16 +941,16 @@ func (o *WmiSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) err
 }
 
 // WmiExists checks if the Wmi row exists.
-func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string, deviceMakeID string) (bool, error) {
+func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string, manufacturerName string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"device_make_id\"=$2 limit 1)"
+	sql := "select exists(select 1 from \"device_definitions_api\".\"wmis\" where \"wmi\"=$1 AND \"manufacturer_name\"=$2 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, wmi, deviceMakeID)
+		fmt.Fprintln(writer, wmi, manufacturerName)
 	}
-	row := exec.QueryRowContext(ctx, sql, wmi, deviceMakeID)
+	row := exec.QueryRowContext(ctx, sql, wmi, manufacturerName)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1151,5 +962,5 @@ func WmiExists(ctx context.Context, exec boil.ContextExecutor, wmi string, devic
 
 // Exists checks if the Wmi row exists.
 func (o *Wmi) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return WmiExists(ctx, exec, o.Wmi, o.DeviceMakeID)
+	return WmiExists(ctx, exec, o.Wmi, o.ManufacturerName)
 }

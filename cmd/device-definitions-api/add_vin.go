@@ -17,8 +17,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared"
@@ -83,7 +81,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitSuccess
 	}
 	processedVIN := shared.VIN(vin)
-	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi()), qm.Load(models.WmiRels.DeviceMake)).One(ctx, pdb.DBS().Reader)
+	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi())).One(ctx, pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println("could not find WMI for vin")
 		return subcommands.ExitFailure
@@ -95,7 +93,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		SerialNumber:     processedVIN.SerialNumber(),
 		CheckDigit:       null.StringFrom(processedVIN.CheckDigit()),
 		Vis:              null.StringFrom(processedVIN.VIS()),
-		ManufacturerName: wmi.R.DeviceMake.Name,
+		ManufacturerName: wmi.ManufacturerName,
 		DecodeProvider:   null.StringFrom("manual"),
 		Year:             processedVIN.Year(),
 	}
@@ -118,12 +116,12 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitFailure
 	}
 
-	manufacturer, err := onChainSvc.GetManufacturer(ctx, wmi.R.DeviceMake.NameSlug, pdb.DBS().Reader)
+	manufacturer, err := onChainSvc.GetManufacturer(ctx, shared.SlugString(wmi.ManufacturerName), pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println(err.Error())
 		return subcommands.ExitFailure
 	}
-	definitionID := common.DeviceDefinitionSlug(wmi.R.DeviceMake.NameSlug, shared.SlugString(model), int16(vinNumber.Year))
+	definitionID := common.DeviceDefinitionSlug(shared.SlugString(wmi.ManufacturerName), shared.SlugString(model), int16(vinNumber.Year))
 	deviceDefinition, err := onChainSvc.GetDefinitionTableland(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
 
 	if err != nil {

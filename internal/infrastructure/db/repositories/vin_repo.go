@@ -55,7 +55,7 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 	}
 
 	//dbWMI, err := models.FindWmi(ctx, r.dbs().Reader, wmi, deviceMake.ID) // there can be WMI's for more than one Make
-	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi), models.WmiWhere.DeviceMakeID.EQ(deviceMake.ID)).
+	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi), models.WmiWhere.ManufacturerName.EQ(mk)).
 		One(ctx, r.DBS().Reader) // there can be WMI's for more than one Make
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, &exceptions.InternalError{
@@ -65,8 +65,8 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 
 	if dbWMI == nil {
 		dbWMI = &models.Wmi{
-			Wmi:          wmi,
-			DeviceMakeID: deviceMake.ID,
+			Wmi:              wmi,
+			ManufacturerName: mk,
 		}
 		err = dbWMI.Insert(ctx, r.DBS().Writer, boil.Infer())
 		if err != nil {
@@ -75,8 +75,6 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 			}
 		}
 	}
-	dbWMI.R = dbWMI.R.NewStruct()
-	dbWMI.R.DeviceMake = deviceMake
 
 	return dbWMI, nil
 }
