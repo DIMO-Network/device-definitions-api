@@ -25,11 +25,11 @@ import (
 // VinNumber is an object representing the database table.
 type VinNumber struct {
 	Vin              string      `boil:"vin" json:"vin" toml:"vin" yaml:"vin"`
-	Wmi              string      `boil:"wmi" json:"wmi" toml:"wmi" yaml:"wmi"`
-	VDS              string      `boil:"vds" json:"vds" toml:"vds" yaml:"vds"`
-	CheckDigit       string      `boil:"check_digit" json:"check_digit" toml:"check_digit" yaml:"check_digit"`
+	Wmi              null.String `boil:"wmi" json:"wmi,omitempty" toml:"wmi" yaml:"wmi,omitempty"`
+	VDS              null.String `boil:"vds" json:"vds,omitempty" toml:"vds" yaml:"vds,omitempty"`
+	CheckDigit       null.String `boil:"check_digit" json:"check_digit,omitempty" toml:"check_digit" yaml:"check_digit,omitempty"`
 	SerialNumber     string      `boil:"serial_number" json:"serial_number" toml:"serial_number" yaml:"serial_number"`
-	Vis              string      `boil:"vis" json:"vis" toml:"vis" yaml:"vis"`
+	Vis              null.String `boil:"vis" json:"vis,omitempty" toml:"vis" yaml:"vis,omitempty"`
 	CreatedAt        time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt        time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	StyleID          null.String `boil:"style_id" json:"style_id,omitempty" toml:"style_id" yaml:"style_id,omitempty"`
@@ -41,6 +41,7 @@ type VinNumber struct {
 	DatgroupData     null.JSON   `boil:"datgroup_data" json:"datgroup_data,omitempty" toml:"datgroup_data" yaml:"datgroup_data,omitempty"`
 	DefinitionID     string      `boil:"definition_id" json:"definition_id" toml:"definition_id" yaml:"definition_id"`
 	ManufacturerName string      `boil:"manufacturer_name" json:"manufacturer_name" toml:"manufacturer_name" yaml:"manufacturer_name"`
+	Vin17Data        null.JSON   `boil:"vin17_data" json:"vin17_data,omitempty" toml:"vin17_data" yaml:"vin17_data,omitempty"`
 
 	R *vinNumberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L vinNumberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -64,6 +65,7 @@ var VinNumberColumns = struct {
 	DatgroupData     string
 	DefinitionID     string
 	ManufacturerName string
+	Vin17Data        string
 }{
 	Vin:              "vin",
 	Wmi:              "wmi",
@@ -82,6 +84,7 @@ var VinNumberColumns = struct {
 	DatgroupData:     "datgroup_data",
 	DefinitionID:     "definition_id",
 	ManufacturerName: "manufacturer_name",
+	Vin17Data:        "vin17_data",
 }
 
 var VinNumberTableColumns = struct {
@@ -102,6 +105,7 @@ var VinNumberTableColumns = struct {
 	DatgroupData     string
 	DefinitionID     string
 	ManufacturerName string
+	Vin17Data        string
 }{
 	Vin:              "vin_numbers.vin",
 	Wmi:              "vin_numbers.wmi",
@@ -120,17 +124,18 @@ var VinNumberTableColumns = struct {
 	DatgroupData:     "vin_numbers.datgroup_data",
 	DefinitionID:     "vin_numbers.definition_id",
 	ManufacturerName: "vin_numbers.manufacturer_name",
+	Vin17Data:        "vin_numbers.vin17_data",
 }
 
 // Generated where
 
 var VinNumberWhere = struct {
 	Vin              whereHelperstring
-	Wmi              whereHelperstring
-	VDS              whereHelperstring
-	CheckDigit       whereHelperstring
+	Wmi              whereHelpernull_String
+	VDS              whereHelpernull_String
+	CheckDigit       whereHelpernull_String
 	SerialNumber     whereHelperstring
-	Vis              whereHelperstring
+	Vis              whereHelpernull_String
 	CreatedAt        whereHelpertime_Time
 	UpdatedAt        whereHelpertime_Time
 	StyleID          whereHelpernull_String
@@ -142,13 +147,14 @@ var VinNumberWhere = struct {
 	DatgroupData     whereHelpernull_JSON
 	DefinitionID     whereHelperstring
 	ManufacturerName whereHelperstring
+	Vin17Data        whereHelpernull_JSON
 }{
 	Vin:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vin\""},
-	Wmi:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
-	VDS:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vds\""},
-	CheckDigit:       whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"check_digit\""},
+	Wmi:              whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"wmi\""},
+	VDS:              whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"vds\""},
+	CheckDigit:       whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"check_digit\""},
 	SerialNumber:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"serial_number\""},
-	Vis:              whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"vis\""},
+	Vis:              whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"vis\""},
 	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"created_at\""},
 	UpdatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"vin_numbers\".\"updated_at\""},
 	StyleID:          whereHelpernull_String{field: "\"device_definitions_api\".\"vin_numbers\".\"style_id\""},
@@ -160,6 +166,7 @@ var VinNumberWhere = struct {
 	DatgroupData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"datgroup_data\""},
 	DefinitionID:     whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"definition_id\""},
 	ManufacturerName: whereHelperstring{field: "\"device_definitions_api\".\"vin_numbers\".\"manufacturer_name\""},
+	Vin17Data:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"vin_numbers\".\"vin17_data\""},
 }
 
 // VinNumberRels is where relationship names are stored.
@@ -190,9 +197,9 @@ func (r *vinNumberR) GetStyle() *DeviceStyle {
 type vinNumberL struct{}
 
 var (
-	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id", "manufacturer_name"}
-	vinNumberColumnsWithoutDefault = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "definition_id", "manufacturer_name"}
-	vinNumberColumnsWithDefault    = []string{"created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data"}
+	vinNumberAllColumns            = []string{"vin", "wmi", "vds", "check_digit", "serial_number", "vis", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "definition_id", "manufacturer_name", "vin17_data"}
+	vinNumberColumnsWithoutDefault = []string{"vin", "serial_number", "definition_id", "manufacturer_name"}
+	vinNumberColumnsWithDefault    = []string{"wmi", "vds", "check_digit", "vis", "created_at", "updated_at", "style_id", "decode_provider", "year", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "vin17_data"}
 	vinNumberPrimaryKeyColumns     = []string{"vin"}
 	vinNumberGeneratedColumns      = []string{}
 )

@@ -190,8 +190,37 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 }
 
-// using existing WMI
+// todo two new tests: re-use WMI, Japan chassis number
 
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_existingVIN() {
+	const vin = "ZWR90-8000186" // toyota something or other
+
+	dm := dbtesthelper.SetupCreateMake(s.T(), "Toyota", s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Yaris", 2024, s.pdb)
+
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		SerialNumber:     "8000186",
+		ManufacturerName: dm.Name,
+		DefinitionID:     dd.ID,
+		Year:             2024,
+		DecodeProvider:   null.StringFrom("manual"),
+	}
+	err := vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+	// there might be some mock expectations?
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	result := qryResult.(*p_grpc.DecodeVinResponse)
+
+	s.NotNil(result, "expected result not nil")
+	s.Assert().Equal(int32(2021), result.Year)
+	s.Assert().Equal(dd.ID, result.DefinitionId)
+	s.Assert().Equal(dm.Name, result.Manufacturer)
+}
+
+// using existing WMI
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
@@ -585,11 +614,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	v := shared.VIN(vin)
 	vinNumb := models.VinNumber{
 		Vin:              vin,
-		Wmi:              v.Wmi(),
-		VDS:              v.VDS(),
-		CheckDigit:       v.CheckDigit(),
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
 		SerialNumber:     v.SerialNumber(),
-		Vis:              v.VIS(),
+		Vis:              null.StringFrom(v.VIS()),
 		ManufacturerName: dm.Name,
 		DefinitionID:     dd.ID,
 		Year:             2021,
