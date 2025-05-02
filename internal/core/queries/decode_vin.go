@@ -111,30 +111,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
-	// todo refactor: func hydrateResponseFromVinNumber(...)
-	if vinDecodeNumber != nil {
-		// get from tableland, probably don't need this here anymore
-		//tblDef, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, vinDecodeNumber.DefinitionID, dc.dbs().Reader)
-		// should mark this deprecated
-		//resp.DeviceMakeId = vinDecodeNumber.DeviceMakeID
-		resp.Manufacturer = vinDecodeNumber.ManufacturerName
-		resp.Year = int32(vinDecodeNumber.Year)
-		resp.DeviceStyleId = vinDecodeNumber.StyleID.String
-		resp.Source = vinDecodeNumber.DecodeProvider.String
-		resp.DefinitionId = vinDecodeNumber.DefinitionID
-		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
-		if len(split) != 3 {
-			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
-		}
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], vinDecodeNumber.DrivlyData, vinDecodeNumber.VincarioData)
-		if err != nil {
-			pt = coremodels.ICE.String()
-		}
-		resp.Powertrain = pt
-
+	// if database vin_number match found, just return it here
+	if r := dc.hydrateResponseFromVinNumber(vinDecodeNumber); r != nil {
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
-
-		return resp, nil
+		return r, nil
 	}
 
 	// todo: this should be a separate specific gRPC endpoint for setting or updating vin number to DD mapping
@@ -371,6 +351,38 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	}
 
 	return &md
+}
+
+// hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response
+func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumber) *p_grpc.DecodeVinResponse {
+	if vn == nil {
+		return nil
+	}
+	// call on-chain svc to get the DD and pull out the powertrain
+	pt := ""
+	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID, dc.dbs().Reader)
+	if err == nil && tblDef != nil {
+		for _, attribute := range tblDef.Metadata.DeviceAttributes {
+			if attribute.Name == common.PowerTrainType {
+				pt = attribute.Value
+			}
+		}
+		if pt == "" {
+			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
+			pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(makeName), shared.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
+		}
+	}
+
+	resp := &p_grpc.DecodeVinResponse{
+		Manufacturer:  vn.ManufacturerName,
+		Year:          int32(vn.Year),
+		DeviceStyleId: vn.StyleID.String,
+		Source:        vn.DecodeProvider.String,
+		DefinitionId:  vn.DefinitionID,
+		Powertrain:    pt,
+	}
+
+	return resp
 }
 
 // processDeviceStyle saves new styles if needed to db and returns the style database ID

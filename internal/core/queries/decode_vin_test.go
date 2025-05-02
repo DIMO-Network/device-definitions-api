@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"testing"
@@ -190,7 +191,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 }
 
-// todo two new tests: re-use WMI, Japan chassis number
+// todo two new test: WMI oem conflict, same WMI for different Make name
 
 // Japan
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_existingVIN() {
@@ -209,9 +210,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_exist
 	}
 	err := vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
-	// there might be some mock expectations?
-	// todo we shouldn't be calling this - like we already have this info if we found the VIN + dd
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("toyota", "yaris", vinNumb.DrivlyData, vinNumb.VincarioData)
+	// mock setup for powertrain lookup, which is in the vin decode response
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID, gomock.Any()).Return(
+		&coremodels.DeviceDefinitionTablelandModel{
+			ID:         dd.ID,
+			Model:      dd.Model,
+			Year:       dd.Year,
+			DeviceType: common.DefaultDeviceType,
+			Metadata: &coremodels.DeviceDefinitionMetadata{DeviceAttributes: []coremodels.DeviceTypeAttribute{
+				{Name: "powertrain_type", Value: "ICE"},
+			}},
+		}, big.NewInt(1), nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
@@ -332,7 +341,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().True(vn.DrivlyData.Valid)
 	s.Assert().Equal(2021, vn.Year)
 	s.Assert().Equal(definitionID, vn.DefinitionID)
-	s.Assert().Equal(wmi, vn.Wmi)
+	s.Assert().Equal(wmi, vn.Wmi.String)
 	s.Assert().Equal("drivly", vn.DecodeProvider.String)
 	s.Assert().Equal(vin, vn.Vin)
 	s.Assert().Equal(vinInfoResp.Model, gjson.GetBytes(vn.DrivlyData.JSON, "model").String())
@@ -629,8 +638,17 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	}
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
-	// when we get the vin already found, we lookup the powertrain using powertrain service
-	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("ford", "escape", vinNumb.DrivlyData, vinNumb.VincarioData)
+	// mock needed for powertrain lookup
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID, gomock.Any()).Return(
+		&coremodels.DeviceDefinitionTablelandModel{
+			ID:         dd.ID,
+			Model:      dd.Model,
+			Year:       dd.Year,
+			DeviceType: common.DefaultDeviceType,
+			Metadata: &coremodels.DeviceDefinitionMetadata{DeviceAttributes: []coremodels.DeviceTypeAttribute{
+				{Name: "powertrain_type", Value: "ICE"},
+			}},
+		}, big.NewInt(1), nil)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
