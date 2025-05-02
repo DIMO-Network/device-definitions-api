@@ -11,24 +11,22 @@ import (
 	"github.com/volatiletech/null/v8"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/shared/db"
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v3"
 )
 
 type PowerTrainTypeService interface {
 	ResolvePowerTrainType(makeSlug string, modelSlug string, drivlyData null.JSON, vincarioData null.JSON) (string, error)
-	ResolvePowerTrainFromVinInfo(vinInfo *coremodels.VINDecodingInfoData) string
+	ResolvePowerTrainFromVinInfo(styleName, fuelType string) string
 }
 
 type powerTrainTypeService struct {
-	DBS                            func() *db.ReaderWriter
 	logger                         *zerolog.Logger
 	powerTrainRuleData             coremodels.PowerTrainTypeRuleData
 	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
 }
 
-func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string, logger *zerolog.Logger, ddOnChainSvc gateways.DeviceDefinitionOnChainService) (PowerTrainTypeService, error) {
+func NewPowerTrainTypeService(rulesFileName string, logger *zerolog.Logger, ddOnChainSvc gateways.DeviceDefinitionOnChainService) (PowerTrainTypeService, error) {
 	if rulesFileName == "" {
 		rulesFileName = "powertrain_type_rule.yaml"
 	}
@@ -43,22 +41,25 @@ func NewPowerTrainTypeService(dbs func() *db.ReaderWriter, rulesFileName string,
 		return nil, err
 	}
 
-	return &powerTrainTypeService{DBS: dbs, logger: logger, powerTrainRuleData: powerTrainTypeData, deviceDefinitionOnChainService: ddOnChainSvc}, nil
+	return &powerTrainTypeService{logger: logger, powerTrainRuleData: powerTrainTypeData, deviceDefinitionOnChainService: ddOnChainSvc}, nil
 }
 
 // ResolvePowerTrainFromVinInfo uses standard vin info StyleName and FuelType to figure out powertrain, otherwise returns an empty string
-func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *coremodels.VINDecodingInfoData) string {
+func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(styleName, fuelType string) string {
 	// style name based inference
-	pt := powertrainNameInference(vinInfo.StyleName)
+	pt := powertrainNameInference(styleName)
 	if pt != "" {
 		return pt
+	}
+	if fuelType == "" {
+		return ""
 	}
 	// we may need a parameter for the provider type and then case below
 	// drivly loop, using fuel type to try to get powertrain
 	for _, item := range c.powerTrainRuleData.DrivlyList {
 		if len(item.Values) > 0 {
 			for _, value := range item.Values {
-				if value == vinInfo.FuelType {
+				if value == fuelType {
 					return item.Type
 				}
 			}
@@ -68,7 +69,7 @@ func (c powerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *coremodels.
 	for _, item := range c.powerTrainRuleData.VincarioList {
 		if len(item.Values) > 0 {
 			for _, value := range item.Values {
-				if value == vinInfo.FuelType {
+				if value == fuelType {
 					return item.Type
 				}
 			}
@@ -157,7 +158,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(makeSlug string, modelSlug 
 	return defaultPowerTrainType, nil
 }
 
-// powertrainNameInference figures out powertrain just from name
+// powertrainNameInference figures out powertrain just from name based on common patterns
 func powertrainNameInference(modelSlug string) string {
 	// model modelSlug based inference
 	if strings.Contains(modelSlug, "plug-in") {

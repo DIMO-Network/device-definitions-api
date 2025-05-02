@@ -12,7 +12,6 @@ package mocks
 import (
 	reflect "reflect"
 
-	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	null "github.com/volatiletech/null/v8"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,17 +40,17 @@ func (m *MockPowerTrainTypeService) EXPECT() *MockPowerTrainTypeServiceMockRecor
 }
 
 // ResolvePowerTrainFromVinInfo mocks base method.
-func (m *MockPowerTrainTypeService) ResolvePowerTrainFromVinInfo(vinInfo *models.VINDecodingInfoData) string {
+func (m *MockPowerTrainTypeService) ResolvePowerTrainFromVinInfo(styleName, fuelType string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolvePowerTrainFromVinInfo", vinInfo)
+	ret := m.ctrl.Call(m, "ResolvePowerTrainFromVinInfo", styleName, fuelType)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // ResolvePowerTrainFromVinInfo indicates an expected call of ResolvePowerTrainFromVinInfo.
-func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainFromVinInfo(vinInfo any) *gomock.Call {
+func (mr *MockPowerTrainTypeServiceMockRecorder) ResolvePowerTrainFromVinInfo(styleName, fuelType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainFromVinInfo", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainFromVinInfo), vinInfo)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolvePowerTrainFromVinInfo", reflect.TypeOf((*MockPowerTrainTypeService)(nil).ResolvePowerTrainFromVinInfo), styleName, fuelType)
 }
 
 // ResolvePowerTrainType mocks base method.

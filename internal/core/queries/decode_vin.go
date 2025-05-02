@@ -298,7 +298,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 
 	// figure out powertrain
-	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo)
+	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo.StyleName, vinInfo.FuelType)
+	if pt == "" {
+		// try a different way
+		pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(resp.Manufacturer), shared.SlugString(resp.Model), null.JSON{}, null.JSON{})
+	}
 	if pt != "" {
 		resp.Powertrain = pt
 	}

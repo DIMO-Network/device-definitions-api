@@ -1,10 +1,7 @@
 package services
 
 import (
-	"context"
 	"testing"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"go.uber.org/mock/gomock"
@@ -16,31 +13,15 @@ import (
 )
 
 func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
-	// database
-	const (
-		dbName               = "device_definitions_api"
-		migrationsDirRelPath = "../../infrastructure/db/migrations"
-	)
-	ctx := context.Background()
-	pdb, container := dbtesthelper.StartContainerDatabase(ctx, dbName, t, migrationsDirRelPath)
+
 	// rule data - just use production one
 	logger := dbtesthelper.Logger()
-	pdb.WaitForDB(*logger)
-	defer container.Terminate(ctx) //nolint
 
 	ctrl := gomock.NewController(t)
 	onChainSvc := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
 	defer ctrl.Finish()
 
-	// used for test case where get powertrain from dd
-	dm := dbtesthelper.SetupCreateMake(t, "Ford", pdb)
-	ddWithPt := dbtesthelper.SetupCreateDeviceDefinition(t, dm, "super special", 2022, pdb)
-	ddWithPt.Metadata.DeviceAttributes = append(ddWithPt.Metadata.DeviceAttributes, models.DeviceTypeAttribute{
-		Name:  "powertrain_type",
-		Value: "BEV",
-	})
-
-	ptSvc, err := NewPowerTrainTypeService(pdb.DBS, "../../../powertrain_type_rule.yaml", logger, onChainSvc)
+	ptSvc, err := NewPowerTrainTypeService("../../../powertrain_type_rule.yaml", logger, onChainSvc)
 	require.NoError(t, err)
 
 	type args struct {
