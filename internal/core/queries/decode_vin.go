@@ -73,7 +73,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 
 func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*DecodeVINQuery)
-	if !(len(qry.VIN) >= 13 && len(qry.VIN) <= 17) {
+	if len(qry.VIN) < 13 || len(qry.VIN) > 17 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}
@@ -296,7 +296,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		// todo load up some metadata from what was decoded. Powertrain too
 		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
 
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, *dbWMI.R.DeviceMake, coremodels.DeviceDefinitionTablelandModel{
+		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
 			ID:         tid,
 			KSUID:      ksuid.New().String(),
 			Model:      resp.Model,
@@ -360,6 +360,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 	}
 	// call on-chain svc to get the DD and pull out the powertrain
 	pt := ""
+	trx := ""
 	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID, dc.dbs().Reader)
 	if err == nil && tblDef != nil {
 		for _, attribute := range tblDef.Metadata.DeviceAttributes {
@@ -371,6 +372,9 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
 			pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(makeName), shared.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
 		}
+	} else {
+		// this is not good, somehow it got decoded in past without it being created on tableland
+		dc.logger.Warn().Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
 	}
 
 	resp := &p_grpc.DecodeVinResponse{
@@ -380,6 +384,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		Source:        vn.DecodeProvider.String,
 		DefinitionId:  vn.DefinitionID,
 		Powertrain:    pt,
+		NewTrxHash:    trx,
 	}
 
 	return resp

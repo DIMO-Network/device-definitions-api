@@ -11,12 +11,11 @@ package mocks
 
 import (
 	context "context"
-	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	big "math/big"
 	reflect "reflect"
 
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
-	models "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	db "github.com/DIMO-Network/shared/db"
 	types "github.com/volatiletech/sqlboiler/v4/types"
@@ -47,18 +46,18 @@ func (m *MockDeviceDefinitionOnChainService) EXPECT() *MockDeviceDefinitionOnCha
 }
 
 // Create mocks base method.
-func (m *MockDeviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models2.DeviceDefinitionTablelandModel) (*string, error) {
+func (m *MockDeviceDefinitionOnChainService) Create(ctx context.Context, manufacturerName string, dd models.DeviceDefinitionTablelandModel) (*string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, mk, dd)
+	ret := m.ctrl.Call(m, "Create", ctx, manufacturerName, dd)
 	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Create(ctx, mk, dd any) *gomock.Call {
+func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Create(ctx, manufacturerName, dd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Create), ctx, mk, dd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDeviceDefinitionOnChainService)(nil).Create), ctx, manufacturerName, dd)
 }
 
 // Delete mocks base method.
@@ -77,10 +76,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) Delete(ctx, manufactur
 }
 
 // GetDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models.DeviceDefinitionTablelandModel, *big.Int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDefinitionByID", ctx, ID, reader)
-	ret0, _ := ret[0].(*models2.DeviceDefinitionTablelandModel)
+	ret0, _ := ret[0].(*models.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(*big.Int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -93,10 +92,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDefinitionByID(ctx,
 }
 
 // GetDefinitionTableland mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDefinitionTableland", ctx, manufacturerID, ID)
-	ret0, _ := ret[0].(*models2.DeviceDefinitionTablelandModel)
+	ret0, _ := ret[0].(*models.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -108,10 +107,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDefinitionTableland
 }
 
 // GetDeviceDefinitionByID mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeviceDefinitionByID", ctx, manufacturerID, ID)
-	ret0, _ := ret[0].(*models2.DeviceDefinitionTablelandModel)
+	ret0, _ := ret[0].(*models.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -123,10 +122,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitionByI
 }
 
 // GetDeviceDefinitions mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]models.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeviceDefinitions", ctx, manufacturerID, ID, model, year, pageIndex, pageSize)
-	ret0, _ := ret[0].([]models2.DeviceDefinitionTablelandModel)
+	ret0, _ := ret[0].([]models.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -168,10 +167,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetManufacturerNameByI
 }
 
 // QueryDefinitionsCustom mocks base method.
-func (m *MockDeviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error) {
+func (m *MockDeviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryDefinitionsCustom", ctx, manufacturerID, whereClause, pageIndex)
-	ret0, _ := ret[0].([]models2.DeviceDefinitionTablelandModel)
+	ret0, _ := ret[0].([]models.DeviceDefinitionTablelandModel)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

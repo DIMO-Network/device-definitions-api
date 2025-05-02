@@ -136,7 +136,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		Metadata:   common.ConvertDeviceTypeAttrsToDefinitionMetadata(command.DeviceAttributes),
 	}
 
-	create, err := ch.onChainSvc.Create(ctx, *dm, ddTbl)
+	create, err := ch.onChainSvc.Create(ctx, command.Make, ddTbl)
 	if err != nil {
 		return nil, err // todo does mediator eat this error?
 	}

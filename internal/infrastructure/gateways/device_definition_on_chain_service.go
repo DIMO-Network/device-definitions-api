@@ -53,7 +53,7 @@ type DeviceDefinitionOnChainService interface {
 	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error)
-	Create(ctx context.Context, mk models.DeviceMake, dd models2.DeviceDefinitionTablelandModel) (*string, error)
+	Create(ctx context.Context, manufacturerName string, dd models2.DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 	QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error)
@@ -298,7 +298,7 @@ const (
 )
 
 // Create does a create for tableland, on-chain operation - checks if already exists, inserts transaction in db. returns the onchain transaction
-func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.DeviceMake, dd models2.DeviceDefinitionTablelandModel) (*string, error) {
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacturerName string, dd models2.DeviceDefinitionTablelandModel) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
@@ -349,11 +349,11 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, mk models.D
 	}
 
 	// Validate if manufacturer exists
-	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, mk.Name)
+	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerName)
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", mk.Name, err)
+		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", manufacturerName, err)
 	}
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
