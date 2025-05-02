@@ -73,7 +73,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 
 func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*DecodeVINQuery)
-	if len(qry.VIN) != 17 {
+	if (len(qry.VIN) >= 13 && len(qry.VIN) <= 17) == false {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}

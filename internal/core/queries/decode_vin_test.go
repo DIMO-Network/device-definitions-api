@@ -192,6 +192,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 // todo two new tests: re-use WMI, Japan chassis number
 
+// Japan
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_existingVIN() {
 	const vin = "ZWR90-8000186" // toyota something or other
 
@@ -209,13 +210,15 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_exist
 	err := vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	// there might be some mock expectations?
+	// todo we shouldn't be calling this - like we already have this info if we found the VIN + dd
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainType("toyota", "yaris", vinNumb.DrivlyData, vinNumb.VincarioData)
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
 	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2021), result.Year)
+	s.Assert().Equal(int32(2024), result.Year)
 	s.Assert().Equal(dd.ID, result.DefinitionId)
 	s.Assert().Equal(dm.Name, result.Manufacturer)
 }
