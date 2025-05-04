@@ -51,6 +51,8 @@ type Settings struct {
 	IdentityAPIURL                    url.URL        `yaml:"IDENTITY_API_URL"`
 	PolygonScanAPIKey                 string         `yaml:"POLYGON_SCAN_API_KEY"`
 	GoogleSheetsCredentials           string         `yaml:"GOOGLE_SHEETS_CREDENTIALS"`
+	Japan17VINUser                    string         `yaml:"JAPAN17_VIN_USER"`
+	Japan17VINPassword                string         `yaml:"JAPAN17_VIN_PASSWORD"`
 }
 
 func (s *Settings) IsProd() bool {
