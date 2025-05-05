@@ -433,17 +433,23 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 }
 
 func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin shared.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
+	jpVIN := false
+	if len(vin.String()) < 17 {
+		jpVIN = true
+	}
 	vinDecodeNumber := &models.VinNumber{
 		Vin:              vin.String(),
 		ManufacturerName: resp.Manufacturer,
 		Wmi:              null.StringFrom(vin.Wmi()),
-		VDS:              null.StringFrom(vin.VDS()),
-		Vis:              null.StringFrom(vin.VIS()),
-		CheckDigit:       null.StringFrom(vin.CheckDigit()),
-		SerialNumber:     vin.SerialNumber(),
 		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
 		Year:             int(resp.Year),
 		DefinitionID:     resp.DefinitionId,
+	}
+	if !jpVIN {
+		vinDecodeNumber.VDS = null.StringFrom(vin.VDS())
+		vinDecodeNumber.Vis = null.StringFrom(vin.VIS())
+		vinDecodeNumber.SerialNumber = vin.SerialNumber()
+		vinDecodeNumber.CheckDigit = null.StringFrom(vin.CheckDigit())
 	}
 
 	// Optional fields based on response and VIN info
@@ -467,6 +473,10 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin sha
 	case coremodels.DATGroupProvider:
 		if len(vinInfo.Raw) > 0 {
 			vinDecodeNumber.DatgroupData = null.JSONFrom(vinInfo.Raw)
+		}
+	case coremodels.Japan17VIN:
+		if len(vinInfo.Raw) > 0 {
+			vinDecodeNumber.Vin17Data = null.JSONFrom(vinInfo.Raw)
 		}
 	}
 
