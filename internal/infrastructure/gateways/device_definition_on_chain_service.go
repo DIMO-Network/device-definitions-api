@@ -20,7 +20,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/tidwall/gjson"

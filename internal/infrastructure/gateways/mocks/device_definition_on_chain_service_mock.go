@@ -17,7 +17,7 @@ import (
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	db "github.com/DIMO-Network/shared/db"
+	db "github.com/DIMO-Network/shared/pkg/db"
 	types "github.com/volatiletech/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )

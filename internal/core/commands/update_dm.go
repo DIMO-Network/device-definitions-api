@@ -7,12 +7,12 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -61,7 +61,7 @@ func (ch UpdateDeviceMakeCommandHandler) Handle(ctx context.Context, query media
 		dm = &models.DeviceMake{
 			ID:       command.ID,
 			Name:     command.Name,
-			NameSlug: shared.SlugString(command.Name),
+			NameSlug: stringutils.SlugString(command.Name),
 		}
 	}
 

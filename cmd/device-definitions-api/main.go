@@ -16,7 +16,7 @@ import (
 
 	_ "github.com/DIMO-Network/device-definitions-api/docs"
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/settings"
 	"github.com/rs/zerolog"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	gitSha1 := os.Getenv("GIT_SHA1")
 	ctx := context.Background()
 
-	settings, err := shared.LoadConfig[config.Settings]("settings.yaml")
+	settings, err := settings.LoadConfig[config.Settings]("settings.yaml")
 	if err != nil {
 		log.Fatal("could not load settings: $s", err)
 	}

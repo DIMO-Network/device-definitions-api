@@ -16,7 +16,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/friendsofgo/errors"
 	"github.com/rs/zerolog"
 	"github.com/volatiletech/null/v8"

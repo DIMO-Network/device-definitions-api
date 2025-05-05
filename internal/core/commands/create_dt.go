@@ -3,12 +3,12 @@ package commands
 import (
 	"context"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -39,7 +39,7 @@ func (ch CreateDeviceTypeCommandHandler) Handle(ctx context.Context, query media
 	dt := models.DeviceType{}
 	dt.ID = command.ID
 	dt.Name = command.Name
-	dt.Metadatakey = shared.SlugString(command.Name)
+	dt.Metadatakey = stringutils.SlugString(command.Name)
 
 	err := dt.Insert(ctx, ch.DBS().Writer, boil.Infer())
 

@@ -11,7 +11,7 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/http"
 )
 
 //go:generate mockgen -source autoiso_api_service.go -destination mocks/autoiso_api_service_mock.go -package mocks
@@ -20,7 +20,7 @@ type AutoIsoAPIService interface {
 }
 
 type autoIsoAPIService struct {
-	httpClientVIN shared.HTTPClientWrapper
+	httpClientVIN http.ClientWrapper
 	autoIsoAPIUid string
 	autoIsoAPIKey string
 }
@@ -29,7 +29,7 @@ func NewAutoIsoAPIService(autoIsoAPIUid, autoIsoAPIKey string) AutoIsoAPIService
 	if autoIsoAPIUid == "" || autoIsoAPIKey == "" {
 		panic("Drivly configuration not set")
 	}
-	hcwv, _ := shared.NewHTTPClientWrapper("http://bp.autoiso.pl", "", 10*time.Second, nil, false)
+	hcwv, _ := http.NewClientWrapper("http://bp.autoiso.pl", "", 10*time.Second, nil, false)
 
 	return &autoIsoAPIService{
 		httpClientVIN: hcwv,

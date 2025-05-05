@@ -10,11 +10,11 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -39,7 +39,7 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 	if len(mk) < 2 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid make name for GetOrCreate: %s", mk)}
 	}
-	makeSlug := shared.SlugString(mk)
+	makeSlug := stringutils.SlugString(mk)
 	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, r.DBS().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

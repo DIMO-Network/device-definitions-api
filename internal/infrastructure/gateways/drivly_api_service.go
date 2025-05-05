@@ -9,7 +9,7 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ type DrivlyAPIService interface {
 
 type drivlyAPIService struct {
 	Settings      *config.Settings
-	httpClientVIN shared.HTTPClientWrapper
+	httpClientVIN http.ClientWrapper
 }
 
 func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
@@ -28,7 +28,7 @@ func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
 		panic("Drivly configuration not set")
 	}
 	h := map[string]string{"x-api-key": settings.DrivlyAPIKey}
-	hcwv, _ := shared.NewHTTPClientWrapper(settings.DrivlyVINAPIURL.String(), "", 10*time.Second, h, true, shared.WithRetry(1))
+	hcwv, _ := http.NewClientWrapper(settings.DrivlyVINAPIURL.String(), "", 10*time.Second, h, true, http.WithRetry(1))
 
 	return &drivlyAPIService{
 		Settings:      settings,
@@ -55,7 +55,7 @@ func (ds *drivlyAPIService) GetVINInfo(vin string) (*coremodels.DrivlyVINRespons
 	return v, nil
 }
 
-func executeAPI(httpClient shared.HTTPClientWrapper, path string) ([]byte, error) {
+func executeAPI(httpClient http.ClientWrapper, path string) ([]byte, error) {
 	res, err := httpClient.ExecuteRequest(path, "GET", nil)
 	if res == nil {
 		if err != nil {

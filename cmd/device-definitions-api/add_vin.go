@@ -19,8 +19,9 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
+	vinutils "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/google/subcommands"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -80,7 +81,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		fmt.Println("already registered")
 		return subcommands.ExitSuccess
 	}
-	processedVIN := shared.VIN(vin)
+	processedVIN := vinutils.VIN(vin)
 	wmi, err := models.Wmis(models.WmiWhere.Wmi.EQ(processedVIN.Wmi())).One(ctx, pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println("could not find WMI for vin")
@@ -116,12 +117,12 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitFailure
 	}
 
-	manufacturer, err := onChainSvc.GetManufacturer(ctx, shared.SlugString(wmi.ManufacturerName), pdb.DBS().Reader)
+	manufacturer, err := onChainSvc.GetManufacturer(ctx, stringutils.SlugString(wmi.ManufacturerName), pdb.DBS().Reader)
 	if err != nil {
 		fmt.Println(err.Error())
 		return subcommands.ExitFailure
 	}
-	definitionID := common.DeviceDefinitionSlug(shared.SlugString(wmi.ManufacturerName), shared.SlugString(model), int16(vinNumber.Year))
+	definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(model), int16(vinNumber.Year))
 	deviceDefinition, err := onChainSvc.GetDefinitionTableland(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
 
 	if err != nil {

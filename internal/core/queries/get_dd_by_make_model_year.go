@@ -10,8 +10,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/ericlagergren/decimal"
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
@@ -41,7 +41,7 @@ func NewGetDeviceDefinitionByMakeModelYearQueryHandler(onChainSvc gateways.Devic
 func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 
 	qry := query.(*GetDeviceDefinitionByMakeModelYearQuery)
-	makeSlug := shared.SlugString(qry.Make)
+	makeSlug := stringutils.SlugString(qry.Make)
 	manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, makeSlug, ch.dbs().Reader)
 	if err != nil {
 		return nil, err

@@ -23,8 +23,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/DIMO-Network/shared"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
+	"github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
@@ -75,7 +76,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}
-	vin := shared.VIN(qry.VIN)
+	vin := vin.VIN(qry.VIN)
 	resp.Year = int32(vin.Year())
 	wmi := vin.Wmi()
 
@@ -242,8 +243,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	resp.Year = vinInfo.Year
 	resp.Model = vinInfo.Model
 
-	modelSlug := shared.SlugString(vinInfo.Model)
-	tid := common.DeviceDefinitionSlug(shared.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
+	modelSlug := stringutils.SlugString(vinInfo.Model)
+	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
 	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
@@ -275,7 +276,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo.StyleName, vinInfo.FuelType)
 	if pt == "" {
 		// try a different way
-		pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(resp.Manufacturer), shared.SlugString(resp.Model), null.JSON{}, null.JSON{})
+		pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(resp.Manufacturer), stringutils.SlugString(resp.Model), null.JSON{}, null.JSON{})
 	}
 	if pt != "" {
 		resp.Powertrain = pt
@@ -364,7 +365,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		}
 		if pt == "" {
 			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
-			pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(makeName), shared.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
+			pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
 		}
 	} else {
 		// this is not good, somehow it got decoded in past without it being created on tableland
@@ -386,7 +387,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 
 // processDeviceStyle saves new styles if needed to db and returns the style database ID
 func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo *coremodels.VINDecodingInfoData, definitionID, powertrain string) (string, error) {
-	externalStyleID := shared.SlugString(vinInfo.StyleName)
+	externalStyleID := stringutils.SlugString(vinInfo.StyleName)
 
 	// Step 1: Try to find an existing style
 	style, err := models.DeviceStyles(
@@ -432,11 +433,9 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 	return style.ID, nil
 }
 
-func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin shared.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
-	jpVIN := false
-	if len(vin.String()) < 17 {
-		jpVIN = true
-	}
+func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin vin.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
+	jpVIN := len(vin.String()) < 17
+
 	vinDecodeNumber := &models.VinNumber{
 		Vin:              vin.String(),
 		ManufacturerName: resp.Manufacturer,
@@ -488,7 +487,7 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin sha
 }
 
 // vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set
-func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin shared.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
+func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
 	vinInfo := &coremodels.VINDecodingInfoData{}
 	vinInfo.VIN = vin.String()
 	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(context.Background(), dc.dbs().Reader)

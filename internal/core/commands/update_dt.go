@@ -5,14 +5,14 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -55,7 +55,7 @@ func (ch UpdateDeviceTypeCommandHandler) Handle(ctx context.Context, query media
 		dt = &models.DeviceType{
 			ID:          command.ID,
 			Name:        command.Name,
-			Metadatakey: shared.SlugString(command.Name),
+			Metadatakey: stringutils.SlugString(command.Name),
 		}
 	}
 

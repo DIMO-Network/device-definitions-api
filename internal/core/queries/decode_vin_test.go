@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/ksuid"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/volatiletech/null/v8"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
@@ -24,7 +24,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
+	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -179,7 +180,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
-	s.Assert().Equal(ds.ExternalStyleID, shared.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(ds.ExternalStyleID, stringutils.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
 
 	// validate metadata was updated on DD
 	// validate vin number created
@@ -285,7 +286,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
-	s.Assert().Equal(ds.ExternalStyleID, shared.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(ds.ExternalStyleID, stringutils.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
 	s.Assert().Equal(styleLevelPT, gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).Str)
 	// validate vin number was create
 	vn, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)
@@ -439,7 +440,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
-	s.Assert().Equal(ds.ExternalStyleID, shared.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
+	s.Assert().Equal(ds.ExternalStyleID, stringutils.SlugString(vinInfoResp.Trim+" "+vinInfoResp.SubModel))
 	s.Assert().Equal(styleLevelPT, gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).Str)
 	// validate vin number was create
 	vn, err := models.VinNumbers().One(s.ctx, s.pdb.DBS().Reader)
@@ -715,7 +716,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	s.Require().NoError(err)
 
 	// insert into vin numbers
-	v := shared.VIN(vin)
+	v := vinutil.VIN(vin)
 	vinNumb := models.VinNumber{
 		Vin:              vin,
 		Wmi:              null.StringFrom(v.Wmi()),

@@ -4,10 +4,10 @@ package config
 import (
 	"net/url"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/DIMO-Network/shared/redis"
+	"github.com/DIMO-Network/shared/pkg/redis"
 )
 
 type Settings struct {

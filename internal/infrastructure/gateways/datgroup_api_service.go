@@ -11,7 +11,7 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
-	"github.com/DIMO-Network/shared"
+	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/antchfx/xmlquery"
 	"github.com/pkg/errors"
 
@@ -151,7 +151,7 @@ func parseXML(logger *zerolog.Logger, datgroupRespXML, vin string) (*coremodels.
 		response.YearHigh = yearHigh
 	}
 
-	yr := shared.VIN(response.VIN).Year()
+	yr := vinutil.VIN(response.VIN).Year()
 	if yr >= response.YearLow && yr <= response.YearHigh {
 		response.Year = yr
 	} else {
