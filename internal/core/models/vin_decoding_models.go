@@ -18,6 +18,7 @@ const (
 	DATGroupProvider DecodeProviderEnum = "dat"
 	AllProviders     DecodeProviderEnum = ""
 	TeslaProvider    DecodeProviderEnum = "tesla"
+	Japan17VIN       DecodeProviderEnum = "japan17vin"
 )
 
 type VINDecodingInfoData struct {
@@ -402,4 +403,13 @@ type DATGroupEquipment struct {
 	// if Vin Equipment, this comes from ShortName
 	ManufacturerDescription string `json:"manufacturerDescription"`
 	Description             string `json:"description"`
+}
+
+// nolint
+type Japan17MMY struct {
+	VIN                   string `json:"vin"`
+	ManufacturerName      string `json:"manufacturerName"`
+	ManufacturerLowerCase string `json:"manufacturerLowerCase"`
+	ModelName             string `json:"modelName"`
+	Year                  int    `json:"year"`
 }

@@ -32,19 +32,21 @@ type VINDecodingService interface {
 }
 
 type vinDecodingService struct {
+	logger             *zerolog.Logger
 	drivlyAPISvc       gateways.DrivlyAPIService
 	vincarioAPISvc     gateways.VincarioAPIService
-	logger             *zerolog.Logger
 	autoIsoAPIService  gateways.AutoIsoAPIService
 	DATGroupAPIService gateways.DATGroupAPIService
+	japan17VINAPI      gateways.Japan17VINAPI
 	onChainSvc         gateways.DeviceDefinitionOnChainService
 	dbs                func() *db.ReaderWriter
 }
 
 func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
-	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter) VINDecodingService {
-	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso, logger: logger,
-		onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
+	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
+	japan17VINAPI gateways.Japan17VINAPI) VINDecodingService {
+	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso,
+		japan17VINAPI: japan17VINAPI, logger: logger, onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
 }
 
 func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error) {
@@ -53,7 +55,10 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 
 	result := &coremodels.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
-	if !ValidateVIN(vin) {
+	// check for japan chasis
+	if (len(vin) < 17 && len(vin) > 10) || country == "JPN" {
+		provider = coremodels.Japan17VIN
+	} else if !ValidateVIN(vin) {
 		return nil, fmt.Errorf("invalid vin: %s", vin)
 	}
 
@@ -104,6 +109,20 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		result, err = buildFromVincario(vinVincarioInfo)
 		if err != nil {
 			return nil, err
+		}
+	case coremodels.Japan17VIN:
+		mmy, raw, err := c.japan17VINAPI.GetVINInfo(vin)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with japan17vin", vin)
+		}
+		result = &coremodels.VINDecodingInfoData{
+			VIN:      vin,
+			Make:     mmy.ManufacturerName,
+			Model:    mmy.ModelName,
+			Year:     int32(mmy.Year),
+			Source:   coremodels.Japan17VIN,
+			MetaData: null.JSONFrom(raw),
+			Raw:      raw,
 		}
 	case coremodels.AutoIsoProvider:
 		vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
