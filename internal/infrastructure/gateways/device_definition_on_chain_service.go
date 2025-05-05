@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"io"
 	"math/big"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
@@ -46,12 +47,12 @@ import (
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
-	GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error)
+	GetManufacturer(manufacturerSlug string) (*Manufacturer, error)
 	GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error)
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
-	GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error)
+	GetDefinitionByID(ctx context.Context, ID string) (*models2.DeviceDefinitionTablelandModel, *big.Int, error)
 	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error)
 	Create(ctx context.Context, manufacturerName string, dd models2.DeviceDefinitionTablelandModel) (*string, error)
@@ -128,14 +129,14 @@ func (e *deviceDefinitionOnChainService) GetManufacturerNameByID(ctx context.Con
 }
 
 // GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
-func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string, reader *db.DB) (*models2.DeviceDefinitionTablelandModel, *big.Int, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string) (*models2.DeviceDefinitionTablelandModel, *big.Int, error) {
 	split := strings.Split(ID, "_")
 	if len(split) != 3 {
 		return nil, nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
 	}
 	manufacturerSlug := split[0]
 	// call out to identity-api w/ caching
-	manufacturer, err := e.GetManufacturer(ctx, manufacturerSlug, reader)
+	manufacturer, err := e.GetManufacturer(manufacturerSlug)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed get DeviceMake: %s", manufacturerSlug)
 	}
@@ -144,16 +145,12 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	return tblDD, manufacturerID, err
 }
 
-func (e *deviceDefinitionOnChainService) GetManufacturer(ctx context.Context, manufacturerSlug string, reader *db.DB) (*Manufacturer, error) {
+func (e *deviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string) (*Manufacturer, error) {
 	value, found := e.inmemCache.Get(manufacturerSlug)
 	if found {
 		return value.(*Manufacturer), nil
 	}
-	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(manufacturerSlug)).One(ctx, reader)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get DeviceMake from db: %s", manufacturerSlug)
-	}
-	manufacturer, err := e.identityAPI.GetManufacturer(deviceMake.Name)
+	manufacturer, err := e.identityAPI.GetManufacturer(manufacturerSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +340,7 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacture
 	auth.From = fromAddress
 
 	// call identity instead of the chain since more reliable
-	manufacturer, err := e.identityAPI.GetManufacturer(stringutils.SlugString(manufacturerName))
+	manufacturer, err := e.GetManufacturer(stringutils.SlugString(manufacturerName))
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()

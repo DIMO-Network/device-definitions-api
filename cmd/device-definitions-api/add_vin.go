@@ -117,7 +117,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitFailure
 	}
 
-	manufacturer, err := onChainSvc.GetManufacturer(ctx, stringutils.SlugString(wmi.ManufacturerName), pdb.DBS().Reader)
+	manufacturer, err := onChainSvc.GetManufacturer(stringutils.SlugString(wmi.ManufacturerName))
 	if err != nil {
 		fmt.Println(err.Error())
 		return subcommands.ExitFailure

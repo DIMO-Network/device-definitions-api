@@ -40,7 +40,7 @@ func NewGetAllDeviceDefinitionOnChainQueryHandler(dbs func() *db.ReaderWriter, d
 
 func (ch GetAllDeviceDefinitionOnChainQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetAllDeviceDefinitionOnChainQuery)
-	dm, err := ch.DeviceDefinitionOnChainService.GetManufacturer(ctx, qry.MakeSlug, ch.DBS().Reader)
+	dm, err := ch.DeviceDefinitionOnChainService.GetManufacturer(qry.MakeSlug)
 	if err != nil {
 		return nil, err
 	}

@@ -42,9 +42,9 @@ func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings, ht
 }
 
 // GetManufacturer from identity-api by the name - must match exactly. Returns the token id and other on chain info
-func (i *identityAPIService) GetManufacturer(name string) (*Manufacturer, error) {
+func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error) {
 	query := `{
-  manufacturer(by: {name: "` + name + `"}) {
+  manufacturer(by: {slug: "` + slug + `"}) {
     	tokenId
     	name
     	tableId
@@ -61,7 +61,7 @@ func (i *identityAPIService) GetManufacturer(name string) (*Manufacturer, error)
 		return nil, err
 	}
 	if wrapper.Data.Manufacturer.Name == "" {
-		return nil, errors.Wrapf(ErrNotFound, "identity-api did not find manufacturer with name: %s", name)
+		return nil, errors.Wrapf(ErrNotFound, "identity-api did not find manufacturer with slug: %s", slug)
 	}
 	return &wrapper.Data.Manufacturer, nil
 }

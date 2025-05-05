@@ -120,7 +120,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// If DefinitionID passed in, override VIN decoding
 	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
-		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID, dc.dbs().Reader)
+		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get device definition id: %s", qry.DefinitionID)
 		}
@@ -247,7 +247,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
-	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid, dc.dbs().Reader)
+	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid)
 	if errTbl != nil {
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
 	} else if tblDef == nil {
@@ -356,7 +356,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 	// call on-chain svc to get the DD and pull out the powertrain
 	pt := ""
 	trx := ""
-	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID, dc.dbs().Reader)
+	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID)
 	if err == nil && tblDef != nil {
 		for _, attribute := range tblDef.Metadata.DeviceAttributes {
 			if attribute.Name == common.PowerTrainType {

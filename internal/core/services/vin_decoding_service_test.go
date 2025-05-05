@@ -224,7 +224,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2020, s.pdb)
 
-	s.mockOnChainSvc.EXPECT().GetDefinitionByID(ctx, dd.ID, gomock.Any()).Times(1).Return(dd, nil, nil)
+	s.mockOnChainSvc.EXPECT().GetDefinitionByID(ctx, dd.ID).Times(1).Return(dd, nil, nil)
 
 	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
 

@@ -40,7 +40,7 @@ func NewGetAllDeviceDefinitionByMakeYearRangeQueryHandler(onChainSvc gateways.De
 func (ch GetAllDeviceDefinitionByMakeYearRangeQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetAllDeviceDefinitionByMakeYearRangeQuery)
 	makeSlug := stringutils.SlugString(qry.Make)
-	manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, makeSlug, ch.dbs().Reader)
+	manufacturer, err := ch.onChainSvc.GetManufacturer(makeSlug)
 	if err != nil {
 		return nil, err
 	}

@@ -67,7 +67,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, _, err := c.onChainSvc.GetDefinitionByID(ctx, DefaultDefinitionID, c.dbs().Reader)
+		dd, _, err := c.onChainSvc.GetDefinitionByID(ctx, DefaultDefinitionID)
 		if err != nil {
 			return nil, err
 		}

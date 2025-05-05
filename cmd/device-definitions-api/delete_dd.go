@@ -88,7 +88,7 @@ func (p *deleteDefinition) Execute(ctx context.Context, _ *flag.FlagSet, _ ...in
 			fmt.Println("Transaction status: ", trxFinished)
 			if loops > 10 {
 				// get device definition from on chain to see if maybe got created but trx still showing false
-				onchainDD, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, id, pdb.DBS().Reader)
+				onchainDD, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, id)
 				fmt.Println("onchainDD: ", onchainDD, err)
 				if onchainDD != nil {
 					break

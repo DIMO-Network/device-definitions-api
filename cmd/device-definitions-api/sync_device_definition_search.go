@@ -160,7 +160,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	var documents []SearchEntryItem
 	// iterate over all makes, then query tableland
 	for _, dm := range makes {
-		manufacturer, err := onChainSvc.GetManufacturer(ctx, dm.NameSlug, pdb.DBS().Reader)
+		manufacturer, err := onChainSvc.GetManufacturer(dm.NameSlug)
 		if err != nil {
 			p.logger.Fatal().Err(err).Send()
 		}

@@ -42,7 +42,7 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 
 	qry := query.(*GetDeviceDefinitionByMakeModelYearQuery)
 	makeSlug := stringutils.SlugString(qry.Make)
-	manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, makeSlug, ch.dbs().Reader)
+	manufacturer, err := ch.onChainSvc.GetManufacturer(makeSlug)
 	if err != nil {
 		return nil, err
 	}

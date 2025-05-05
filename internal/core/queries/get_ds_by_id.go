@@ -50,7 +50,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, ds.DefinitionID, ch.DBS().Reader)
+	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, ds.DefinitionID)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),

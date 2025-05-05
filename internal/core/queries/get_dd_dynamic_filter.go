@@ -66,19 +66,19 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 	qry := query.(*GetDeviceDefinitionByDynamicFilterQuery)
 
 	if len(qry.DefinitionID) > 1 {
-		dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DefinitionID, ch.DBS().Reader)
+		dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DefinitionID)
 		if err != nil {
 			return nil, err
 		}
 		dds := make([]DeviceDefinitionQueryResponse, 1)
-		dds[0] = ch.buildDeviceDefinitionQueryResponse(ctx, dd)
+		dds[0] = ch.buildDeviceDefinitionQueryResponse(dd)
 		return dds, nil
 	}
 
 	manufacturerID := types.NullDecimal{}
 
 	if len(qry.MakeSlug) > 1 {
-		manufacturer, err := ch.onChainSvc.GetManufacturer(ctx, qry.MakeSlug, ch.DBS().Reader)
+		manufacturer, err := ch.onChainSvc.GetManufacturer(qry.MakeSlug)
 		if err != nil {
 			return nil, err
 		}
@@ -92,20 +92,20 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 
 	dd := make([]DeviceDefinitionQueryResponse, len(definitions))
 	for i, item := range definitions {
-		dd[i] = ch.buildDeviceDefinitionQueryResponse(ctx, &item)
+		dd[i] = ch.buildDeviceDefinitionQueryResponse(&item)
 	}
 
 	return dd, err
 
 }
 
-func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQueryResponse(ctx context.Context, dd *models.DeviceDefinitionTablelandModel) DeviceDefinitionQueryResponse {
+func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQueryResponse(dd *models.DeviceDefinitionTablelandModel) DeviceDefinitionQueryResponse {
 	if dd == nil {
 		return DeviceDefinitionQueryResponse{}
 	}
 	split := strings.Split(dd.ID, "_")
 	manufacturerSlug := split[0]
-	manufacturer, _ := ch.onChainSvc.GetManufacturer(ctx, manufacturerSlug, ch.DBS().Reader)
+	manufacturer, _ := ch.onChainSvc.GetManufacturer(manufacturerSlug)
 	mdStr := []byte("{}")
 	if dd.Metadata != nil {
 		mdStr, _ = json.Marshal(dd.Metadata)
