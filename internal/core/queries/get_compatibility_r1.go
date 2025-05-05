@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"google.golang.org/api/option"
 
@@ -100,7 +100,7 @@ func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings)
 			compat := fmt.Sprintf("%v", row[3])
 
 			rows = append(rows, CompatibilitySheetRow{
-				DefinitionID: common.DeviceDefinitionSlug(shared.SlugString(mk), shared.SlugString(model), int16(yr)),
+				DefinitionID: common.DeviceDefinitionSlug(stringutils.SlugString(mk), stringutils.SlugString(model), int16(yr)),
 				Make:         mk,
 				Model:        model,
 				Year:         yr,

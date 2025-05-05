@@ -12,7 +12,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
@@ -26,11 +26,11 @@ type Japan17VINAPI interface {
 type japan17VINAPI struct {
 	logger     *zerolog.Logger
 	settings   *config.Settings
-	httpClient shared.HTTPClientWrapper
+	httpClient http.ClientWrapper
 }
 
 func NewJapan17VINAPI(logger *zerolog.Logger, settings *config.Settings) Japan17VINAPI {
-	httpClient, _ := shared.NewHTTPClientWrapper("", "", 20*time.Second, nil, true)
+	httpClient, _ := http.NewClientWrapper("", "", 20*time.Second, nil, true, http.WithRetry(2))
 
 	return &japan17VINAPI{
 		logger:     logger,

@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
@@ -20,7 +20,7 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/pkg/errors"
@@ -82,7 +82,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(shared.SlugString(command.Make))).One(ctx, ch.dbs().Reader)
+	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(stringutils.SlugString(command.Make))).One(ctx, ch.dbs().Reader)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.ValidationError{
@@ -106,7 +106,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 			}
 		}
 		if !powerTrainExists {
-			powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(shared.SlugString(command.Make), shared.SlugString(command.Model), null.JSON{}, null.JSON{})
+			powerTrainTypeValue, err := ch.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(command.Make), stringutils.SlugString(command.Model), null.JSON{}, null.JSON{})
 			if err != nil {
 				return nil, &exceptions.InternalError{
 					Err: fmt.Errorf("failed to get powertraintype"),
@@ -127,7 +127,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	ddTbl := coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(command.Model), int16(command.Year)),
+		ID:         common.DeviceDefinitionSlug(dm.NameSlug, stringutils.SlugString(command.Model), int16(command.Year)),
 		KSUID:      ksuid.New().String(),
 		Model:      command.Model,
 		Year:       command.Year,

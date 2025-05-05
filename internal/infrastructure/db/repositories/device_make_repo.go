@@ -7,11 +7,11 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/null/v8"
@@ -57,7 +57,7 @@ func (r *deviceMakeRepository) GetOrCreate(ctx context.Context, makeName string,
 			m = &models.DeviceMake{
 				ID:                 ksuid.New().String(),
 				Name:               makeName,
-				NameSlug:           shared.SlugString(makeName),
+				NameSlug:           stringutils.SlugString(makeName),
 				LogoURL:            null.StringFrom(logURL),
 				ExternalIds:        null.JSONFrom([]byte(externalIDs)),
 				Metadata:           null.JSONFrom([]byte(metadata)),

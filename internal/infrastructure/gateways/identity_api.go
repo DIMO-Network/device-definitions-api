@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	"github.com/DIMO-Network/shared"
+	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -15,7 +15,7 @@ var ErrNotFound = errors.New("not found")
 var ErrBadRequest = errors.New("bad request")
 
 type identityAPIService struct {
-	httpClient     shared.HTTPClientWrapper
+	httpClient     http.ClientWrapper
 	logger         zerolog.Logger
 	identityAPIURL string
 }
@@ -27,11 +27,11 @@ type IdentityAPI interface {
 
 // NewIdentityAPIService creates a new instance of IdentityAPI, initializing it with the provided logger, settings, and HTTP client.
 // httpClient is used for testing really
-func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings, httpClient shared.HTTPClientWrapper) IdentityAPI {
+func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings, httpClient http.ClientWrapper) IdentityAPI {
 	if httpClient == nil {
 		h := map[string]string{}
 		h["Content-Type"] = "application/json"
-		httpClient, _ = shared.NewHTTPClientWrapper("", "", 10*time.Second, h, false) // ok to ignore err since only used for tor check
+		httpClient, _ = http.NewClientWrapper("", "", 10*time.Second, h, false) // ok to ignore err since only used for tor check
 	}
 
 	return &identityAPIService{
@@ -78,7 +78,7 @@ func (i *identityAPIService) fetchWithQuery(query string, result interface{}) er
 	res, err := i.httpClient.ExecuteRequest(i.identityAPIURL, "POST", payloadBytes)
 	if err != nil {
 		i.logger.Err(err).Str("func", "fetchWithQuery").Msgf("request payload: %s", string(payloadBytes))
-		if _, ok := err.(shared.HTTPResponseError); !ok {
+		if _, ok := err.(http.ResponseError); !ok {
 			return errors.Wrapf(err, "error calling identity api from url %s", i.identityAPIURL)
 		}
 	}

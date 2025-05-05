@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 
-	"github.com/DIMO-Network/shared"
+	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/volatiletech/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -77,7 +77,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 
 	switch provider {
 	case coremodels.TeslaProvider:
-		v := shared.VIN(vin)
+		v := vinutil.VIN(vin)
 		metadata := map[string]interface{}{
 			"fuel_type":       "electric",
 			"powertrain_type": coremodels.BEV.String(),

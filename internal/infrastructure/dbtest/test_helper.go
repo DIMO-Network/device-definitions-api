@@ -10,12 +10,12 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
@@ -143,7 +143,7 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	SetupCreateDeviceType(t, pdb)
 	dd := &coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(dm.NameSlug, shared.SlugString(model), int16(year)),
+		ID:         common.DeviceDefinitionSlug(dm.NameSlug, stringutils.SlugString(model), int16(year)),
 		KSUID:      ksuid.New().String(),
 		Model:      model,
 		Year:       year,
@@ -226,7 +226,7 @@ func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
 	dm := models.DeviceMake{
 		ID:       ksuid.New().String(),
 		Name:     mk,
-		NameSlug: shared.SlugString(mk),
+		NameSlug: stringutils.SlugString(mk),
 	}
 	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "no db error expected")

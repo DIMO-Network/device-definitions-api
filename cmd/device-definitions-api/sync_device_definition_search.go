@@ -9,14 +9,14 @@ import (
 	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	"github.com/DIMO-Network/shared"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/DIMO-Network/shared/db"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
 	"github.com/typesense/typesense-go/typesense"
@@ -176,7 +176,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			name := common.BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model)
 			imageUrl := dd.ImageURI
 			modelName := dd.Model
-			modelSlug := shared.SlugString(dd.Model)
+			modelSlug := stringutils.SlugString(dd.Model)
 
 			year := dd.Year
 			if year < 2007 {
