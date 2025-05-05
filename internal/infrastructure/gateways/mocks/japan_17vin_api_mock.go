@@ -40,11 +40,11 @@ func (m *MockJapan17VINAPI) EXPECT() *MockJapan17VINAPIMockRecorder {
 }
 
 // GetVINInfo mocks base method.
-func (m *MockJapan17VINAPI) GetVINInfo(vin string) (*models.Japan17MMY, *string, error) {
+func (m *MockJapan17VINAPI) GetVINInfo(vin string) (*models.Japan17MMY, []byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVINInfo", vin)
 	ret0, _ := ret[0].(*models.Japan17MMY)
-	ret1, _ := ret[1].(*string)
+	ret1, _ := ret[1].([]byte)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }

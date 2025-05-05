@@ -32,8 +32,9 @@ type VINDecodingServiceSuite struct {
 	mockVincarioAPISvc     *mock_gateways.MockVincarioAPIService
 	mockAutoIsoAPISvc      *mock_gateways.MockAutoIsoAPIService
 	mockDATGroupAPIService *mock_gateways.MockDATGroupAPIService
-	mockOnChainSvc         *mock_gateways.MockDeviceDefinitionOnChainService
+	mockJapan17VINAPI      *mock_gateways.MockJapan17VINAPI
 
+	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionOnChainService
 	vinDecodingService VINDecodingService
 }
 
@@ -58,10 +59,11 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
 	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
 	s.mockDATGroupAPIService = mock_gateways.NewMockDATGroupAPIService(s.ctrl)
+	s.mockJapan17VINAPI = mock_gateways.NewMockJapan17VINAPI(s.ctrl)
 	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(),
-		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS)
+		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
@@ -74,6 +76,33 @@ func (s *VINDecodingServiceSuite) TearDownSuite() {
 	if err := s.container.Terminate(s.ctx); err != nil {
 		s.T().Fatal(err)
 	}
+}
+
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_Japan17VIN_Success() {
+	ctx := context.Background()
+	const vin = "ZWR90-8000186"
+	const makeID = "Toyota"
+	const country = "CHN"
+
+	vinInfoResp := &coremodels.Japan17MMY{
+		VIN:                   vin,
+		ManufacturerName:      makeID,
+		ManufacturerLowerCase: "toyota",
+		ModelName:             "Voxy",
+		Year:                  2022,
+	}
+	s.mockJapan17VINAPI.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, []byte{0x1, 0x22}, nil)
+
+	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
+	assert.Equal(s.T(), result.Source, coremodels.Japan17VIN)
+	assert.Equal(s.T(), result.Make, "Toyota")
+	assert.Equal(s.T(), result.Model, "Voxy")
+	assert.Equal(s.T(), result.Year, int32(2022))
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {

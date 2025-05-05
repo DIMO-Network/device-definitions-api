@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"github.com/goccy/go-json"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -93,7 +94,7 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 		fmt.Println("VIN Info:")
 		fmt.Println(string(jsonBytes))
 		fmt.Println("Raw JSON Payload:")
-		fmt.Println(*payload)
+		fmt.Println(string(payload))
 	}
 
 	fmt.Println()

@@ -18,6 +18,7 @@ const (
 	DATGroupProvider DecodeProviderEnum = "dat"
 	AllProviders     DecodeProviderEnum = ""
 	TeslaProvider    DecodeProviderEnum = "tesla"
+	Japan17VIN       DecodeProviderEnum = "japan17vin"
 )
 
 type VINDecodingInfoData struct {

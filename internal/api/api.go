@@ -59,6 +59,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vincarioAPIService := gateways.NewVincarioAPIService(settings, &logger)
 	fuelAPIService := gateways.NewFuelAPIService(settings, &logger)
 	autoIsoAPIService := gateways.NewAutoIsoAPIService(settings.AutoIsoAPIUid, settings.AutoIsoAPIKey)
+	japan17VINAPI := gateways.NewJapan17VINAPI(&logger, settings)
 	registryInstance, err := contracts.NewRegistry(settings.EthereumRegistryAddress, ethClient)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
@@ -73,7 +74,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	vinRepository := repositories.NewVINRepository(pdb.DBS, registryInstance)
 
 	//cache services
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, ddOnChainService, datGroupWSService, pdb.DBS)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, ddOnChainService, datGroupWSService, pdb.DBS, japan17VINAPI)
 	powerTrainTypeService, err := services.NewPowerTrainTypeService("powertrain_type_rule.yaml", &logger, ddOnChainService)
 	searchService := search.NewTypesenseAPIService(settings, &logger)
 	if err != nil {

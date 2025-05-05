@@ -4,23 +4,23 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
+	"time"
+	"unicode"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
-	"io"
-	"strconv"
-	"strings"
-	"time"
-	"unicode"
 )
 
 //go:generate mockgen -source japan_17vin_api.go -destination mocks/japan_17vin_api_mock.go -package mocks
-
 type Japan17VINAPI interface {
-	GetVINInfo(vin string) (*coremodels.Japan17MMY, *string, error)
+	GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, error)
 }
 
 type japan17VINAPI struct {
@@ -39,7 +39,7 @@ func NewJapan17VINAPI(logger *zerolog.Logger, settings *config.Settings) Japan17
 	}
 }
 
-func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, *string, error) {
+func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, error) {
 	token := tokenGenerator(j.settings.Japan17VINUser, j.settings.Japan17VINPassword, vin)
 
 	url := fmt.Sprintf("http://api.17vin.com:8080/?vin=%s&user=%s&token=%s", vin, j.settings.Japan17VINUser, token)
@@ -87,8 +87,7 @@ func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, *string,
 		Year:                  year,
 	}
 
-	payload := string(bodyBytes)
-	return &result, &payload, nil
+	return &result, bodyBytes, nil
 }
 func md5Hex(s string) string {
 	hash := md5.Sum([]byte(s))
