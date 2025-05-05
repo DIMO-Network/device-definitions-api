@@ -434,20 +434,18 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 }
 
 func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin vin.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
-	jpVIN := len(vin.String()) < 17
-
 	vinDecodeNumber := &models.VinNumber{
 		Vin:              vin.String(),
 		ManufacturerName: resp.Manufacturer,
 		Wmi:              null.StringFrom(vin.Wmi()),
+		SerialNumber:     vin.SerialNumber(),
 		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
 		Year:             int(resp.Year),
 		DefinitionID:     resp.DefinitionId,
 	}
-	if !jpVIN {
+	if !vin.IsJapanChassis() {
 		vinDecodeNumber.VDS = null.StringFrom(vin.VDS())
 		vinDecodeNumber.Vis = null.StringFrom(vin.VIS())
-		vinDecodeNumber.SerialNumber = vin.SerialNumber()
 		vinDecodeNumber.CheckDigit = null.StringFrom(vin.CheckDigit())
 	}
 
