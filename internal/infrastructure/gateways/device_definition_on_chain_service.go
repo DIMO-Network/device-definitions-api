@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"io"
 	"math/big"
 	"net/http"
@@ -163,7 +164,7 @@ func (e *deviceDefinitionOnChainService) GetManufacturer(ctx context.Context, ma
 // GetDefinitionTableland gets dd from tableland with a select statement and returns tbl object
 func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
-		return nil, fmt.Errorf("manufacturerID cannot be 0")
+		return nil, fmt.Errorf("GetDefinitionTableland - manufacturerID cannot be 0")
 	}
 
 	tableName, err := e.getTablelandTableName(ctx, manufacturerID)
@@ -341,20 +342,18 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacture
 	auth.GasPrice = bumpedPrice
 	auth.From = fromAddress
 
-	queryInstance, err := contracts.NewRegistry(contractAddress, e.client)
+	// call identity instead of the chain since more reliable
+	manufacturer, err := e.identityAPI.GetManufacturer(stringutils.SlugString(manufacturerName))
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
 		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		return nil, fmt.Errorf("failed create NewRegistry: %w", err)
+		return nil, fmt.Errorf("failed get manufacturer from identity: %w", err)
 	}
+	if manufacturer == nil {
+		return nil, fmt.Errorf("manufacturer not found in identity")
+	}
+	e.logger.Info().Msgf("manufacturer to create DD with: %+v", manufacturer)
 
-	// Validate if manufacturer exists
-	bigManufID, err := queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, manufacturerName)
-	if err != nil {
-		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
-		metrics.InternalError.With(prometheus.Labels{"method": TablelandErrors}).Inc()
-		return nil, fmt.Errorf("failed get GetManufacturerIdByName => %s: %w", manufacturerName, err)
-	}
 	instance, err := contracts.NewRegistryTransactor(contractAddress, e.client)
 	if err != nil {
 		e.logger.Err(err).Msgf("OnChainError - %s", dd.ID)
@@ -382,6 +381,8 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacture
 		jsonData, _ := json.Marshal(dd.Metadata)
 		deviceInputs.Metadata = string(jsonData)
 	}
+
+	bigManufID := big.NewInt(int64(manufacturer.TokenID))
 
 	// check for duplicate create
 	currentDeviceDefinition, err := e.GetDeviceDefinitionByID(ctx, bigManufID, deviceInputs.Id)
