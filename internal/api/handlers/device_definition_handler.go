@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"strconv"
 	"strings"
 
@@ -62,20 +63,21 @@ type DecodeVINResponse struct {
 }
 
 // GetDeviceDefinitionByID godoc
-// @Summary gets a device definition, optionally from tableland (on-chain records) if use an mmy style id.
+// @Summary gets a device definition, from tableland on-chain records. Only support mmy style id's eg. ford_escape_2025
 // @ID GetDeviceDefinitionByID
 // @Description gets a device definition
 // @Tags device-definitions
-// @Param  id path string true "device definition id or mmy definition_id eg. ford_escape_2020"
+// @Param  id path string true "mmy definition_id eg. ford_escape_2020"
 // @Produce json
 // @Success 200 {object} models.DeviceDefinitionTablelandModel
 // @Failure 404
+// @Failure 400
 // @Failure 500
 // @Router /device-definitions/{id} [get]
 func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		// check if not ksuid, eg. MMY based definition_id
+		// make sure it is mmy style dd id
 		split := strings.Split(id, "_")
 		if len(split) == 3 {
 			query := &queries.GetDeviceDefinitionByIDQueryV2{DefinitionID: id}
@@ -83,10 +85,12 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 			return c.Status(fiber.StatusOK).JSON(result)
 		}
 
-		query := &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: id}
-		result, _ := m.Send(c.UserContext(), query)
-
-		return c.Status(fiber.StatusOK).JSON(result)
+		return c.Status(fiber.StatusBadRequest).JSON(common.ProblemDetails{
+			Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+			Title:  "invalid id format",
+			Status: fiber.StatusBadRequest,
+			Detail: "id must be mmy style eg. ford_escape_2025",
+		})
 	}
 }
 
