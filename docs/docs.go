@@ -399,6 +399,11 @@ const docTemplate = `{
         },
         "/vin-profile/{vin}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "gets VIN profile if we have it.",
                 "produces": [
                     "application/json"

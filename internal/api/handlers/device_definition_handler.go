@@ -106,6 +106,7 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 // @Failure 404
 // @Failure 400
 // @Failure 500
+// @Security BearerAuth
 // @Router /vin-profile/{vin} [get]
 func VINProfile(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {

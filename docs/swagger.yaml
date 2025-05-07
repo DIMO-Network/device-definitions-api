@@ -445,6 +445,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - BearerAuth: []
       summary: gets any raw profile info we have on previously decoded VINs. USA Only.
       tags:
       - device-definitions
