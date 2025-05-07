@@ -208,12 +208,12 @@ const docTemplate = `{
                 "tags": [
                     "device-definitions"
                 ],
-                "summary": "gets a device definition, optionally from tableland (on-chain records) if use an mmy style id.",
+                "summary": "gets a device definition, from tableland on-chain records. Only support mmy style id's eg. ford_escape_2025",
                 "operationId": "GetDeviceDefinitionByID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "device definition id or mmy definition_id eg. ford_escape_2020",
+                        "description": "mmy definition_id eg. ford_escape_2020",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -225,6 +225,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionTablelandModel"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     },
                     "404": {
                         "description": "Not Found"
@@ -387,6 +390,45 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/vin-profile/{vin}": {
+            "get": {
+                "description": "gets VIN profile if we have it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device-definitions"
+                ],
+                "summary": "gets any raw profile info we have on previously decoded VINs. USA Only.",
+                "operationId": "VINProfile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "17 character usa based VIN eg. WBA12345678901234",
+                        "name": "vin",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -595,6 +637,23 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse": {
+            "type": "object",
+            "properties": {
+                "profileRaw": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "vendor": {
+                    "type": "string"
+                },
+                "vin": {
+                    "type": "string"
                 }
             }
         },

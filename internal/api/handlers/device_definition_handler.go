@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 	"strconv"
 	"strings"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 
@@ -91,6 +92,45 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 			Status: fiber.StatusBadRequest,
 			Detail: "id must be mmy style eg. ford_escape_2025",
 		})
+	}
+}
+
+// VINProfile godoc
+// @Summary gets any raw profile info we have on previously decoded VINs. USA Only.
+// @ID VINProfile
+// @Description gets VIN profile if we have it.
+// @Tags device-definitions
+// @Param  vin path string true "17 character usa based VIN eg. WBA12345678901234"
+// @Produce json
+// @Success 200 {object} queries.GetVINProfileResponse
+// @Failure 404
+// @Failure 400
+// @Failure 500
+// @Router /vin-profile/{vin} [get]
+func VINProfile(m mediator.Mediator) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		vin := c.Params("vin")
+		// make sure it is mmy style dd id
+		if len(vin) != 17 {
+			return c.Status(fiber.StatusBadRequest).JSON(common.ProblemDetails{
+				Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+				Title:  "invalid VIN format",
+				Status: fiber.StatusBadRequest,
+				Detail: "Only USA style VINs supported 17 characters long.",
+			})
+		}
+
+		query := &queries.GetVINProfileQuery{VIN: vin}
+		result, err := m.Send(c.UserContext(), query)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(common.ProblemDetails{
+				Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+				Title:  "No VIN profile founder",
+				Status: fiber.StatusNotFound,
+				Detail: "Couldn't get VIN profile.",
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }
 

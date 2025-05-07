@@ -131,6 +131,17 @@ definitions:
       year:
         type: integer
     type: object
+  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse:
+    properties:
+      profileRaw:
+        items:
+          type: integer
+        type: array
+      vendor:
+        type: string
+      vin:
+        type: string
+    type: object
   internal_api_handlers.DecodeVINRequest:
     properties:
       countryCode:
@@ -177,7 +188,7 @@ paths:
       description: gets a device definition
       operationId: GetDeviceDefinitionByID
       parameters:
-      - description: device definition id or mmy definition_id eg. ford_escape_2020
+      - description: mmy definition_id eg. ford_escape_2020
         in: path
         name: id
         required: true
@@ -189,12 +200,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_models.DeviceDefinitionTablelandModel'
+        "400":
+          description: Bad Request
         "404":
           description: Not Found
         "500":
           description: Internal Server Error
-      summary: gets a device definition, optionally from tableland (on-chain records)
-        if use an mmy style id.
+      summary: gets a device definition, from tableland on-chain records. Only support
+        mmy style id's eg. ford_escape_2025
       tags:
       - device-definitions
   /device-definitions/decode-vin:
@@ -407,6 +420,32 @@ paths:
           description: Internal Server Error
       summary: gets all device definitions by Makes, models, and years, from tableland
         (on-chain records)
+      tags:
+      - device-definitions
+  /vin-profile/{vin}:
+    get:
+      description: gets VIN profile if we have it.
+      operationId: VINProfile
+      parameters:
+      - description: 17 character usa based VIN eg. WBA12345678901234
+        in: path
+        name: vin
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: gets any raw profile info we have on previously decoded VINs. USA Only.
       tags:
       - device-definitions
 securityDefinitions:
