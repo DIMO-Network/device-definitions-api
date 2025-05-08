@@ -207,6 +207,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			documents = append(documents, newDocument)
 		}
 		definitions = nil // will this help rambo the gc?
+		fmt.Printf("loaded %d definitions from %s \n", len(documents), manufacturer.Name)
 	}
 
 	err = uploadWithAPI(client, documents, p.settings.SearchServiceIndexName)

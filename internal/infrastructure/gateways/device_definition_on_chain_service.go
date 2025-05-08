@@ -226,7 +226,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 	return modelTableland, nil
 }
 
-// QueryDefinitionsCustom queries tableland definitions oem table based on manuf ID. Always page size of 50, but you can alter the page index
+// QueryDefinitionsCustom queries tableland definitions oem table based on manuf ID. Always page size of 500, but you can alter the page index
 func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
@@ -237,8 +237,11 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
+	if tableName == "" {
+		return nil, fmt.Errorf("tableName cannot be empty for manufacturer token id %d", manufacturerID)
+	}
 
-	statement := fmt.Sprintf("SELECT * FROM %s %s LIMIT %d OFFSET %d", tableName, whereClause, 50, pageIndex)
+	statement := fmt.Sprintf("SELECT * FROM %s %s LIMIT %d OFFSET %d", tableName, whereClause, 500, pageIndex)
 
 	queryParams := map[string]string{
 		"statement": statement,
