@@ -40,7 +40,7 @@ func NewGetVINProfileQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.L
 
 func (dc GetVINProfileQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*GetVINProfileQuery)
-	if len(qry.VIN) < 12 || len(qry.VIN) > 17 {
+	if len(qry.VIN) < 10 || len(qry.VIN) > 17 {
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 
