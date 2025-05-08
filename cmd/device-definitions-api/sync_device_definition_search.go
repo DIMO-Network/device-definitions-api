@@ -157,6 +157,8 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		p.logger.Fatal().Err(err).Send()
 	}
 
+	fmt.Printf("Found %d manufacturers in db\n", len(makes))
+
 	var documents []SearchEntryItem
 	// iterate over all makes, then query tableland
 	for _, dm := range makes {
@@ -204,6 +206,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 			documents = append(documents, newDocument)
 		}
+		definitions = nil // will this help rambo the gc?
 	}
 
 	err = uploadWithAPI(client, documents, p.settings.SearchServiceIndexName)
