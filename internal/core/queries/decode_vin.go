@@ -490,18 +490,31 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 	vinInfo.VIN = vin.String()
 	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(context.Background(), dc.dbs().Reader)
 	if err != nil {
-		return nil, errors.Wrap(err, "vinInfoFromKnown: could not get WMI from vin wmi "+vin.Wmi())
+		return nil, errors.Wrap(err, "vinInfoFromKnown: unknown WMI "+vin.Wmi())
 	}
 	if len(wmis) > 1 {
-		return nil, fmt.Errorf("vinInfoFromKnown: more than one WMI found for vin wmi %s", vin.Wmi())
+		// see if we can find an existing device definition for this WMI
+		for _, wmi := range wmis {
+			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
+			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), definitionID)
+			if err == nil && deviceDefinitionTablelandModel != nil {
+				vinInfo.Make = wmi.ManufacturerName
+				break
+			}
+		}
+		// if make is blank means no matching DD's found. We don't have a good way to determine the right Make / OEM
+		if vinInfo.Make == "" {
+			return nil, fmt.Errorf("vinInfoFromKnown: unable to find the OEM for WMI %s", vin.Wmi())
+		}
+	} else {
+		vinInfo.Make = wmis[0].ManufacturerName
 	}
-	vinInfo.Make = wmis[0].ManufacturerName
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
 	vinInfo.Source = "probably smartcar"
 
 	if len(vinInfo.Model) == 0 || len(vinInfo.Make) == 0 || vinInfo.Year == 0 {
-		return nil, fmt.Errorf("unable to decode from known info")
+		return nil, fmt.Errorf("vinInfoFromKnown: unable to decode from known info")
 	}
 
 	return vinInfo, nil
