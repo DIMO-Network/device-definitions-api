@@ -947,3 +947,86 @@ func TestResolveMetadataFromInfo(t *testing.T) {
 func buildStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 	return strings.TrimSpace(vinInfo.Trim + " " + vinInfo.SubModel)
 }
+
+func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_multipleWMI() {
+	vinny := "1FMCU0G61MUA52727"
+	v := vinutil.VIN(vinny)
+	// insert into wmi
+	wmi1 := models.Wmi{
+		Wmi:              "1FM",
+		ManufacturerName: "Ford",
+	}
+	wmi2 := models.Wmi{
+		Wmi:              "1FM",
+		ManufacturerName: "Lincoln",
+	}
+	err := wmi1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+	err = wmi2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+	// mock call to get definition by id
+	definitionID := "ford_escape_2020"
+
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).AnyTimes().Return(&coremodels.DeviceDefinitionTablelandModel{
+		ID:         definitionID,
+		KSUID:      ksuid.New().String(),
+		Model:      "Escape",
+		Year:       2020,
+		DeviceType: common.DefaultDeviceType,
+		ImageURI:   "",
+		Metadata:   nil,
+	}, nil, nil)
+	//s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), "lincoln_escape_2020").AnyTimes().Return(nil, nil, fmt.Errorf("not found"))
+
+	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "1FMCU0G61MUA52727", got.VIN)
+	assert.Equal(s.T(), "Ford", got.Make)
+	assert.Equal(s.T(), "Escape", got.Model)
+	assert.Equal(s.T(), int32(2020), got.Year)
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_singleWMI() {
+	vinny := "1FMCU0G61MUA52727"
+	v := vinutil.VIN(vinny)
+	// insert into wmi
+	wmi1 := models.Wmi{
+		Wmi:              "1FM",
+		ManufacturerName: "Ford",
+	}
+
+	err := wmi1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+
+	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "1FMCU0G61MUA52727", got.VIN)
+	assert.Equal(s.T(), "Ford", got.Make)
+	assert.Equal(s.T(), "Escape", got.Model)
+	assert.Equal(s.T(), int32(2020), got.Year)
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_multipleWMINoDDFound() {
+	vinny := "1FMCU0G61MUA52727"
+	v := vinutil.VIN(vinny)
+	// insert into wmi
+	wmi1 := models.Wmi{
+		Wmi:              "1FM",
+		ManufacturerName: "Ford",
+	}
+	wmi2 := models.Wmi{
+		Wmi:              "1FM",
+		ManufacturerName: "Lincoln",
+	}
+	err := wmi1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+	err = wmi2.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	require.NoError(s.T(), err)
+	// mock call to get definition by id
+	definitionID := "ford_escape_2020"
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).Times(2).Return(nil, nil, fmt.Errorf("not found"))
+
+	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	require.Error(s.T(), err, "vinInfoFromKnown: unable to determine the right OEM between Ford, Lincoln for WMI %s 1FM")
+	require.Nil(s.T(), got)
+}
