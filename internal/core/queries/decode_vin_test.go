@@ -966,7 +966,8 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	require.NoError(s.T(), err)
 	// mock call to get definition by id
 	definitionID := "ford_escape_2020"
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(&coremodels.DeviceDefinitionTablelandModel{
+
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).AnyTimes().Return(&coremodels.DeviceDefinitionTablelandModel{
 		ID:         definitionID,
 		KSUID:      ksuid.New().String(),
 		Model:      "Escape",
@@ -975,6 +976,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 		ImageURI:   "",
 		Metadata:   nil,
 	}, nil, nil)
+	//s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), "lincoln_escape_2020").AnyTimes().Return(nil, nil, fmt.Errorf("not found"))
 
 	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
 	require.NoError(s.T(), err)
@@ -1022,9 +1024,9 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	require.NoError(s.T(), err)
 	// mock call to get definition by id
 	definitionID := "ford_escape_2020"
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Times(2).Return(nil, nil, fmt.Errorf("not found"))
+	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).Times(2).Return(nil, nil, fmt.Errorf("not found"))
 
 	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
-	require.Error(s.T(), err, "vinInfoFromKnown: unable to find the OEM for WMI 1FM")
+	require.Error(s.T(), err, "vinInfoFromKnown: unable to determine the right OEM between Ford, Lincoln for WMI %s 1FM")
 	require.Nil(s.T(), got)
 }

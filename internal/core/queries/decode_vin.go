@@ -494,7 +494,9 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 	}
 	if len(wmis) > 1 {
 		// see if we can find an existing device definition for this WMI
+		makeNamesForError := ""
 		for _, wmi := range wmis {
+			makeNamesForError += wmi.ManufacturerName + ", "
 			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
 			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), definitionID)
 			if err == nil && deviceDefinitionTablelandModel != nil {
@@ -504,7 +506,7 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 		}
 		// if make is blank means no matching DD's found. We don't have a good way to determine the right Make / OEM
 		if vinInfo.Make == "" {
-			return nil, fmt.Errorf("vinInfoFromKnown: unable to find the OEM for WMI %s", vin.Wmi())
+			return nil, fmt.Errorf("vinInfoFromKnown: unable to determine the right OEM between %sfor WMI %s", makeNamesForError, vin.Wmi())
 		}
 	} else {
 		vinInfo.Make = wmis[0].ManufacturerName
