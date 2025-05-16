@@ -9,8 +9,8 @@ package grpc;
 message DecodeVinRequest {
   string vin = 1;
   string country = 2;
-  string known_model = 3 [deprecated=true];
-  int32 known_year = 4 [deprecated=true];
+  string known_model = 3;
+  int32 known_year = 4;
 }
 
 message DecodeVinResponse {

@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -33,4 +35,15 @@ func (s *GrpcVinDecoderService) DecodeVin(ctx context.Context, in *p_grpc.Decode
 	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	return result, nil
+}
+
+func (s *GrpcVinDecoderService) UpsertDecoding(ctx context.Context, in *p_grpc.UpsertDecodingRequest) (*emptypb.Empty, error) {
+	_, err := s.Mediator.Send(ctx, &queries.UpsertDecodingQuery{
+		VIN:          in.Vin,
+		DefinitionID: in.TargetDefinitionId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
 }
