@@ -9,8 +9,8 @@ package grpc;
 message DecodeVinRequest {
   string vin = 1;
   string country = 2;
-  string known_model = 3;
-  int32 known_year = 4;
+  string known_model = 3 [deprecated=true];
+  int32 known_year = 4 [deprecated=true];
 }
 
 message DecodeVinResponse {
@@ -26,12 +26,13 @@ message DecodeVinResponse {
   string manufacturer = 11;
 }
 
-message ChangeDecodingRequest {
+message UpsertDecodingRequest {
   string vin = 1;
   string target_definition_id = 2;
 }
 
 service VinDecoderService {
   rpc DecodeVin(DecodeVinRequest) returns (DecodeVinResponse);
-  rpc ChangeDecoding(ChangeDecodingRequest) returns (google.protobuf.Empty);
+  // used to change what a vin points to or insert a new vin to definition id mapping
+  rpc UpsertDecoding(UpsertDecodingRequest) returns (google.protobuf.Empty);
 }
