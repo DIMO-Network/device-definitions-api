@@ -132,6 +132,8 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetCompatibilityR1SheetQuery{}, queries.NewCompatibilityR1SheetQueryHandler(settings)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQueryV2{}, queries.NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetVINProfileQuery{}, queries.NewGetVINProfileQueryHandler(pdb.DBS, &logger)),
+
+		mediator.WithHandler(&queries.UpsertDecodingQuery{}, queries.NewUpsertDecodingQueryHandler(pdb.DBS, &logger, ddOnChainService)),
 	)
 
 	//fiber

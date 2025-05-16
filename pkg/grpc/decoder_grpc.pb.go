@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	VinDecoderService_DecodeVin_FullMethodName      = "/grpc.VinDecoderService/DecodeVin"
-	VinDecoderService_ChangeDecoding_FullMethodName = "/grpc.VinDecoderService/ChangeDecoding"
+	VinDecoderService_UpsertDecoding_FullMethodName = "/grpc.VinDecoderService/UpsertDecoding"
 )
 
 // VinDecoderServiceClient is the client API for VinDecoderService service.
@@ -29,7 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VinDecoderServiceClient interface {
 	DecodeVin(ctx context.Context, in *DecodeVinRequest, opts ...grpc.CallOption) (*DecodeVinResponse, error)
-	ChangeDecoding(ctx context.Context, in *ChangeDecodingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// used to change what a vin points to or insert a new vin to definition id mapping
+	UpsertDecoding(ctx context.Context, in *UpsertDecodingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type vinDecoderServiceClient struct {
@@ -49,9 +50,9 @@ func (c *vinDecoderServiceClient) DecodeVin(ctx context.Context, in *DecodeVinRe
 	return out, nil
 }
 
-func (c *vinDecoderServiceClient) ChangeDecoding(ctx context.Context, in *ChangeDecodingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *vinDecoderServiceClient) UpsertDecoding(ctx context.Context, in *UpsertDecodingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, VinDecoderService_ChangeDecoding_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, VinDecoderService_UpsertDecoding_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,8 @@ func (c *vinDecoderServiceClient) ChangeDecoding(ctx context.Context, in *Change
 // for forward compatibility
 type VinDecoderServiceServer interface {
 	DecodeVin(context.Context, *DecodeVinRequest) (*DecodeVinResponse, error)
-	ChangeDecoding(context.Context, *ChangeDecodingRequest) (*emptypb.Empty, error)
+	// used to change what a vin points to or insert a new vin to definition id mapping
+	UpsertDecoding(context.Context, *UpsertDecodingRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedVinDecoderServiceServer()
 }
 
@@ -74,8 +76,8 @@ type UnimplementedVinDecoderServiceServer struct {
 func (UnimplementedVinDecoderServiceServer) DecodeVin(context.Context, *DecodeVinRequest) (*DecodeVinResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DecodeVin not implemented")
 }
-func (UnimplementedVinDecoderServiceServer) ChangeDecoding(context.Context, *ChangeDecodingRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ChangeDecoding not implemented")
+func (UnimplementedVinDecoderServiceServer) UpsertDecoding(context.Context, *UpsertDecodingRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertDecoding not implemented")
 }
 func (UnimplementedVinDecoderServiceServer) mustEmbedUnimplementedVinDecoderServiceServer() {}
 
@@ -108,20 +110,20 @@ func _VinDecoderService_DecodeVin_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _VinDecoderService_ChangeDecoding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeDecodingRequest)
+func _VinDecoderService_UpsertDecoding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertDecodingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VinDecoderServiceServer).ChangeDecoding(ctx, in)
+		return srv.(VinDecoderServiceServer).UpsertDecoding(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VinDecoderService_ChangeDecoding_FullMethodName,
+		FullMethod: VinDecoderService_UpsertDecoding_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VinDecoderServiceServer).ChangeDecoding(ctx, req.(*ChangeDecodingRequest))
+		return srv.(VinDecoderServiceServer).UpsertDecoding(ctx, req.(*UpsertDecodingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -138,8 +140,8 @@ var VinDecoderService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _VinDecoderService_DecodeVin_Handler,
 		},
 		{
-			MethodName: "ChangeDecoding",
-			Handler:    _VinDecoderService_ChangeDecoding_Handler,
+			MethodName: "UpsertDecoding",
+			Handler:    _VinDecoderService_UpsertDecoding_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
