@@ -118,6 +118,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			// use the dat group service to decode
 			if err != nil {
 				fmt.Println(err.Error())
+				continue
 			}
 
 			fmt.Printf("\n\nVIN Response: %+v\n", vinInfo)
@@ -126,7 +127,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DrivlyProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
-				return subcommands.ExitFailure
+				continue
 			}
 
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
@@ -135,7 +136,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.VincarioProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
-				return subcommands.ExitFailure
+				continue
 			}
 
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
@@ -144,7 +145,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.Japan17VIN, country)
 			if err != nil {
 				fmt.Println(err.Error())
-				return subcommands.ExitFailure
+				continue
 			}
 			jsonBytes, _ := json.MarshalIndent(vinInfo, "", " ")
 			fmt.Println("VIN Info:")
@@ -204,7 +205,7 @@ func readVINFile(filename string) ([]string, error) {
 
 	csvColumnIndex := -1
 	for i, columnName := range header {
-		if columnName == "csv" {
+		if columnName == "vins" {
 			csvColumnIndex = i
 			break
 		}
@@ -212,7 +213,7 @@ func readVINFile(filename string) ([]string, error) {
 
 	if csvColumnIndex == -1 {
 		csvColumnIndex = 0 // default to first column if "csv" column not found
-		fmt.Println("defaulting to first column as 'csv' column not found, please ensure your CSV file has a column named 'csv' with VINs in it.")
+		fmt.Println("defaulting to first column as 'vins' column not found, please ensure your CSV file has a column named 'vins' with VINs in it.")
 	}
 
 	// Read all rows and extract values from the "csv" column
