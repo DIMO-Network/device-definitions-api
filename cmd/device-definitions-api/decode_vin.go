@@ -8,6 +8,16 @@ import (
 	"io"
 	"os"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/shared/pkg/db"
+	vinutil "github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+
 	"github.com/goccy/go-json"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -20,11 +30,12 @@ type decodeVINCmd struct {
 	logger   *zerolog.Logger
 	settings *config.Settings
 
-	datGroup   bool
-	drivly     bool
-	vincario   bool
-	japan17vin bool
-	fromFile   bool
+	datGroup    bool
+	drivly      bool
+	vincario    bool
+	japan17vin  bool
+	fromFile    bool
+	persistToDB bool
 }
 
 func (*decodeVINCmd) Name() string { return "decodevin" }
@@ -41,9 +52,10 @@ func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.vincario, "vincario", false, "use vincario vin decoder")
 	f.BoolVar(&p.japan17vin, "japan17vin", false, "use japan17vin vin decoder")
 	f.BoolVar(&p.fromFile, "from-file", false, "read vin from file in /tmp directory")
+	f.BoolVar(&p.persistToDB, "persist-to-db", false, "persist successful vin decodings to db, table vin_numbers")
 }
 
-func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	if len(f.Args()) == 0 {
 		if p.fromFile {
 			fmt.Println("missing filename parameter")
@@ -53,6 +65,9 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 		return subcommands.ExitUsageError
 	}
 	vinOrFile := f.Args()[0]
+
+	pdb := db.NewDbConnectionFromSettings(context.Background(), &p.settings.DB, true)
+	pdb.WaitForDB(*p.logger)
 
 	country := "USA"
 	if len(f.Args()) == 2 {
@@ -74,21 +89,41 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 		return subcommands.ExitFailure
 	}
 
+	vinDecodingService := instantiateVINDecodingSvc(ctx, p.settings, p.logger, pdb)
+
 	for _, vin := range vins {
+		// in case want to insert
+		vinObj := vinutil.VIN(vin)
+		dbVin := &models.VinNumber{
+			Vin:          vin,
+			Wmi:          null.StringFrom(vinObj.Wmi()),
+			VDS:          null.StringFrom(vinObj.VDS()),
+			SerialNumber: vinObj.SerialNumber(),
+			CheckDigit:   null.StringFrom(vinObj.CheckDigit()),
+			Vis:          null.StringFrom(vinObj.VIS()),
+		}
+		wmi, _ := models.Wmis(models.WmiWhere.Wmi.EQ(vinObj.Wmi())).One(ctx, pdb.DBS().Reader)
+		if wmi != nil {
+			dbVin.ManufacturerName = wmi.ManufacturerName
+		}
+		dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, pdb.DBS().Reader)
+		if err != nil {
+			fmt.Println(err.Error())
+			return subcommands.ExitFailure
+		}
+		vinInfo := &coremodels.VINDecodingInfoData{VIN: vin}
+
 		if p.datGroup {
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DATGroupProvider, country)
 			// use the dat group service to decode
-			datAPI := gateways.NewDATGroupAPIService(p.settings, p.logger)
-			vinInfo, err := datAPI.GetVINv2(vin, country)
 			if err != nil {
 				fmt.Println(err.Error())
-				return subcommands.ExitFailure
 			}
 
-			fmt.Printf("\n\nVIN Response: %+v\n", *vinInfo)
+			fmt.Printf("\n\nVIN Response: %+v\n", vinInfo)
 		}
 		if p.drivly {
-			drivlyAPI := gateways.NewDrivlyAPIService(p.settings)
-			vinInfo, err := drivlyAPI.GetVINInfo(vin)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DrivlyProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				return subcommands.ExitFailure
@@ -97,8 +132,7 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.vincario {
-			vincarioAPI := gateways.NewVincarioAPIService(p.settings, p.logger)
-			vinInfo, err := vincarioAPI.DecodeVIN(vin)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.VincarioProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				return subcommands.ExitFailure
@@ -107,8 +141,7 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.japan17vin {
-			jp17vinAPI := gateways.NewJapan17VINAPI(p.logger, p.settings)
-			vinInfo, payload, err := jp17vinAPI.GetVINInfo(vin)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.Japan17VIN, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				return subcommands.ExitFailure
@@ -116,10 +149,28 @@ func (p *decodeVINCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interfac
 			jsonBytes, _ := json.MarshalIndent(vinInfo, "", " ")
 			fmt.Println("VIN Info:")
 			fmt.Println(string(jsonBytes))
-			fmt.Println("Raw JSON Payload:")
-			fmt.Println(string(payload))
 		}
 		fmt.Println()
+		if p.persistToDB {
+			if vinInfo == nil || vinInfo.Model == "" {
+				fmt.Println("no decoding info found, skipping: " + vin)
+				continue
+			}
+			dbVin.Year = int(vinInfo.Year)
+			if dbVin.ManufacturerName == "" {
+				dbVin.ManufacturerName = vinInfo.Make
+			}
+			dbVin.DatgroupData = null.JSONFrom(vinInfo.Raw)
+			dbVin.DefinitionID = common.DeviceDefinitionSlug(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+			dbVin.DecodeProvider = null.StringFrom(string(vinInfo.Source))
+			// todo future change to add field with StyleName
+
+			err := dbVin.Insert(ctx, pdb.DBS().Writer, boil.Infer())
+			if err != nil {
+				fmt.Println(err.Error())
+				return subcommands.ExitFailure
+			}
+		}
 	}
 	return subcommands.ExitSuccess
 }
@@ -181,4 +232,31 @@ func readVINFile(filename string) ([]string, error) {
 	}
 
 	return values, nil
+}
+
+func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
+	datAPI := gateways.NewDATGroupAPIService(settings, logger)
+	drivlyAPI := gateways.NewDrivlyAPIService(settings)
+	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
+	jp17vinAPI := gateways.NewJapan17VINAPI(logger, settings)
+
+	send, err := createSender(ctx, settings, logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create sender.")
+	}
+
+	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+	}
+
+	chainID, err := ethClient.ChainID(ctx)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+	}
+	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
+
+	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI)
+
+	return vinDecodingService
 }
