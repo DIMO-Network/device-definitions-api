@@ -1,8 +1,6 @@
 package gateways
 
 import (
-	"encoding/json"
-	"io"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -23,15 +21,14 @@ type identityAPIService struct {
 //go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go -package mocks
 type IdentityAPI interface {
 	GetManufacturer(slug string) (*Manufacturer, error)
+	GetManufacturers() ([]Manufacturer, error)
 }
 
 // NewIdentityAPIService creates a new instance of IdentityAPI, initializing it with the provided logger, settings, and HTTP client.
 // httpClient is used for testing really
 func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings, httpClient http.ClientWrapper) IdentityAPI {
 	if httpClient == nil {
-		h := map[string]string{}
-		h["Content-Type"] = "application/json"
-		httpClient, _ = http.NewClientWrapper("", "", 10*time.Second, h, false) // ok to ignore err since only used for tor check
+		httpClient, _ = http.NewClientWrapper("", "", 10*time.Second, nil, true) // ok to ignore err since only used for tor check
 	}
 
 	return &identityAPIService{
@@ -56,7 +53,7 @@ func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error)
 			Manufacturer Manufacturer `json:"manufacturer"`
 		} `json:"data"`
 	}
-	err := i.fetchWithQuery(query, &wrapper)
+	err := i.httpClient.GraphQLQuery("", query, &wrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -66,41 +63,33 @@ func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error)
 	return &wrapper.Data.Manufacturer, nil
 }
 
-func (i *identityAPIService) fetchWithQuery(query string, result interface{}) error {
-	// GraphQL request
-	requestPayload := GraphQLRequest{Query: query}
-	payloadBytes, err := json.Marshal(requestPayload)
+func (i *identityAPIService) GetManufacturers() ([]Manufacturer, error) {
+	query := `{
+  manufacturers {
+    totalCount
+    nodes {
+      id
+      tokenId
+      name
+      tableId
+      owner
+    }
+  }
+}`
+	var wrapper struct {
+		Data struct {
+			Vehicles struct {
+				TotalCount int            `json:"totalCount"`
+				Nodes      []Manufacturer `json:"nodes"`
+			} `json:"manufacturers"`
+		} `json:"data"`
+	}
+
+	err := i.httpClient.GraphQLQuery("", query, &wrapper)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	// POST request
-	res, err := i.httpClient.ExecuteRequest(i.identityAPIURL, "POST", payloadBytes)
-	if err != nil {
-		i.logger.Err(err).Str("func", "fetchWithQuery").Msgf("request payload: %s", string(payloadBytes))
-		if _, ok := err.(http.ResponseError); !ok {
-			return errors.Wrapf(err, "error calling identity api from url %s", i.identityAPIURL)
-		}
-	}
-	defer res.Body.Close() // nolint
-
-	if res.StatusCode == 404 {
-		return ErrNotFound
-	}
-	if res.StatusCode == 400 {
-		return ErrBadRequest
-	}
-
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return errors.Wrapf(err, "error reading response body from url %s", i.identityAPIURL)
-	}
-
-	if err := json.Unmarshal(bodyBytes, result); err != nil {
-		return err
-	}
-
-	return nil
+	return wrapper.Data.Vehicles.Nodes, nil
 }
 
 type Manufacturer struct {

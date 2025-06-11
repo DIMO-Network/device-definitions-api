@@ -20,6 +20,7 @@ import (
 type MockIdentityAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockIdentityAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockIdentityAPIMockRecorder is the mock recorder for MockIdentityAPI.
@@ -52,4 +53,19 @@ func (m *MockIdentityAPI) GetManufacturer(slug string) (*gateways.Manufacturer, 
 func (mr *MockIdentityAPIMockRecorder) GetManufacturer(slug any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturer", reflect.TypeOf((*MockIdentityAPI)(nil).GetManufacturer), slug)
+}
+
+// GetManufacturers mocks base method.
+func (m *MockIdentityAPI) GetManufacturers() ([]gateways.Manufacturer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManufacturers")
+	ret0, _ := ret[0].([]gateways.Manufacturer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManufacturers indicates an expected call of GetManufacturers.
+func (mr *MockIdentityAPIMockRecorder) GetManufacturers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturers", reflect.TypeOf((*MockIdentityAPI)(nil).GetManufacturers))
 }
