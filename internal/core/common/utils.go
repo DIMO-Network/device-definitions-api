@@ -3,8 +3,8 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -32,25 +32,6 @@ func Contains(s []string, str string) bool {
 	return false
 }
 
-// SubModelsFromStylesDB gets the unique style.SubModel from the styles slice, deduping sub_model
-func SubModelsFromStylesDB(styles repoModel.DeviceStyleSlice) []string {
-	items := map[string]string{}
-	for _, style := range styles {
-		if _, ok := items[style.SubModel]; !ok {
-			items[style.SubModel] = style.Name
-		}
-	}
-
-	sm := make([]string, len(items))
-	i := 0
-	for key := range items {
-		sm[i] = key
-		i++
-	}
-	sort.Strings(sm)
-	return sm
-}
-
 func BuildExternalIDs(externalIDsJSON null.JSON) []*models.ExternalID {
 	var externalIDs []*models.ExternalID
 	var ei map[string]string
@@ -65,18 +46,6 @@ func BuildExternalIDs(externalIDsJSON null.JSON) []*models.ExternalID {
 	return externalIDs
 }
 
-func BuildDeviceMakeMetadata(metadataJSON null.JSON) *models.DeviceMakeMetadata {
-	var dmMetadata *models.DeviceMakeMetadata
-	var m map[string]string
-	if err := metadataJSON.Unmarshal(&m); err == nil {
-		dmMetadata = &models.DeviceMakeMetadata{
-			RideGuideLink: m["RideGuideLink"],
-		}
-	}
-
-	return dmMetadata
-}
-
 func ExternalIDsToGRPC(externalIDs []*models.ExternalID) []*grpc.ExternalID {
 	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIDs))
 	for i, ei := range externalIDs {
@@ -86,14 +55,6 @@ func ExternalIDsToGRPC(externalIDs []*models.ExternalID) []*grpc.ExternalID {
 		}
 	}
 	return externalIDsGRPC
-}
-
-func DeviceMakeMetadataToGRPC(dm *models.DeviceMakeMetadata) *grpc.Metadata {
-	dmMetadata := &grpc.Metadata{
-		RideGuideLink: dm.RideGuideLink,
-	}
-
-	return dmMetadata
 }
 
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
@@ -231,7 +192,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models.DeviceTyp
 	return respAttrs
 }
 
-func BuildFromDeviceDefinitionToQueryResult(dd *models.DeviceDefinitionTablelandModel, dm *models.DeviceMake, dss []*repoModel.DeviceStyle, trx []*repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
+func BuildFromDeviceDefinitionToQueryResult(dd *models.DeviceDefinitionTablelandModel, dm *gateways.Manufacturer, dss []*repoModel.DeviceStyle, trx []*repoModel.DefinitionTransaction) (*models.GetDeviceDefinitionQueryResult, error) {
 	mdBytes := []byte("{}")
 	if dd.Metadata != nil {
 		mdBytes, _ = json.Marshal(dd.Metadata)
@@ -241,7 +202,8 @@ func BuildFromDeviceDefinitionToQueryResult(dd *models.DeviceDefinitionTableland
 		NameSlug:           dd.ID,
 		Name:               BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model),
 		HardwareTemplateID: DefautlAutoPiTemplate, // used for the autopi template id, which should now always be 130
-		DeviceMake:         *dm,
+		MakeName:           dm.Name,
+		MakeTokenID:        dm.TokenID,
 		Metadata:           mdBytes,
 		Verified:           true,
 		ImageURL:           dd.ImageURI,
@@ -280,57 +242,6 @@ func BuildFromDeviceDefinitionToQueryResult(dd *models.DeviceDefinitionTableland
 	}
 
 	return rp, nil
-}
-
-func BuildFromQueryResultToGRPC(dd *models.GetDeviceDefinitionQueryResult) *grpc.GetDeviceDefinitionItemResponse {
-	rp := &grpc.GetDeviceDefinitionItemResponse{
-		DeviceDefinitionId: dd.DeviceDefinitionID,
-		NameSlug:           dd.NameSlug,
-		Name:               dd.Name,
-		ImageUrl:           dd.ImageURL,
-
-		HardwareTemplateId: DefautlAutoPiTemplate, //used for the autopi template id, which should always be 130 now
-		Make: &grpc.DeviceMake{
-			Id:              dd.DeviceMake.ID,
-			Name:            dd.DeviceMake.Name,
-			LogoUrl:         dd.DeviceMake.LogoURL.String,
-			OemPlatformName: dd.DeviceMake.OemPlatformName.String,
-			NameSlug:        dd.DeviceMake.NameSlug,
-		},
-		Verified:     dd.Verified,
-		Transactions: dd.Transactions,
-	}
-	if dd.DeviceMake.TokenID != nil {
-		rp.Make.TokenId = dd.DeviceMake.TokenID.Uint64()
-	}
-
-	rp.DeviceStyles = []*grpc.DeviceStyle{}
-	for _, ds := range dd.DeviceStyles {
-		rp.DeviceStyles = append(rp.DeviceStyles, &grpc.DeviceStyle{
-			DeviceDefinitionId: dd.DeviceDefinitionID,
-			ExternalStyleId:    ds.ExternalStyleID,
-			Id:                 ds.ID,
-			Name:               ds.Name,
-			Source:             ds.Source,
-			SubModel:           ds.SubModel,
-			HardwareTemplateId: ds.HardwareTemplateID,
-		})
-	}
-
-	rp.DeviceAttributes = []*grpc.DeviceTypeAttribute{}
-	for _, da := range dd.DeviceAttributes {
-		rp.DeviceAttributes = append(rp.DeviceAttributes, &grpc.DeviceTypeAttribute{
-			Name:        da.Name,
-			Label:       da.Label,
-			Description: da.Description,
-			Value:       da.Value,
-			Required:    da.Required,
-			Type:        da.Type,
-			Options:     da.Option,
-		})
-	}
-
-	return rp
 }
 
 func BuildDeviceTypeAttributes(attributes []*models.UpdateDeviceTypeAttribute, dt *repoModel.DeviceType) (null.JSON, error) {

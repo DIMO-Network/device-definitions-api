@@ -12,31 +12,6 @@ message GetDeviceDefinitionRequest {
   string make_slug = 2;
 }
 
-
-message GetDeviceDefinitionResponse {
-  repeated GetDeviceDefinitionItemResponse device_definitions = 1;
-}
-
-message GetDeviceDefinitionItemResponse {
-  string device_definition_id = 1;
-  string name = 2;
-  string image_url = 3;
-  bool  verified = 6;
-  DeviceMake make = 8;
-  repeated DeviceStyle device_styles = 9;
-  string source = 10 [deprecated = true];
-  string external_id = 11 [deprecated = true];
-  repeated DeviceTypeAttribute device_attributes = 12;
-  repeated ExternalID external_ids = 13 [deprecated = true];
-  string hardware_template_id = 14 [deprecated = true];
-  string name_slug = 15[deprecated = true];
-  repeated string transactions = 16;
-  int32 year = 17;
-  string model = 18;
-  string ksuid = 19;
-  string id = 20;
-}
-
 message GetDevicesMMYResponse {
   repeated GetDevicesMMYItemResponse device = 1;
 }
@@ -53,10 +28,6 @@ message GetDevicesMMYItemResponse {
 message ExternalID {
   string vendor = 1;
   string id = 2;
-}
-
-message Metadata {
-  string RideGuideLink = 1;
 }
 
 message DeviceTypeAttribute {
@@ -95,35 +66,6 @@ message DeviceStyle {
   string hardware_template_id = 7 [deprecated=true];
   repeated DeviceTypeAttribute device_attributes = 8;
   string definition_id = 9;
-}
-
-message DeviceMake {
-  string id = 1;
-  string name = 2;
-  string logo_url = 3;
-  string oem_platform_name = 4;
-  uint64 token_id = 5;
-  string name_slug = 6;
-  string external_ids = 7 [deprecated = true];
-  repeated ExternalID external_ids_typed = 8 [deprecated = true];
-  Metadata metadata = 9;
-  string hardware_template_id = 10 [deprecated = true];
-  google.protobuf.Timestamp created_at = 11;
-  google.protobuf.Timestamp updated_at = 12;
-}
-
-// deprecated
-message VehicleInfo {
-  string fuel_type = 1;
-  string driven_wheels = 2;
-  int32 number_of_doors = 3;
-  int32 base_MSRP = 4;
-  string EPA_class = 5;
-  string vehicle_type = 6;
-  float MPG_highway = 7;
-  float MPG_city = 8;
-  float fuel_tank_capacity_gal = 9;
-  float MPG = 10;
 }
 
 message GetDeviceDefinitionByMMYRequest {
@@ -257,11 +199,6 @@ message GetIntegrationByTokenIDRequest {
   uint64 token_id = 1;
 }
 
-message CreateDeviceMakeRequest {
-  string name = 1;
-  string hardware_template_id = 2;
-}
-
 message GetDeviceStyleByIDRequest {
   string id = 1;
 }
@@ -279,26 +216,6 @@ message CreateIntegrationRequest {
   string type = 2;
   string style = 3;
   uint64 token_id = 4;
-}
-
-message GetDeviceMakeBySlugRequest {
-  string slug = 1;
-}
-
-message GetDeviceMakeResponse {
-  repeated DeviceMake device_makes = 1;
-}
-
-message UpdateDeviceMakeRequest {
-  string id = 1;
-  string name = 2;
-  string logo_url = 3;
-  string oem_platform_name = 4;
-  uint64 token_id = 5;
-  string name_slug = 6;
-  string external_ids = 7;
-  string metadata = 8;
-  string hardware_template_id = 9;
 }
 
 message UpdateDeviceStyleRequest {
@@ -359,10 +276,6 @@ message DeleteDeviceTypeRequest {
   string id = 1;
 }
 
-message GetDeviceMakeByTokenIdRequest {
-  string token_id = 1;
-}
-
 message GetDeviceDefinitionHardwareTemplateByIDRequest {
   string id = 1;
   string integration_id = 2;
@@ -396,16 +309,10 @@ message GetDeviceDefinitionByMakeAndYearRangeRequest {
 }
 
 service DeviceDefinitionService {
-  rpc GetDeviceDefinitionByID(GetDeviceDefinitionRequest) returns (GetDeviceDefinitionResponse);
-  rpc GetDeviceDefinitionByMMY(GetDeviceDefinitionByMMYRequest) returns (GetDeviceDefinitionItemResponse);
-  rpc GetDeviceMakeBySlug(GetDeviceMakeBySlugRequest) returns (DeviceMake);
-  rpc GetDeviceMakeByTokenID(GetDeviceMakeByTokenIdRequest) returns (DeviceMake);
-  rpc GetDeviceMakes(google.protobuf.Empty) returns (GetDeviceMakeResponse);
   rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
   rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
   rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
   rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
-  rpc CreateDeviceMake(CreateDeviceMakeRequest) returns (BaseResponse);
   rpc CreateIntegration(CreateIntegrationRequest) returns (BaseResponse);
   rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
   rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
@@ -413,7 +320,6 @@ service DeviceDefinitionService {
   rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);
   rpc GetDeviceStylesByFilter(GetDeviceStyleFilterRequest) returns (GetDeviceStyleResponse);
-  rpc UpdateDeviceMake(UpdateDeviceMakeRequest) returns (BaseResponse);
   rpc UpdateDeviceStyle(UpdateDeviceStyleRequest) returns (BaseResponse);
   rpc GetDeviceTypesByID(GetDeviceTypeByIDRequest) returns (GetDeviceTypeResponse);
   rpc GetDeviceTypes(google.protobuf.Empty) returns (GetDeviceTypeListResponse);
@@ -423,6 +329,5 @@ service DeviceDefinitionService {
   rpc GetDeviceDefinitionHardwareTemplateByID(GetDeviceDefinitionHardwareTemplateByIDRequest) returns (GetDeviceDefinitionHardwareTemplateByIDResponse);
   rpc SyncDeviceDefinitionsWithElasticSearch(google.protobuf.Empty) returns (SyncStatusResult);
   rpc GetIntegrationByTokenID(GetIntegrationByTokenIDRequest) returns (Integration);
-  rpc GetDeviceDefinitionByMakeAndYearRange(GetDeviceDefinitionByMakeAndYearRangeRequest) returns (GetDeviceDefinitionResponse);
-
+  
 }

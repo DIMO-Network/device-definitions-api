@@ -4,6 +4,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -23,11 +24,11 @@ type BulkValidateVinCommandResult struct {
 }
 
 type DecodedVIN struct {
-	VIN          string            `json:"vin"`
-	DefinitionID string            `json:"definition_id"`
-	DeviceMake   models.DeviceMake `json:"device_make"`
-	DeviceYear   int32             `json:"device_year"`
-	DeviceModel  string            `json:"device_model"`
+	VIN          string                `json:"vin"`
+	DefinitionID string                `json:"definition_id"`
+	DeviceMake   gateways.Manufacturer `json:"device_make"`
+	DeviceYear   int32                 `json:"device_year"`
+	DeviceModel  string                `json:"device_model"`
 }
 
 func (*BulkValidateVinCommand) Key() string { return "BulkValidateVinCommand" }
@@ -66,11 +67,17 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId}) //nolint
 
 		if err == nil {
+			dd := devideDefinition.(*models.GetDeviceDefinitionQueryResult)
+			dm := gateways.Manufacturer{
+				TokenID: dd.MakeTokenID,
+				Name:    dd.MakeName,
+			}
+
 			decodedVINs = append(decodedVINs, DecodedVIN{
 				VIN:          vin,
 				DefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId,
 				DeviceYear:   decodedVIN.(*p_grpc.DecodeVinResponse).Year,
-				DeviceMake:   devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceMake,
+				DeviceMake:   dm,
 				DeviceModel:  devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
 			})
 		}

@@ -90,7 +90,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
@@ -196,8 +196,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	const vin = "1FMCU0G61MUA52727" // Lincoln escape 2021
 	const wmi = "1FM"
 
-	dmFord := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
-	dmLincoln := dbtesthelper.SetupCreateMake(s.T(), "Lincoln", s.pdb)
+	dmFord := dbtesthelper.SetupCreateMake("Ford")
+	dmLincoln := dbtesthelper.SetupCreateMake("Lincoln")
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
 	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dmFord.ID, s.pdb)
 
@@ -310,7 +310,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_existingVIN() {
 	const vin = "ZWR90-8000186" // toyota something or other
 
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Toyota", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Toyota")
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Yaris", 2024, s.pdb)
 
 	vinNumb := models.VinNumber{
@@ -351,7 +351,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 	const wmi = "1FM"
 
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
 	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.ID, s.pdb)
 
@@ -477,7 +477,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
@@ -565,7 +565,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 	wmi := models.Wmi{
 		Wmi:              "1FM",
@@ -654,7 +654,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 	const vin = "5YJ3E1EA2PF696023" // tesla model 3 2023
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Tesla", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Tesla")
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Model 3", 2023, s.pdb)
 	wmi := models.Wmi{
 		Wmi:              "5YJ",
@@ -706,7 +706,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinitionWithVehicleInfo(s.T(), dm, "Escape", 2021, s.pdb)
 	wmi := models.Wmi{
 		Wmi:              "1FM",
@@ -761,7 +761,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source: "vincario",
@@ -802,7 +802,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 
 	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
 		Source:    "vincario",
@@ -850,7 +850,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Fail_DecodeErr() {
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	_ = dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	_ = dbtesthelper.SetupCreateMake("Ford")
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, gomock.Any(), coremodels.AllProviders, "USA").Times(1).Return(nil, fmt.Errorf("unable to decode"))
 
@@ -864,7 +864,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	const vin = "1FMCU0G61MUA52727" // invalid year digit 10 - Q
 
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
 	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.Name, s.pdb)
 
 	definitionID := "ford_bronco_2022"

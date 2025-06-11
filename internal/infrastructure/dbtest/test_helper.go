@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"os"
 	"testing"
 
@@ -140,10 +141,10 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 	}
 }
 
-func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+func SetupCreateDeviceDefinition(t *testing.T, manufacturerName, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	SetupCreateDeviceType(t, pdb)
 	dd := &coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(dm.NameSlug, stringutils.SlugString(model), int16(year)),
+		ID:         common.DeviceDefinitionSlug(stringutils.SlugString(manufacturerName), stringutils.SlugString(model), int16(year)),
 		KSUID:      ksuid.New().String(),
 		Model:      model,
 		Year:       year,
@@ -154,8 +155,8 @@ func SetupCreateDeviceDefinition(t *testing.T, dm models.DeviceMake, model strin
 	return dd
 }
 
-func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
-	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
+func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm gateways.Manufacturer, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+	dd := SetupCreateDeviceDefinition(t, dm.Name, model, year, pdb)
 	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
 		DeviceAttributes: []coremodels.DeviceTypeAttribute{
 			{
@@ -173,36 +174,6 @@ func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm models.DeviceMa
 			{
 				Name:  "mpg",
 				Value: "defaultValue",
-			},
-		},
-	}
-
-	return dd
-}
-
-func SetupCreateDeviceDefinitionWithVehicleInfoIncludePowerTrain(t *testing.T, dm models.DeviceMake, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
-	dd := SetupCreateDeviceDefinition(t, dm, model, year, pdb)
-	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
-		DeviceAttributes: []coremodels.DeviceTypeAttribute{
-			{
-				Name:  "fuel_type",
-				Value: "defaultValue",
-			},
-			{
-				Name:  "driven_wheels",
-				Value: "4",
-			},
-			{
-				Name:  "number_of_doors",
-				Value: "4",
-			},
-			{
-				Name:  "mpg",
-				Value: "defaultValue",
-			},
-			{
-				Name:  "powertrain_type",
-				Value: "ICE",
 			},
 		},
 	}
@@ -222,14 +193,11 @@ func SetupCreateDeviceType(t *testing.T, pdb db.Store) *models.DeviceType {
 	return dt
 }
 
-func SetupCreateMake(t *testing.T, mk string, pdb db.Store) models.DeviceMake {
-	dm := models.DeviceMake{
-		ID:       ksuid.New().String(),
-		Name:     mk,
-		NameSlug: stringutils.SlugString(mk),
+func SetupCreateMake(mk string) gateways.Manufacturer {
+	dm := gateways.Manufacturer{
+		Name:    mk,
+		TokenID: 123,
 	}
-	err := dm.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "no db error expected")
 	return dm
 }
 
@@ -249,15 +217,6 @@ func SetupCreateStyle(t *testing.T, definitionID string, name string, source str
 
 func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integration {
 
-	dMake := &models.DeviceMake{
-		ID:       ksuid.New().String(),
-		Name:     "AutoPi",
-		NameSlug: "autopi",
-	}
-
-	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
 	integration := &models.Integration{
 		ID:                  ksuid.New().String(),
 		Type:                models.IntegrationTypeAPI,
@@ -267,7 +226,7 @@ func SetupCreateAutoPiIntegration(t *testing.T, pdb db.Store) *models.Integratio
 		Points:              6000,
 		ManufacturerTokenID: null.IntFrom(144),
 	}
-	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
+	err := integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return integration
 }
@@ -280,55 +239,6 @@ func SetupCreateWMI(t *testing.T, id string, manufacturerName string, pdb db.Sto
 	err := wmi.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
 	require.NoError(t, err, "database error")
 	return wmi
-}
-
-func SetupCreateSmartCarIntegration(t *testing.T, pdb db.Store) *models.Integration {
-	dMake := &models.DeviceMake{
-		ID:       ksuid.New().String(),
-		Name:     "Smartcar",
-		NameSlug: "smartcar",
-	}
-
-	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	integration := &models.Integration{
-		ID:                  ksuid.New().String(),
-		Type:                models.IntegrationTypeAPI,
-		Style:               models.IntegrationStyleWebhook,
-		Vendor:              common.SmartCarVendor,
-		RefreshLimitSecs:    1800,
-		Points:              6000,
-		ManufacturerTokenID: null.IntFrom(143),
-	}
-	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-	return integration
-}
-
-func SetupCreateHardwareIntegration(t *testing.T, pdb db.Store) *models.Integration {
-
-	dMake := &models.DeviceMake{
-		ID:       ksuid.New().String(),
-		Name:     "Macaron",
-		NameSlug: "macaron",
-	}
-
-	err := dMake.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-
-	integration := &models.Integration{
-		ID:                  ksuid.New().String(),
-		Type:                models.IntegrationTypeHardware,
-		Style:               models.IntegrationStyleAddon,
-		Vendor:              "Hardware",
-		RefreshLimitSecs:    1800,
-		Points:              6000,
-		ManufacturerTokenID: null.IntFrom(142),
-	}
-	err = integration.Insert(context.Background(), pdb.DBS().Writer, boil.Infer())
-	require.NoError(t, err, "database error")
-	return integration
 }
 
 func Logger() *zerolog.Logger {

@@ -80,7 +80,7 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 		client:      client,
 		chainID:     chainID,
 		sender:      sender,
-		identityAPI: NewIdentityAPIService(logger, settings, nil),
+		identityAPI: NewIdentityAPIService(logger, settings),
 		inmemCache:  cache.New(128*time.Hour, 1*time.Hour),
 		dbs:         dbs,
 	}
