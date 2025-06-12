@@ -91,7 +91,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
 	dm := dbtesthelper.SetupCreateMake("Ford")
-	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2021, s.pdb)
+	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm.Name, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
 	vinInfoResp := &coremodels.DrivlyVINResponse{
@@ -199,7 +199,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	dmFord := dbtesthelper.SetupCreateMake("Ford")
 	dmLincoln := dbtesthelper.SetupCreateMake("Lincoln")
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dmFord.ID, s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dmFord.Name, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
 	vinInfoResp := &coremodels.DrivlyVINResponse{
@@ -353,7 +353,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 
 	dm := dbtesthelper.SetupCreateMake("Ford")
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
-	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.ID, s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
 	vinInfoResp := &coremodels.DrivlyVINResponse{

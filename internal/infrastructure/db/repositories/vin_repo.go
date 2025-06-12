@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,10 +27,11 @@ type VINRepository interface {
 type vinRepository struct {
 	DBS              func() *db.ReaderWriter
 	registryInstance *contracts.Registry
+	identity         gateways.IdentityAPI
 }
 
-func NewVINRepository(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry) VINRepository {
-	return &vinRepository{DBS: dbs, registryInstance: registryInstance}
+func NewVINRepository(dbs func() *db.ReaderWriter, registryInstance *contracts.Registry, identity gateways.IdentityAPI) VINRepository {
+	return &vinRepository{DBS: dbs, registryInstance: registryInstance, identity: identity}
 }
 
 func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk string) (*models.Wmi, error) {
@@ -40,7 +42,8 @@ func (r *vinRepository) GetOrCreateWMI(ctx context.Context, wmi string, mk strin
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid make name for GetOrCreate: %s", mk)}
 	}
 	makeSlug := stringutils.SlugString(mk)
-	deviceMake, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, r.DBS().Reader)
+
+	deviceMake, err := r.identity.GetManufacturer(makeSlug)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.NotFoundError{

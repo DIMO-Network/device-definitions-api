@@ -221,8 +221,8 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 	const country = "US"
 
 	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
-	dm := dbtesthelper.SetupCreateMake(s.T(), "Ford", s.pdb)
-	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm, "Escape", 2020, s.pdb)
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm.Name, "Escape", 2020, s.pdb)
 
 	s.mockOnChainSvc.EXPECT().GetDefinitionByID(ctx, dd.ID).Times(1).Return(dd, nil, nil)
 
