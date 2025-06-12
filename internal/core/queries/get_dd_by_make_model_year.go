@@ -6,7 +6,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -29,12 +28,14 @@ func (*GetDeviceDefinitionByMakeModelYearQuery) Key() string {
 type GetDeviceDefinitionByMakeModelYearQueryHandler struct {
 	dbs        func() *db.ReaderWriter
 	onChainSvc gateways.DeviceDefinitionOnChainService
+	identity   gateways.IdentityAPI
 }
 
-func NewGetDeviceDefinitionByMakeModelYearQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByMakeModelYearQueryHandler {
+func NewGetDeviceDefinitionByMakeModelYearQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter, identity gateways.IdentityAPI) GetDeviceDefinitionByMakeModelYearQueryHandler {
 	return GetDeviceDefinitionByMakeModelYearQueryHandler{
 		onChainSvc: onChainSvc,
 		dbs:        dbs,
+		identity:   identity,
 	}
 }
 
@@ -58,14 +59,14 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 			Err: fmt.Errorf("could not find device definition with MMY: %s %s %d", qry.Make, qry.Model, qry.Year),
 		}
 	}
-	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, ch.dbs().Reader)
+	dm, err := ch.identity.GetManufacturer(makeSlug)
 	if err != nil {
 		return nil, err
 	}
 	dss, _ := models.DeviceStyles(models.DeviceStyleWhere.DefinitionID.EQ(definitions[0].ID)).All(ctx, ch.dbs().Reader)
 	trx, _ := models.DefinitionTransactions(models.DefinitionTransactionWhere.DefinitionID.EQ(definitions[0].ID)).All(ctx, ch.dbs().Reader)
 
-	queryResult, err := common.BuildFromDeviceDefinitionToQueryResult(&definitions[0], coremodels.ConvertDeviceMakeFromDB(dm), dss, trx)
+	queryResult, err := common.BuildFromDeviceDefinitionToQueryResult(&definitions[0], dm, dss, trx)
 	if err != nil {
 		return nil, err
 	}

@@ -53,13 +53,15 @@ type CreateDeviceDefinitionCommandHandler struct {
 	powerTrainTypeService services.PowerTrainTypeService
 	fuelAPI               gateways.FuelAPIService
 	logger                *zerolog.Logger
+	identity              gateways.IdentityAPI
 }
 
 func NewCreateDeviceDefinitionCommandHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter,
-	powerTrainTypeService services.PowerTrainTypeService, fuelAPI gateways.FuelAPIService, logger *zerolog.Logger) CreateDeviceDefinitionCommandHandler {
+	powerTrainTypeService services.PowerTrainTypeService, fuelAPI gateways.FuelAPIService, logger *zerolog.Logger, identity gateways.IdentityAPI) CreateDeviceDefinitionCommandHandler {
 	return CreateDeviceDefinitionCommandHandler{onChainSvc: onChainSvc, dbs: dbs,
 		powerTrainTypeService: powerTrainTypeService,
-		fuelAPI:               fuelAPI, logger: logger}
+		fuelAPI:               fuelAPI, logger: logger,
+		identity: identity}
 }
 
 func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -82,7 +84,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		}
 	}
 
-	dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(stringutils.SlugString(command.Make))).One(ctx, ch.dbs().Reader)
+	dm, err := ch.identity.GetManufacturer(stringutils.SlugString(command.Make))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &exceptions.ValidationError{
@@ -127,7 +129,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 	}
 
 	ddTbl := coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(dm.NameSlug, stringutils.SlugString(command.Model), int16(command.Year)),
+		ID:         common.DeviceDefinitionSlug(stringutils.SlugString(dm.Name), stringutils.SlugString(command.Model), int16(command.Year)),
 		KSUID:      ksuid.New().String(),
 		Model:      command.Model,
 		Year:       command.Year,

@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
 )
 
@@ -23,11 +23,11 @@ type BulkValidateVinCommandResult struct {
 }
 
 type DecodedVIN struct {
-	VIN          string            `json:"vin"`
-	DefinitionID string            `json:"definition_id"`
-	DeviceMake   models.DeviceMake `json:"device_make"`
-	DeviceYear   int32             `json:"device_year"`
-	DeviceModel  string            `json:"device_model"`
+	VIN          string                  `json:"vin"`
+	DefinitionID string                  `json:"definition_id"`
+	DeviceMake   coremodels.Manufacturer `json:"device_make"`
+	DeviceYear   int32                   `json:"device_year"`
+	DeviceModel  string                  `json:"device_model"`
 }
 
 func (*BulkValidateVinCommand) Key() string { return "BulkValidateVinCommand" }
@@ -63,15 +63,21 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 			continue
 		}
 
-		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId}) //nolint
+		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId}) //nolint
 
 		if err == nil {
+			dd := devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult)
+			dm := coremodels.Manufacturer{
+				TokenID: dd.MakeTokenID,
+				Name:    dd.MakeName,
+			}
+
 			decodedVINs = append(decodedVINs, DecodedVIN{
 				VIN:          vin,
-				DefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId,
-				DeviceYear:   decodedVIN.(*p_grpc.DecodeVinResponse).Year,
-				DeviceMake:   devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceMake,
-				DeviceModel:  devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
+				DefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId,
+				DeviceYear:   decodedVIN.(*pgrpc.DecodeVinResponse).Year,
+				DeviceMake:   dm,
+				DeviceModel:  devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
 			})
 		}
 	}

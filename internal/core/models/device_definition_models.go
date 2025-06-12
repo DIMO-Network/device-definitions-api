@@ -3,12 +3,6 @@ package models
 
 import (
 	"encoding/json"
-	"math/big"
-	"time"
-
-	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-
-	"github.com/volatiletech/null/v8"
 )
 
 type GetDeviceDefinitionQueryResult struct {
@@ -17,12 +11,13 @@ type GetDeviceDefinitionQueryResult struct {
 	Name               string                      `json:"name"`
 	ImageURL           string                      `json:"imageUrl"`
 	HardwareTemplateID string                      `json:"hardware_template_id"`
-	DeviceMake         DeviceMake                  `json:"make"`
 	Metadata           []byte                      `json:"metadata"`
 	Verified           bool                        `json:"verified"`
 	DeviceStyles       []DeviceStyle               `json:"deviceStyles"`
 	DeviceAttributes   []DeviceTypeAttributeEditor `json:"deviceAttributes"`
 	Transactions       []string                    `json:"transactions"`
+	MakeName           string                      `json:"makeSlug"`
+	MakeTokenID        int                         `json:"makeTokenId"`
 }
 
 type DeviceTypeAttributeEditor struct {
@@ -88,19 +83,6 @@ type DeviceStyle struct {
 	Metadata           []DeviceTypeAttributeEditor `json:"metadata"`
 }
 
-type DeviceMake struct {
-	ID              string              `json:"id"`
-	Name            string              `json:"name"`
-	LogoURL         null.String         `json:"logo_url"`
-	OemPlatformName null.String         `json:"oem_platform_name"`
-	TokenID         *big.Int            `json:"tokenId,omitempty"`
-	NameSlug        string              `json:"nameSlug"`
-	Metadata        json.RawMessage     `json:"metadata"`
-	MetadataTyped   *DeviceMakeMetadata `json:"metadataTyped"`
-	CreatedAt       time.Time           `json:"created_at,omitempty"`
-	UpdatedAt       time.Time           `json:"updated_at,omitempty"`
-}
-
 type ExternalID struct {
 	Vendor string `json:"vendor"`
 	ID     string `json:"id"`
@@ -112,21 +94,6 @@ type DeviceMakeMetadata struct {
 
 type GetDeviceDefinitionHardwareTemplateQueryResult struct {
 	TemplateID string `json:"template_id"`
-}
-
-func ConvertDeviceMakeFromDB(dmDb *repoModel.DeviceMake) *DeviceMake {
-	if dmDb == nil {
-		return nil
-	}
-	return &DeviceMake{
-		ID:              dmDb.ID,
-		Name:            dmDb.Name,
-		LogoURL:         dmDb.LogoURL,
-		OemPlatformName: dmDb.OemPlatformName,
-		NameSlug:        dmDb.NameSlug,
-		CreatedAt:       dmDb.CreatedAt,
-		UpdatedAt:       dmDb.UpdatedAt,
-	}
 }
 
 // DeviceDefinitionTablelandModel model returned by on-chain sql lite from tableland

@@ -24,13 +24,13 @@ import (
 )
 
 func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Mediator, dbs func() *db.ReaderWriter,
-	onChainDeviceDefs gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry) {
+	onChainDeviceDefs gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry, identity gateways.IdentityAPI) {
 	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
 	}
 
-	deviceDefinitionService := NewGrpcService(m, &logger, dbs, onChainDeviceDefs, registryInstance)
+	deviceDefinitionService := NewGrpcService(m, &logger, dbs, onChainDeviceDefs, registryInstance, identity)
 	integrationService := NewGrpcIntegrationService(m, &logger)
 	decodeService := NewGrpcVinDecoderService(m, &logger)
 

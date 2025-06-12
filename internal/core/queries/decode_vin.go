@@ -41,6 +41,7 @@ type DecodeVINQueryHandler struct {
 	fuelAPIService                 gateways.FuelAPIService
 	powerTrainTypeService          services.PowerTrainTypeService
 	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	identity                       gateways.IdentityAPI
 }
 
 type DecodeVINQuery struct {
@@ -58,7 +59,8 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 	logger *zerolog.Logger,
 	fuelAPIService gateways.FuelAPIService,
 	powerTrainTypeService services.PowerTrainTypeService,
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) DecodeVINQueryHandler {
+	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService,
+	identity gateways.IdentityAPI) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
 		dbs:                            dbs,
 		vinDecodingService:             vinDecodingService,
@@ -67,6 +69,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 		fuelAPIService:                 fuelAPIService,
 		powerTrainTypeService:          powerTrainTypeService,
 		deviceDefinitionOnChainService: deviceDefinitionOnChainService,
+		identity:                       identity,
 	}
 }
 
@@ -125,7 +128,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, errors.Wrapf(err, "failed to get device definition id: %s", qry.DefinitionID)
 		}
 		makeSlug := strings.Split(tblDef.ID, "_")[0]
-		dm, err := models.DeviceMakes(models.DeviceMakeWhere.NameSlug.EQ(makeSlug)).One(ctx, dc.dbs().Reader)
+		dm, err := dc.identity.GetManufacturer(makeSlug)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get device make for: %s", qry.DefinitionID)
 		}
@@ -168,7 +171,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 			return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
 		}
 
-		resp.DeviceMakeId = dm.ID //nolint
 		resp.Manufacturer = dm.Name
 		resp.Year = int32(vinDecodeNumber.Year)
 		resp.Source = vinDecodeNumber.DecodeProvider.String

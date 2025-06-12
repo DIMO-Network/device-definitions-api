@@ -15,7 +15,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
@@ -71,6 +70,8 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
 
 	collectionName := p.settings.SearchServiceIndexName
+
+	identity := gateways.NewIdentityAPIService(&p.logger, &p.settings)
 
 	if p.createIndex {
 
@@ -152,7 +153,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 
 	fmt.Printf("Starting processing definitions\n")
 
-	makes, err := models.DeviceMakes().All(ctx, pdb.DBS().Reader)
+	makes, err := identity.GetManufacturers()
 	if err != nil {
 		p.logger.Fatal().Err(err).Send()
 	}
@@ -162,7 +163,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	var documents []SearchEntryItem
 	// iterate over all makes, then query tableland
 	for _, dm := range makes {
-		manufacturer, err := onChainSvc.GetManufacturer(dm.NameSlug)
+		manufacturer, err := onChainSvc.GetManufacturer(stringutils.SlugString(dm.Name))
 		if err != nil {
 			p.logger.Fatal().Err(err).Send()
 		}
@@ -186,7 +187,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 			}
 
 			makeName := dm.Name
-			makeSlug := dm.NameSlug
+			makeSlug := stringutils.SlugString(dm.Name)
 			manufacturerTokenID := manufacturer.TokenID
 
 			newDocument := SearchEntryItem{

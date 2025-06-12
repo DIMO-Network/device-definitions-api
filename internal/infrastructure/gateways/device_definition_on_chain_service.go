@@ -14,51 +14,43 @@ import (
 	"strings"
 	"time"
 
-	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-
-	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-
-	"github.com/volatiletech/sqlboiler/v4/boil"
-
-	"github.com/patrickmn/go-cache"
-
-	"github.com/DIMO-Network/shared/pkg/db"
-
-	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/tidwall/gjson"
-
-	"github.com/pkg/errors"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
+	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	"github.com/DIMO-Network/shared/pkg/db"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	eth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+	"github.com/tidwall/gjson"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 //go:generate mockgen -source device_definition_on_chain_service.go -destination mocks/device_definition_on_chain_service_mock.go -package mocks
 type DeviceDefinitionOnChainService interface {
-	GetManufacturer(manufacturerSlug string) (*Manufacturer, error)
+	GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error)
 	GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error)
 	// GetDeviceDefinitionByID get DD from tableland by slug ID and specifying the manufacturer for the table to lookup in
-	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
+	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID get DD from tableland by slug ID, automatically figures out table by oem portion of slug. returns the manufacturer token id too
-	GetDefinitionByID(ctx context.Context, ID string) (*models2.DeviceDefinitionTablelandModel, *big.Int, error)
-	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error)
-	Create(ctx context.Context, manufacturerName string, dd models2.DeviceDefinitionTablelandModel) (*string, error)
+	GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error)
+	GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
+	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
+	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
-	QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error)
+	QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error)
 }
 
 type deviceDefinitionOnChainService struct {
@@ -80,14 +72,14 @@ func NewDeviceDefinitionOnChainService(settings *config.Settings, logger *zerolo
 		client:      client,
 		chainID:     chainID,
 		sender:      sender,
-		identityAPI: NewIdentityAPIService(logger, settings, nil),
+		identityAPI: NewIdentityAPIService(logger, settings),
 		inmemCache:  cache.New(128*time.Hour, 1*time.Hour),
 		dbs:         dbs,
 	}
 }
 
 // GetDeviceDefinitionByID gets dd from tableland with a select statement, returning a db model object
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
 	tablelandDD, err := e.GetDefinitionTableland(ctx, manufacturerID, ID)
 	if err != nil {
 		return nil, err
@@ -129,7 +121,7 @@ func (e *deviceDefinitionOnChainService) GetManufacturerNameByID(ctx context.Con
 }
 
 // GetDefinitionByID returns the tableland on chain DD model and the manufacturer token id
-func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string) (*models2.DeviceDefinitionTablelandModel, *big.Int, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error) {
 	split := strings.Split(ID, "_")
 	if len(split) != 3 {
 		return nil, nil, fmt.Errorf("get dd by slug - invalid slug: %s", ID)
@@ -145,10 +137,10 @@ func (e *deviceDefinitionOnChainService) GetDefinitionByID(ctx context.Context, 
 	return tblDD, manufacturerID, err
 }
 
-func (e *deviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string) (*Manufacturer, error) {
+func (e *deviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error) {
 	value, found := e.inmemCache.Get(manufacturerSlug)
 	if found {
-		return value.(*Manufacturer), nil
+		return value.(*coremodels.Manufacturer), nil
 	}
 	manufacturer, err := e.identityAPI.GetManufacturer(manufacturerSlug)
 	if err != nil {
@@ -159,7 +151,7 @@ func (e *deviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string
 }
 
 // GetDefinitionTableland gets dd from tableland with a select statement and returns tbl object
-func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*models2.DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == nil || manufacturerID.Uint64() == 0 {
 		return nil, fmt.Errorf("GetDefinitionTableland - manufacturerID cannot be 0")
 	}
@@ -175,7 +167,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 		"statement": statement,
 	}
 
-	var modelTableland []models2.DeviceDefinitionTablelandModel
+	var modelTableland []coremodels.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, errors.Wrapf(err, "failed to query tableland, manufacturer: %d", manufacturerID.Int64())
 	}
@@ -186,7 +178,7 @@ func (e *deviceDefinitionOnChainService) GetDefinitionTableland(ctx context.Cont
 	return &modelTableland[0], nil
 }
 
-func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]models2.DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID.IsZero() {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -218,7 +210,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 		"statement": statement,
 	}
 
-	var modelTableland []models2.DeviceDefinitionTablelandModel
+	var modelTableland []coremodels.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
@@ -227,7 +219,7 @@ func (e *deviceDefinitionOnChainService) GetDeviceDefinitions(ctx context.Contex
 }
 
 // QueryDefinitionsCustom queries tableland definitions oem table based on manuf ID. Always page size of 500, but you can alter the page index
-func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]models2.DeviceDefinitionTablelandModel, error) {
+func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Context, manufacturerID int, whereClause string, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error) {
 	if manufacturerID == 0 {
 		return nil, fmt.Errorf("manufacturerID cannot be 0")
 	}
@@ -247,7 +239,7 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 		"statement": statement,
 	}
 
-	var modelTableland []models2.DeviceDefinitionTablelandModel
+	var modelTableland []coremodels.DeviceDefinitionTablelandModel
 	if err := e.QueryTableland(queryParams, &modelTableland); err != nil {
 		return nil, err
 	}
@@ -299,7 +291,7 @@ const (
 )
 
 // Create does a create for tableland, on-chain operation - checks if already exists, inserts transaction in db. returns the onchain transaction
-func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacturerName string, dd models2.DeviceDefinitionTablelandModel) (*string, error) {
+func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Create for device definition %s. EthereumSendTransaction %t. payload: %+v", dd.ID, e.settings.EthereumSendTransaction, dd)
@@ -656,17 +648,17 @@ func (e *deviceDefinitionOnChainService) Delete(ctx context.Context, manufacture
 	return &trx, nil
 }
 
-func validateAttributes(current, newAttrs []models2.DeviceTypeAttribute) ([]models2.DeviceTypeAttribute, []models2.DeviceTypeAttribute) {
+func validateAttributes(current, newAttrs []coremodels.DeviceTypeAttribute) ([]coremodels.DeviceTypeAttribute, []coremodels.DeviceTypeAttribute) {
 	currentMap := attributesToMap(current)
 	newMap := attributesToMap(newAttrs)
 
-	var newOrModifiedAttributes []models2.DeviceTypeAttribute
-	var removedAttributes []models2.DeviceTypeAttribute
+	var newOrModifiedAttributes []coremodels.DeviceTypeAttribute
+	var removedAttributes []coremodels.DeviceTypeAttribute
 
 	// Find new or changed attributes
 	for name, newValue := range newMap {
 		if currentValue, exists := currentMap[name]; !exists || currentValue != newValue {
-			newOrModifiedAttributes = append(newOrModifiedAttributes, models2.DeviceTypeAttribute{
+			newOrModifiedAttributes = append(newOrModifiedAttributes, coremodels.DeviceTypeAttribute{
 				Name:  name,
 				Value: newValue,
 			})
@@ -676,7 +668,7 @@ func validateAttributes(current, newAttrs []models2.DeviceTypeAttribute) ([]mode
 	// Find deleted attributes
 	for name, currentValue := range currentMap {
 		if _, exists := newMap[name]; !exists {
-			removedAttributes = append(removedAttributes, models2.DeviceTypeAttribute{
+			removedAttributes = append(removedAttributes, coremodels.DeviceTypeAttribute{
 				Name:  name,
 				Value: currentValue,
 			})
@@ -686,7 +678,7 @@ func validateAttributes(current, newAttrs []models2.DeviceTypeAttribute) ([]mode
 	return newOrModifiedAttributes, removedAttributes
 }
 
-func attributesToMap(attributes []models2.DeviceTypeAttribute) map[string]string {
+func attributesToMap(attributes []coremodels.DeviceTypeAttribute) map[string]string {
 	attrMap := make(map[string]string)
 	for _, attr := range attributes {
 		attrMap[attr.Name] = attr.Value
@@ -718,8 +710,8 @@ func NewKeyedTransactorWithChainID(context context.Context, send sender.Sender, 
 	}, nil
 }
 
-func GetDeviceAttributesTyped(metadata null.JSON, key string) []models2.DeviceTypeAttribute {
-	var respAttrs []models2.DeviceTypeAttribute
+func GetDeviceAttributesTyped(metadata null.JSON, key string) []coremodels.DeviceTypeAttribute {
+	var respAttrs []coremodels.DeviceTypeAttribute
 	var ai map[string]any
 	if err := metadata.Unmarshal(&ai); err == nil {
 		if ai != nil {
@@ -728,7 +720,7 @@ func GetDeviceAttributesTyped(metadata null.JSON, key string) []models2.DeviceTy
 				for key, value := range attributes {
 					v := fmt.Sprint(value)
 					if len(v) > 0 {
-						respAttrs = append(respAttrs, models2.DeviceTypeAttribute{
+						respAttrs = append(respAttrs, coremodels.DeviceTypeAttribute{
 							Name:  key,
 							Value: v,
 						})
@@ -771,8 +763,8 @@ func BuildDeviceTypeAttributesTbland(attributes []*grpc.DeviceTypeAttributeReque
 	if attributes == nil {
 		return ""
 	}
-	deviceTypeInfo := models2.DeviceDefinitionMetadata{}
-	metaData := make([]models2.DeviceTypeAttribute, len(attributes))
+	deviceTypeInfo := coremodels.DeviceDefinitionMetadata{}
+	metaData := make([]coremodels.DeviceTypeAttribute, len(attributes))
 	for i, prop := range attributes {
 		metaData[i].Name = prop.Name
 		metaData[i].Value = prop.Value
