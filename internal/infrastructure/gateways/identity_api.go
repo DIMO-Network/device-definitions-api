@@ -29,7 +29,7 @@ type IdentityAPI interface {
 // NewIdentityAPIService creates a new instance of IdentityAPI, initializing it with the provided logger, settings, and HTTP client.
 // httpClient is used for testing really
 func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings) IdentityAPI {
-	httpClient, _ := http.NewClientWrapper("", "", 10*time.Second, nil, true) // ok to ignore err since only used for tor check
+	httpClient, _ := http.NewClientWrapper(settings.IdentityAPIURL.String(), "", 10*time.Second, nil, true) // ok to ignore err since only used for tor check
 
 	return &identityAPIService{
 		httpClient:     httpClient,
