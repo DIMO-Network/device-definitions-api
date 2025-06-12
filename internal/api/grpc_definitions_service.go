@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

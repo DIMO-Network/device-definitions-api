@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"os"
 	"testing"
 
@@ -155,7 +154,7 @@ func SetupCreateDeviceDefinition(t *testing.T, manufacturerName, model string, y
 	return dd
 }
 
-func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm gateways.Manufacturer, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
+func SetupCreateDeviceDefinitionWithVehicleInfo(t *testing.T, dm coremodels.Manufacturer, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	dd := SetupCreateDeviceDefinition(t, dm.Name, model, year, pdb)
 	dd.Metadata = &coremodels.DeviceDefinitionMetadata{
 		DeviceAttributes: []coremodels.DeviceTypeAttribute{
@@ -193,8 +192,8 @@ func SetupCreateDeviceType(t *testing.T, pdb db.Store) *models.DeviceType {
 	return dt
 }
 
-func SetupCreateMake(mk string) gateways.Manufacturer {
-	dm := gateways.Manufacturer{
+func SetupCreateMake(mk string) coremodels.Manufacturer {
+	dm := coremodels.Manufacturer{
 		Name:    mk,
 		TokenID: 123,
 	}

@@ -16,7 +16,6 @@ import (
 
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	types "github.com/volatiletech/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -25,6 +24,7 @@ import (
 type MockDeviceDefinitionOnChainService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDeviceDefinitionOnChainServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockDeviceDefinitionOnChainServiceMockRecorder is the mock recorder for MockDeviceDefinitionOnChainService.
@@ -136,10 +136,10 @@ func (mr *MockDeviceDefinitionOnChainServiceMockRecorder) GetDeviceDefinitions(c
 }
 
 // GetManufacturer mocks base method.
-func (m *MockDeviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string) (*gateways.Manufacturer, error) {
+func (m *MockDeviceDefinitionOnChainService) GetManufacturer(manufacturerSlug string) (*models.Manufacturer, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManufacturer", manufacturerSlug)
-	ret0, _ := ret[0].(*gateways.Manufacturer)
+	ret0, _ := ret[0].(*models.Manufacturer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -3,6 +3,8 @@ package gateways
 import (
 	"time"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/pkg/errors"
@@ -20,8 +22,8 @@ type identityAPIService struct {
 
 //go:generate mockgen -source identity_api.go -destination mocks/identity_api_mock.go -package mocks
 type IdentityAPI interface {
-	GetManufacturer(slug string) (*Manufacturer, error)
-	GetManufacturers() ([]Manufacturer, error)
+	GetManufacturer(slug string) (*coremodels.Manufacturer, error)
+	GetManufacturers() ([]coremodels.Manufacturer, error)
 }
 
 // NewIdentityAPIService creates a new instance of IdentityAPI, initializing it with the provided logger, settings, and HTTP client.
@@ -37,7 +39,7 @@ func NewIdentityAPIService(logger *zerolog.Logger, settings *config.Settings) Id
 }
 
 // GetManufacturer from identity-api by the name - must match exactly. Returns the token id and other on chain info
-func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error) {
+func (i *identityAPIService) GetManufacturer(slug string) (*coremodels.Manufacturer, error) {
 	query := `{
   manufacturer(by: {slug: "` + slug + `"}) {
     	tokenId
@@ -48,7 +50,7 @@ func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error)
 	}`
 	var wrapper struct {
 		Data struct {
-			Manufacturer Manufacturer `json:"manufacturer"`
+			Manufacturer coremodels.Manufacturer `json:"manufacturer"`
 		} `json:"data"`
 	}
 	err := i.httpClient.GraphQLQuery("", query, &wrapper)
@@ -61,7 +63,7 @@ func (i *identityAPIService) GetManufacturer(slug string) (*Manufacturer, error)
 	return &wrapper.Data.Manufacturer, nil
 }
 
-func (i *identityAPIService) GetManufacturers() ([]Manufacturer, error) {
+func (i *identityAPIService) GetManufacturers() ([]coremodels.Manufacturer, error) {
 	query := `{
   manufacturers {
     totalCount
@@ -76,9 +78,9 @@ func (i *identityAPIService) GetManufacturers() ([]Manufacturer, error) {
 }`
 	var wrapper struct {
 		Data struct {
-			Vehicles struct {
-				TotalCount int            `json:"totalCount"`
-				Nodes      []Manufacturer `json:"nodes"`
+			Manufacturers struct {
+				TotalCount int                       `json:"totalCount"`
+				Nodes      []coremodels.Manufacturer `json:"nodes"`
 			} `json:"manufacturers"`
 		} `json:"data"`
 	}
@@ -87,14 +89,7 @@ func (i *identityAPIService) GetManufacturers() ([]Manufacturer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return wrapper.Data.Vehicles.Nodes, nil
-}
-
-type Manufacturer struct {
-	TokenID int    `json:"tokenId"`
-	Name    string `json:"name"`
-	TableID int    `json:"tableId"`
-	Owner   string `json:"owner"`
+	return wrapper.Data.Manufacturers.Nodes, nil
 }
 
 type GraphQLRequest struct {

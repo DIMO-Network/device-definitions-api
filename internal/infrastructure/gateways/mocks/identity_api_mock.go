@@ -12,7 +12,7 @@ package mocks
 import (
 	reflect "reflect"
 
-	gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,10 +41,10 @@ func (m *MockIdentityAPI) EXPECT() *MockIdentityAPIMockRecorder {
 }
 
 // GetManufacturer mocks base method.
-func (m *MockIdentityAPI) GetManufacturer(slug string) (*gateways.Manufacturer, error) {
+func (m *MockIdentityAPI) GetManufacturer(slug string) (*models.Manufacturer, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManufacturer", slug)
-	ret0, _ := ret[0].(*gateways.Manufacturer)
+	ret0, _ := ret[0].(*models.Manufacturer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,10 +56,10 @@ func (mr *MockIdentityAPIMockRecorder) GetManufacturer(slug any) *gomock.Call {
 }
 
 // GetManufacturers mocks base method.
-func (m *MockIdentityAPI) GetManufacturers() ([]gateways.Manufacturer, error) {
+func (m *MockIdentityAPI) GetManufacturers() ([]models.Manufacturer, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManufacturers")
-	ret0, _ := ret[0].([]gateways.Manufacturer)
+	ret0, _ := ret[0].([]models.Manufacturer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -4,10 +4,9 @@ package commands
 import (
 	"context"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
@@ -24,11 +23,11 @@ type BulkValidateVinCommandResult struct {
 }
 
 type DecodedVIN struct {
-	VIN          string                `json:"vin"`
-	DefinitionID string                `json:"definition_id"`
-	DeviceMake   gateways.Manufacturer `json:"device_make"`
-	DeviceYear   int32                 `json:"device_year"`
-	DeviceModel  string                `json:"device_model"`
+	VIN          string                  `json:"vin"`
+	DefinitionID string                  `json:"definition_id"`
+	DeviceMake   coremodels.Manufacturer `json:"device_make"`
+	DeviceYear   int32                   `json:"device_year"`
+	DeviceModel  string                  `json:"device_model"`
 }
 
 func (*BulkValidateVinCommand) Key() string { return "BulkValidateVinCommand" }
@@ -67,8 +66,8 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId}) //nolint
 
 		if err == nil {
-			dd := devideDefinition.(*models.GetDeviceDefinitionQueryResult)
-			dm := gateways.Manufacturer{
+			dd := devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult)
+			dm := coremodels.Manufacturer{
 				TokenID: dd.MakeTokenID,
 				Name:    dd.MakeName,
 			}
@@ -78,7 +77,7 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 				DefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId,
 				DeviceYear:   decodedVIN.(*pgrpc.DecodeVinResponse).Year,
 				DeviceMake:   dm,
-				DeviceModel:  devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
+				DeviceModel:  devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
 			})
 		}
 	}

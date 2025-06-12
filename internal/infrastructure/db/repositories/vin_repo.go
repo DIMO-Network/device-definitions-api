@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
