@@ -124,16 +124,17 @@ message UpdateDeviceDefinitionRequest {
   string device_definition_id = 1;
   string source = 3 [deprecated = true];
   string image_url = 4;
-  bool verified = 5;
+  bool verified = 5 [deprecated = true];
   string model = 6;
   int32 year = 7;
-  string device_make_id = 8;
+  string device_make_id = 8 [deprecated = true];
   repeated DeviceStyles device_styles = 9;
   string external_id = 11 [deprecated = true];
   string device_type_id = 12;
   repeated DeviceTypeAttributeRequest device_attributes = 13;
   repeated ExternalID external_ids = 14 [deprecated = true];
-  string hardware_template_id = 15;
+  string hardware_template_id = 15 [deprecated = true];
+  string manufacturer_name = 16;
 
   message DeviceStyles {
     string id = 1;

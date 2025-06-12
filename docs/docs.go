@@ -364,39 +364,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v2/device-definitions/{make}/all": {
-            "get": {
-                "description": "gets a device definition",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "device-definitions"
-                ],
-                "summary": "gets all device definitions by Makes, models, and years, from tableland (on-chain records)",
-                "operationId": "GetDeviceDefinitionV2All",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "device make name",
-                        "name": "make",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
         "/vin-profile/{vin}": {
             "get": {
                 "security": [

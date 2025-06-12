@@ -388,29 +388,6 @@ paths:
       summary: gets all supported manufacturers for the smartcar external integration
       tags:
       - device-definitions
-  /v2/device-definitions/{make}/all:
-    get:
-      consumes:
-      - application/json
-      description: gets a device definition
-      operationId: GetDeviceDefinitionV2All
-      parameters:
-      - description: device make name
-        in: path
-        name: make
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "500":
-          description: Internal Server Error
-      summary: gets all device definitions by Makes, models, and years, from tableland
-        (on-chain records)
-      tags:
-      - device-definitions
   /vin-profile/{vin}:
     get:
       description: gets VIN profile if we have it.

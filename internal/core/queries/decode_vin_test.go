@@ -50,6 +50,7 @@ type DecodeVINQueryHandlerSuite struct {
 
 	queryHandler DecodeVINQueryHandler
 	mockVINRepo  *mock_repository.MockVINRepository
+	mockIdentity *mock_gateways.MockIdentityAPI
 }
 
 const country = "USA"
@@ -69,9 +70,10 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 	s.mockFuelAPIService = mock_gateways.NewMockFuelAPIService(s.ctrl)
 
 	s.mockVINRepo = mock_repository.NewMockVINRepository(s.ctrl)
+	s.mockIdentity = mock_gateways.NewMockIdentityAPI(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, s.mockVINRepo, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService, s.mockDeviceDefinitionOnChainService)
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, s.mockVINRepo, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService, s.mockDeviceDefinitionOnChainService, s.mockIdentity)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -91,6 +93,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021
 
 	dm := dbtesthelper.SetupCreateMake("Ford")
+	s.mockIdentity.EXPECT().GetManufacturer("ford").Return(dm, nil)
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm.Name, "Escape", 2021, s.pdb)
 
 	// mock setup, include some attributes we should expect in metadata, and trim we should expect created in styles
@@ -197,7 +200,9 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	const wmi = "1FM"
 
 	dmFord := dbtesthelper.SetupCreateMake("Ford")
+	s.mockIdentity.EXPECT().GetManufacturer("ford").Return(dmFord, nil)
 	dmLincoln := dbtesthelper.SetupCreateMake("Lincoln")
+	s.mockIdentity.EXPECT().GetManufacturer("lincoln").Return(dmLincoln, nil)
 	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
 	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dmFord.Name, s.pdb)
 

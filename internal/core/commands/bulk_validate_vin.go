@@ -10,7 +10,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	pgrpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
 )
 
@@ -64,7 +64,7 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 			continue
 		}
 
-		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId}) //nolint
+		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId}) //nolint
 
 		if err == nil {
 			dd := devideDefinition.(*models.GetDeviceDefinitionQueryResult)
@@ -75,8 +75,8 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 
 			decodedVINs = append(decodedVINs, DecodedVIN{
 				VIN:          vin,
-				DefinitionID: decodedVIN.(*p_grpc.DecodeVinResponse).DefinitionId,
-				DeviceYear:   decodedVIN.(*p_grpc.DecodeVinResponse).Year,
+				DefinitionID: decodedVIN.(*pgrpc.DecodeVinResponse).DefinitionId,
+				DeviceYear:   decodedVIN.(*pgrpc.DecodeVinResponse).Year,
 				DeviceMake:   dm,
 				DeviceModel:  devideDefinition.(*models.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
 			})
