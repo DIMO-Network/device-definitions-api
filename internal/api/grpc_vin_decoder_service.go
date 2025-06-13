@@ -5,7 +5,6 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/rs/zerolog"
@@ -13,21 +12,25 @@ import (
 
 type GrpcVinDecoderService struct {
 	p_grpc.VinDecoderServiceServer
-	Mediator mediator.Mediator
-	logger   *zerolog.Logger
+	logger           *zerolog.Logger
+	decodeVINHandler *queries.DecodeVINQueryHandler
+	upsertVINHandler *queries.UpsertDecodingQueryHandler
 }
 
-func NewGrpcVinDecoderService(mediator mediator.Mediator, logger *zerolog.Logger) p_grpc.VinDecoderServiceServer {
-	return &GrpcVinDecoderService{Mediator: mediator, logger: logger}
+func NewGrpcVinDecoderService(logger *zerolog.Logger, decodeVINHandler *queries.DecodeVINQueryHandler,
+	upsertVINHandler *queries.UpsertDecodingQueryHandler) p_grpc.VinDecoderServiceServer {
+	return &GrpcVinDecoderService{logger: logger, decodeVINHandler: decodeVINHandler, upsertVINHandler: upsertVINHandler}
 }
 
 func (s *GrpcVinDecoderService) DecodeVin(ctx context.Context, in *p_grpc.DecodeVinRequest) (*p_grpc.DecodeVinResponse, error) {
-	qryResult, err := s.Mediator.Send(ctx, &queries.DecodeVINQuery{
+	qry := queries.DecodeVINQuery{
 		VIN:        in.Vin,
 		KnownModel: in.KnownModel,
 		KnownYear:  in.KnownYear,
 		Country:    in.Country,
-	})
+	}
+	qryResult, err := s.decodeVINHandler.Handle(ctx, &qry) // todo change Handle to require the actual type not mediator message
+	// todo change handler to return p_grpc.DecodeVinResponse? But would need to change other places too
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +41,7 @@ func (s *GrpcVinDecoderService) DecodeVin(ctx context.Context, in *p_grpc.Decode
 }
 
 func (s *GrpcVinDecoderService) UpsertDecoding(ctx context.Context, in *p_grpc.UpsertDecodingRequest) (*emptypb.Empty, error) {
-	_, err := s.Mediator.Send(ctx, &queries.UpsertDecodingQuery{
+	_, err := s.upsertVINHandler.Handle(ctx, &queries.UpsertDecodingQuery{
 		VIN:          in.Vin,
 		DefinitionID: in.TargetDefinitionId,
 	})
