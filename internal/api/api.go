@@ -81,6 +81,9 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		logger.Fatal().Err(err).Send()
 	}
 
+	decodeVINHandler := queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService, identityAPI)
+	upsertVINHandler := queries.NewUpsertDecodingQueryHandler(pdb.DBS, &logger, ddOnChainService)
+
 	//custom commands
 	m, _ := mediator.New(
 		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
@@ -106,9 +109,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&commands.DeleteDeviceTypeCommand{}, commands.NewDeleteDeviceTypeCommandHandler(pdb.DBS)),
 
 		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
-
-		mediator.WithHandler(&queries.DecodeVINQuery{}, queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService, identityAPI)),
-
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
 			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService, identityAPI),
@@ -123,7 +123,8 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQueryV2{}, queries.NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetVINProfileQuery{}, queries.NewGetVINProfileQueryHandler(pdb.DBS, &logger)),
 
-		mediator.WithHandler(&queries.UpsertDecodingQuery{}, queries.NewUpsertDecodingQueryHandler(pdb.DBS, &logger, ddOnChainService)),
+		mediator.WithHandler(&queries.DecodeVINQuery{}, decodeVINHandler),
+		mediator.WithHandler(&queries.UpsertDecodingQuery{}, upsertVINHandler),
 	)
 
 	//fiber
@@ -150,7 +151,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService, registryInstance, identityAPI)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService, registryInstance, identityAPI, &decodeVINHandler, &upsertVINHandler)
 
 	// Start Server from a different go routine
 	go func() {

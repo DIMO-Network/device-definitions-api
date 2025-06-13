@@ -3,6 +3,8 @@ package api
 import (
 	"net"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -24,7 +26,8 @@ import (
 )
 
 func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Mediator, dbs func() *db.ReaderWriter,
-	onChainDeviceDefs gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry, identity gateways.IdentityAPI) {
+	onChainDeviceDefs gateways.DeviceDefinitionOnChainService, registryInstance *contracts.Registry, identity gateways.IdentityAPI,
+	decodeVINHandler *queries.DecodeVINQueryHandler, upsertVINHandler *queries.UpsertDecodingQueryHandler) {
 	lis, err := net.Listen("tcp", ":"+s.GRPCPort)
 	if err != nil {
 		logger.Fatal().Msgf("Failed to listen on port %v: %v", s.GRPCPort, err)
@@ -32,7 +35,7 @@ func StartGrpcServer(logger zerolog.Logger, s *config.Settings, m mediator.Media
 
 	deviceDefinitionService := NewGrpcService(m, &logger, dbs, onChainDeviceDefs, registryInstance, identity)
 	integrationService := NewGrpcIntegrationService(m, &logger)
-	decodeService := NewGrpcVinDecoderService(m, &logger)
+	decodeService := NewGrpcVinDecoderService(&logger, decodeVINHandler, upsertVINHandler)
 
 	logger.Info().Msgf("Starting gRPC server on port %s", s.GRPCPort)
 	gp := common.GrpcConfig{Logger: &logger}
