@@ -128,16 +128,24 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			})
 		}
 		md, _ := json.Marshal(deviceDefinition.Metadata)
-
-		update, err := onChainSvc.Update(ctx, manufName, contracts.DeviceDefinitionUpdateInput{
+		updateContract := contracts.DeviceDefinitionUpdateInput{
 			Id:         deviceDefinition.ID,
 			Metadata:   string(md),
 			Ksuid:      deviceDefinition.KSUID,
 			DeviceType: deviceDefinition.DeviceType,
 			ImageURI:   deviceDefinition.ImageURI,
-		})
+		}
+
+		update, err := onChainSvc.Update(ctx, manufName, updateContract)
 		if err != nil {
 			fmt.Printf("%s: Error updating device definition: %v\n", definitionID, err)
+			if strings.Contains(err.Error(), "nonce too low:") {
+				time.Sleep(10 * time.Second)
+				update, err = onChainSvc.Update(ctx, manufName, updateContract)
+				if err != nil {
+					fmt.Printf("%s: Error updating device definition: %v\n", definitionID, err)
+				}
+			}
 			return subcommands.ExitFailure
 		}
 		fmt.Printf("%s: Updated device definition trx id: %s\nWaiting 10 seconds before next update\n", definitionID, *update)
