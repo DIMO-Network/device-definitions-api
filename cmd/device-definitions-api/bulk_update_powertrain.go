@@ -81,10 +81,18 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			fmt.Printf("Skipping malformed line %d: %v\n", i+1, record)
 			continue
 		}
-		definitionID := record[0]
-		powertrain := record[1]
+		definitionID := strings.ToLower(record[0])
+		powertrain := strings.ToUpper(record[1])
 		if definitionID == "" || powertrain == "" {
 			fmt.Printf("Skipping malformed line %d: %v\n", i+1, record)
+			continue
+		}
+		if powertrain != models.HEV.String() && powertrain != models.PHEV.String() && powertrain != models.BEV.String() && powertrain != models.ICE.String() {
+			fmt.Printf("Invalid powertrain: %d: %s\n", i+1, powertrain)
+			continue
+		}
+		if len(strings.Split(definitionID, "_")) != 3 {
+			fmt.Printf("Invalid definitionID: %s\n", definitionID)
 			continue
 		}
 		fmt.Printf("DefinitionID: %s, Powertrain: %s\n", definitionID, powertrain)
