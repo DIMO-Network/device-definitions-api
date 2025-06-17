@@ -110,6 +110,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		if deviceDefinition == nil {
 			fmt.Printf("%s: Device definition not found\n", definitionID)
 			notFoundDefinitions = append(notFoundDefinitions, definitionID)
+			continue
 		}
 
 		manufName, err := onChainSvc.GetManufacturerNameByID(ctx, manufID)
