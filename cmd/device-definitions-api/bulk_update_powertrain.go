@@ -3,14 +3,18 @@ package main
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"os"
-	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -79,6 +83,10 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		}
 		definitionID := record[0]
 		powertrain := record[1]
+		if definitionID == "" || powertrain == "" {
+			fmt.Printf("Skipping malformed line %d: %v\n", i+1, record)
+			continue
+		}
 		fmt.Printf("DefinitionID: %s, Powertrain: %s\n", definitionID, powertrain)
 
 		deviceDefinition, manufID, err := onChainSvc.GetDefinitionByID(ctx, definitionID)
@@ -92,22 +100,34 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			fmt.Printf("%s: Error getting manufacturer name: %v\n", manufID, err)
 			continue
 		}
-		// todo need a way to serialize the attributes correctly
-		deviceDefinition.Metadata.DeviceAttributes
+		set := false
+		for i2, attribute := range deviceDefinition.Metadata.DeviceAttributes {
+			if attribute.Name == common.PowerTrainType {
+				deviceDefinition.Metadata.DeviceAttributes[i2].Value = powertrain
+				set = true
+				break
+			}
+		}
+		if !set {
+			deviceDefinition.Metadata.DeviceAttributes = append(deviceDefinition.Metadata.DeviceAttributes, models.DeviceTypeAttribute{
+				Name:  common.PowerTrainType,
+				Value: powertrain,
+			})
+		}
+		md, _ := json.Marshal(deviceDefinition.Metadata)
 
 		update, err := onChainSvc.Update(ctx, manufName, contracts.DeviceDefinitionUpdateInput{
 			Id:         deviceDefinition.ID,
-			Metadata:   "",
+			Metadata:   string(md),
 			Ksuid:      deviceDefinition.KSUID,
 			DeviceType: deviceDefinition.DeviceType,
 			ImageURI:   deviceDefinition.ImageURI,
 		})
 		if err != nil {
 			fmt.Printf("%s: Error updating device definition: %v\n", definitionID, err)
-			continue
+			return subcommands.ExitFailure
 		}
-		fmt.Printf("%s: Updated device definition: %v\n", definitionID, update)
-
+		fmt.Printf("%s: Updated device definition trx id: %s\n", definitionID, *update)
 	}
 
 	return subcommands.ExitSuccess
