@@ -114,6 +114,11 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			continue
 		}
 		set := false
+		if deviceDefinition.Metadata != nil {
+			deviceDefinition.Metadata = &models.DeviceDefinitionMetadata{
+				DeviceAttributes: make([]models.DeviceTypeAttribute, 0),
+			}
+		}
 		for i2, attribute := range deviceDefinition.Metadata.DeviceAttributes {
 			if attribute.Name == common.PowerTrainType {
 				deviceDefinition.Metadata.DeviceAttributes[i2].Value = powertrain
@@ -121,6 +126,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 				break
 			}
 		}
+
 		if !set {
 			deviceDefinition.Metadata.DeviceAttributes = append(deviceDefinition.Metadata.DeviceAttributes, models.DeviceTypeAttribute{
 				Name:  common.PowerTrainType,
