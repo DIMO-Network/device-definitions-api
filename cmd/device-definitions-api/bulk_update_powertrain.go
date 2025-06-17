@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -76,6 +77,8 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 	}
 	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
 
+	notFoundDefinitions := make([]string, 0)
+
 	for i, record := range records {
 		if len(record) < 2 {
 			fmt.Printf("Skipping malformed line %d: %v\n", i+1, record)
@@ -93,6 +96,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		}
 		if len(strings.Split(definitionID, "_")) != 3 {
 			fmt.Printf("Invalid definitionID: %s\n", definitionID)
+			notFoundDefinitions = append(notFoundDefinitions, definitionID)
 			continue
 		}
 		fmt.Printf("DefinitionID: %s, Powertrain: %s\n", definitionID, powertrain)
@@ -100,6 +104,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		deviceDefinition, manufID, err := onChainSvc.GetDefinitionByID(ctx, definitionID)
 		if err != nil {
 			fmt.Printf("%s: Error getting device definition: %v\n", definitionID, err)
+			notFoundDefinitions = append(notFoundDefinitions, definitionID)
 			continue
 		}
 
@@ -135,7 +140,14 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			fmt.Printf("%s: Error updating device definition: %v\n", definitionID, err)
 			return subcommands.ExitFailure
 		}
-		fmt.Printf("%s: Updated device definition trx id: %s\n", definitionID, *update)
+		fmt.Printf("%s: Updated device definition trx id: %s\nWaiting 10 seconds before next update\n", definitionID, *update)
+
+		time.Sleep(10 * time.Second)
+	}
+
+	fmt.Printf("Not found definitions: %d\n", len(notFoundDefinitions))
+	for _, definitionID := range notFoundDefinitions {
+		fmt.Printf("%s\n", definitionID)
 	}
 
 	return subcommands.ExitSuccess
