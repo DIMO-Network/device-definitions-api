@@ -53,6 +53,8 @@ type Settings struct {
 	GoogleSheetsCredentials           string         `yaml:"GOOGLE_SHEETS_CREDENTIALS"`
 	Japan17VINUser                    string         `yaml:"JAPAN17_VIN_USER"`
 	Japan17VINPassword                string         `yaml:"JAPAN17_VIN_PASSWORD"`
+	CarVxUserId                       string         `yaml:"CARVX_USER_ID"`
+	CarVxAPIKey                       string         `yaml:"CARVX_API_KEY"`
 }
 
 func (s *Settings) IsProd() bool {
