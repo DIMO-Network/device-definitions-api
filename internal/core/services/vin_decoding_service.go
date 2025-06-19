@@ -11,24 +11,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DIMO-Network/shared/pkg/logfields"
+
 	"github.com/DIMO-Network/shared/pkg/db"
 
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/volatiletech/null/v8"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
-	"github.com/tidwall/gjson"
-
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 type VINDecodingService interface {
 	// GetVIN decodes a vin using one of the providers passed in or if AllProviders applies an ordered logic. Only pass TeslaProvider if know it is a Tesla.
-	GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error)
+	GetVIN(ctx context.Context, vin string, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error)
 }
 
 type vinDecodingService struct {
@@ -38,32 +36,35 @@ type vinDecodingService struct {
 	autoIsoAPIService  gateways.AutoIsoAPIService
 	DATGroupAPIService gateways.DATGroupAPIService
 	japan17VINAPI      gateways.Japan17VINAPI
+	carvxAPI           gateways.CarVxVINAPI
 	onChainSvc         gateways.DeviceDefinitionOnChainService
 	dbs                func() *db.ReaderWriter
 }
 
 func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
 	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
-	japan17VINAPI gateways.Japan17VINAPI) VINDecodingService {
+	japan17VINAPI gateways.Japan17VINAPI, carvxAPI gateways.CarVxVINAPI) VINDecodingService {
 	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso,
-		japan17VINAPI: japan17VINAPI, logger: logger, onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
+		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
 }
 
-func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoModel.DeviceType, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error) {
-
+func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, error) {
 	const DefaultDefinitionID = "ford_escape_2020"
 
 	result := &coremodels.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
-	// check for japan chasis
-	if (len(vin) < 17 && len(vin) > 10) || country == "JPN" {
-		provider = coremodels.Japan17VIN
+	providersToTry := make([]coremodels.DecodeProviderEnum, 0)
+	// check for japan chasis if all providers
+	if provider == coremodels.AllProviders && ((len(vin) < 17 && len(vin) > 10) || country == "JPN") {
+		providersToTry = append(providersToTry, coremodels.CarVXVIN)
+		providersToTry = append(providersToTry, coremodels.Japan17VIN)
 	} else if !ValidateVIN(vin) {
 		return nil, fmt.Errorf("invalid vin: %s", vin)
 	}
 
 	localLog := c.logger.With().
-		Str("vin", vin).
+		Str(logfields.VIN, vin).
+		Str(logfields.FunctionName, "GetVIN").
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
@@ -75,140 +76,187 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 		return result, nil
 	}
 
-	switch provider {
-	case coremodels.TeslaProvider:
-		v := vinutil.VIN(vin)
-		metadata := map[string]interface{}{
-			"fuel_type":       "electric",
-			"powertrain_type": coremodels.BEV.String(),
-		}
-		bytes, _ := json.Marshal(metadata)
-		result = &coremodels.VINDecodingInfoData{
-			VIN:      vin,
-			Year:     int32(v.Year()),
-			Make:     "Tesla",
-			Model:    v.TeslaModel(),
-			Source:   coremodels.TeslaProvider,
-			FuelType: "electric",
-			MetaData: null.JSONFrom(bytes),
-		}
-	case coremodels.DrivlyProvider:
-		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
-		}
-		result, err = buildFromDrivly(vinDrivlyInfo)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
-		}
-	case coremodels.VincarioProvider:
-		vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
-		}
-		result, err = buildFromVincario(vinVincarioInfo)
-		if err != nil {
-			return nil, err
-		}
-	case coremodels.Japan17VIN:
-		mmy, raw, err := c.japan17VINAPI.GetVINInfo(vin)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with japan17vin", vin)
-		}
-		result = &coremodels.VINDecodingInfoData{
-			VIN:      vin,
-			Make:     mmy.ManufacturerName,
-			Model:    mmy.ModelName,
-			Year:     int32(mmy.Year),
-			Source:   coremodels.Japan17VIN,
-			MetaData: null.JSONFrom(raw),
-			Raw:      raw,
-		}
-	case coremodels.AutoIsoProvider:
-		vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
-		}
-		result, err = buildFromAutoIso(vinAutoIsoInfo)
-		if err != nil {
-			return nil, err
-		}
-	case coremodels.DATGroupProvider:
-		// todo lookup country for two letter equiv
-		vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
-		}
-		result, err = buildFromDATGroup(vinInfo)
-		if err != nil {
-			return nil, err
-		}
-	case coremodels.AllProviders:
-		// todo if tesla, just build from tesla and use model
-
-		vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
-		if err != nil {
-			localLog.Warn().Err(err).Msg("AllProviders decode - unable decode vin with drivly")
+	if len(providersToTry) == 0 {
+		if provider == coremodels.AllProviders {
+			// fill in the list, future could do something country specific
+			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.AutoIsoProvider, coremodels.VincarioProvider, coremodels.DATGroupProvider)
 		} else {
+			// use the specified override
+			providersToTry = append(providersToTry, provider)
+		}
+	}
+	var errFinal error // for later
+
+	for _, p := range providersToTry {
+		// try all the options, but need to continue if get an error
+		// todo: break if decode works, continue if need to try with next
+		switch p {
+		case coremodels.TeslaProvider:
+			v := vinutil.VIN(vin)
+			metadata := map[string]interface{}{
+				"fuel_type":       "electric",
+				"powertrain_type": coremodels.BEV.String(),
+			}
+			bytes, _ := json.Marshal(metadata)
+			result = &coremodels.VINDecodingInfoData{
+				VIN:      vin,
+				Year:     int32(v.Year()),
+				Make:     "Tesla",
+				Model:    v.TeslaModel(),
+				Source:   coremodels.TeslaProvider,
+				FuelType: "electric",
+				MetaData: null.JSONFrom(bytes),
+			}
+			localLog.Info().Msgf("decoded with tesla: %+v", result)
+			return result, nil
+		case coremodels.DrivlyProvider:
+			vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
+				continue
+			}
 			result, err = buildFromDrivly(vinDrivlyInfo)
 			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with drivly")
-			} else {
-				metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
-				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
-				}
-				result.MetaData = metadata
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
+				continue
 			}
-		}
-
-		// if nothing from drivly, try autoiso
-		if result == nil || result.Source == "" {
-			autoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
-			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with autoiso")
-			} else {
-				result, err = buildFromAutoIso(autoIsoInfo)
-				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from autoiso data")
-				}
-			}
-		}
-
-		// if nothing,try vincario
-		if result == nil || result.Source == "" {
+			return result, nil
+		case coremodels.VincarioProvider:
 			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
-			} else {
-				result, err = buildFromVincario(vinVincarioInfo)
-				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from vincario data")
-				}
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
+				continue
 			}
-		}
-
-		// if nothing from vincario, try DATGroup
-		if result == nil || result.Source == "" {
-			// idea: only accept WMI's for DATgroup that they have succesfully decoded in the past
-			datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
+			result, err = buildFromVincario(vinVincarioInfo)
 			if err != nil {
-				localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
-			} else {
-				result, err = buildFromDATGroup(datGroupInfo)
-				localLog.Info().Msgf("datgroup result: %+v", result) // temporary for debugging
-				if err != nil {
-					localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
-				}
+				errFinal = err
+				continue
 			}
+			return result, nil
+		case coremodels.Japan17VIN:
+			mmy, raw, err := c.japan17VINAPI.GetVINInfo(vin)
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with japan17vin", vin)
+				continue
+			}
+			result = &coremodels.VINDecodingInfoData{
+				VIN:      vin,
+				Make:     mmy.ManufacturerName,
+				Model:    mmy.ModelName,
+				Year:     int32(mmy.Year),
+				Source:   coremodels.Japan17VIN,
+				MetaData: null.JSONFrom(raw),
+				Raw:      raw,
+			}
+			return result, nil
+		case coremodels.CarVXVIN:
+			info, raw, err := c.carvxAPI.GetVINInfo(vin)
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with carvx", vin)
+				continue
+			}
+			yr, _ := strconv.Atoi(info.Data[0].ManufactureDate.Year)
+			result = &coremodels.VINDecodingInfoData{
+				VIN:       vin,
+				Make:      info.Data[0].Make,
+				Model:     info.Data[0].Model,
+				SubModel:  info.Data[0].Drive + " " + info.Data[0].Transmission,
+				Year:      int32(yr),
+				StyleName: info.Data[0].Drive + " " + info.Data[0].Transmission,
+				Source:    coremodels.CarVXVIN,
+				MetaData:  null.JSONFrom(raw),
+				Raw:       raw,
+				FuelType:  info.Data[0].Fuel,
+			}
+			return result, nil
+		case coremodels.AutoIsoProvider:
+			vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
+				continue
+			}
+			result, err = buildFromAutoIso(vinAutoIsoInfo)
+			if err != nil {
+				errFinal = err
+				continue
+			}
+			return result, nil
+		case coremodels.DATGroupProvider:
+			// todo lookup country for two letter equiv
+			vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
+				continue
+			}
+			result, err = buildFromDATGroup(vinInfo)
+			if err != nil {
+				errFinal = err
+				continue
+			}
+			return result, nil
+		case coremodels.AllProviders:
+			//vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
+			//if err != nil {
+			//	localLog.Warn().Err(err).Msg("AllProviders decode - unable decode vin with drivly")
+			//} else {
+			//	result, err = buildFromDrivly(vinDrivlyInfo)
+			//	if err != nil {
+			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with drivly")
+			//	} else {
+			//		metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
+			//		if err != nil {
+			//			localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
+			//		}
+			//		result.MetaData = metadata
+			//	}
+			//}
+			//
+			//// if nothing from drivly, try autoiso
+			//if result == nil || result.Source == "" {
+			//	autoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
+			//	if err != nil {
+			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with autoiso")
+			//	} else {
+			//		result, err = buildFromAutoIso(autoIsoInfo)
+			//		if err != nil {
+			//			localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from autoiso data")
+			//		}
+			//	}
+			//}
+			//
+			//// if nothing,try vincario
+			//if result == nil || result.Source == "" {
+			//	vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
+			//	if err != nil {
+			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
+			//	} else {
+			//		result, err = buildFromVincario(vinVincarioInfo)
+			//		if err != nil {
+			//			localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from vincario data")
+			//		}
+			//	}
+			//}
+			//
+			//// if nothing from vincario, try DATGroup
+			//if result == nil || result.Source == "" {
+			//	// idea: only accept WMI's for DATgroup that they have succesfully decoded in the past
+			//	datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
+			//	if err != nil {
+			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
+			//	} else {
+			//		result, err = buildFromDATGroup(datGroupInfo)
+			//		localLog.Info().Msgf("datgroup result: %+v", result) // temporary for debugging
+			//		if err != nil {
+			//			localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
+			//		}
+			//	}
+			//}
 		}
 	}
+
 	// could not decode anything
-	if result == nil || result.Source == "" {
-		return nil, fmt.Errorf("could not decode from any provider for vin: %s", vin)
-	}
-	if result.Year == 0 {
-		return nil, fmt.Errorf("unable to decode vin: %s - year returned as 0", vin)
+	if errFinal != nil {
+		return nil, errFinal
 	}
 
 	return result, nil
@@ -223,38 +271,6 @@ func ValidateVIN(vin string) bool {
 	regex := regexp.MustCompile(pattern)
 
 	return regex.MatchString(vin)
-}
-
-func buildDrivlyVINInfoToUpdateAttr(vinInfo *coremodels.DrivlyVINResponse) []*coremodels.UpdateDeviceTypeAttribute {
-	seekAttributes := map[string]string{
-		// {device attribute, must match device_types.properties}: {vin info from drivly}
-		"mpg_city":               "mpgCity",
-		"mpg_highway":            "mpgHighway",
-		"mpg":                    "mpg",
-		"base_msrp":              "msrpBase",
-		"fuel_tank_capacity_gal": "fuelTankCapacityGal",
-		"fuel_type":              "fuel",
-		"wheelbase":              "wheelbase",
-		"generation":             "generation",
-		"number_of_doors":        "doors",
-		"manufacturer_code":      "manufacturerCode",
-		"driven_wheels":          "drive",
-	}
-	marshal, _ := json.Marshal(vinInfo)
-	var udta []*coremodels.UpdateDeviceTypeAttribute
-
-	for dtAttrKey, drivlyKey := range seekAttributes {
-		v := gjson.GetBytes(marshal, drivlyKey).String()
-		// if v valid, ok etc
-		if len(v) > 0 && v != "0" && v != "0.0000" {
-			udta = append(udta, &coremodels.UpdateDeviceTypeAttribute{
-				Name:  dtAttrKey,
-				Value: v,
-			})
-		}
-	}
-
-	return udta
 }
 
 func buildFromAutoIso(info *coremodels.AutoIsoVINResponse) (*coremodels.VINDecodingInfoData, error) {
@@ -393,6 +409,9 @@ func validateVinDecoding(vdi *coremodels.VINDecodingInfoData) error {
 	}
 	if strings.Contains(vdi.Model, ",") || strings.Contains(vdi.Model, "/") {
 		return fmt.Errorf("model contains invalid characters: %s", vdi.Model)
+	}
+	if vdi.Source == "" {
+		return fmt.Errorf("vin source is empty")
 	}
 
 	return nil

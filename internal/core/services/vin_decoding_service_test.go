@@ -33,6 +33,7 @@ type VINDecodingServiceSuite struct {
 	mockAutoIsoAPISvc      *mock_gateways.MockAutoIsoAPIService
 	mockDATGroupAPIService *mock_gateways.MockDATGroupAPIService
 	mockJapan17VINAPI      *mock_gateways.MockJapan17VINAPI
+	mockCarvxAPI           *mock_gateways.MockCarVxVINAPI
 
 	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionOnChainService
 	vinDecodingService VINDecodingService
@@ -60,10 +61,11 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockAutoIsoAPISvc = mock_gateways.NewMockAutoIsoAPIService(s.ctrl)
 	s.mockDATGroupAPIService = mock_gateways.NewMockDATGroupAPIService(s.ctrl)
 	s.mockJapan17VINAPI = mock_gateways.NewMockJapan17VINAPI(s.ctrl)
+	s.mockCarvxAPI = mock_gateways.NewMockCarVxVINAPI(s.ctrl)
 	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(),
-		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI)
+		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI, s.mockCarvxAPI)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
@@ -91,11 +93,12 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Japan17VIN_Success() {
 		ModelName:             "Voxy",
 		Year:                  2022,
 	}
+	s.mockCarvxAPI.EXPECT().GetVINInfo(vin).Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
 	s.mockJapan17VINAPI.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, []byte{0x1, 0x22}, nil)
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -134,9 +137,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	}
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -146,8 +149,8 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Tesla() {
 	ctx := context.Background()
 	const vin = "5YJ3E1EA2PF696023"
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.TeslaProvider, "USA")
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.TeslaProvider, "USA")
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -183,9 +186,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 	// vincario is the last fallback
 	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vincarioResp, nil)
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -206,9 +209,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -220,13 +223,13 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 	const vin = "0SCZZZ4M0KD018683"
 	const country = "US"
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm.Name, "Escape", 2020, s.pdb)
 
 	s.mockOnChainSvc.EXPECT().GetDefinitionByID(ctx, dd.ID).Times(1).Return(dd, nil, nil)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.AllProviders, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
@@ -249,9 +252,9 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 
 	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(vinInfoResp, nil)
 
-	dt := dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
-	result, err := s.vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DATGroupProvider, country)
+	result, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.DATGroupProvider, country)
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)

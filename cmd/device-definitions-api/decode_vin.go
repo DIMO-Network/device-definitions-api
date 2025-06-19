@@ -36,6 +36,7 @@ type decodeVINCmd struct {
 	japan17vin  bool
 	fromFile    bool
 	persistToDB bool
+	carvx       bool
 }
 
 func (*decodeVINCmd) Name() string { return "decodevin" }
@@ -43,7 +44,7 @@ func (*decodeVINCmd) Synopsis() string {
 	return "tries decoding a vin with chosen provider - does not insert in our db"
 }
 func (*decodeVINCmd) Usage() string {
-	return `decodevin [-dat|-drivly|-vincario|-japan17vin|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
+	return `decodevin [-dat|-drivly|-vincario|-japan17vin|carvx|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
 }
 
 func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
@@ -51,6 +52,7 @@ func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.drivly, "drivly", false, "use drivly vin decoder")
 	f.BoolVar(&p.vincario, "vincario", false, "use vincario vin decoder")
 	f.BoolVar(&p.japan17vin, "japan17vin", false, "use japan17vin vin decoder")
+	f.BoolVar(&p.carvx, "carvx", false, "use carvx vin decoder")
 	f.BoolVar(&p.fromFile, "from-file", false, "read vin from file in /tmp directory")
 	f.BoolVar(&p.persistToDB, "persist-to-db", false, "persist successful vin decodings to db, table vin_numbers")
 }
@@ -106,7 +108,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 		if wmi != nil {
 			dbVin.ManufacturerName = wmi.ManufacturerName
 		}
-		dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, pdb.DBS().Reader)
+		_, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, pdb.DBS().Reader)
 		if err != nil {
 			fmt.Println(err.Error())
 			return subcommands.ExitFailure
@@ -114,7 +116,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 		vinInfo := &coremodels.VINDecodingInfoData{VIN: vin}
 
 		if p.datGroup {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DATGroupProvider, country)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DATGroupProvider, country)
 			// use the dat group service to decode
 			if err != nil {
 				fmt.Println(err.Error())
@@ -124,7 +126,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("\n\nVIN Response: %+v\n", vinInfo)
 		}
 		if p.drivly {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.DrivlyProvider, country)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DrivlyProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -133,16 +135,23 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.vincario {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.VincarioProvider, country)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.VincarioProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
 			}
-
+			fmt.Printf("VIN Response: %+v\n", vinInfo)
+		}
+		if p.carvx {
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.CarVXVIN, country)
+			if err != nil {
+				fmt.Println(err.Error())
+				continue
+			}
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.japan17vin {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.Japan17VIN, country)
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.Japan17VIN, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -240,6 +249,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	drivlyAPI := gateways.NewDrivlyAPIService(settings)
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
 	jp17vinAPI := gateways.NewJapan17VINAPI(logger, settings)
+	carvxAPI := gateways.NewCarVxVINAPI(logger, settings)
 
 	send, err := createSender(ctx, settings, logger)
 	if err != nil {
@@ -257,7 +267,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	}
 	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
 
-	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI)
+	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI)
 
 	return vinDecodingService
 }

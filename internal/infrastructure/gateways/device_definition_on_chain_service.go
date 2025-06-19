@@ -414,7 +414,7 @@ func (e *deviceDefinitionOnChainService) Create(ctx context.Context, manufacture
 
 // Update on-chain device definition, only has basic validation that some fields be present. Requires existing tableland record to exist to update
 func (e *deviceDefinitionOnChainService) Update(ctx context.Context, manufacturerName string, input contracts.DeviceDefinitionUpdateInput) (*string, error) {
-
+	// todo add retry logic to this call
 	metrics.Success.With(prometheus.Labels{"method": TablelandRequests}).Inc()
 	e.logger.Info().Msgf("OnChain Start Update for device definition %s. EthereumSendTransaction %t. payload: %+v", input.Id, e.settings.EthereumSendTransaction, input)
 

@@ -19,6 +19,7 @@ const (
 	AllProviders     DecodeProviderEnum = ""
 	TeslaProvider    DecodeProviderEnum = "tesla"
 	Japan17VIN       DecodeProviderEnum = "japan17vin"
+	CarVXVIN         DecodeProviderEnum = "carvxvin"
 )
 
 type VINDecodingInfoData struct {
@@ -412,4 +413,23 @@ type Japan17MMY struct {
 	ManufacturerLowerCase string `json:"manufacturerLowerCase"`
 	ModelName             string `json:"modelName"`
 	Year                  int    `json:"year"`
+}
+
+// nolint
+type CarVxResponse struct {
+	Data []struct {
+		Make            string `json:"make"`
+		Model           string `json:"model"`
+		Grade           string `json:"grade"`
+		Body            string `json:"body"`
+		Engine          string `json:"engine"`
+		Drive           string `json:"drive"`
+		Transmission    string `json:"transmission"`
+		Fuel            string `json:"fuel"`
+		ManufactureDate struct {
+			Year  string `json:"year"`
+			Month string `json:"month"`
+		} `json:"manufacture_date"`
+	} `json:"data"`
+	Error string `json:"error"`
 }
