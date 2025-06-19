@@ -14,7 +14,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	models0 "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -22,6 +21,7 @@ import (
 type MockVINDecodingService struct {
 	ctrl     *gomock.Controller
 	recorder *MockVINDecodingServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockVINDecodingServiceMockRecorder is the mock recorder for MockVINDecodingService.
@@ -42,16 +42,16 @@ func (m *MockVINDecodingService) EXPECT() *MockVINDecodingServiceMockRecorder {
 }
 
 // GetVIN mocks base method.
-func (m *MockVINDecodingService) GetVIN(ctx context.Context, vin string, dt *models0.DeviceType, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error) {
+func (m *MockVINDecodingService) GetVIN(ctx context.Context, vin string, provider models.DecodeProviderEnum, country string) (*models.VINDecodingInfoData, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVIN", ctx, vin, dt, provider, country)
+	ret := m.ctrl.Call(m, "GetVIN", ctx, vin, provider, country)
 	ret0, _ := ret[0].(*models.VINDecodingInfoData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVIN indicates an expected call of GetVIN.
-func (mr *MockVINDecodingServiceMockRecorder) GetVIN(ctx, vin, dt, provider, country any) *gomock.Call {
+func (mr *MockVINDecodingServiceMockRecorder) GetVIN(ctx, vin, provider, country any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVIN", reflect.TypeOf((*MockVINDecodingService)(nil).GetVIN), ctx, vin, dt, provider, country)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVIN", reflect.TypeOf((*MockVINDecodingService)(nil).GetVIN), ctx, vin, provider, country)
 }

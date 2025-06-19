@@ -16,7 +16,7 @@ import (
 //go:generate mockgen -source carvx_vin_api.go -destination mocks/carvx_vin_api_mock.go -package mocks
 type carVxVINAPI struct {
 	httpClient http.ClientWrapper
-	logger     zerolog.Logger
+	logger     *zerolog.Logger
 	settings   *config.Settings
 }
 
@@ -26,7 +26,7 @@ type CarVxVINAPI interface {
 
 const carvxURL = "https://carvx.jp/api/v1/get-chassis-info"
 
-func NewCarVxVINAPI(logger zerolog.Logger, settings *config.Settings) CarVxVINAPI {
+func NewCarVxVINAPI(logger *zerolog.Logger, settings *config.Settings) CarVxVINAPI {
 	headers := map[string]string{
 		"Carvx-User-Uid": settings.CarVxUserID,
 		"Carvx-Api-Key":  settings.CarVxAPIKey,
@@ -55,10 +55,10 @@ func (c *carVxVINAPI) GetVINInfo(chassisNumber string) (*coremodels.CarVxRespons
 		return nil, nil, errors.Wrapf(err, "error decoding response body from url %s", carvxURL)
 	}
 	if len(v.Error) > 0 {
-		return nil, nil, errors.New(v.Error)
+		return nil, nil, fmt.Errorf("%s", v.Error)
 	}
 	if len(v.Data) == 0 {
-		return nil, nil, errors.New("no data found")
+		return nil, nil, fmt.Errorf("no data found")
 	}
 	return v, bodyBytes, nil
 }

@@ -186,7 +186,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return resp, nil
 	}
 
-	dt, err := models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
+	_, err = models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
 		return nil, errors.Wrap(err, "failed to get device_type")
@@ -201,13 +201,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
 		if dbWMI.ManufacturerName == "Tesla" {
-			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.TeslaProvider, qry.Country)
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), coremodels.TeslaProvider, qry.Country)
 			resp.Manufacturer = "Tesla"
 		}
 	}
 	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), dt, coremodels.AllProviders, qry.Country) // this will try drivly first unless of japan
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), coremodels.AllProviders, qry.Country) // this will try drivly first unless of japan
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
