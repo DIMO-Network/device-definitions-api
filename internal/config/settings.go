@@ -54,7 +54,7 @@ type Settings struct {
 	Japan17VINUser                    string         `yaml:"JAPAN17_VIN_USER"`
 	Japan17VINPassword                string         `yaml:"JAPAN17_VIN_PASSWORD"`
 	CarVxUserID                       string         `yaml:"CAR_VX_USER_ID"`
-	CarVxAPIKey                       string         `yaml:"CARVX_API_KEY"`
+	CarVxAPIKey                       string         `yaml:"CAR_VX_API_KEY"`
 }
 
 func (s *Settings) IsProd() bool {
