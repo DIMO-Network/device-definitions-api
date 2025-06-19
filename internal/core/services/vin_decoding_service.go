@@ -148,6 +148,11 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 				MetaData: null.JSONFrom(raw),
 				Raw:      raw,
 			}
+			err = validateVinDecoding(result)
+			if err != nil {
+				errFinal = err
+				continue
+			}
 			return result, nil
 		case coremodels.CarVXVIN:
 			info, raw, err := c.carvxAPI.GetVINInfo(vin)
@@ -167,6 +172,11 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 				MetaData:  null.JSONFrom(raw),
 				Raw:       raw,
 				FuelType:  info.Data[0].Fuel,
+			}
+			err = validateVinDecoding(result)
+			if err != nil {
+				errFinal = err
+				continue
 			}
 			return result, nil
 		case coremodels.AutoIsoProvider:
