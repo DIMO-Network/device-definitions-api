@@ -38,6 +38,7 @@ type vinDecodingService struct {
 	autoIsoAPIService  gateways.AutoIsoAPIService
 	DATGroupAPIService gateways.DATGroupAPIService
 	japan17VINAPI      gateways.Japan17VINAPI
+	carvxAPI           gateways.CarVxVINAPI
 	onChainSvc         gateways.DeviceDefinitionOnChainService
 	dbs                func() *db.ReaderWriter
 }
@@ -55,9 +56,9 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 
 	result := &coremodels.VINDecodingInfoData{}
 	vin = strings.ToUpper(strings.TrimSpace(vin))
-	// check for japan chasis
-	if (len(vin) < 17 && len(vin) > 10) || country == "JPN" {
-		provider = coremodels.Japan17VIN
+	// check for japan chasis if all providers
+	if provider == coremodels.AllProviders && (len(vin) < 17 && len(vin) > 10 || country == "JPN") {
+		provider = coremodels.CarVXVIN
 	} else if !ValidateVIN(vin) {
 		return nil, fmt.Errorf("invalid vin: %s", vin)
 	}
@@ -123,6 +124,24 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 			Source:   coremodels.Japan17VIN,
 			MetaData: null.JSONFrom(raw),
 			Raw:      raw,
+		}
+	case coremodels.CarVXVIN:
+		info, raw, err := c.carvxAPI.GetVINInfo(vin)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode vin: %s with carvx", vin)
+		}
+		yr, _ := strconv.Atoi(info.Data[0].ManufactureDate.Year)
+		result = &coremodels.VINDecodingInfoData{
+			VIN:       vin,
+			Make:      info.Data[0].Make,
+			Model:     info.Data[0].Model,
+			SubModel:  info.Data[0].Drive + " " + info.Data[0].Transmission,
+			Year:      int32(yr),
+			StyleName: info.Data[0].Drive + " " + info.Data[0].Transmission,
+			Source:    coremodels.CarVXVIN,
+			MetaData:  null.JSONFrom(raw),
+			Raw:       raw,
+			FuelType:  info.Data[0].Fuel,
 		}
 	case coremodels.AutoIsoProvider:
 		vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
@@ -202,6 +221,8 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, dt *repoMode
 				}
 			}
 		}
+
+		// todo try carvx and japan17vin if nothing from above
 	}
 	// could not decode anything
 	if result == nil || result.Source == "" {

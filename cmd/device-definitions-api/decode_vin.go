@@ -36,6 +36,7 @@ type decodeVINCmd struct {
 	japan17vin  bool
 	fromFile    bool
 	persistToDB bool
+	carvx       bool
 }
 
 func (*decodeVINCmd) Name() string { return "decodevin" }
@@ -43,7 +44,7 @@ func (*decodeVINCmd) Synopsis() string {
 	return "tries decoding a vin with chosen provider - does not insert in our db"
 }
 func (*decodeVINCmd) Usage() string {
-	return `decodevin [-dat|-drivly|-vincario|-japan17vin|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
+	return `decodevin [-dat|-drivly|-vincario|-japan17vin|carvx|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
 }
 
 func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
@@ -51,6 +52,7 @@ func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.drivly, "drivly", false, "use drivly vin decoder")
 	f.BoolVar(&p.vincario, "vincario", false, "use vincario vin decoder")
 	f.BoolVar(&p.japan17vin, "japan17vin", false, "use japan17vin vin decoder")
+	f.BoolVar(&p.carvx, "carvx", false, "use carvx vin decoder")
 	f.BoolVar(&p.fromFile, "from-file", false, "read vin from file in /tmp directory")
 	f.BoolVar(&p.persistToDB, "persist-to-db", false, "persist successful vin decodings to db, table vin_numbers")
 }
@@ -138,7 +140,14 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 				fmt.Println(err.Error())
 				continue
 			}
-
+			fmt.Printf("VIN Response: %+v\n", vinInfo)
+		}
+		if p.carvx {
+			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, dt, coremodels.CarVXVIN, country)
+			if err != nil {
+				fmt.Println(err.Error())
+				continue
+			}
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.japan17vin {
