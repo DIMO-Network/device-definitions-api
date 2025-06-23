@@ -393,10 +393,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse"
                         }
                     },
                     "400": {
@@ -612,6 +609,26 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse": {
+            "type": "object",
+            "properties": {
+                "powertrainType": {
+                    "type": "string"
+                },
+                "profileRaw": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "vendor": {
+                    "type": "string"
+                },
+                "vin": {
+                    "type": "string"
                 }
             }
         },
