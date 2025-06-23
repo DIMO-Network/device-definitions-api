@@ -103,7 +103,7 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 // @Tags device-definitions
 // @Param  vin path string true "17 character usa based VIN eg. WBA12345678901234"
 // @Produce json
-// @Success 200 {object} queries.GetVINProfileResponse
+// @Success 200 {object} map[]string{}
 // @Failure 404
 // @Failure 400
 // @Failure 500

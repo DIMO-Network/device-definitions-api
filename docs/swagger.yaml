@@ -131,19 +131,6 @@ definitions:
       year:
         type: integer
     type: object
-  github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse:
-    properties:
-      powertrainType:
-        type: string
-      profileRaw:
-        items:
-          type: integer
-        type: array
-      vendor:
-        type: string
-      vin:
-        type: string
-    type: object
   internal_api_handlers.DecodeVINRequest:
     properties:
       countryCode:
@@ -417,7 +404,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_DIMO-Network_device-definitions-api_internal_core_queries.GetVINProfileResponse'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
         "404":
