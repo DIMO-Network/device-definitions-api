@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/tidwall/sjson"
 	"strconv"
 	"strings"
 
@@ -128,12 +129,21 @@ func VINProfile(m mediator.Mediator) fiber.Handler {
 				Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
 				Title:  "No VIN profile founder",
 				Status: fiber.StatusNotFound,
-				Detail: "Couldn't get VIN profile.",
+				Detail: err.Error(),
 			})
 		}
 		resp := result.(*queries.GetVINProfileResponse)
 		c.Type("json") // sets Content-Type: application/json
-		return c.Send(resp.ProfileRaw)
+		jb, err := sjson.SetBytes(resp.ProfileRaw, "powertrainType", resp.PowertrainType)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(common.ProblemDetails{
+				Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+				Title:  "Failed to set powertrainType",
+				Status: fiber.StatusInternalServerError,
+				Detail: err.Error(),
+			})
+		}
+		return c.Send(jb)
 	}
 }
 
