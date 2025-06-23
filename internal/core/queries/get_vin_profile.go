@@ -5,6 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
+	"github.com/DIMO-Network/shared/pkg/logfields"
+	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -15,8 +19,9 @@ import (
 )
 
 type GetVINProfileQueryHandler struct {
-	dbs    func() *db.ReaderWriter
-	logger *zerolog.Logger
+	dbs           func() *db.ReaderWriter
+	logger        *zerolog.Logger
+	powertrainSvc services.PowerTrainTypeService
 }
 
 type GetVINProfileQuery struct {
@@ -24,17 +29,19 @@ type GetVINProfileQuery struct {
 }
 
 type GetVINProfileResponse struct {
-	VIN        string `json:"vin"`
-	ProfileRaw []byte `json:"profileRaw"`
-	Vendor     string `json:"vendor"`
+	VIN            string `json:"vin"`
+	ProfileRaw     []byte `json:"profileRaw"`
+	Vendor         string `json:"vendor"`
+	PowertrainType string `json:"powertrainType,omitempty"`
 }
 
 func (*GetVINProfileQuery) Key() string { return "GetVINProfileQuery" }
 
-func NewGetVINProfileQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger) GetVINProfileQueryHandler {
+func NewGetVINProfileQueryHandler(dbs func() *db.ReaderWriter, logger *zerolog.Logger, powertrainSvc services.PowerTrainTypeService) GetVINProfileQueryHandler {
 	return GetVINProfileQueryHandler{
-		dbs:    dbs,
-		logger: logger,
+		dbs:           dbs,
+		logger:        logger,
+		powertrainSvc: powertrainSvc,
 	}
 }
 
@@ -44,7 +51,7 @@ func (dc GetVINProfileQueryHandler) Handle(ctx context.Context, query mediator.M
 		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
 	}
 
-	vinNumber, err := models.VinNumbers(models.VinNumberWhere.Vin.EQ(qry.VIN), models.VinNumberWhere.DrivlyData.IsNotNull()).One(ctx, dc.dbs().Reader)
+	vinNumber, err := models.VinNumbers(models.VinNumberWhere.Vin.EQ(qry.VIN)).One(ctx, dc.dbs().Reader)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -52,10 +59,22 @@ func (dc GetVINProfileQueryHandler) Handle(ctx context.Context, query mediator.M
 		}
 		return nil, &exceptions.InternalError{Err: fmt.Errorf("failed to get vin %s", qry.VIN)}
 	}
+	split := strings.Split(vinNumber.DefinitionID, "_")
+	powertrain := ""
+	if len(split) == 3 {
+		powertrain, err = dc.powertrainSvc.ResolvePowerTrainType(split[0], split[1], vinNumber.DrivlyData, vinNumber.VincarioData)
+		if err != nil {
+			dc.logger.Error().Err(err).Str(logfields.VIN, qry.VIN).Msg("failed to resolve powertrain type for vin, continuing with ICE")
+		}
+	}
+	if powertrain == "" {
+		powertrain = string(coremodels.ICE)
+	}
 
 	return &GetVINProfileResponse{
-		VIN:        qry.VIN,
-		ProfileRaw: vinNumber.DrivlyData.JSON,
-		Vendor:     "drivly",
+		VIN:            qry.VIN,
+		ProfileRaw:     vinNumber.DrivlyData.JSON,
+		Vendor:         vinNumber.DecodeProvider.String,
+		PowertrainType: powertrain,
 	}, nil
 }
