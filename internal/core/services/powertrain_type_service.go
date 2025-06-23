@@ -115,7 +115,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(makeSlug string, modelSlug 
 	}
 
 	// Resolve Drivly Data
-	if drivlyData.Valid && len(c.powerTrainRuleData.VincarioList) > 0 {
+	if drivlyData.Valid && len(c.powerTrainRuleData.DrivlyList) > 0 {
 		var drivlyModel coremodels.DrivlyData
 		err := drivlyData.Unmarshal(&drivlyModel)
 		if err != nil {
