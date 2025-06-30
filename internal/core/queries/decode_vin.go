@@ -121,7 +121,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	// todo: this should be a separate specific gRPC endpoint for setting or updating vin number to DD mapping
 	// If DefinitionID passed in, override VIN decoding
-	localLog.Info().Msgf("Start Decode VIN for vin %s and device definition %s", vin.String(), qry.DefinitionID)
+	localLog.Info().Msgf("Start Decode VIN for %s and device definition %s", vin.String(), qry.DefinitionID)
 	if len(qry.DefinitionID) > 0 {
 		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID)
 		if err != nil {
