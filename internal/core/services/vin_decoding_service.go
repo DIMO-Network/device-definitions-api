@@ -79,7 +79,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 	if len(providersToTry) == 0 {
 		if provider == coremodels.AllProviders {
 			// fill in the list, future could do something country specific
-			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.AutoIsoProvider, coremodels.VincarioProvider, coremodels.DATGroupProvider)
+			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.VincarioProvider, coremodels.Japan17VIN, coremodels.AutoIsoProvider, coremodels.DATGroupProvider)
 		} else {
 			// use the specified override
 			providersToTry = append(providersToTry, provider)
@@ -89,7 +89,6 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 
 	for _, p := range providersToTry {
 		// try all the options, but need to continue if get an error
-		// todo: break if decode works, continue if need to try with next
 		switch p {
 		case coremodels.TeslaProvider:
 			v := vinutil.VIN(vin)
@@ -107,33 +106,41 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 				FuelType: "electric",
 				MetaData: null.JSONFrom(bytes),
 			}
+			err := validateVinDecoding(result)
+			if err != nil {
+				errFinal = err
+				continue
+			}
 			localLog.Info().Msgf("decoded with tesla: %+v", result)
 			return result, nil
 		case coremodels.DrivlyProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with drivly", vin)
 			vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 				continue
 			}
-			result, err = buildFromDrivly(vinDrivlyInfo)
+			result, err = buildFromDrivly(vinDrivlyInfo) // already does validation
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
 				continue
 			}
 			return result, nil
 		case coremodels.VincarioProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with vincario", vin)
 			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
 				continue
 			}
-			result, err = buildFromVincario(vinVincarioInfo)
+			result, err = buildFromVincario(vinVincarioInfo) // already does validation
 			if err != nil {
 				errFinal = err
 				continue
 			}
 			return result, nil
 		case coremodels.Japan17VIN:
+			localLog.Info().Msgf("trying to decode VIN: %s with 17vin", vin)
 			mmy, raw, err := c.japan17VINAPI.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with japan17vin", vin)
@@ -155,6 +162,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.CarVXVIN:
+			localLog.Info().Msgf("trying to decode VIN: %s with carvx", vin)
 			info, raw, err := c.carvxAPI.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with carvx", vin)
@@ -180,87 +188,35 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.AutoIsoProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with autoiso", vin)
 			vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
 				continue
 			}
-			result, err = buildFromAutoIso(vinAutoIsoInfo)
+			result, err = buildFromAutoIso(vinAutoIsoInfo) // already does validation
 			if err != nil {
 				errFinal = err
 				continue
 			}
 			return result, nil
 		case coremodels.DATGroupProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with datgroup", vin)
 			// todo lookup country for two letter equiv
 			vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
 				continue
 			}
-			result, err = buildFromDATGroup(vinInfo)
+			result, err = buildFromDATGroup(vinInfo) // already does validation
 			if err != nil {
 				errFinal = err
 				continue
 			}
 			return result, nil
 		case coremodels.AllProviders:
-			//vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
-			//if err != nil {
-			//	localLog.Warn().Err(err).Msg("AllProviders decode - unable decode vin with drivly")
-			//} else {
-			//	result, err = buildFromDrivly(vinDrivlyInfo)
-			//	if err != nil {
-			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with drivly")
-			//	} else {
-			//		metadata, err := common.BuildDeviceTypeAttributes(buildDrivlyVINInfoToUpdateAttr(vinDrivlyInfo), dt)
-			//		if err != nil {
-			//			localLog.Warn().Err(err).Msg("AllProviders decode - unable to build metadata attributes")
-			//		}
-			//		result.MetaData = metadata
-			//	}
-			//}
-			//
-			//// if nothing from drivly, try autoiso
-			//if result == nil || result.Source == "" {
-			//	autoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
-			//	if err != nil {
-			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with autoiso")
-			//	} else {
-			//		result, err = buildFromAutoIso(autoIsoInfo)
-			//		if err != nil {
-			//			localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from autoiso data")
-			//		}
-			//	}
-			//}
-			//
-			//// if nothing,try vincario
-			//if result == nil || result.Source == "" {
-			//	vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
-			//	if err != nil {
-			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with vincario")
-			//	} else {
-			//		result, err = buildFromVincario(vinVincarioInfo)
-			//		if err != nil {
-			//			localLog.Warn().Err(err).Msg("AllProviders decode -could not build struct from vincario data")
-			//		}
-			//	}
-			//}
-			//
-			//// if nothing from vincario, try DATGroup
-			//if result == nil || result.Source == "" {
-			//	// idea: only accept WMI's for DATgroup that they have succesfully decoded in the past
-			//	datGroupInfo, err := c.DATGroupAPIService.GetVINv2(vin, country)
-			//	if err != nil {
-			//		localLog.Warn().Err(err).Msg("AllProviders decode -could not decode vin with DATGroup")
-			//	} else {
-			//		result, err = buildFromDATGroup(datGroupInfo)
-			//		localLog.Info().Msgf("datgroup result: %+v", result) // temporary for debugging
-			//		if err != nil {
-			//			localLog.Warn().Err(err).Msg("AllProviders decode - could not build struct from DATGroup data")
-			//		}
-			//	}
-			//}
+			// this should never hit
+			errFinal = fmt.Errorf("all providers - invalid option reached")
 		}
 	}
 

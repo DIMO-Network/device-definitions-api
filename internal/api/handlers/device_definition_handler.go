@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/tidwall/sjson"
 	"strconv"
 	"strings"
+
+	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 
