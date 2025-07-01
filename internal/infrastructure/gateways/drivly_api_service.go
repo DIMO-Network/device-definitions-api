@@ -19,7 +19,7 @@ type DrivlyAPIService interface {
 }
 
 type drivlyAPIService struct {
-	Settings      *config.Settings
+	settings      *config.Settings
 	httpClientVIN http.ClientWrapper
 }
 
@@ -31,7 +31,7 @@ func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
 	hcwv, _ := http.NewClientWrapper(settings.DrivlyVINAPIURL.String(), "", 10*time.Second, h, true, http.WithRetry(1))
 
 	return &drivlyAPIService{
-		Settings:      settings,
+		settings:      settings,
 		httpClientVIN: hcwv,
 	}
 }

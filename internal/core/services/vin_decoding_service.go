@@ -75,11 +75,11 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 		result = buildFromDDForTestVIN(vin, dd)
 		return result, nil
 	}
-	// todo: We should log for each provider that we try, make sure not retrying same one unless 503
+
 	if len(providersToTry) == 0 {
 		if provider == coremodels.AllProviders {
 			// fill in the list, future could do something country specific
-			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.AutoIsoProvider, coremodels.VincarioProvider, coremodels.Japan17VIN, coremodels.DATGroupProvider)
+			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.VincarioProvider, coremodels.Japan17VIN, coremodels.AutoIsoProvider, coremodels.DATGroupProvider)
 		} else {
 			// use the specified override
 			providersToTry = append(providersToTry, provider)
@@ -106,14 +106,15 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 				FuelType: "electric",
 				MetaData: null.JSONFrom(bytes),
 			}
-			localLog.Info().Msgf("decoded with tesla: %+v", result)
 			err := validateVinDecoding(result)
 			if err != nil {
 				errFinal = err
 				continue
 			}
+			localLog.Info().Msgf("decoded with tesla: %+v", result)
 			return result, nil
 		case coremodels.DrivlyProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with drivly", vin)
 			vinDrivlyInfo, err := c.drivlyAPISvc.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with drivly", vin)
@@ -126,6 +127,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.VincarioProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with vincario", vin)
 			vinVincarioInfo, err := c.vincarioAPISvc.DecodeVIN(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with vincario", vin)
@@ -138,6 +140,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.Japan17VIN:
+			localLog.Info().Msgf("trying to decode VIN: %s with 17vin", vin)
 			mmy, raw, err := c.japan17VINAPI.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with japan17vin", vin)
@@ -159,6 +162,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.CarVXVIN:
+			localLog.Info().Msgf("trying to decode VIN: %s with carvx", vin)
 			info, raw, err := c.carvxAPI.GetVINInfo(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with carvx", vin)
@@ -184,6 +188,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.AutoIsoProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with autoiso", vin)
 			vinAutoIsoInfo, err := c.autoIsoAPIService.GetVIN(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with autoiso", vin)
@@ -196,6 +201,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			}
 			return result, nil
 		case coremodels.DATGroupProvider:
+			localLog.Info().Msgf("trying to decode VIN: %s with datgroup", vin)
 			// todo lookup country for two letter equiv
 			vinInfo, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
 			if err != nil {
@@ -210,6 +216,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			return result, nil
 		case coremodels.AllProviders:
 			// this should never hit
+			errFinal = fmt.Errorf("all providers - invalid option reached")
 		}
 	}
 
