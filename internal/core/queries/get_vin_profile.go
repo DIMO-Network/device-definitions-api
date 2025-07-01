@@ -5,10 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/shared/pkg/logfields"
-	"strings"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"

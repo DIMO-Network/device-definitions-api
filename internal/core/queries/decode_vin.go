@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/tidwall/sjson"
@@ -45,11 +44,10 @@ type DecodeVINQueryHandler struct {
 }
 
 type DecodeVINQuery struct {
-	VIN          string `json:"vin"`
-	KnownModel   string `json:"knownModel"`
-	KnownYear    int32  `json:"knownYear"`
-	Country      string `json:"country"`
-	DefinitionID string `json:"definition_id"`
+	VIN        string `json:"vin"`
+	KnownModel string `json:"knownModel"`
+	KnownYear  int32  `json:"knownYear"`
+	Country    string `json:"country"`
 }
 
 func (*DecodeVINQuery) Key() string { return "DecodeVINQuery" }
@@ -93,11 +91,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Logger()
 
 	const (
-		VinRequests              = "VIN_All_Request"
-		VinSuccess               = "VIN_Success_Request"
-		VinExists                = "VIN_Exists_Request"
-		VinErrors                = "VIN_Error_Request"
-		DeviceDefinitionOverride = "Device_Definition_Override"
+		VinRequests = "VIN_All_Request"
+		VinSuccess  = "VIN_Success_Request"
+		VinExists   = "VIN_Exists_Request"
+		VinErrors   = "VIN_Error_Request"
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
@@ -119,72 +116,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		return r, nil
 	}
 
-	// todo: this should be a separate specific gRPC endpoint for setting or updating vin number to DD mapping
-	// If DefinitionID passed in, override VIN decoding
-	localLog.Info().Msgf("Start Decode VIN for %s and device definition %s", vin.String(), qry.DefinitionID)
-	if len(qry.DefinitionID) > 0 {
-		tblDef, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get device definition id: %s", qry.DefinitionID)
-		}
-		makeSlug := strings.Split(tblDef.ID, "_")[0]
-		dm, err := dc.identity.GetManufacturer(makeSlug)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get device make for: %s", qry.DefinitionID)
-		}
-		dbWMI, err := dc.vinRepository.GetOrCreateWMI(ctx, wmi, dm.Name)
-		if err != nil {
-			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			localLog.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
-			return resp, nil
-		}
-
-		// insert vin_numbers
-		vinDecodeNumber = &models.VinNumber{
-			Vin:              vin.String(),
-			ManufacturerName: dm.Name,
-			Wmi:              null.StringFrom(dbWMI.Wmi),
-			VDS:              null.StringFrom(vin.VDS()),
-			Vis:              null.StringFrom(vin.VIS()),
-			CheckDigit:       null.StringFrom(vin.CheckDigit()),
-			SerialNumber:     vin.SerialNumber(),
-			DecodeProvider:   null.StringFrom("manual"),
-			Year:             tblDef.Year,
-			DefinitionID:     tblDef.ID,
-		}
-
-		split := strings.Split(vinDecodeNumber.DefinitionID, "_")
-		if len(split) != 3 {
-			return nil, errors.New("invalid definition ID encountered: " + vinDecodeNumber.DefinitionID)
-		}
-
-		// no style, maybe for future way to pick the Style from Admin
-
-		// note we use a transaction here all throughout and commit at the end
-		if err = vinDecodeNumber.Insert(ctx, txVinNumbers, boil.Infer()); err != nil {
-			localLog.Err(err).
-				Str("definition_id", tblDef.ID).
-				Msg("failed to insert to vin_numbers")
-		}
-		err = txVinNumbers.Commit()
-		if err != nil {
-			return nil, errors.Wrap(err, "error when commiting transaction for inserting vin_number")
-		}
-
-		resp.Manufacturer = dm.Name
-		resp.Year = int32(vinDecodeNumber.Year)
-		resp.Source = vinDecodeNumber.DecodeProvider.String
-		pt, err := dc.powerTrainTypeService.ResolvePowerTrainType(split[0], split[1], null.JSON{}, null.JSON{})
-		if err != nil {
-			pt = coremodels.ICE.String()
-		}
-		resp.Powertrain = pt
-		resp.DefinitionId = tblDef.ID
-
-		metrics.Success.With(prometheus.Labels{"method": DeviceDefinitionOverride}).Inc()
-
-		return resp, nil
-	}
+	localLog.Info().Msgf("Start Decode VIN ")
 
 	_, err = models.DeviceTypes(models.DeviceTypeWhere.ID.EQ(common.DefaultDeviceType)).One(ctx, dc.dbs().Reader)
 	if err != nil {
