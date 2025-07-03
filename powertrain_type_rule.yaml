@@ -52,6 +52,7 @@ types:
       - volkswagen
       - kia
       - jaguar
+      - cupra
     models:
       - lyriq
       - eqs
@@ -76,6 +77,8 @@ types:
       - ev6
       - ev9
       - i-pace
+      - tavascan
+      - born
 
   - name: Rule FCEV
     type: FCEV
@@ -101,6 +104,7 @@ drivly:
     values:
       - Electric
       - Alternative
+      - electric
 
 vincario:
   - type: ICE
