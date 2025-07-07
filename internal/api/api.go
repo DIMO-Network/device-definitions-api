@@ -112,7 +112,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetIntegrationOptionsQuery{}, queries.NewGetIntegrationOptionsQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
-			queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService, identityAPI),
+			decodeVINHandler,
 			queries.NewGetDeviceDefinitionByIDQueryHandler(ddOnChainService, pdb.DBS),
 		)),
 
@@ -124,7 +124,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQueryV2{}, queries.NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetVINProfileQuery{}, queries.NewGetVINProfileQueryHandler(pdb.DBS, &logger, powerTrainTypeService)),
 
-		mediator.WithHandler(&queries.DecodeVINQuery{}, decodeVINHandler),
 		mediator.WithHandler(&queries.UpsertDecodingQuery{}, upsertVINHandler),
 	)
 
@@ -146,7 +145,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		JWKSetURLs: []string{settings.JwtKeySetURL},
 	})
 
-	RegisterDeviceDefinitionsRoutes(app, *m, jwtAuth)
+	RegisterDeviceDefinitionsRoutes(app, *m, jwtAuth, decodeVINHandler)
 	RegisterIntegrationRoutes(app, *m)
 	RegisterDeviceTypeRoutes(app, *m)
 

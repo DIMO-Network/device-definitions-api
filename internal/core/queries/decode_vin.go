@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -73,16 +72,18 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 	}
 }
 
-func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
-	qry := query.(*DecodeVINQuery)
-	if len(qry.VIN) < 10 || len(qry.VIN) > 17 {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", qry.VIN)}
+func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuery) (*p_grpc.DecodeVinResponse, error) {
+	if query == nil {
+		return nil, &exceptions.ValidationError{Err: errors.New("query is nil")}
+	}
+	if len(query.VIN) < 10 || len(query.VIN) > 17 {
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", query.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}
-	vinObj := vin.VIN(qry.VIN)
+	vinObj := vin.VIN(query.VIN)
 
 	if !vinObj.IsValidJapanChassis() && !vinObj.IsValidVIN() {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", qry.VIN)}
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", query.VIN)}
 	}
 
 	resp.Year = int32(vinObj.Year())
@@ -92,9 +93,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		Str(logfields.VIN, vinObj.String()).
 		Str("handler", query.Key()).
 		Str("vinYear", fmt.Sprintf("%d", resp.Year)).
-		Str("knownModel", qry.KnownModel).
-		Str("knownYear", strconv.Itoa(int(qry.KnownYear))).
-		Str("country", qry.Country).
+		Str("knownModel", query.KnownModel).
+		Str("knownYear", strconv.Itoa(int(query.KnownYear))).
+		Str("country", query.Country).
 		Logger()
 
 	const (
@@ -140,21 +141,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
 		if dbWMI.ManufacturerName == "Tesla" {
-			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, qry.Country)
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, query.Country)
 			resp.Manufacturer = "Tesla"
 		}
 	}
 	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, qry.Country) // this will try drivly first unless of japan
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
 	if err != nil {
-		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
+		if len(query.KnownModel) > 0 && query.KnownYear > 0 {
 			// note if this is successful, err gets set to nil
 			// todo: the knownModel should correspond with the Make
-			vinInfo, err = dc.vinInfoFromKnown(vinObj, qry.KnownModel, qry.KnownYear)
+			vinInfo, err = dc.vinInfoFromKnown(vinObj, query.KnownModel, query.KnownYear)
 		}
 	}
 
@@ -167,7 +168,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if err == nil {
 			err = errors.New("failed to decode, vinInfo is nil")
 		}
-		localLog.Err(err).Msgf("failed to decode vinObj from provider, country: %s", qry.Country)
+		localLog.Err(err).Msgf("failed to decode vinObj from provider, country: %s", query.Country)
 		// todo track failed decodes
 		return nil, err
 	}

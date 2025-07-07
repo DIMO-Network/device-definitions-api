@@ -8,8 +8,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/api/common"
 
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	_ "github.com/DIMO-Network/device-definitions-api/internal/core/models" // required for swagger to generate models
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
@@ -30,7 +28,7 @@ import (
 // @Failure 500
 // @Security    BearerAuth
 // @Router /device-definitions/decode-vin [post]
-func DecodeVIN(m mediator.Mediator) fiber.Handler {
+func DecodeVIN(dvq queries.DecodeVINQueryHandler) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var dvr DecodeVINRequest
 		if err := c.BodyParser(&dvr); err != nil {
@@ -38,14 +36,13 @@ func DecodeVIN(m mediator.Mediator) fiber.Handler {
 		}
 		query := &queries.DecodeVINQuery{VIN: dvr.VIN, Country: dvr.CountryCode}
 
-		result, err := m.Send(c.UserContext(), query)
+		result, err := dvq.Handle(c.UserContext(), query)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "Couldn't decode VIN.")
 		}
-		resp := result.(*p_grpc.DecodeVinResponse)
 		dd := DecodeVINResponse{
-			DeviceDefinitionID: resp.DefinitionId,
-			NewTransactionHash: resp.NewTrxHash,
+			DeviceDefinitionID: result.DefinitionId,
+			NewTransactionHash: result.NewTrxHash,
 		}
 
 		return c.Status(fiber.StatusOK).JSON(dd)

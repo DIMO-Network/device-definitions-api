@@ -23,7 +23,6 @@ import (
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
-	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/stretchr/testify/assert"
@@ -170,16 +169,15 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2021), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
 
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
-	s.Assert().Equal(ds.ID, result.DeviceStyleId)
+	s.Assert().Equal(ds.ID, qryResult.DeviceStyleId)
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
@@ -281,13 +279,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
-	s.NotNil(result, "expected result not nil")
+	s.NotNil(qryResult, "expected qryResult not nil")
 
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
-	s.Assert().Equal(ds.ID, result.DeviceStyleId)
+	s.Assert().Equal(ds.ID, qryResult.DeviceStyleId)
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
@@ -342,12 +339,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_exist
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2024), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
-	s.Assert().Equal(dm.Name, result.Manufacturer)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2024), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
+	s.Assert().Equal(dm.Name, qryResult.Manufacturer)
 }
 
 // using existing WMI
@@ -435,13 +431,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
-	s.NotNil(result, "expected result not nil")
+	s.NotNil(qryResult, "expected qryResult not nil")
 
 	// validate style was created
 	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
-	s.Assert().Equal(ds.ID, result.DeviceStyleId)
+	s.Assert().Equal(ds.ID, qryResult.DeviceStyleId)
 	s.Assert().Equal(vinInfoResp.Trim+" "+vinInfoResp.SubModel, ds.Name)
 	s.Assert().Equal(vinInfoResp.SubModel, ds.SubModel)
 	s.Assert().Equal("drivly", ds.Source)
@@ -555,13 +550,12 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
-	s.Assert().Equal(dm.Name, result.Manufacturer)
-	s.Assert().Equal(ds.ID, result.DeviceStyleId)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2021), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
+	s.Assert().Equal(dm.Name, qryResult.Manufacturer)
+	s.Assert().Equal(ds.ID, qryResult.DeviceStyleId)
 
 }
 
@@ -642,12 +636,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
-	s.Assert().Equal(dm.Name, result.Manufacturer)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2021), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
+	s.Assert().Equal(dm.Name, qryResult.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -695,12 +688,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2023), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
-	s.Assert().Equal(dm.Name, result.Manufacturer)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2023), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
+	s.Assert().Equal(dm.Name, qryResult.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -750,12 +742,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	s.NoError(err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
-	s.NotNil(result, "expected result not nil")
-	s.Assert().Equal(int32(2021), result.Year)
-	s.Assert().Equal(dd.ID, result.DefinitionId)
-	s.Assert().Equal(dm.Name, result.Manufacturer)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(int32(2021), qryResult.Year)
+	s.Assert().Equal(dd.ID, qryResult.DefinitionId)
+	s.Assert().Equal(dm.Name, qryResult.Manufacturer)
 	// validate same number of wmi's
 	wmis, err := models.Wmis().All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
@@ -799,8 +790,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	assert.NotNil(s.T(), qryResult)
 	assert.NoError(s.T(), err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
-	assert.Equal(s.T(), int32(2017), result.Year)
+	assert.Equal(s.T(), int32(2017), qryResult.Year)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso() {
@@ -841,9 +831,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
 	assert.NotNil(s.T(), qryResult)
 	assert.NoError(s.T(), err)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
-	assert.Equal(s.T(), int32(2017), result.Year)
-	assert.Equal(s.T(), "", result.DeviceStyleId)
+	assert.Equal(s.T(), int32(2017), qryResult.Year)
+	assert.Equal(s.T(), "", qryResult.DeviceStyleId)
 
 	count, err := models.VinNumbers().Count(s.ctx, s.pdb.DBS().Reader)
 	require.NoError(s.T(), err)
@@ -896,12 +885,11 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	// make will be inferred by WMI
 	assert.Nil(s.T(), err)
 	assert.NotNil(s.T(), qryResult)
-	result := qryResult.(*p_grpc.DecodeVinResponse)
-	assert.Equal(s.T(), int32(2022), result.Year)
-	assert.Equal(s.T(), dm.Name, result.Manufacturer)
-	assert.Equal(s.T(), "probably smartcar", result.Source)
-	assert.NotEmptyf(s.T(), result.DefinitionId, "dd expected")
-	assert.Equal(s.T(), result.NewTrxHash, "")
+	assert.Equal(s.T(), int32(2022), qryResult.Year)
+	assert.Equal(s.T(), dm.Name, qryResult.Manufacturer)
+	assert.Equal(s.T(), "probably smartcar", qryResult.Source)
+	assert.NotEmptyf(s.T(), qryResult.DefinitionId, "dd expected")
+	assert.Equal(s.T(), qryResult.NewTrxHash, "")
 }
 
 func TestResolveMetadataFromInfo(t *testing.T) {
