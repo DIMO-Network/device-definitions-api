@@ -3,7 +3,7 @@ module github.com/DIMO-Network/device-definitions-api
 go 1.24
 
 require (
-	github.com/DIMO-Network/shared v1.0.2
+	github.com/DIMO-Network/shared v1.0.6
 	github.com/antchfx/xmlquery v1.4.1
 	github.com/arsmn/fiber-swagger/v2 v2.31.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.27

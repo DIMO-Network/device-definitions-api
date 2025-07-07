@@ -76,6 +76,8 @@ github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1M
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DIMO-Network/shared v1.0.2 h1:V5PH+tbhKwm/UBoMJLA0fKxt5lO2TFPNOJCSsrTCDxs=
 github.com/DIMO-Network/shared v1.0.2/go.mod h1:lDHUKwwT2LW6Zvd42Nb33dXklRNTmfyOlbUNx2dQfGY=
+github.com/DIMO-Network/shared v1.0.6 h1:hUCxB7WFL4+VAFQMjtvZ6O2UrtF1PgA1OQwl0Ilm3h4=
+github.com/DIMO-Network/shared v1.0.6/go.mod h1:lDHUKwwT2LW6Zvd42Nb33dXklRNTmfyOlbUNx2dQfGY=
 github.com/DIMO-Network/yaml v0.1.0 h1:KQ3oKHUZETchR6Pxbmmol3e4ewrPv/q8cEwqxfwyZbU=
 github.com/DIMO-Network/yaml v0.1.0/go.mod h1:KkiehcbkVzH8Pf8f9dja8B2aW81gYYZSqfwzSj9yN68=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
