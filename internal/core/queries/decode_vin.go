@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/DIMO-Network/shared/pkg/logfields"
+
 	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -74,15 +76,20 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
 	qry := query.(*DecodeVINQuery)
 	if len(qry.VIN) < 10 || len(qry.VIN) > 17 {
-		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid vin %s", qry.VIN)}
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", qry.VIN)}
 	}
 	resp := &p_grpc.DecodeVinResponse{}
-	vin := vin.VIN(qry.VIN)
-	resp.Year = int32(vin.Year())
-	wmi := vin.Wmi()
+	vinObj := vin.VIN(qry.VIN)
+
+	if !vinObj.IsValidJapanChassis() && !vinObj.IsValidVIN() {
+		return nil, &exceptions.ValidationError{Err: fmt.Errorf("invalid VIN %s", qry.VIN)}
+	}
+
+	resp.Year = int32(vinObj.Year())
+	wmi := vinObj.Wmi()
 
 	localLog := dc.logger.With().
-		Str("vin", vin.String()).
+		Str(logfields.VIN, vinObj.String()).
 		Str("handler", query.Key()).
 		Str("vinYear", fmt.Sprintf("%d", resp.Year)).
 		Str("knownModel", qry.KnownModel).
@@ -104,7 +111,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	}
 	defer txVinNumbers.Rollback() //nolint
 	vinDecodeNumber, err := models.VinNumbers(
-		models.VinNumberWhere.Vin.EQ(vin.String())).
+		models.VinNumberWhere.Vin.EQ(vinObj.String())).
 		One(ctx, txVinNumbers)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
@@ -126,20 +133,20 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	// future: see if we can self decode model based on data we have before calling external decode WMI and VDS. Only thing is we won't get the style.
 
 	if resp.Year == 0 || resp.Year > int32(time.Now().Year()+1) {
-		localLog.Info().Msgf("encountered vin with non-standard year digit")
+		localLog.Info().Msgf("encountered vinObj with non-standard year digit")
 	}
 	// check if this is a Tesla VIN, if not just follow regular path
 	vinInfo := &coremodels.VINDecodingInfoData{}
 	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
 		if dbWMI.ManufacturerName == "Tesla" {
-			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), coremodels.TeslaProvider, qry.Country)
+			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, qry.Country)
 			resp.Manufacturer = "Tesla"
 		}
 	}
 	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vin.String(), coremodels.AllProviders, qry.Country) // this will try drivly first unless of japan
+		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, qry.Country) // this will try drivly first unless of japan
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
@@ -147,7 +154,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if len(qry.KnownModel) > 0 && qry.KnownYear > 0 {
 			// note if this is successful, err gets set to nil
 			// todo: the knownModel should correspond with the Make
-			vinInfo, err = dc.vinInfoFromKnown(vin, qry.KnownModel, qry.KnownYear)
+			vinInfo, err = dc.vinInfoFromKnown(vinObj, qry.KnownModel, qry.KnownYear)
 		}
 	}
 
@@ -160,7 +167,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		if err == nil {
 			err = errors.New("failed to decode, vinInfo is nil")
 		}
-		localLog.Err(err).Msgf("failed to decode vin from provider, country: %s", qry.Country)
+		localLog.Err(err).Msgf("failed to decode vinObj from provider, country: %s", qry.Country)
 		// todo track failed decodes
 		return nil, err
 	}
@@ -169,7 +176,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		_, err = dc.vinRepository.GetOrCreateWMI(ctx, wmi, vinInfo.Make)
 		if err != nil {
 			// just log, Japan chasis numbers won't really work with this anyways
-			dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vin %s", vin.String())
+			dc.logger.Error().Err(err).Msgf("failed to get or create wmi for vinObj %s", vinObj.String())
 		}
 	}
 	resp.Manufacturer = vinInfo.Make
@@ -183,11 +190,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 
 	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid)
 	if errTbl != nil {
-		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
+		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
-		dc.logger.Warn().Msgf("failed to get definition from tableland for vin: %s, id: %s", vin.String(), tid)
+		dc.logger.Warn().Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else {
-		dc.logger.Info().Str("vin", vin.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
+		dc.logger.Info().Str(logfields.VIN, vinObj.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
 	}
 
 	// add images if we don't have any for this definition_id
@@ -236,7 +243,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		})
 		if err != nil {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			return nil, errors.Wrap(err, "error creating new device definition on-chain from decoded vin")
+			return nil, errors.Wrap(err, "error creating new device definition on-chain from decoded vinObj")
 		}
 		resp.NewTrxHash = *trx
 	}
@@ -248,12 +255,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 		var styleErr error
 		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, resp.Powertrain)
 		if styleErr != nil {
-			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vin: %s. continuing", vin.String())
+			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vinObj: %s. continuing", vinObj.String())
 		}
 	}
 
 	// insert vin_numbers
-	errVinNumber := dc.saveVinDecodeNumber(ctx, vin, vinInfo, resp)
+	errVinNumber := dc.saveVinDecodeNumber(ctx, vinObj, vinInfo, resp)
 	if errVinNumber != nil {
 		return nil, errors.Wrap(errVinNumber, "error saving vin_number")
 	}
@@ -261,9 +268,9 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query mediator.Messa
 	localLog.Info().Str("device_definition_id", resp.DefinitionId).
 		Str("style_id", resp.DeviceStyleId).
 		Str("wmi", wmi).
-		Str("vds", vin.VDS()).
-		Str("vis", vin.VIS()).
-		Str("check_digit", vin.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
+		Str("vds", vinObj.VDS()).
+		Str("vis", vinObj.VIS()).
+		Str("check_digit", vinObj.CheckDigit()).Msgf("decoded vinObj ok with: %s", vinInfo.Source)
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
 
@@ -367,20 +374,20 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 	return style.ID, nil
 }
 
-func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin vin.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
+func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vinObj vin.VIN, vinInfo *coremodels.VINDecodingInfoData, resp *p_grpc.DecodeVinResponse) error {
 	vinDecodeNumber := &models.VinNumber{
-		Vin:              vin.String(),
+		Vin:              vinObj.String(),
 		ManufacturerName: resp.Manufacturer,
-		Wmi:              null.StringFrom(vin.Wmi()),
-		SerialNumber:     vin.SerialNumber(),
+		Wmi:              null.StringFrom(vinObj.Wmi()),
+		SerialNumber:     vinObj.SerialNumber(),
 		DecodeProvider:   null.StringFrom(string(vinInfo.Source)),
 		Year:             int(resp.Year),
 		DefinitionID:     resp.DefinitionId,
 	}
-	if !vin.IsJapanChassis() {
-		vinDecodeNumber.VDS = null.StringFrom(vin.VDS())
-		vinDecodeNumber.Vis = null.StringFrom(vin.VIS())
-		vinDecodeNumber.CheckDigit = null.StringFrom(vin.CheckDigit())
+	if vinObj.IsValidVIN() {
+		vinDecodeNumber.VDS = null.StringFrom(vinObj.VDS())
+		vinDecodeNumber.Vis = null.StringFrom(vinObj.VIS())
+		vinDecodeNumber.CheckDigit = null.StringFrom(vinObj.CheckDigit())
 	}
 
 	// Optional fields based on response and VIN info
@@ -409,6 +416,8 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vin vin
 		if len(vinInfo.Raw) > 0 {
 			vinDecodeNumber.Vin17Data = null.JSONFrom(vinInfo.Raw)
 		}
+	case coremodels.CarVXVIN:
+		// we currently do not store the raw payload since seemed to not gain much for now
 	}
 
 	// Insert VIN decode number into the database
