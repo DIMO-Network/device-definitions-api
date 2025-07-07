@@ -121,7 +121,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(makeSlug string, modelSlug 
 		if err != nil {
 			c.logger.Error().Err(err).Send()
 		}
-		c.logger.Info().Msg("Looking up PowerTrain from Drivly Data")
+		c.logger.Debug().Msgf("Looking up PowerTrain from Drivly Data for %s", modelSlug)
 		for _, item := range c.powerTrainRuleData.DrivlyList {
 			if len(item.Values) > 0 {
 				for _, value := range item.Values {
@@ -139,7 +139,7 @@ func (c powerTrainTypeService) ResolvePowerTrainType(makeSlug string, modelSlug 
 		if err != nil {
 			c.logger.Error().Err(err).Send()
 		}
-		c.logger.Info().Msg("Looking up PowerTrain from Vincario Data")
+		c.logger.Debug().Msgf("Looking up PowerTrain from Vincario Data for %s", modelSlug)
 		for _, item := range c.powerTrainRuleData.VincarioList {
 			if len(item.Values) > 0 {
 				for _, value := range item.Values {
