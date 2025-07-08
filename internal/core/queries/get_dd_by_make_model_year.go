@@ -11,8 +11,8 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/pkg/db"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
+	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/ericlagergren/decimal"
-	"github.com/volatiletech/sqlboiler/v4/types"
 )
 
 type GetDeviceDefinitionByMakeModelYearQuery struct {

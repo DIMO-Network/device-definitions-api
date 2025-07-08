@@ -26,11 +26,11 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type DecodeVINQueryHandler struct {

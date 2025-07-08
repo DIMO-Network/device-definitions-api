@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 )
 
 type DecodeProviderEnum string

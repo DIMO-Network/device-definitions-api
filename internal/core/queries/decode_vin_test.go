@@ -14,7 +14,7 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 
 	mock_services "github.com/DIMO-Network/device-definitions-api/internal/core/services/mocks"
 
@@ -25,12 +25,12 @@ import (
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/DIMO-Network/shared/pkg/db"
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/tidwall/gjson"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"go.uber.org/mock/gomock"
 )
 

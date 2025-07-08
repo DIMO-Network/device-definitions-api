@@ -61,14 +61,14 @@ If brew version does not work, download from https://github.com/golangci/golangc
 
 ### Database ORM
 
-This is using [sqlboiler](https://github.com/volatiletech/sqlboiler). The ORM models are code generated. If the db changes,
+This is using [sqlboiler](https://github.com/aarondl/sqlboiler). The ORM models are code generated. If the db changes,
 you must update the models.
 
 Make sure you have sqlboiler installed:
 
 ```bash
-go install github.com/volatiletech/sqlboiler/v4@latest
-go install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@latest
+go install github.com/aarondl/sqlboiler/v4@latest
+go install github.com/aarondl/sqlboiler/v4/drivers/sqlboiler-psql@latest
 ```
 
 To generate the models:

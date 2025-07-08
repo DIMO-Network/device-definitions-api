@@ -14,9 +14,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/shared/pkg/db"
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/goccy/go-json"
 

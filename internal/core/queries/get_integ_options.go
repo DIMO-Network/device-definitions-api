@@ -8,7 +8,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
-	"github.com/volatiletech/sqlboiler/v4/queries"
+	"github.com/aarondl/sqlboiler/v4/queries"
 )
 
 type GetIntegrationOptionsQuery struct {

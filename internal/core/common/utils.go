@@ -10,7 +10,7 @@ import (
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 )
 
 func JSONOrDefault(j null.JSON) json.RawMessage {

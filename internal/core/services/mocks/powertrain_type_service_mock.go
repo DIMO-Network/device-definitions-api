@@ -12,7 +12,7 @@ package mocks
 import (
 	reflect "reflect"
 
-	null "github.com/volatiletech/null/v8"
+	null "github.com/aarondl/null/v8"
 	gomock "go.uber.org/mock/gomock"
 )
 

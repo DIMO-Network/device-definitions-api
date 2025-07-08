@@ -16,7 +16,7 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
