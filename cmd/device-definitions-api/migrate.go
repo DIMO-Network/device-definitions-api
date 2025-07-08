@@ -23,7 +23,7 @@ type migrateDBCmd struct {
 func (*migrateDBCmd) Name() string     { return "migrate" }
 func (*migrateDBCmd) Synopsis() string { return "migrate args to stdout." }
 func (*migrateDBCmd) Usage() string {
-	return `migrate [-up-to|-down-to] <some text>:
+	return `migrate [-up|-down] <some text>:
 	migrate args.
   `
 }

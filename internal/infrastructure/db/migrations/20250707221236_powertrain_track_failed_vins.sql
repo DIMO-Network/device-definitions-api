@@ -12,6 +12,7 @@ create table device_definitions_api.failed_vin_decodes (
     datgroup_data     jsonb,
     vin17_data        jsonb,
     manufacturer_name text,
+    country_code      varchar(5),
     created_at timestamp with time zone default CURRENT_TIMESTAMP not null
 );
 

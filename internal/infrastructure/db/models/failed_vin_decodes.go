@@ -33,6 +33,7 @@ type FailedVinDecode struct {
 	DatgroupData     null.JSON         `boil:"datgroup_data" json:"datgroup_data,omitempty" toml:"datgroup_data" yaml:"datgroup_data,omitempty"`
 	Vin17Data        null.JSON         `boil:"vin17_data" json:"vin17_data,omitempty" toml:"vin17_data" yaml:"vin17_data,omitempty"`
 	ManufacturerName null.String       `boil:"manufacturer_name" json:"manufacturer_name,omitempty" toml:"manufacturer_name" yaml:"manufacturer_name,omitempty"`
+	CountryCode      null.String       `boil:"country_code" json:"country_code,omitempty" toml:"country_code" yaml:"country_code,omitempty"`
 	CreatedAt        time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 
 	R *failedVinDecodeR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var FailedVinDecodeColumns = struct {
 	DatgroupData     string
 	Vin17Data        string
 	ManufacturerName string
+	CountryCode      string
 	CreatedAt        string
 }{
 	Vin:              "vin",
@@ -58,6 +60,7 @@ var FailedVinDecodeColumns = struct {
 	DatgroupData:     "datgroup_data",
 	Vin17Data:        "vin17_data",
 	ManufacturerName: "manufacturer_name",
+	CountryCode:      "country_code",
 	CreatedAt:        "created_at",
 }
 
@@ -70,6 +73,7 @@ var FailedVinDecodeTableColumns = struct {
 	DatgroupData     string
 	Vin17Data        string
 	ManufacturerName string
+	CountryCode      string
 	CreatedAt        string
 }{
 	Vin:              "failed_vin_decodes.vin",
@@ -80,6 +84,7 @@ var FailedVinDecodeTableColumns = struct {
 	DatgroupData:     "failed_vin_decodes.datgroup_data",
 	Vin17Data:        "failed_vin_decodes.vin17_data",
 	ManufacturerName: "failed_vin_decodes.manufacturer_name",
+	CountryCode:      "failed_vin_decodes.country_code",
 	CreatedAt:        "failed_vin_decodes.created_at",
 }
 
@@ -120,6 +125,7 @@ var FailedVinDecodeWhere = struct {
 	DatgroupData     whereHelpernull_JSON
 	Vin17Data        whereHelpernull_JSON
 	ManufacturerName whereHelpernull_String
+	CountryCode      whereHelpernull_String
 	CreatedAt        whereHelpertime_Time
 }{
 	Vin:              whereHelperstring{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"vin\""},
@@ -130,6 +136,7 @@ var FailedVinDecodeWhere = struct {
 	DatgroupData:     whereHelpernull_JSON{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"datgroup_data\""},
 	Vin17Data:        whereHelpernull_JSON{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"vin17_data\""},
 	ManufacturerName: whereHelpernull_String{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"manufacturer_name\""},
+	CountryCode:      whereHelpernull_String{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"country_code\""},
 	CreatedAt:        whereHelpertime_Time{field: "\"device_definitions_api\".\"failed_vin_decodes\".\"created_at\""},
 }
 
@@ -150,9 +157,9 @@ func (*failedVinDecodeR) NewStruct() *failedVinDecodeR {
 type failedVinDecodeL struct{}
 
 var (
-	failedVinDecodeAllColumns            = []string{"vin", "vendors_tried", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "vin17_data", "manufacturer_name", "created_at"}
+	failedVinDecodeAllColumns            = []string{"vin", "vendors_tried", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "vin17_data", "manufacturer_name", "country_code", "created_at"}
 	failedVinDecodeColumnsWithoutDefault = []string{"vin"}
-	failedVinDecodeColumnsWithDefault    = []string{"vendors_tried", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "vin17_data", "manufacturer_name", "created_at"}
+	failedVinDecodeColumnsWithDefault    = []string{"vendors_tried", "vincario_data", "drivly_data", "autoiso_data", "datgroup_data", "vin17_data", "manufacturer_name", "country_code", "created_at"}
 	failedVinDecodePrimaryKeyColumns     = []string{"vin"}
 	failedVinDecodeGeneratedColumns      = []string{}
 )
