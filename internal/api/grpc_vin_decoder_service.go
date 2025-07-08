@@ -29,13 +29,10 @@ func (s *GrpcVinDecoderService) DecodeVin(ctx context.Context, in *p_grpc.Decode
 		KnownYear:  in.KnownYear,
 		Country:    in.Country,
 	}
-	qryResult, err := s.decodeVINHandler.Handle(ctx, &qry) // todo change Handle to require the actual type not mediator message
-	// todo change handler to return p_grpc.DecodeVinResponse? But would need to change other places too
+	result, err := s.decodeVINHandler.Handle(ctx, &qry)
 	if err != nil {
 		return nil, err
 	}
-
-	result := qryResult.(*p_grpc.DecodeVinResponse)
 
 	return result, nil
 }
