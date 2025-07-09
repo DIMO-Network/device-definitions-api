@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 
 //go:generate mockgen -source vincario_api_service.go -destination mocks/vincario_api_service_mock.go -package mocks
 type VincarioAPIService interface {
-	DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, error)
+	DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, []byte, error)
 }
 
 type vincarioAPIService struct {
@@ -40,26 +41,28 @@ func NewVincarioAPIService(settings *config.Settings, log *zerolog.Logger) Vinca
 	}
 }
 
-func (va *vincarioAPIService) DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, error) {
+func (va *vincarioAPIService) DecodeVIN(vin string) (*coremodels.VincarioInfoResponse, []byte, error) {
 	id := "decode"
 
 	urlPath := vincarioPathBuilder(vin, id, va.settings.VincarioAPIKey, va.settings.VincarioAPISecret)
 	// url with api access
 	resp, err := va.httpClientVIN.ExecuteRequest(urlPath, "GET", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
 
 	// decode JSON from response body
-	var data tempResponse
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	v := &tempResponse{}
+	err = json.Unmarshal(body, v)
 	if err != nil {
-		return nil, err
+		return nil, body, err
 	}
-	defer resp.Body.Close()
 
 	infoResp := coremodels.VincarioInfoResponse{}
-	for _, s2 := range data.Decode {
+	for _, s2 := range v.Decode {
 		// find the property in the struct with the label name in the key metadata
 		err := setStructPropertiesByMetadataKey(&infoResp, s2.Label, s2.Value)
 		if err != nil {
@@ -68,10 +71,10 @@ func (va *vincarioAPIService) DecodeVIN(vin string) (*coremodels.VincarioInfoRes
 	}
 
 	if infoResp.ModelYear == 0 || len(infoResp.Model) == 0 || len(infoResp.Make) == 0 {
-		return nil, fmt.Errorf("decode failed due to invalid MMY. Make %s, Model %s, Year %d", infoResp.Make, infoResp.Model, infoResp.ModelYear)
+		return nil, body, fmt.Errorf("decode failed due to invalid MMY. Make %s, Model %s, Year %d", infoResp.Make, infoResp.Model, infoResp.ModelYear)
 	}
 
-	return &infoResp, nil
+	return &infoResp, body, nil
 }
 
 func vincarioPathBuilder(vin, id, key, secret string) string {

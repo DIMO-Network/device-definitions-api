@@ -20,6 +20,7 @@ import (
 type MockDATGroupAPIService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDATGroupAPIServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockDATGroupAPIServiceMockRecorder is the mock recorder for MockDATGroupAPIService.
@@ -40,16 +41,17 @@ func (m *MockDATGroupAPIService) EXPECT() *MockDATGroupAPIServiceMockRecorder {
 }
 
 // GetVINv2 mocks base method.
-func (m *MockDATGroupAPIService) GetVINv2(vin, country string) (*models.DATGroupInfoResponse, error) {
+func (m *MockDATGroupAPIService) GetVINv2(vin string) (*models.DATGroupInfoResponse, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVINv2", vin, country)
+	ret := m.ctrl.Call(m, "GetVINv2", vin)
 	ret0, _ := ret[0].(*models.DATGroupInfoResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetVINv2 indicates an expected call of GetVINv2.
-func (mr *MockDATGroupAPIServiceMockRecorder) GetVINv2(vin, country any) *gomock.Call {
+func (mr *MockDATGroupAPIServiceMockRecorder) GetVINv2(vin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVINv2", reflect.TypeOf((*MockDATGroupAPIService)(nil).GetVINv2), vin, country)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVINv2", reflect.TypeOf((*MockDATGroupAPIService)(nil).GetVINv2), vin)
 }

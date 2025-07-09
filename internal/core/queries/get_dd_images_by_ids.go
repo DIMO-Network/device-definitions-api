@@ -8,9 +8,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type GetDeviceDefinitionImagesByIDsQuery struct {

@@ -20,6 +20,7 @@ import (
 type MockAutoIsoAPIService struct {
 	ctrl     *gomock.Controller
 	recorder *MockAutoIsoAPIServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockAutoIsoAPIServiceMockRecorder is the mock recorder for MockAutoIsoAPIService.
@@ -40,12 +41,13 @@ func (m *MockAutoIsoAPIService) EXPECT() *MockAutoIsoAPIServiceMockRecorder {
 }
 
 // GetVIN mocks base method.
-func (m *MockAutoIsoAPIService) GetVIN(vin string) (*models.AutoIsoVINResponse, error) {
+func (m *MockAutoIsoAPIService) GetVIN(vin string) (*models.AutoIsoVINResponse, []byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVIN", vin)
 	ret0, _ := ret[0].(*models.AutoIsoVINResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetVIN indicates an expected call of GetVIN.

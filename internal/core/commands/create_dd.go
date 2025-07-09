@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 

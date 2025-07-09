@@ -16,7 +16,7 @@ import (
 
 	contracts "github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	types "github.com/volatiletech/sqlboiler/v4/types"
+	types "github.com/aarondl/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )
 

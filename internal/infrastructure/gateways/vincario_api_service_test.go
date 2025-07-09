@@ -29,7 +29,7 @@ func Test_vincarioAPIService_DecodeVIN(t *testing.T) {
 
 	httpmock.RegisterResponder(http.MethodGet, baseURL+path, httpmock.NewStringResponder(200, string(testVincarioVINResp)))
 
-	resp, err := vincarioSvc.DecodeVIN(testVIN)
+	resp, _, err := vincarioSvc.DecodeVIN(testVIN)
 
 	require.NoError(t, err)
 	assert.Equal(t, testVIN, resp.VIN)
@@ -65,7 +65,7 @@ func Test_vincarioAPIService_DecodeVIN_MissingProperties(t *testing.T) {
 
 	httpmock.RegisterResponder(http.MethodGet, baseURL+path, httpmock.NewStringResponder(200, string(testVincarioVINResp)))
 
-	resp, err := vincarioSvc.DecodeVIN(testVIN)
+	resp, _, err := vincarioSvc.DecodeVIN(testVIN)
 
 	require.NoError(t, err)
 	assert.Equal(t, testVIN, resp.VIN)

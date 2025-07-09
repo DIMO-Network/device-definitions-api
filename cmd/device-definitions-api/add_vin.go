@@ -22,11 +22,11 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	vinutils "github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/google/subcommands"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type addVINCmd struct {

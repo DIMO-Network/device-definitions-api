@@ -15,7 +15,7 @@ import (
 
 //go:generate mockgen -source drivly_api_service.go -destination mocks/drivly_api_service_mock.go -package mocks
 type DrivlyAPIService interface {
-	GetVINInfo(vin string) (*coremodels.DrivlyVINResponse, error)
+	GetVINInfo(vin string) (*coremodels.DrivlyVINResponse, []byte, error)
 }
 
 type drivlyAPIService struct {
@@ -37,22 +37,22 @@ func NewDrivlyAPIService(settings *config.Settings) DrivlyAPIService {
 }
 
 // GetVINInfo is the basic enriched VIN call, that is pretty standard now. Looks in multiple sources in their backend.
-func (ds *drivlyAPIService) GetVINInfo(vin string) (*coremodels.DrivlyVINResponse, error) {
+func (ds *drivlyAPIService) GetVINInfo(vin string) (*coremodels.DrivlyVINResponse, []byte, error) {
 	res, err := executeAPI(ds.httpClientVIN, fmt.Sprintf("/api/%s/", vin))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	v := &coremodels.DrivlyVINResponse{}
 	err = json.Unmarshal(res, v)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if v.Year == "0" || len(v.Year) == 0 || len(v.Model) == 0 || len(v.Make) == 0 {
-		return nil, fmt.Errorf("decode failed due to invalid MMY. Make: %s Model: %s Year: %s", v.Make, v.Model, v.Year)
+		return nil, res, fmt.Errorf("decode failed due to invalid MMY. Make: %s Model: %s Year: %s", v.Make, v.Model, v.Year)
 	}
 
-	return v, nil
+	return v, res, nil
 }
 
 func executeAPI(httpClient http.ClientWrapper, path string) ([]byte, error) {

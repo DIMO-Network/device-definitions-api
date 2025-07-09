@@ -26,11 +26,11 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/DIMO-Network/shared/pkg/vin"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/segmentio/ksuid"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type DecodeVINQueryHandler struct {
@@ -91,11 +91,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 	localLog := dc.logger.With().
 		Str(logfields.VIN, vinObj.String()).
-		Str("handler", query.Key()).
+		Str(logfields.FunctionName, query.Key()).
 		Str("vinYear", fmt.Sprintf("%d", resp.Year)).
 		Str("knownModel", query.KnownModel).
 		Str("knownYear", strconv.Itoa(int(query.KnownYear))).
-		Str("country", query.Country).
+		Str(logfields.CountryCode, query.Country).
 		Logger()
 
 	const (
@@ -138,16 +138,17 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	}
 	// check if this is a Tesla VIN, if not just follow regular path
 	vinInfo := &coremodels.VINDecodingInfoData{}
+	vinExtra := &coremodels.VINDecodingVendorExtra{}
 	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
 		if dbWMI.ManufacturerName == "Tesla" {
-			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, query.Country)
+			vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, query.Country)
 			resp.Manufacturer = "Tesla"
 		}
 	}
 	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
+		vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
@@ -169,7 +170,23 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 			err = errors.New("failed to decode, vinInfo is nil")
 		}
 		localLog.Err(err).Msgf("failed to decode vinObj from provider, country: %s", query.Country)
-		// todo track failed decodes
+
+		failedVinDecode := models.FailedVinDecode{
+			Vin:              vinObj.String(),
+			VendorsTried:     vinExtra.VendorsTried,
+			VincarioData:     null.JSONFrom(vinExtra.VincarioRaw),
+			DrivlyData:       null.JSONFrom(vinExtra.DrivlyRaw),
+			AutoisoData:      null.JSONFrom(vinExtra.AutoIsoRaw),
+			DatgroupData:     null.JSONFrom(vinExtra.DATGroupRaw),
+			Vin17Data:        null.JSONFrom(vinExtra.Japan17VINRaw),
+			CountryCode:      null.StringFrom(query.Country),
+			ManufacturerName: null.StringFrom(resp.Manufacturer),
+		}
+		errFailedVin := failedVinDecode.Insert(ctx, dc.dbs().Writer, boil.Infer())
+		if errFailedVin != nil {
+			localLog.Err(errFailedVin).Msgf("failed to save failed vin decode to database")
+		}
+
 		return nil, err
 	}
 	// WMI's may be re-used by multiple OEM's of same parent OEM, but just create it if needed
@@ -271,7 +288,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		Str("wmi", wmi).
 		Str("vds", vinObj.VDS()).
 		Str("vis", vinObj.VIS()).
-		Str("check_digit", vinObj.CheckDigit()).Msgf("decoded vinObj ok with: %s", vinInfo.Source)
+		Str("check_digit", vinObj.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
 
@@ -296,18 +313,21 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		return nil
 	}
 	// call on-chain svc to get the DD and pull out the powertrain
-	pt := ""
+	powertrain := "" // this is what we're trying to resolve in part
 	trx := ""
 	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID)
 	if err == nil && tblDef != nil {
-		for _, attribute := range tblDef.Metadata.DeviceAttributes {
-			if attribute.Name == common.PowerTrainType {
-				pt = attribute.Value
+		if tblDef.Metadata != nil {
+			for _, attribute := range tblDef.Metadata.DeviceAttributes {
+				if attribute.Name == common.PowerTrainType {
+					powertrain = attribute.Value
+					break
+				}
 			}
 		}
-		if pt == "" {
+		if powertrain == "" {
 			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
-			pt, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
+			powertrain, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
 		}
 	} else {
 		// this is not good, somehow it got decoded in past without it being created on tableland
@@ -320,7 +340,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		DeviceStyleId: vn.StyleID.String,
 		Source:        vn.DecodeProvider.String,
 		DefinitionId:  vn.DefinitionID,
-		Powertrain:    pt,
+		Powertrain:    powertrain,
 		NewTrxHash:    trx,
 	}
 

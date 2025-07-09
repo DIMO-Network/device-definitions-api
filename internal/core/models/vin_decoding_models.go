@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/volatiletech/null/v8"
+	"github.com/aarondl/null/v8"
 )
 
 type DecodeProviderEnum string
@@ -34,6 +34,17 @@ type VINDecodingInfoData struct {
 	MetaData   null.JSON
 	Raw        []byte
 	FuelType   string
+}
+
+// VINDecodingVendorExtra extra information from decoding process to store for failures
+type VINDecodingVendorExtra struct {
+	VendorsTried  []string
+	DrivlyRaw     []byte
+	VincarioRaw   []byte
+	AutoIsoRaw    []byte
+	DATGroupRaw   []byte
+	Japan17VINRaw []byte
+	CarVXVINRaw   []byte
 }
 
 type AutoIsoVINResponse struct {

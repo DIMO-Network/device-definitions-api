@@ -7,9 +7,9 @@ import (
 	"go.uber.org/mock/gomock"
 
 	dbtesthelper "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/dbtest"
+	"github.com/aarondl/null/v8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/volatiletech/null/v8"
 )
 
 func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
