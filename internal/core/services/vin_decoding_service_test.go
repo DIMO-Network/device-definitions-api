@@ -135,7 +135,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 		MpgHighway:          31,
 		Wheelbase:           "106 WB",
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil, nil)
 
 	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
@@ -180,10 +180,10 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Vincario_Success() {
 		Height:             31,
 		Wheelbase:          1,
 	}
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
 	// s.mockDATGroupAPIService.EXPECT().GetVINv2(vin, country).Times(1).Return(nil, fmt.Errorf("unable to decode"))
 	// vincario is the last fallback
-	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vincarioResp, nil)
+	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(vincarioResp, nil, nil)
 
 	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
@@ -205,10 +205,10 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_AutoIso_Success() {
 	vinInfoResp := &coremodels.AutoIsoVINResponse{}
 	_ = json.Unmarshal(testAutoIsoJSON, vinInfoResp)
 
-	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
+	s.mockDrivlyAPISvc.EXPECT().GetVINInfo(vin).Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
 	s.mockJapan17VINAPI.EXPECT().GetVINInfo(vin).Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
-	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(nil, fmt.Errorf("unable to decode"))
-	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil)
+	s.mockVincarioAPISvc.EXPECT().DecodeVIN(vin).Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
+	s.mockAutoIsoAPISvc.EXPECT().GetVIN(vin).Times(1).Return(vinInfoResp, nil, nil)
 
 	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
@@ -251,7 +251,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
 	}
 	_ = xml.Unmarshal(testDATGroupXML, vinInfoResp)
 
-	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin).Times(1).Return(vinInfoResp, nil)
+	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin).Times(1).Return(vinInfoResp, nil, nil)
 
 	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
 
