@@ -138,17 +138,17 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	}
 	// check if this is a Tesla VIN, if not just follow regular path
 	vinInfo := &coremodels.VINDecodingInfoData{}
+	vinExtra := &coremodels.VINDecodingVendorExtra{}
 	dbWMI, err := models.Wmis(models.WmiWhere.Wmi.EQ(wmi)).One(ctx, dc.dbs().Reader)
 	if err == nil && dbWMI != nil {
 		if dbWMI.ManufacturerName == "Tesla" {
-			vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, query.Country)
+			vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.TeslaProvider, query.Country)
 			resp.Manufacturer = "Tesla"
 		}
 	}
 	// not a tesla, regular decode path
 	if vinInfo == nil || vinInfo.Model == "" {
-		// todo vinInfo: add raw from all vendors, add string array of vendors tried
-		vinInfo, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
+		vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
 	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
@@ -173,12 +173,12 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 		failedVinDecode := models.FailedVinDecode{
 			Vin:              vinObj.String(),
-			VendorsTried:     nil, // todo need to track this from vinInfo
-			VincarioData:     null.JSON{},
-			DrivlyData:       null.JSON{},
-			AutoisoData:      null.JSON{},
-			DatgroupData:     null.JSON{},
-			Vin17Data:        null.JSON{},
+			VendorsTried:     vinExtra.VendorsTried,
+			VincarioData:     null.JSONFrom(vinExtra.VincarioRaw),
+			DrivlyData:       null.JSONFrom(vinExtra.DrivlyRaw),
+			AutoisoData:      null.JSONFrom(vinExtra.AutoIsoRaw),
+			DatgroupData:     null.JSONFrom(vinExtra.DATGroupRaw),
+			Vin17Data:        null.JSONFrom(vinExtra.Japan17VINRaw),
 			CountryCode:      null.StringFrom(query.Country),
 			ManufacturerName: null.StringFrom(resp.Manufacturer),
 		}
