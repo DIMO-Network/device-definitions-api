@@ -60,16 +60,20 @@ func (dc GetVINProfileQueryHandler) Handle(ctx context.Context, query mediator.M
 		}
 		return nil, &exceptions.InternalError{Err: fmt.Errorf("failed to get vin %s", qry.VIN)}
 	}
-	split := strings.Split(vinNumber.DefinitionID, "_")
-	powertrain := ""
-	if len(split) == 3 {
-		powertrain, err = dc.powertrainSvc.ResolvePowerTrainType(split[0], split[1], vinNumber.DrivlyData, vinNumber.VincarioData)
-		if err != nil {
-			dc.logger.Error().Err(err).Str(logfields.VIN, qry.VIN).Msg("failed to resolve powertrain type for vin, continuing with ICE")
+	// try getting powertrain from override column in db
+	powertrain := vinNumber.PowertrainType.String
+	if powertrain == "" {
+		// otherwise resolve from powertrain type
+		split := strings.Split(vinNumber.DefinitionID, "_")
+		if len(split) == 3 {
+			powertrain, err = dc.powertrainSvc.ResolvePowerTrainType(split[0], split[1], vinNumber.DrivlyData, vinNumber.VincarioData)
+			if err != nil {
+				dc.logger.Error().Err(err).Str(logfields.VIN, qry.VIN).Msg("failed to resolve powertrain type for vin, continuing with ICE")
+			}
 		}
 	}
 	if powertrain == "" {
-		powertrain = string(coremodels.ICE)
+		powertrain = string(coremodels.ICE) //default to ICE
 	}
 
 	return &GetVINProfileResponse{
