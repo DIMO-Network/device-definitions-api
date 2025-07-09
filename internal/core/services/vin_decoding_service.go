@@ -215,8 +215,8 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 		case coremodels.DATGroupProvider:
 			resultVendorExtra.VendorsTried = append(resultVendorExtra.VendorsTried, string(coremodels.DATGroupProvider))
 			localLog.Info().Msgf("trying to decode VIN: %s with datgroup", vin)
-			// todo lookup country for two letter equiv
-			vinInfo, raw, err := c.DATGroupAPIService.GetVINv2(vin, country) // try with Turkey
+
+			vinInfo, _, err := c.DATGroupAPIService.GetVINv2(vin)
 			if err != nil {
 				errFinal = errors.Wrapf(err, "unable to decode vin: %s with DATGroup", vin)
 				continue

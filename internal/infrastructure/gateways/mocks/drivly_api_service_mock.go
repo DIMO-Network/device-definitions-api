@@ -20,6 +20,7 @@ import (
 type MockDrivlyAPIService struct {
 	ctrl     *gomock.Controller
 	recorder *MockDrivlyAPIServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockDrivlyAPIServiceMockRecorder is the mock recorder for MockDrivlyAPIService.
@@ -40,12 +41,13 @@ func (m *MockDrivlyAPIService) EXPECT() *MockDrivlyAPIServiceMockRecorder {
 }
 
 // GetVINInfo mocks base method.
-func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*models.DrivlyVINResponse, error) {
+func (m *MockDrivlyAPIService) GetVINInfo(vin string) (*models.DrivlyVINResponse, []byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVINInfo", vin)
 	ret0, _ := ret[0].(*models.DrivlyVINResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetVINInfo indicates an expected call of GetVINInfo.

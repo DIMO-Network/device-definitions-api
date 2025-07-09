@@ -20,6 +20,7 @@ import (
 type MockJapan17VINAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockJapan17VINAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockJapan17VINAPIMockRecorder is the mock recorder for MockJapan17VINAPI.

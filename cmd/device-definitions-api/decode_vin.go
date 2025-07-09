@@ -116,7 +116,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 		vinInfo := &coremodels.VINDecodingInfoData{VIN: vin}
 
 		if p.datGroup {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DATGroupProvider, country)
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DATGroupProvider, country)
 			// use the dat group service to decode
 			if err != nil {
 				fmt.Println(err.Error())
@@ -126,7 +126,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("\n\nVIN Response: %+v\n", vinInfo)
 		}
 		if p.drivly {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DrivlyProvider, country)
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.DrivlyProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -135,7 +135,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.vincario {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.VincarioProvider, country)
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.VincarioProvider, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -143,7 +143,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.carvx {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.CarVXVIN, country)
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.CarVXVIN, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -151,7 +151,7 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Printf("VIN Response: %+v\n", vinInfo)
 		}
 		if p.japan17vin {
-			vinInfo, err = vinDecodingService.GetVIN(ctx, vin, coremodels.Japan17VIN, country)
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.Japan17VIN, country)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue

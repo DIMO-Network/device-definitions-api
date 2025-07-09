@@ -3,13 +3,14 @@ package gateways
 import (
 	"bytes"
 	"fmt"
-	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"io"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 
@@ -23,7 +24,7 @@ import (
 
 //go:generate mockgen -source datgroup_api_service.go -destination mocks/datgroup_api_service_mock.go -package mocks
 type DATGroupAPIService interface {
-	GetVINv2(vin string, country string) (*coremodels.DATGroupInfoResponse, []byte, error)
+	GetVINv2(vin string) (*coremodels.DATGroupInfoResponse, []byte, error)
 }
 
 type datGroupAPIService struct {
@@ -38,10 +39,7 @@ func NewDATGroupAPIService(settings *config.Settings, logger *zerolog.Logger) DA
 	}
 }
 
-func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*coremodels.DATGroupInfoResponse, []byte, error) {
-	if userCountryISO2 == "" || len(userCountryISO2) != 2 {
-		userCountryISO2 = "US"
-	}
+func (ai *datGroupAPIService) GetVINv2(vin string) (*coremodels.DATGroupInfoResponse, []byte, error) {
 	customerLogin := ai.Settings.DatGroupCustomerLogin
 	customerNumber := ai.Settings.DatGroupCustomerNumber
 	customerSignature := ai.Settings.DatGroupCustomerSignature
@@ -72,8 +70,7 @@ func (ai *datGroupAPIService) GetVINv2(vin, userCountryISO2 string) (*coremodels
 </soapenv:Body>
 </soapenv:Envelope>
 `
-	soapReqWParams := fmt.Sprintf(soapReq, customerLogin, customerNumber, customerNumber, customerSignature, interfacePartnerSignature,
-		userCountryISO2, vin)
+	soapReqWParams := fmt.Sprintf(soapReq, customerLogin, customerNumber, customerNumber, customerSignature, interfacePartnerSignature, vin)
 
 	ai.log.Debug().Msg(soapReqWParams)
 

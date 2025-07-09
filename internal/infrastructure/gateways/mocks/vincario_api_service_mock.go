@@ -20,6 +20,7 @@ import (
 type MockVincarioAPIService struct {
 	ctrl     *gomock.Controller
 	recorder *MockVincarioAPIServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockVincarioAPIServiceMockRecorder is the mock recorder for MockVincarioAPIService.
@@ -40,12 +41,13 @@ func (m *MockVincarioAPIService) EXPECT() *MockVincarioAPIServiceMockRecorder {
 }
 
 // DecodeVIN mocks base method.
-func (m *MockVincarioAPIService) DecodeVIN(vin string) (*models.VincarioInfoResponse, error) {
+func (m *MockVincarioAPIService) DecodeVIN(vin string) (*models.VincarioInfoResponse, []byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DecodeVIN", vin)
 	ret0, _ := ret[0].(*models.VincarioInfoResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // DecodeVIN indicates an expected call of DecodeVIN.
