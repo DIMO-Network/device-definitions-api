@@ -173,7 +173,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 		failedVinDecode := models.FailedVinDecode{
 			Vin:              vinObj.String(),
-			VendorsTried:     nil, // todo need to track this
+			VendorsTried:     nil, // todo need to track this from vinInfo
 			VincarioData:     null.JSON{},
 			DrivlyData:       null.JSON{},
 			AutoisoData:      null.JSON{},
@@ -288,7 +288,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		Str("wmi", wmi).
 		Str("vds", vinObj.VDS()).
 		Str("vis", vinObj.VIS()).
-		Str("check_digit", vinObj.CheckDigit()).Msgf("decoded vinObj ok with: %s", vinInfo.Source)
+		Str("check_digit", vinObj.CheckDigit()).Msgf("decoded vin ok with: %s", vinInfo.Source)
 
 	metrics.Success.With(prometheus.Labels{"method": VinSuccess}).Inc()
 

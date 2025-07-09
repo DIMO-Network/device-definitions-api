@@ -36,6 +36,17 @@ type VINDecodingInfoData struct {
 	FuelType   string
 }
 
+// VINDecodingVendorExtra extra information from decoding process to store for failures
+type VINDecodingVendorExtra struct {
+	VendorsTried  []string
+	DrivlyRaw     []byte
+	VincarioRaw   []byte
+	AutoIsoRaw    []byte
+	DATGroupRaw   []byte
+	Japan17VINRaw []byte
+	CarVXVINRaw   []byte
+}
+
 type AutoIsoVINResponse struct {
 	Version          string `json:"version"`
 	Vin              string `json:"vin"`
