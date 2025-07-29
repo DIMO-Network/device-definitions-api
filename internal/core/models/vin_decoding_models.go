@@ -444,3 +444,27 @@ type CarVxResponse struct {
 	} `json:"data"`
 	Error string `json:"error"`
 }
+
+type ElevaVINResponse struct {
+	Error   int    `json:"error"`
+	Message string `json:"message"`
+	Data    struct {
+		Client struct {
+			Rut          string `json:"rut"`
+			ClientId     int    `json:"clientId"`
+			Name         string `json:"name"`
+			Lastname     string `json:"lastname"`
+			Email        string `json:"email"`
+			Phone        string `json:"phone"`
+			BusinessName string `json:"businessName"`
+		} `json:"client"`
+		Vehicle struct {
+			Plate     string `json:"plate"`
+			Chassis   string `json:"chassis"`
+			Model     string `json:"model"`
+			Kms       int    `json:"kms"`
+			Baumuster string `json:"baumuster"`
+			Brand     string `json:"brand"`
+		} `json:"vehicle"`
+	} `json:"data"`
+}
