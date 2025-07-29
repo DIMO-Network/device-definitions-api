@@ -1,0 +1,23 @@
+{
+  "error": 0,
+  "message": "Success",
+  "data": {
+    "client": {
+      "rut": "12866851-9",
+      "clientId": 13,
+      "name": "MACARENA",
+      "lastname": "RAMOS ALERCE",
+      "email": "maxhoja@gmail.com",
+      "phone": "995339163",
+      "businessName": "MACARENA RAMOS ALERCE"
+    },
+    "vehicle": {
+      "plate": "SC-SS29",
+      "chassis": "W1K3F4GB9NN286196",
+      "model": "A 250",
+      "kms": 43879,
+      "baumuster": "177046",
+      "brand": "MERCEDES-BENZ"
+    }
+  }
+}

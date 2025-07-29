@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 )
 
 //go:generate mockgen -source kaufmann_api.go -destination mocks/kaufmann_api_mock.go -package mocks
@@ -30,7 +31,7 @@ type elevaAPI struct {
 	tokenExpires time.Time
 }
 
-func NewElevaAPI(settings config.Settings) ElevaAPI {
+func NewElevaAPI(settings *config.Settings) ElevaAPI {
 	return &elevaAPI{
 		client: &http.Client{
 			Timeout: 10 * time.Second,

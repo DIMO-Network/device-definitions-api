@@ -110,6 +110,31 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Japan17VIN_Success() {
 	assert.Equal(s.T(), result.Year, int32(2022))
 }
 
+//go:embed eleva_resp.json
+var elevaAPIResponse []byte
+
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_KaufmannEleva_Success() {
+	ctx := context.Background()
+	const vin = "W1K3F4GB9NN286196"
+	const country = "CHL" // chile only
+
+	vinInfoResp := &coremodels.ElevaVINResponse{}
+	err := json.Unmarshal(elevaAPIResponse, vinInfoResp)
+	require.NoError(s.T(), err)
+	s.mockElevaAPI.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+
+	result, _, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
+	assert.Equal(s.T(), result.Source, coremodels.ElevaKaufmannProvider)
+	assert.Equal(s.T(), result.Make, "Mercedes-Benz")
+	assert.Equal(s.T(), result.Model, "A 250")
+	assert.Equal(s.T(), result.Year, int32(2022))
+}
+
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	ctx := context.Background()
 	const vin = "1FMCU0G61MUA52727" // ford escape 2021

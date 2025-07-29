@@ -250,6 +250,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
 	jp17vinAPI := gateways.NewJapan17VINAPI(logger, settings)
 	carvxAPI := gateways.NewCarVxVINAPI(logger, settings)
+	elevaAPI := gateways.NewElevaAPI(settings)
 
 	send, err := createSender(ctx, settings, logger)
 	if err != nil {
@@ -267,7 +268,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	}
 	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
 
-	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI)
+	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 
 	return vinDecodingService
 }

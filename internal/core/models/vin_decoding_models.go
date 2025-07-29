@@ -446,6 +446,7 @@ type CarVxResponse struct {
 	Error string `json:"error"`
 }
 
+// nolint
 type ElevaVINResponse struct {
 	Error   int    `json:"error"`
 	Message string `json:"message"`
