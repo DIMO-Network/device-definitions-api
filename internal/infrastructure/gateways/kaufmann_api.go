@@ -11,21 +11,27 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source kaufmann_api.go -destination mocks/kaufmann_api_mock.go -package mocks
+
 type ElevaConfig struct {
 	Username string
 	Password string
 }
 
+type ElevaAPI interface {
+	GetVINInfo(vin string) (*coremodels.ElevaVINResponse, error)
+}
+
 // ElevaAPI is used to call Kaufmann for VIN decoding in Chile
-type ElevaAPI struct {
+type elevaAPI struct {
 	client       *http.Client
 	config       ElevaConfig
 	accessToken  string
 	tokenExpires time.Time
 }
 
-func NewElevaAPI(settings config.Settings) *ElevaAPI {
-	return &ElevaAPI{
+func NewElevaAPI(settings config.Settings) ElevaAPI {
+	return &elevaAPI{
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -39,7 +45,7 @@ func NewElevaAPI(settings config.Settings) *ElevaAPI {
 // how long does the access token last
 const tokenExpiration = 15 * time.Minute // assumed
 
-func (e *ElevaAPI) getAccessToken() error {
+func (e *elevaAPI) getAccessToken() error {
 	if e.accessToken != "" && time.Now().Before(e.tokenExpires) {
 		return nil
 	}
@@ -89,7 +95,7 @@ func (e *ElevaAPI) getAccessToken() error {
 	return nil
 }
 
-func (e *ElevaAPI) GetVINInfo(plateOrVIN string) (*coremodels.ElevaVINResponse, error) {
+func (e *elevaAPI) GetVINInfo(plateOrVIN string) (*coremodels.ElevaVINResponse, error) {
 	if err := e.getAccessToken(); err != nil {
 		return nil, err
 	}

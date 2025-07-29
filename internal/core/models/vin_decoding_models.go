@@ -12,14 +12,15 @@ import (
 type DecodeProviderEnum string
 
 const (
-	DrivlyProvider   DecodeProviderEnum = "drivly"
-	VincarioProvider DecodeProviderEnum = "vincario"
-	AutoIsoProvider  DecodeProviderEnum = "autoiso"
-	DATGroupProvider DecodeProviderEnum = "dat"
-	AllProviders     DecodeProviderEnum = ""
-	TeslaProvider    DecodeProviderEnum = "tesla"
-	Japan17VIN       DecodeProviderEnum = "japan17vin"
-	CarVXVIN         DecodeProviderEnum = "carvxvin"
+	DrivlyProvider        DecodeProviderEnum = "drivly"
+	VincarioProvider      DecodeProviderEnum = "vincario"
+	AutoIsoProvider       DecodeProviderEnum = "autoiso"
+	DATGroupProvider      DecodeProviderEnum = "dat"
+	AllProviders          DecodeProviderEnum = ""
+	TeslaProvider         DecodeProviderEnum = "tesla"
+	Japan17VIN            DecodeProviderEnum = "japan17vin"
+	CarVXVIN              DecodeProviderEnum = "carvxvin"
+	ElevaKaufmannProvider DecodeProviderEnum = "eleva"
 )
 
 type VINDecodingInfoData struct {

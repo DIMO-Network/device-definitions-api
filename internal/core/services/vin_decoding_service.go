@@ -37,15 +37,17 @@ type vinDecodingService struct {
 	DATGroupAPIService gateways.DATGroupAPIService
 	japan17VINAPI      gateways.Japan17VINAPI
 	carvxAPI           gateways.CarVxVINAPI
+	elevaAPI           gateways.ElevaAPI
 	onChainSvc         gateways.DeviceDefinitionOnChainService
 	dbs                func() *db.ReaderWriter
 }
 
 func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
 	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
-	japan17VINAPI gateways.Japan17VINAPI, carvxAPI gateways.CarVxVINAPI) VINDecodingService {
+	japan17VINAPI gateways.Japan17VINAPI, carvxAPI gateways.CarVxVINAPI, elevaAPI gateways.ElevaAPI) VINDecodingService {
 	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso,
-		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, onChainSvc: onChainSvc, DATGroupAPIService: datGroupAPIService, dbs: dbs}
+		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, onChainSvc: onChainSvc,
+		DATGroupAPIService: datGroupAPIService, dbs: dbs, elevaAPI: elevaAPI}
 }
 
 func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, *coremodels.VINDecodingVendorExtra, error) {
@@ -56,7 +58,10 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 	vin = strings.ToUpper(strings.TrimSpace(vin))
 	providersToTry := make([]coremodels.DecodeProviderEnum, 0)
 	// check for japan chasis if all providers
-	if provider == coremodels.AllProviders && ((len(vin) < 17 && len(vin) > 10) || country == "JPN") {
+	if country == "CHL" {
+		providersToTry = append(providersToTry, coremodels.ElevaKaufmannProvider)
+		providersToTry = append(providersToTry, coremodels.VincarioProvider) // sometimes works in latam as backup
+	} else if provider == coremodels.AllProviders && ((len(vin) < 17 && len(vin) > 10) || country == "JPN") {
 		providersToTry = append(providersToTry, coremodels.CarVXVIN)
 		providersToTry = append(providersToTry, coremodels.Japan17VIN)
 	} else if !ValidateVIN(vin) {
@@ -225,6 +230,33 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 			if err != nil {
 				errFinal = err
 				continue
+			}
+			return result, resultVendorExtra, nil
+		case coremodels.ElevaKaufmannProvider:
+			resultVendorExtra.VendorsTried = append(resultVendorExtra.VendorsTried, string(coremodels.ElevaKaufmannProvider))
+			localLog.Info().Msgf("trying to decode VIN: %s with eleva", vin)
+
+			vinInfo, err := c.elevaAPI.GetVINInfo(vin)
+			if err != nil {
+				errFinal = errors.Wrapf(err, "unable to decode vin: %s with eleva", vin)
+				continue
+			}
+			vinObj := vinutil.VIN(vin)
+			yr := vinObj.Year()
+			if yr < 2018 {
+				yr = time.Now().Year() - 1
+				localLog.Info().Msgf("vin year is less than 2019 for eleva kaufmann, using %d instead", yr)
+			}
+
+			result = &coremodels.VINDecodingInfoData{
+				VIN:       vin,
+				Make:      vinInfo.Data.Vehicle.Brand,
+				Model:     vinInfo.Data.Vehicle.Model,
+				SubModel:  "",
+				Year:      int32(yr),
+				StyleName: "",
+				Source:    "ElevaKaufmann",
+				Raw:       nil,
 			}
 			return result, resultVendorExtra, nil
 		case coremodels.AllProviders:
