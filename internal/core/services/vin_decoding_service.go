@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/DIMO-Network/shared/pkg/logfields"
 
@@ -250,12 +251,12 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 
 			result = &coremodels.VINDecodingInfoData{
 				VIN:       vin,
-				Make:      vinInfo.Data.Vehicle.Brand,
+				Make:      titleCase(vinInfo.Data.Vehicle.Brand), // MERCEDES-BENZ to Mercedes-Benz
 				Model:     vinInfo.Data.Vehicle.Model,
 				SubModel:  "",
 				Year:      int32(yr),
 				StyleName: "",
-				Source:    "ElevaKaufmann",
+				Source:    coremodels.ElevaKaufmannProvider,
 				Raw:       nil,
 			}
 			return result, resultVendorExtra, nil
@@ -426,4 +427,21 @@ func validateVinDecoding(vdi *coremodels.VINDecodingInfoData) error {
 	}
 
 	return nil
+}
+
+func titleCase(s string) string {
+	parts := strings.Split(s, "-")
+
+	for i, part := range parts {
+		if len(part) == 0 {
+			continue
+		}
+		part = strings.ToLower(part)
+
+		runes := []rune(part)
+		runes[0] = unicode.ToUpper(runes[0])
+
+		parts[i] = string(runes)
+	}
+	return strings.Join(parts, "-")
 }

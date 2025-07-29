@@ -37,6 +37,7 @@ type decodeVINCmd struct {
 	fromFile    bool
 	persistToDB bool
 	carvx       bool
+	eleva       bool
 }
 
 func (*decodeVINCmd) Name() string { return "decodevin" }
@@ -53,6 +54,7 @@ func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.vincario, "vincario", false, "use vincario vin decoder")
 	f.BoolVar(&p.japan17vin, "japan17vin", false, "use japan17vin vin decoder")
 	f.BoolVar(&p.carvx, "carvx", false, "use carvx vin decoder")
+	f.BoolVar(&p.eleva, "eleva", false, "use eleva kaufmann vin decoder")
 	f.BoolVar(&p.fromFile, "from-file", false, "read vin from file in /tmp directory")
 	f.BoolVar(&p.persistToDB, "persist-to-db", false, "persist successful vin decodings to db, table vin_numbers")
 }
@@ -159,6 +161,14 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			jsonBytes, _ := json.MarshalIndent(vinInfo, "", " ")
 			fmt.Println("VIN Info:")
 			fmt.Println(string(jsonBytes))
+		}
+		if p.eleva {
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.ElevaKaufmannProvider, country)
+			if err != nil {
+				fmt.Println(err.Error())
+				continue
+			}
+			fmt.Printf("VIN Response: \n %+v\n", vinInfo)
 		}
 		fmt.Println()
 		if p.persistToDB {
