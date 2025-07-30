@@ -74,7 +74,7 @@ func (e *elevaAPI) getAccessToken() error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode > 299 {
 		return fmt.Errorf("auth failed with status %d", resp.StatusCode)
 	}
 
@@ -120,7 +120,7 @@ func (e *elevaAPI) GetVINInfo(plateOrVIN string) (*coremodels.ElevaVINResponse, 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode > 299 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("vin info failed (%d): %s", resp.StatusCode, string(bodyBytes))
 	}
@@ -133,6 +133,9 @@ func (e *elevaAPI) GetVINInfo(plateOrVIN string) (*coremodels.ElevaVINResponse, 
 	err = json.Unmarshal(jsonResp, &v)
 	if err != nil {
 		return nil, fmt.Errorf("failed decoding vin info response: %w", err)
+	}
+	if v.Error > 0 {
+		return nil, fmt.Errorf("eleva api returned error: %s", v.Message)
 	}
 
 	return v, nil

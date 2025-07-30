@@ -45,7 +45,7 @@ func (*decodeVINCmd) Synopsis() string {
 	return "tries decoding a vin with chosen provider - does not insert in our db"
 }
 func (*decodeVINCmd) Usage() string {
-	return `decodevin [-dat|-drivly|-vincario|-japan17vin|carvx|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
+	return `decodevin [-dat|-drivly|-vincario|-japan17vin|-carvx|-eleva|-from-file] <vin 17 chars OR filaname in /tmp> <country three letter iso>`
 }
 
 func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
@@ -261,24 +261,25 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	jp17vinAPI := gateways.NewJapan17VINAPI(logger, settings)
 	carvxAPI := gateways.NewCarVxVINAPI(logger, settings)
 	elevaAPI := gateways.NewElevaAPI(settings)
+	if settings.Environment == "local" {
+		return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, nil, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
+	} else {
+		send, err := createSender(ctx, settings, logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create sender.")
+		}
 
-	send, err := createSender(ctx, settings, logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create sender.")
+		ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
+		}
+
+		chainID, err := ethClient.ChainID(ctx)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
+		}
+		deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
+
+		return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 	}
-
-	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
-
-	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
-
-	return vinDecodingService
 }
