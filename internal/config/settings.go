@@ -55,6 +55,9 @@ type Settings struct {
 	Japan17VINPassword                string         `yaml:"JAPAN17_VIN_PASSWORD"`
 	CarVxUserID                       string         `yaml:"CAR_VX_USER_ID"`
 	CarVxAPIKey                       string         `yaml:"CAR_VX_API_KEY"`
+	// used for Kaufmann API
+	ElevaUsername string `yaml:"ELEVA_USERNAME"`
+	ElevaPassword string `yaml:"ELEVA_PASSWORD"`
 }
 
 func (s *Settings) IsProd() bool {

@@ -37,6 +37,7 @@ type decodeVINCmd struct {
 	fromFile    bool
 	persistToDB bool
 	carvx       bool
+	eleva       bool
 }
 
 func (*decodeVINCmd) Name() string { return "decodevin" }
@@ -44,7 +45,7 @@ func (*decodeVINCmd) Synopsis() string {
 	return "tries decoding a vin with chosen provider - does not insert in our db"
 }
 func (*decodeVINCmd) Usage() string {
-	return `decodevin [-dat|-drivly|-vincario|-japan17vin|carvx|-from-file] <vin 17 chars OR filaname in /tmp> <country two letter iso>`
+	return `decodevin [-dat|-drivly|-vincario|-japan17vin|-carvx|-eleva|-from-file] <vin 17 chars OR filaname in /tmp> <country three letter iso>`
 }
 
 func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
@@ -53,6 +54,7 @@ func (p *decodeVINCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.vincario, "vincario", false, "use vincario vin decoder")
 	f.BoolVar(&p.japan17vin, "japan17vin", false, "use japan17vin vin decoder")
 	f.BoolVar(&p.carvx, "carvx", false, "use carvx vin decoder")
+	f.BoolVar(&p.eleva, "eleva", false, "use eleva kaufmann vin decoder")
 	f.BoolVar(&p.fromFile, "from-file", false, "read vin from file in /tmp directory")
 	f.BoolVar(&p.persistToDB, "persist-to-db", false, "persist successful vin decodings to db, table vin_numbers")
 }
@@ -160,6 +162,14 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 			fmt.Println("VIN Info:")
 			fmt.Println(string(jsonBytes))
 		}
+		if p.eleva {
+			vinInfo, _, err = vinDecodingService.GetVIN(ctx, vin, coremodels.ElevaKaufmannProvider, country)
+			if err != nil {
+				fmt.Println(err.Error())
+				continue
+			}
+			fmt.Printf("VIN Response: \n %+v\n", vinInfo)
+		}
 		fmt.Println()
 		if p.persistToDB {
 			if vinInfo == nil || vinInfo.Model == "" {
@@ -250,6 +260,10 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
 	jp17vinAPI := gateways.NewJapan17VINAPI(logger, settings)
 	carvxAPI := gateways.NewCarVxVINAPI(logger, settings)
+	elevaAPI := gateways.NewElevaAPI(settings)
+	if settings.Environment == "local" {
+		return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, nil, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
+	}
 
 	send, err := createSender(ctx, settings, logger)
 	if err != nil {
@@ -267,7 +281,5 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 	}
 	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
 
-	vinDecodingService := services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI)
-
-	return vinDecodingService
+	return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 }

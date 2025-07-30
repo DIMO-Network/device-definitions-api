@@ -37,6 +37,7 @@ type VINDecodingServiceSuite struct {
 
 	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionOnChainService
 	vinDecodingService VINDecodingService
+	mockElevaAPI       *mock_gateways.MockElevaAPI
 }
 
 func TestVINDecodingService(t *testing.T) {
@@ -62,10 +63,11 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockDATGroupAPIService = mock_gateways.NewMockDATGroupAPIService(s.ctrl)
 	s.mockJapan17VINAPI = mock_gateways.NewMockJapan17VINAPI(s.ctrl)
 	s.mockCarvxAPI = mock_gateways.NewMockCarVxVINAPI(s.ctrl)
+	s.mockElevaAPI = mock_gateways.NewMockElevaAPI(s.ctrl)
 	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
 
 	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(),
-		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI, s.mockCarvxAPI)
+		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI, s.mockCarvxAPI, s.mockElevaAPI)
 }
 
 func (s *VINDecodingServiceSuite) TearDownTest() {
@@ -105,6 +107,31 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Japan17VIN_Success() {
 	assert.Equal(s.T(), result.Source, coremodels.Japan17VIN)
 	assert.Equal(s.T(), result.Make, "Toyota")
 	assert.Equal(s.T(), result.Model, "Voxy")
+	assert.Equal(s.T(), result.Year, int32(2022))
+}
+
+//go:embed eleva_resp.json
+var elevaAPIResponse []byte
+
+func (s *VINDecodingServiceSuite) Test_VINDecodingService_KaufmannEleva_Success() {
+	ctx := context.Background()
+	const vin = "W1K3F4GB9NN286196"
+	const country = "CHL" // chile only
+
+	vinInfoResp := &coremodels.ElevaVINResponse{}
+	err := json.Unmarshal(elevaAPIResponse, vinInfoResp)
+	require.NoError(s.T(), err)
+	s.mockElevaAPI.EXPECT().GetVINInfo(vin).Times(1).Return(vinInfoResp, nil)
+
+	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
+
+	result, _, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
+
+	s.NoError(err)
+	assert.Equal(s.T(), result.VIN, vin)
+	assert.Equal(s.T(), result.Source, coremodels.ElevaKaufmannProvider)
+	assert.Equal(s.T(), result.Make, "Mercedes-Benz")
+	assert.Equal(s.T(), result.Model, "A 250")
 	assert.Equal(s.T(), result.Year, int32(2022))
 }
 

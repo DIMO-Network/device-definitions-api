@@ -12,14 +12,15 @@ import (
 type DecodeProviderEnum string
 
 const (
-	DrivlyProvider   DecodeProviderEnum = "drivly"
-	VincarioProvider DecodeProviderEnum = "vincario"
-	AutoIsoProvider  DecodeProviderEnum = "autoiso"
-	DATGroupProvider DecodeProviderEnum = "dat"
-	AllProviders     DecodeProviderEnum = ""
-	TeslaProvider    DecodeProviderEnum = "tesla"
-	Japan17VIN       DecodeProviderEnum = "japan17vin"
-	CarVXVIN         DecodeProviderEnum = "carvxvin"
+	DrivlyProvider        DecodeProviderEnum = "drivly"
+	VincarioProvider      DecodeProviderEnum = "vincario"
+	AutoIsoProvider       DecodeProviderEnum = "autoiso"
+	DATGroupProvider      DecodeProviderEnum = "dat"
+	AllProviders          DecodeProviderEnum = ""
+	TeslaProvider         DecodeProviderEnum = "tesla"
+	Japan17VIN            DecodeProviderEnum = "japan17vin"
+	CarVXVIN              DecodeProviderEnum = "carvxvin"
+	ElevaKaufmannProvider DecodeProviderEnum = "eleva"
 )
 
 type VINDecodingInfoData struct {
@@ -443,4 +444,29 @@ type CarVxResponse struct {
 		} `json:"manufacture_date"`
 	} `json:"data"`
 	Error string `json:"error"`
+}
+
+// nolint
+type ElevaVINResponse struct {
+	Error   int    `json:"error"`
+	Message string `json:"message"`
+	Data    struct {
+		Client struct {
+			Rut          string `json:"rut"`
+			ClientId     int    `json:"clientId"`
+			Name         string `json:"name"`
+			Lastname     string `json:"lastname"`
+			Email        string `json:"email"`
+			Phone        string `json:"phone"`
+			BusinessName string `json:"businessName"`
+		} `json:"client"`
+		Vehicle struct {
+			Plate     string `json:"plate"`
+			Chassis   string `json:"chassis"`
+			Model     string `json:"model"`
+			Kms       int    `json:"kms"`
+			Baumuster string `json:"baumuster"`
+			Brand     string `json:"brand"`
+		} `json:"vehicle"`
+	} `json:"data"`
 }
