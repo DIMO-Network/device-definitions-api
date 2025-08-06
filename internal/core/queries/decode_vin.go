@@ -123,6 +123,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 		return r, nil
 	}
+	// check if vin has failed in the past, and if it has just fail now
+	vinAlreadyFailed, _ := models.FailedVinDecodes(models.FailedVinDecodeWhere.Vin.EQ(vinObj.String())).Exists(ctx, dc.dbs().Writer)
+	if vinAlreadyFailed {
+		return nil, fmt.Errorf("vin %s failed decoding already", vinObj.String())
+	}
 
 	localLog.Info().Msgf("Start Decode VIN ")
 

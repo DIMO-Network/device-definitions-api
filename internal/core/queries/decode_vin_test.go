@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+	"github.com/aarondl/sqlboiler/v4/types"
+	"github.com/segmentio/ksuid"
 	"math/big"
 	"strconv"
 	"strings"
 	"testing"
-
-	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/segmentio/ksuid"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
@@ -85,6 +85,21 @@ func (s *DecodeVINQueryHandlerSuite) TearDownSuite() {
 	if err := s.container.Terminate(s.ctx); err != nil {
 		s.T().Fatal(err)
 	}
+}
+
+func (s *DecodeVINQueryHandlerSuite) TestHandle_Failure_ExistingFailedVIN() {
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+
+	fvin := models.FailedVinDecode{
+		Vin:          vin,
+		VendorsTried: types.StringArray{"drivly"},
+	}
+	err := fvin.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
+	s.Require().NoError(err)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.Error(err)
+	s.Nil(qryResult)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAttributes_CreatesStyle() {
