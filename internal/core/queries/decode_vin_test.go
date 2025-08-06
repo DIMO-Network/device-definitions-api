@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
-	"github.com/aarondl/sqlboiler/v4/types"
-	"github.com/segmentio/ksuid"
 	"math/big"
 	"strconv"
 	"strings"
 	"testing"
+
+	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
+	"github.com/aarondl/sqlboiler/v4/types"
+	"github.com/segmentio/ksuid"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
