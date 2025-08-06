@@ -85,8 +85,8 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 
 	if len(providersToTry) == 0 {
 		if provider == coremodels.AllProviders {
-			// fill in the list, future could do something country specific
-			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.VincarioProvider, coremodels.DATGroupProvider, coremodels.Japan17VIN)
+			// fill in the list, future could do something country specific. removed DAT group
+			providersToTry = append(providersToTry, coremodels.DrivlyProvider, coremodels.VincarioProvider, coremodels.Japan17VIN, coremodels.AutoIsoProvider)
 		} else {
 			// use the specified override
 			providersToTry = append(providersToTry, provider)

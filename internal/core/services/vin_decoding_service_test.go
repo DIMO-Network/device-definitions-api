@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"testing"
 
@@ -261,30 +260,4 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
-}
-
-//go:embed datgroup_resp.xml
-var testDATGroupXML []byte
-
-func (s *VINDecodingServiceSuite) Test_VINDecodingService_DATGroup_Success() {
-	ctx := context.Background()
-	const vin = "ZFADEXTESTSTUB001"
-	const country = "TR"
-
-	vinInfoResp := &coremodels.DATGroupInfoResponse{
-		VIN:               vin,
-		MainTypeGroupName: "Test",
-		Year:              2023,
-	}
-	_ = xml.Unmarshal(testDATGroupXML, vinInfoResp)
-
-	s.mockDATGroupAPIService.EXPECT().GetVINv2(vin).Times(1).Return(vinInfoResp, nil, nil)
-
-	_ = dbtesthelper.SetupCreateDeviceType(s.T(), s.pdb)
-
-	result, _, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.DATGroupProvider, country)
-
-	s.NoError(err)
-	assert.Equal(s.T(), result.VIN, vin)
-	assert.Equal(s.T(), result.Source, coremodels.DATGroupProvider)
 }
