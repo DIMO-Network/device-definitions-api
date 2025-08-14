@@ -66,15 +66,18 @@ func (dc UpsertDecodingQueryHandler) Handle(ctx context.Context, query mediator.
 	vinNumber := &models.VinNumber{
 		Vin:              qry.VIN,
 		Wmi:              null.StringFrom(wmi),
-		VDS:              null.StringFrom(vin.VDS()),
-		CheckDigit:       null.StringFrom(vin.CheckDigit()),
-		SerialNumber:     vin.SerialNumber(),
-		Vis:              null.StringFrom(vin.VIS()),
 		DecodeProvider:   null.StringFrom("manual entry"),
 		Year:             dd.Year,
 		DefinitionID:     dd.ID,
 		ManufacturerName: manufacturerName,
 	}
+	if vin.IsValidVIN() {
+		vinNumber.VDS = null.StringFrom(vin.VDS())
+		vinNumber.CheckDigit = null.StringFrom(vin.CheckDigit())
+		vinNumber.SerialNumber = vin.SerialNumber()
+		vinNumber.Vis = null.StringFrom(vin.VIS())
+	}
+
 	err = vinNumber.Upsert(ctx, dc.dbs().Writer, true, []string{"vin"}, boil.Infer(), boil.Infer())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to upsert vin number %s for manual update", qry.VIN)
