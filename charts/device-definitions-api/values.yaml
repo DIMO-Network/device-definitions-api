@@ -102,8 +102,8 @@ resources:
     cpu: 250m
     memory: 768Mi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 10m
+    memory: 64Mi
 autoscaling:
   enabled: false
   minReplicas: 1
