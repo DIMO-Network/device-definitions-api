@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
@@ -43,13 +44,14 @@ func main() {
 		Str("git-sha1", gitSha1).
 		Logger()
 	sigSender, err := createSender(ctx, &settings, &logger)
+	identity := gateways.NewIdentityAPIService(&logger, &settings)
 
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, sender: sigSender}, "")
+	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, sender: sigSender, identity: identity}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
 	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings, sender: sigSender}, "")
 	subcommands.Register(&deleteDefinition{logger: logger, settings: settings}, "")

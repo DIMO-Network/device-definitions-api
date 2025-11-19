@@ -16,6 +16,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/DIMO-Network/shared/pkg/db"
+	"github.com/DIMO-Network/shared/pkg/logfields"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	vinutils "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/aarondl/null/v8"
@@ -30,7 +31,8 @@ type addVINsCSVCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
 
-	sender sender.Sender
+	sender   sender.Sender
+	identity gateways.IdentityAPI
 }
 
 func (*addVINsCSVCmd) Name() string { return "addvinscsv" }
@@ -156,25 +158,14 @@ func (p *addVINsCSVCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...inter
 			errorCount++
 			continue
 		}
-		// Verify the device definition exists
-		manufacturer, err := onChainSvc.GetManufacturer(stringutils.SlugString(wmi.ManufacturerName))
-		if err != nil {
-			p.logger.Error().Err(err).Str("vin", vin).Str("manufacturer", wmi.ManufacturerName).Msg("Could not find manufacturer")
-			fmt.Printf("Error: Could not find manufacturer '%s' for VIN '%s': %v\n", wmi.ManufacturerName, vin, err)
-			errorCount++
-			continue
-		}
 
-		deviceDefinition, err := onChainSvc.GetDefinitionTableland(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
-		if err != nil {
-			p.logger.Error().Err(err).Str("vin", vin).Str("definitionID", definitionID).Msg("Could not find device definition")
-			fmt.Printf("Error: Could not find device definition '%s' for VIN '%s': %v\n", definitionID, vin, err)
-			errorCount++
-			continue
-		}
-		if deviceDefinition == nil {
-			p.logger.Error().Str("vin", vin).Str("definitionID", definitionID).Msg("Device definition not found")
-			fmt.Printf("Error: Device definition '%s' not found for VIN '%s'\n", definitionID, vin)
+		// Verify the device definition exists
+		deviceDefinition, err := p.identity.GetDeviceDefinitionByID(definitionID)
+		if err != nil || deviceDefinition == nil {
+			if err != nil {
+				p.logger.Error().Err(err).Str(logfields.DefinitionID, definitionID).Msg("Could not find definition")
+			}
+			fmt.Printf("Error: Could not find manufacturer '%s' for VIN '%s': %v\n", wmi.ManufacturerName, vin, err)
 			errorCount++
 			continue
 		}

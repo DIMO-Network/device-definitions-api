@@ -1,11 +1,11 @@
 package gateways
 
 import (
+	"fmt"
 	"time"
 
-	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared/pkg/http"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -24,6 +24,7 @@ type identityAPIService struct {
 type IdentityAPI interface {
 	GetManufacturer(slug string) (*coremodels.Manufacturer, error)
 	GetManufacturers() ([]coremodels.Manufacturer, error)
+	GetDeviceDefinitionByID(id string) (*coremodels.DeviceDefinition, error)
 }
 
 // NewIdentityAPIService creates a new instance of IdentityAPI, initializing it with the provided logger, settings, and HTTP client.
@@ -92,6 +93,34 @@ func (i *identityAPIService) GetManufacturers() ([]coremodels.Manufacturer, erro
 	return wrapper.Data.Manufacturers.Nodes, nil
 }
 
+func (i *identityAPIService) GetDeviceDefinitionByID(id string) (*coremodels.DeviceDefinition, error) {
+	graphqlQuery := fmt.Sprintf(DeviceDefinitionByIDQuery, id)
+
+	var wrapper struct {
+		Data struct {
+			DeviceDefinition coremodels.DeviceDefinition `json:"deviceDefinition"`
+		} `json:"data"`
+	}
+
+	err := i.httpClient.GraphQLQuery("", graphqlQuery, &wrapper)
+	if err != nil {
+		return nil, err
+	}
+	return &wrapper.Data.DeviceDefinition, nil
+}
+
 type GraphQLRequest struct {
 	Query string `json:"query"`
 }
+
+const DeviceDefinitionByIDQuery = `{
+	deviceDefinition(by: {id: "%s"}) {
+    	deviceDefinitionId
+    	manufacturer {
+      		name
+      		tokenId
+    	}
+    	model
+    	year
+  	}
+}`
