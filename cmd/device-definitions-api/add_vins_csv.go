@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"strings"
 
@@ -17,11 +16,9 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/shared/pkg/logfields"
-	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	vinutils "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/subcommands"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -57,17 +54,6 @@ func (p *addVINsCSVCmd) SetFlags(_ *flag.FlagSet) {
 func (p *addVINsCSVCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
-
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
 
 	// Read CSV from stdin
 	reader := csv.NewReader(os.Stdin)
