@@ -49,6 +49,7 @@ func main() {
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
+	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, sender: sigSender}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
 	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings, sender: sigSender}, "")
 	subcommands.Register(&deleteDefinition{logger: logger, settings: settings}, "")
