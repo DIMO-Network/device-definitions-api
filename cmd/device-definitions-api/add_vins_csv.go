@@ -172,6 +172,12 @@ func (p *addVINsCSVCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...inter
 			errorCount++
 			continue
 		}
+		if deviceDefinition == nil {
+			p.logger.Error().Str("vin", vin).Str("definitionID", definitionID).Msg("Device definition not found")
+			fmt.Printf("Error: Device definition '%s' not found for VIN '%s'\n", definitionID, vin)
+			errorCount++
+			continue
+		}
 
 		vinNumber := models.VinNumber{
 			Vin:              vin,
