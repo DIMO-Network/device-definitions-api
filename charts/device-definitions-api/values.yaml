@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: 1174cf4
+  tag: '6944044'
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -19,7 +19,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - all
+      - all
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
@@ -72,15 +72,15 @@ service:
       targetPort: grpc
       protocol: TCP
 ports:
-- name: mon-http
-  containerPort: 8888
-  protocol: TCP
-- name: http
-  containerPort: 8080
-  protocol: TCP
-- name: grpc
-  containerPort: 8086
-  protocol: TCP
+  - name: mon-http
+    containerPort: 8888
+    protocol: TCP
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+  - name: grpc
+    containerPort: 8086
+    protocol: TCP
 ingress:
   enabled: true
   className: nginx
@@ -92,10 +92,10 @@ ingress:
     nginx.ingress.kubernetes.io/limit-rps: '5'
     external-dns.alpha.kubernetes.io/hostname: device-definitions-api.dev.dimo.zone
   hosts:
-  - host: device-definitions-api.dev.dimo.zone
-    paths:
-    - path: /
-      pathType: ImplementationSpecific
+    - host: device-definitions-api.dev.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls: []
 resources:
   limits:
@@ -120,10 +120,8 @@ serviceMonitor:
   port: mon-http
   interval: 30s
 jobs:
-- name: search-index-load
-  schedule: 0 0 * * *
-  args:
-  - -c
-  - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly
-    typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown"
-    http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+  - name: search-index-load
+    schedule: 0 0 * * *
+    args:
+      - '-c'
+      - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
