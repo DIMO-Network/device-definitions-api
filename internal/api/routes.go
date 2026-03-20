@@ -23,7 +23,7 @@ func RegisterDeviceDefinitionsRoutes(app fiber.Router, m mediator.Mediator, auth
 
 	app.Post("/device-definitions/decode-vin", auth, handlers.DecodeVIN(decodeHandler)).Name("device-definitions-decode-vin")
 
-	app.Get("/vin-profile/:vin", auth, handlers.VINProfile(m)).Name("vin-profile")
+	app.Get("/vin-profile/:vin", auth, handlers.GetVINProfile(m)).Name("vin-profile")
 }
 
 func RegisterIntegrationRoutes(app fiber.Router, m mediator.Mediator) {

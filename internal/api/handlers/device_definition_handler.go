@@ -94,9 +94,9 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 	}
 }
 
-// VINProfile godoc
+// GetVINProfile godoc
 // @Summary gets any raw profile info we have on previously decoded VINs. USA Only.
-// @ID VINProfile
+// @ID GetVINProfile
 // @Description gets VIN profile if we have it.
 // @Tags device-definitions
 // @Param  vin path string true "17 character usa based VIN eg. WBA12345678901234"
@@ -107,7 +107,7 @@ func GetDeviceDefinitionByID(m mediator.Mediator) fiber.Handler {
 // @Failure 500
 // @Security BearerAuth
 // @Router /vin-profile/{vin} [get]
-func VINProfile(m mediator.Mediator) fiber.Handler {
+func GetVINProfile(m mediator.Mediator) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		vin := c.Params("vin")
 		// make sure it is mmy style dd id
@@ -134,12 +134,8 @@ func VINProfile(m mediator.Mediator) fiber.Handler {
 		c.Type("json") // sets Content-Type: application/json
 		jb, err := sjson.SetBytes(resp.ProfileRaw, "powertrainType", resp.PowertrainType)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(common.ProblemDetails{
-				Type:   "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-				Title:  "Failed to set powertrainType",
-				Status: fiber.StatusInternalServerError,
-				Detail: err.Error(),
-			})
+			c.Locals("logger").(interface{ Error(args ...interface{}) }).Error("Failed to set powertrainType: ", err)
+			return c.Send(resp.ProfileRaw)
 		}
 		return c.Send(jb)
 	}
