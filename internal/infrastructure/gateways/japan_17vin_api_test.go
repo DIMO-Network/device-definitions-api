@@ -92,3 +92,28 @@ func Test_extractModelName_chineseFallback(t *testing.T) {
 func Test_extractModelName_empty(t *testing.T) {
 	assert.Equal(t, "", extractModelName(gjson.Parse(`{"data":{}}`)))
 }
+
+// Regression: real 17vin response for GWS214-6014148 (Toyota Crown Hybrid).
+// Previously yielded "4D" from the "Additional Vehicle Infomation" column and
+// got minted on-chain as toyota_4d_2017.
+func Test_extractModelName_gws214Crown(t *testing.T) {
+	payload := `{
+		"data": {
+			"epc": "toyota",
+			"model_year_from_vin": "2017",
+			"model_original_epc_list": [{
+				"CarAttributes": [
+					{"Col_name": "车型", "Col_value": "CROWN/HYBRID"},
+					{"Col_name": "Model Name", "Col_value": "CROWN/HYBRID"},
+					{"Col_name": "车型代码", "Col_value": "GWS214-AEXZB"},
+					{"Col_name": "Model Code", "Col_value": "GWS214-AEXZB"},
+					{"Col_name": "车身", "Col_value": "SED"},
+					{"Col_name": "Body", "Col_value": "SED"},
+					{"Col_name": "Engine Code", "Col_value": "2GRFXE"},
+					{"Col_name": "Additional Vehicle Infomation", "Col_value": "4D   HTWC"}
+				]
+			}]
+		}
+	}`
+	assert.Equal(t, "CROWN", extractModelName(gjson.Parse(payload)))
+}
