@@ -85,19 +85,22 @@ func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, 
 
 // extractModelName finds the vehicle series name from the 17vin EPC response,
 // skipping body-style codes like "4D" that sometimes populate the Model Name column.
+// When Model Name is a "/"-joined platform list (e.g. "NOAH/VOXY/ESQUIRE"), the
+// Additional Vehicle Infomation field usually names the actual trim — used as
+// a disambiguation hint.
 func extractModelName(parsed gjson.Result) string {
 	entries := parsed.Get("data.model_original_epc_list").Array()
 	for _, entry := range entries {
 		attrs := entry.Get("CarAttributes")
+		addl := attrs.Get(`#(Col_name="Additional Vehicle Infomation").Col_value`).String()
 		for _, col := range modelNameColumns {
 			raw := attrs.Get(fmt.Sprintf(`#(Col_name=%q).Col_value`, col)).String()
-			candidate := pickModelCandidate(raw)
+			candidate := pickModelCandidate(raw, addl)
 			if candidate != "" {
 				return candidate
 			}
 		}
-		// fall back: first token of "Additional Vehicle Infomation"
-		addl := attrs.Get(`#(Col_name="Additional Vehicle Infomation").Col_value`).String()
+		// fall back: first meaningful token of Additional Vehicle Infomation
 		if addl != "" {
 			for t := range strings.FieldsSeq(addl) {
 				if !isBodyStyleCode(t) && len(t) > 1 {
@@ -110,19 +113,33 @@ func extractModelName(parsed gjson.Result) string {
 }
 
 // pickModelCandidate accepts a raw Col_value, splits on "/" for multi-model responses,
-// and returns the first non-body-style entry.
-func pickModelCandidate(raw string) string {
+// and returns the best non-body-style entry. If multiple candidates remain and the
+// hint (additional-info column) contains one of them, that one wins; otherwise the
+// first valid candidate is returned.
+func pickModelCandidate(raw, hint string) string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return ""
 	}
+	var candidates []string
 	for p := range strings.SplitSeq(raw, "/") {
 		p = strings.TrimSpace(p)
 		if p != "" && !isBodyStyleCode(p) {
-			return p
+			candidates = append(candidates, p)
 		}
 	}
-	return ""
+	if len(candidates) == 0 {
+		return ""
+	}
+	if len(candidates) > 1 && hint != "" {
+		hintUpper := strings.ToUpper(hint)
+		for _, c := range candidates {
+			if strings.Contains(hintUpper, strings.ToUpper(c)) {
+				return c
+			}
+		}
+	}
+	return candidates[0]
 }
 
 func isBodyStyleCode(s string) bool {
