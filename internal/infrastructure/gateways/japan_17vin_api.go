@@ -83,12 +83,16 @@ func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, 
 	return &result, bodyBytes, nil
 }
 
-// extractModelName finds the vehicle series name from the 17vin EPC response,
-// skipping body-style codes like "4D" that sometimes populate the Model Name column.
-// When Model Name is a "/"-joined platform list (e.g. "NOAH/VOXY/ESQUIRE"), the
-// Additional Vehicle Infomation field usually names the actual trim — used as
-// a disambiguation hint.
+// extractModelName finds the vehicle series name from the 17vin response.
+// Preference order: (1) data.model_list[0].Model_en — 17vin's standardized
+// product name, populated for known 17-char VINs; (2) the EPC
+// model_original_epc_list attributes, which may carry raw internal model
+// names with body-style codes, parenthetical factory tags, or multi-model
+// platform lists (e.g. "NOAH/VOXY/ESQUIRE").
 func extractModelName(parsed gjson.Result) string {
+	if std := sanitizeModelName(parsed.Get("data.model_list.0.Model_en").String()); std != "" {
+		return std
+	}
 	entries := parsed.Get("data.model_original_epc_list").Array()
 	for _, entry := range entries {
 		attrs := entry.Get("CarAttributes")
@@ -104,7 +108,7 @@ func extractModelName(parsed gjson.Result) string {
 		if addl != "" {
 			for t := range strings.FieldsSeq(addl) {
 				if !isBodyStyleCode(t) && len(t) > 1 {
-					return t
+					return sanitizeModelName(t)
 				}
 			}
 		}
@@ -112,12 +116,22 @@ func extractModelName(parsed gjson.Result) string {
 	return ""
 }
 
+// sanitizeModelName strips characters that don't belong in a slugged model
+// name: parenthetical factory tags like "(TMMC" and trailing commas.
+func sanitizeModelName(s string) string {
+	s = strings.TrimSpace(s)
+	if i := strings.IndexAny(s, "(,"); i >= 0 {
+		s = s[:i]
+	}
+	return strings.TrimSpace(s)
+}
+
 // pickModelCandidate accepts a raw Col_value, splits on "/" for multi-model responses,
 // and returns the best non-body-style entry. If multiple candidates remain and the
 // hint (additional-info column) contains one of them, that one wins; otherwise the
-// first valid candidate is returned.
+// first valid candidate is returned. Parenthetical suffixes are stripped.
 func pickModelCandidate(raw, hint string) string {
-	raw = strings.TrimSpace(raw)
+	raw = sanitizeModelName(raw)
 	if raw == "" {
 		return ""
 	}

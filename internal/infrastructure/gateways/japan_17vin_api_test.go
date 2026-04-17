@@ -232,6 +232,21 @@ func Test_extractModelName_realPayloads(t *testing.T) {
 			]}]}}`,
 			want: "CROWN",
 		},
+		{
+			name: "212HGCEZ3NC010151 Lexus NX — prefer model_list.Model_en",
+			payload: `{"data":{"model_list":[{"Model_en":"NX 350","Brand_en":"Lexus"}],"model_original_epc_list":[{"CarAttributes":[
+				{"Col_name":"Model Name","Col_value":"LEXUS NX SERIES(TMMC"},
+				{"Col_name":"Additional Vehicle Infomation","Col_value":"LHD  TBO  USA"}
+			]}]}}`,
+			want: "NX 350",
+		},
+		{
+			name: "paren stripped even when model_list absent",
+			payload: `{"data":{"model_original_epc_list":[{"CarAttributes":[
+				{"Col_name":"Model Name","Col_value":"LEXUS NX SERIES(TMMC"}
+			]}]}}`,
+			want: "LEXUS NX SERIES",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
