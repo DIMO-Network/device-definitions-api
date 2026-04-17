@@ -246,9 +246,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		resp.Powertrain = pt
 	}
 
-	// if dd not found in tableland, we want to create it
+	// if dd not found in tableland, we want to create it — but only for high-confidence
+	// provider sources. Low-confidence sources (Japan chassis decoders, etc.) have produced
+	// garbage on-chain DDs (e.g. Model="4D" body-style codes), so we reject here and let
+	// the client fall back to manual make/model/year selection via the picker.
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
+	} else if isLowConfidenceSource(vinInfo.Source) {
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		localLog.Warn().Str("decode_source", string(vinInfo.Source)).Msgf("low-confidence decode + tableland miss; returning not found so client opens manual picker")
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found on-chain for low-confidence decode %s (source=%s); manual selection required", tid, vinInfo.Source)}
 	} else {
 		// if any images were added above, they will be in the database
 		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
@@ -521,4 +528,18 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 	}
 
 	return nil
+}
+
+// isLowConfidenceSource returns true for decode providers whose output has historically
+// produced bad on-chain device definitions (e.g., Japanese chassis decoders returning body-style
+// codes as model names). For these sources we refuse to auto-create a DD from a tableland miss
+// and instead surface a NotFoundError so the client can fall back to manual make/model/year
+// selection. High-confidence Western providers (Drivly, Vincario, DATGroup, Tesla) retain the
+// existing auto-create behavior.
+func isLowConfidenceSource(src coremodels.DecodeProviderEnum) bool {
+	switch src {
+	case coremodels.Japan17VIN, coremodels.CarVXVIN, coremodels.AutoIsoProvider, coremodels.ElevaKaufmannProvider:
+		return true
+	}
+	return false
 }
