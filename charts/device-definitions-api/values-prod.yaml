@@ -4,7 +4,7 @@ replicaCount: 2
 image:
   repository: dimozone/device-definitions-api
   pullPolicy: IfNotPresent
-  tag: c8e5e37
+  tag: c8fce31
 env:
   ENVIRONMENT: prod
   PORT: '8080'
@@ -64,4 +64,3 @@ jobs:
     args:
       - '-c'
       - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "daily device definitions typesense search sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
-
