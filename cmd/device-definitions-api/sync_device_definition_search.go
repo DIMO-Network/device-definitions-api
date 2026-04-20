@@ -230,8 +230,8 @@ func fetchAllDefinitions(ctx context.Context, onChainSvc gateways.DeviceDefiniti
 		// Append the current page of definitions to allDefinitions.
 		allDefinitions = append(allDefinitions, definitions...)
 
-		// If you receive less than 50 results then you've likely reached the end.
-		if len(definitions) < 50 {
+		// Page size is 500 (see QueryDefinitionsCustom); a short page means we've hit the end.
+		if len(definitions) < 500 {
 			break
 		}
 
