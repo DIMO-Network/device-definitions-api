@@ -4,9 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"time"
 
-	models2 "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
@@ -23,7 +22,12 @@ import (
 	"github.com/typesense/typesense-go/typesense/api/pointer"
 )
 
-// syncDeviceDefinitionSearchCmd cli command to sync to typesense
+const (
+	minSearchYear         = 2007
+	tablelandPageSize     = 500
+	searchDefaultScore    = 1
+)
+
 type syncDeviceDefinitionSearchCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
@@ -44,7 +48,6 @@ func (p *syncDeviceDefinitionSearchCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.createIndex, "create-index", false, "create or recreate index")
 }
 
-// nolint
 func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
@@ -53,214 +56,136 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	if err != nil {
 		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
 	}
-
 	chainID, err := ethClient.ChainID(ctx)
 	if err != nil {
 		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
 	}
-	//queryInstance, err := contracts.NewRegistry(p.settings.EthereumRegistryAddress, ethClient)
-	//if err != nil {
-	//	p.logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
-	//}
 
 	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+	identity := gateways.NewIdentityAPIService(&p.logger, &p.settings)
 
 	client := typesense.NewClient(
 		typesense.WithServer(p.settings.SearchServiceAPIURL.String()),
 		typesense.WithAPIKey(p.settings.SearchServiceAPIKey))
+	indexer := NewTypesenseSearchIndexer(client)
 
 	collectionName := p.settings.SearchServiceIndexName
 
-	identity := gateways.NewIdentityAPIService(&p.logger, &p.settings)
-
 	if p.createIndex {
-
-		_, err := client.Collection(collectionName).Delete(context.Background())
-		if err != nil {
-			p.logger.Error().Err(err).Send()
-		}
-		fmt.Println("Successfully deleted index: " + collectionName)
-
-		hasFacet := true
-		nestedFields := false
-		sort := true
-		schema := &api.CollectionSchema{
-			Name:                collectionName,
-			EnableNestedFields:  &nestedFields,
-			DefaultSortingField: pointer.String("score"),
-			Fields: []api.Field{
-				{
-					Name: "device_definition_id",
-					Type: "string",
-				},
-				{
-					Name: "name",
-					Type: "string",
-					Sort: &sort,
-				},
-				{
-					Name:  "make",
-					Type:  "string",
-					Facet: &hasFacet,
-				},
-				{
-					Name:  "make_slug",
-					Type:  "string",
-					Facet: &hasFacet,
-				},
-				{
-					Name:  "make_token_id",
-					Type:  "int32",
-					Facet: &hasFacet,
-				},
-				{
-					Name:  "model",
-					Type:  "string",
-					Facet: &hasFacet,
-				},
-				{
-					Name:  "model_slug",
-					Type:  "string",
-					Facet: &hasFacet,
-				},
-				{
-					Name:  "year",
-					Type:  "int32",
-					Facet: &hasFacet,
-				},
-				{
-					Name: "image_url",
-					Type: "string",
-				},
-				{
-					Name: "score",
-					Type: "int32",
-				},
-				{
-					Name: "definition_id",
-					Type: "string",
-				},
-			},
-		}
-		_, err = client.Collections().Create(context.Background(), schema)
-		if err != nil {
+		if err := indexer.RecreateIndex(ctx, deviceDefinitionSearchSchema(collectionName)); err != nil {
 			p.logger.Error().Err(err).Send()
 			return subcommands.ExitFailure
 		}
-
 		fmt.Printf("Index %s created\n", collectionName)
 	}
 
-	fmt.Printf("Starting processing definitions\n")
-
-	makes, err := identity.GetManufacturers()
-	if err != nil {
-		p.logger.Fatal().Err(err).Send()
+	if err := runSearchSync(ctx, identity, onChainSvc, indexer, collectionName); err != nil {
+		p.logger.Error().Err(err).Msg("sync failed")
+		return subcommands.ExitFailure
 	}
-
-	fmt.Printf("Found %d manufacturers in db\n", len(makes))
-
-	var documents []SearchEntryItem
-	// iterate over all makes, then query tableland
-	for _, dm := range makes {
-		manufacturer, err := onChainSvc.GetManufacturer(stringutils.SlugString(dm.Name))
-		if err != nil {
-			p.logger.Fatal().Err(err).Send()
-		}
-
-		definitions, err := fetchAllDefinitions(ctx, onChainSvc, manufacturer.TokenID, "")
-		if err != nil {
-			p.logger.Fatal().Err(err).Send()
-		}
-
-		for _, dd := range definitions {
-			id := dd.ID
-			deviceDefinitionID := dd.ID
-			name := common.BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model)
-			imageUrl := dd.ImageURI
-			modelName := dd.Model
-			modelSlug := stringutils.SlugString(dd.Model)
-
-			year := dd.Year
-			if year < 2007 {
-				continue // do not sync old cars into search
-			}
-
-			makeName := dm.Name
-			makeSlug := stringutils.SlugString(dm.Name)
-			manufacturerTokenID := manufacturer.TokenID
-
-			newDocument := SearchEntryItem{
-				ID:                  id,
-				DeviceDefinitionID:  deviceDefinitionID,
-				DefinitionID:        dd.ID,
-				Name:                name,
-				Make:                makeName,
-				MakeSlug:            makeSlug,
-				ManufacturerTokenID: manufacturerTokenID,
-				Model:               modelName,
-				ModelSlug:           modelSlug,
-				Year:                year,
-				ImageURL:            imageUrl,
-				Score:               1,
-			}
-
-			documents = append(documents, newDocument)
-		}
-		definitions = nil // will this help rambo the gc?
-		fmt.Printf("loaded %d definitions from %s \n", len(documents), manufacturer.Name)
-	}
-
-	err = uploadWithAPI(client, documents, p.settings.SearchServiceIndexName)
-
 	fmt.Print("Index Updated")
 	return subcommands.ExitSuccess
 }
 
-func fetchAllDefinitions(ctx context.Context, onChainSvc gateways.DeviceDefinitionOnChainService, manufacturerID int, whereClause string) ([]models2.DeviceDefinitionTablelandModel, error) {
-	pageIndex := 0
-	var allDefinitions []models2.DeviceDefinitionTablelandModel
+// runSearchSync fetches every manufacturer, builds its definition documents, and
+// upserts them to the search index one manufacturer at a time. This caps the
+// steady-state memory footprint to a single manufacturer's definitions rather
+// than the full catalog.
+func runSearchSync(
+	ctx context.Context,
+	identity gateways.IdentityAPI,
+	onChainSvc gateways.DeviceDefinitionOnChainService,
+	indexer SearchIndexer,
+	collectionName string,
+) error {
+	makes, err := identity.GetManufacturers()
+	if err != nil {
+		return fmt.Errorf("get manufacturers: %w", err)
+	}
+	fmt.Printf("Found %d manufacturers\n", len(makes))
 
+	for _, dm := range makes {
+		docs, err := buildManufacturerDocuments(ctx, onChainSvc, dm)
+		if err != nil {
+			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
+		}
+		if len(docs) == 0 {
+			fmt.Printf("%s: no definitions to sync\n", dm.Name)
+			continue
+		}
+		if err := indexer.UpsertDocuments(ctx, collectionName, docs); err != nil {
+			return fmt.Errorf("upsert %s: %w", dm.Name, err)
+		}
+		fmt.Printf("%s: upserted %d definitions\n", dm.Name, len(docs))
+	}
+	return nil
+}
+
+// buildManufacturerDocuments pulls every tableland definition for a manufacturer
+// and converts the ones from model year >= minSearchYear into SearchEntryItems.
+func buildManufacturerDocuments(
+	ctx context.Context,
+	onChainSvc gateways.DeviceDefinitionOnChainService,
+	dm coremodels.Manufacturer,
+) ([]SearchEntryItem, error) {
+	makeSlug := stringutils.SlugString(dm.Name)
+	var docs []SearchEntryItem
+
+	pageIndex := 0
 	for {
-		definitions, err := onChainSvc.QueryDefinitionsCustom(ctx, manufacturerID, whereClause, pageIndex)
+		page, err := onChainSvc.QueryDefinitionsCustom(ctx, dm.TokenID, "", pageIndex)
 		if err != nil {
 			return nil, err
 		}
-
-		// Append the current page of definitions to allDefinitions.
-		allDefinitions = append(allDefinitions, definitions...)
-
-		// Page size is 500 (see QueryDefinitionsCustom); a short page means we've hit the end.
-		if len(definitions) < 500 {
+		for _, dd := range page {
+			if dd.Year < minSearchYear {
+				continue
+			}
+			docs = append(docs, SearchEntryItem{
+				ID:                  dd.ID,
+				DeviceDefinitionID:  dd.ID,
+				DefinitionID:        dd.ID,
+				Name:                common.BuildDeviceDefinitionName(int16(dd.Year), dm.Name, dd.Model),
+				Make:                dm.Name,
+				MakeSlug:            makeSlug,
+				ManufacturerTokenID: dm.TokenID,
+				Model:               dd.Model,
+				ModelSlug:           stringutils.SlugString(dd.Model),
+				Year:                dd.Year,
+				ImageURL:            dd.ImageURI,
+				Score:               searchDefaultScore,
+			})
+		}
+		if len(page) < tablelandPageSize {
 			break
 		}
-
-		// Move to the next page.
 		pageIndex++
 	}
-
-	return allDefinitions, nil
+	return docs, nil
 }
 
-func uploadWithAPI(client *typesense.Client, entries []SearchEntryItem, collectionName string) error {
-	processedCount := 0
-	for _, entry := range entries {
-		processedCount++
-		_, err := client.Collection(collectionName).Documents().Upsert(context.Background(), entry)
-		if err != nil {
-			fmt.Printf("Error uploading entry: %v\n Retrying...", err)
-			time.Sleep(1000)
-			_, err = client.Collection(collectionName).Documents().Upsert(context.Background(), entry)
-			// todo fancier retry
-			if err != nil {
-				return err
-			}
-		}
-		if processedCount%100 == 0 {
-			fmt.Printf("Uploaded %d definitionIds to Typesense search.\n", processedCount)
-		}
+func deviceDefinitionSearchSchema(collectionName string) *api.CollectionSchema {
+	hasFacet := true
+	nestedFields := false
+	sort := true
+	return &api.CollectionSchema{
+		Name:                collectionName,
+		EnableNestedFields:  &nestedFields,
+		DefaultSortingField: pointer.String("score"),
+		Fields: []api.Field{
+			{Name: "device_definition_id", Type: "string"},
+			{Name: "name", Type: "string", Sort: &sort},
+			{Name: "make", Type: "string", Facet: &hasFacet},
+			{Name: "make_slug", Type: "string", Facet: &hasFacet},
+			{Name: "make_token_id", Type: "int32", Facet: &hasFacet},
+			{Name: "model", Type: "string", Facet: &hasFacet},
+			{Name: "model_slug", Type: "string", Facet: &hasFacet},
+			{Name: "year", Type: "int32", Facet: &hasFacet},
+			{Name: "image_url", Type: "string"},
+			{Name: "score", Type: "int32"},
+			{Name: "definition_id", Type: "string"},
+		},
 	}
-	return nil
 }
 
 type SearchEntryItem struct {
