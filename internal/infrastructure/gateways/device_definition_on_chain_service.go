@@ -233,7 +233,8 @@ func (e *deviceDefinitionOnChainService) QueryDefinitionsCustom(ctx context.Cont
 		return nil, fmt.Errorf("tableName cannot be empty for manufacturer token id %d", manufacturerID)
 	}
 
-	statement := fmt.Sprintf("SELECT * FROM %s %s LIMIT %d OFFSET %d", tableName, whereClause, 500, pageIndex)
+	const pageSize = 500
+	statement := fmt.Sprintf("SELECT * FROM %s %s LIMIT %d OFFSET %d", tableName, whereClause, pageSize, pageIndex*pageSize)
 
 	queryParams := map[string]string{
 		"statement": statement,

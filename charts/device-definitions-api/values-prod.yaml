@@ -58,3 +58,10 @@ tolerations: []
 affinity: {}
 podDisruptionBudget:
   minAvailable: 1
+jobs:
+  - name: device-definitions-search-sync
+    schedule: 0 13 * * *
+    args:
+      - '-c'
+      - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "daily device definitions typesense search sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+
