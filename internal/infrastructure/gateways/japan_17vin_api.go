@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,15 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tidwall/gjson"
 )
+
+// bodyStylePattern matches Japanese EPC body-style codes like "4D", "5D", "2D", "4DR", "5HB"
+// which sometimes appear in the "Model Name" column instead of an actual vehicle series.
+var bodyStylePattern = regexp.MustCompile(`^\d+[A-Za-z]{0,3}$`)
+
+// modelNameColumns lists Col_name candidates for the vehicle series, in priority order.
+// 17vin responses vary by brand; docs show "Model name" (lowercase), existing production
+// data used "Model Name", and Chinese-column responses use "车型".
+var modelNameColumns = []string{"Model Name", "Model name", "车型"}
 
 //go:generate mockgen -source japan_17vin_api.go -destination mocks/japan_17vin_api_mock.go -package mocks
 type Japan17VINAPI interface {
@@ -60,24 +70,7 @@ func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, 
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to parse year string %s", yearString)
 	}
-	model := ""
-	modelNameProperty := parsed.Get(`data.model_original_epc_list.0.CarAttributes.#(Col_name="Model Name").Col_value`).String()
-	if modelNameProperty != "" {
-		if strings.Contains(modelNameProperty, `/`) {
-			// this means it has two options, sometimes in the additional info it will have the model
-			additionalInfo := parsed.Get(`data.model_original_epc_list.0.CarAttributes.#(Col_name="Additional Vehicle Infomation").Col_value`).String()
-			splitInfo := strings.Split(additionalInfo, " ")
-			if len(splitInfo) > 0 {
-				// grab the first name which is usually the model
-				model = splitInfo[0]
-			} else {
-				// if nothing found then just grab the first value from the model name
-				model = strings.Split(modelNameProperty, "/")[0]
-			}
-		} else {
-			model = modelNameProperty
-		}
-	}
+	model := extractModelName(parsed)
 
 	result := coremodels.Japan17MMY{
 		VIN:                   vin,
@@ -89,6 +82,84 @@ func (j *japan17VINAPI) GetVINInfo(vin string) (*coremodels.Japan17MMY, []byte, 
 
 	return &result, bodyBytes, nil
 }
+
+// extractModelName finds the vehicle series name from the 17vin response.
+// Preference order: (1) data.model_list[0].Model_en — 17vin's standardized
+// product name, populated for known 17-char VINs; (2) the EPC
+// model_original_epc_list attributes, which may carry raw internal model
+// names with body-style codes, parenthetical factory tags, or multi-model
+// platform lists (e.g. "NOAH/VOXY/ESQUIRE").
+func extractModelName(parsed gjson.Result) string {
+	if std := sanitizeModelName(parsed.Get("data.model_list.0.Model_en").String()); std != "" {
+		return std
+	}
+	entries := parsed.Get("data.model_original_epc_list").Array()
+	for _, entry := range entries {
+		attrs := entry.Get("CarAttributes")
+		addl := attrs.Get(`#(Col_name="Additional Vehicle Infomation").Col_value`).String()
+		for _, col := range modelNameColumns {
+			raw := attrs.Get(fmt.Sprintf(`#(Col_name=%q).Col_value`, col)).String()
+			candidate := pickModelCandidate(raw, addl)
+			if candidate != "" {
+				return candidate
+			}
+		}
+		// fall back: first meaningful token of Additional Vehicle Infomation
+		if addl != "" {
+			for t := range strings.FieldsSeq(addl) {
+				if !isBodyStyleCode(t) && len(t) > 1 {
+					return sanitizeModelName(t)
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// sanitizeModelName strips characters that don't belong in a slugged model
+// name: parenthetical factory tags like "(TMMC" and trailing commas.
+func sanitizeModelName(s string) string {
+	s = strings.TrimSpace(s)
+	if i := strings.IndexAny(s, "(,"); i >= 0 {
+		s = s[:i]
+	}
+	return strings.TrimSpace(s)
+}
+
+// pickModelCandidate accepts a raw Col_value, splits on "/" for multi-model responses,
+// and returns the best non-body-style entry. If multiple candidates remain and the
+// hint (additional-info column) contains one of them, that one wins; otherwise the
+// first valid candidate is returned. Parenthetical suffixes are stripped.
+func pickModelCandidate(raw, hint string) string {
+	raw = sanitizeModelName(raw)
+	if raw == "" {
+		return ""
+	}
+	var candidates []string
+	for p := range strings.SplitSeq(raw, "/") {
+		p = strings.TrimSpace(p)
+		if p != "" && !isBodyStyleCode(p) {
+			candidates = append(candidates, p)
+		}
+	}
+	if len(candidates) == 0 {
+		return ""
+	}
+	if len(candidates) > 1 && hint != "" {
+		hintUpper := strings.ToUpper(hint)
+		for _, c := range candidates {
+			if strings.Contains(hintUpper, strings.ToUpper(c)) {
+				return c
+			}
+		}
+	}
+	return candidates[0]
+}
+
+func isBodyStyleCode(s string) bool {
+	return bodyStylePattern.MatchString(strings.TrimSpace(s))
+}
+
 func md5Hex(s string) string {
 	hash := md5.Sum([]byte(s))
 	return hex.EncodeToString(hash[:])
