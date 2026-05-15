@@ -48,7 +48,7 @@ require (
 	github.com/DIMO-Network/yaml v0.1.0 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
-	github.com/antchfx/xpath v1.3.4 // indirect
+	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
