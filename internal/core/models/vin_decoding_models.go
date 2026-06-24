@@ -303,6 +303,7 @@ func (v *VincarioInfoResponse) GetMetadata() (null.JSON, error) {
 		"mpg_highway":            nil,
 		"mpg_city":               nil,
 		"fuel_tank_capacity_gal": nil,
+		"battery_capacity_kwh":   nil,
 		"mpg":                    nil,
 	}
 
@@ -359,6 +360,7 @@ type DrivlyVINResponse struct {
 	Wheelbase                string   `json:"wheelbase"`
 	Fuel                     string   `json:"fuel"`
 	FuelTankCapacityGal      float64  `json:"fuelTankCapacityGal"`
+	BatteryCapacityKwh       float64  `json:"batteryCapacityKwh"`
 	Mpg                      int      `json:"mpg"`
 	MpgCity                  int      `json:"mpgCity"`
 	MpgHighway               int      `json:"mpgHighway"`
