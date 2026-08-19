@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func (e *deviceDefinitionCatalogService) catalogURL(pathSuffix string) string {
 }
 
 func (e *deviceDefinitionCatalogService) fetchDoc(ctx context.Context, id string) (*catalogDoc, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/definitions/"+id+".json"), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/definitions/"+url.PathEscape(id)+".json"), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -256,8 +257,8 @@ func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, meth
 		}
 		reader = bytes.NewReader(b)
 	}
-	url := strings.TrimSuffix(e.settings.DefinitionsWorkerURL, "/") + pathSuffix
-	req, err := http.NewRequestWithContext(ctx, method, url, reader)
+	reqURL := strings.TrimSuffix(e.settings.DefinitionsWorkerURL, "/") + pathSuffix
+	req, err := http.NewRequestWithContext(ctx, method, reqURL, reader)
 	if err != nil {
 		return false, err
 	}
@@ -287,7 +288,7 @@ type workerPutBody struct {
 
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
-	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+dd.ID, workerPutBody{
+	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
 		ID:         dd.ID,
 		Model:      dd.Model,
 		Year:       dd.Year,
@@ -329,7 +330,7 @@ func (e *deviceDefinitionCatalogService) Update(ctx context.Context, manufacture
 	if input.Metadata != nil {
 		body.Metadata = input.Metadata
 	}
-	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+input.ID, body)
+	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(input.ID), body)
 	if err != nil || !sent {
 		return nil, err
 	}
@@ -339,7 +340,7 @@ func (e *deviceDefinitionCatalogService) Update(ctx context.Context, manufacture
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {
 	e.logger.Info().Msgf("catalog delete for device definition %s (manufacturer %s)", id, manufacturerName)
-	sent, err := e.workerRequest(ctx, http.MethodDelete, "/definitions/"+id, nil)
+	sent, err := e.workerRequest(ctx, http.MethodDelete, "/definitions/"+url.PathEscape(id), nil)
 	if err != nil || !sent {
 		return nil, err
 	}
