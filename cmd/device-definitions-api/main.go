@@ -7,9 +7,6 @@ import (
 	"os"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/kms"
 
 	"github.com/google/subcommands"
 
@@ -43,7 +40,6 @@ func main() {
 		Str("app", settings.ServiceName).
 		Str("git-sha1", gitSha1).
 		Logger()
-	sigSender, err := createSender(ctx, &settings, &logger)
 	identity := gateways.NewIdentityAPIService(&logger, &settings)
 
 	subcommands.Register(subcommands.HelpCommand(), "")
@@ -51,45 +47,18 @@ func main() {
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&migrateDBCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
-	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, sender: sigSender, identity: identity}, "")
+	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, identity: identity}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
-	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings, sender: sigSender}, "")
+	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&deleteDefinition{logger: logger, settings: settings}, "")
-	subcommands.Register(&bulkUpdatePowertrain{logger: logger, settings: settings, sender: sigSender}, "")
+	subcommands.Register(&bulkUpdatePowertrain{logger: logger, settings: settings}, "")
 
 	if len(os.Args) == 1 {
 		// Run API & everythying else
-		if err != nil {
-			logger.Fatal().Err(err).Msg("Failed to create sender.")
-		}
-		api.Run(ctx, logger, &settings, sigSender)
+		api.Run(ctx, logger, &settings)
 	} else {
 		flag.Parse()
 		os.Exit(int(subcommands.Execute(ctx)))
 	}
 
-}
-
-func createSender(ctx context.Context, settings *config.Settings, logger *zerolog.Logger) (sender.Sender, error) {
-	if settings.PrivateKeyMode {
-		logger.Warn().Msg("Using injected private key. Never do this in production.")
-		send, err := sender.FromKey(settings.SenderPrivateKey)
-		if err != nil {
-			return nil, err
-		}
-		logger.Info().Str("address", send.Address().Hex()).Msg("Loaded private key account.")
-		return send, nil
-	}
-
-	awsconf, err := awsconfig.LoadDefaultConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	kmsc := kms.NewFromConfig(awsconf)
-	send, err := sender.FromKMS(ctx, kmsc, settings.KMSKeyID)
-	if err != nil {
-		return nil, err
-	}
-	logger.Info().Msgf("Loaded KMS key %s, address %s.", settings.KMSKeyID, send.Address().Hex())
-	return send, nil
 }

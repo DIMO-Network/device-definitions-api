@@ -28,11 +28,11 @@ func (*GetDeviceStyleByIDQuery) Key() string { return "GetDeviceStyleByIDQuery" 
 
 type GetDeviceStyleByIDQueryHandler struct {
 	DBS        func() *db.ReaderWriter
-	onChainSvc gateways.DeviceDefinitionOnChainService
+	catalogSvc gateways.DeviceDefinitionCatalogService
 }
 
-func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, onchainSvc gateways.DeviceDefinitionOnChainService) GetDeviceStyleByIDQueryHandler {
-	return GetDeviceStyleByIDQueryHandler{DBS: dbs, onChainSvc: onchainSvc}
+func NewGetDeviceStyleByIDQueryHandler(dbs func() *db.ReaderWriter, onchainSvc gateways.DeviceDefinitionCatalogService) GetDeviceStyleByIDQueryHandler {
+	return GetDeviceStyleByIDQueryHandler{DBS: dbs, catalogSvc: onchainSvc}
 }
 
 func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query mediator.Message) (interface{}, error) {
@@ -50,7 +50,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, ds.DefinitionID)
+	dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, ds.DefinitionID)
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),

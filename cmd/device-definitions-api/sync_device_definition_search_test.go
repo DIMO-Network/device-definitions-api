@@ -23,11 +23,11 @@ func defToyota(year int, model, id string) coremodels.DeviceDefinitionTablelandM
 
 func TestBuildManufacturerDocuments_FiltersPre2007(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 42, Name: "Toyota"}
 
 	onChain.EXPECT().
-		QueryDefinitionsCustom(gomock.Any(), 42, "", 0).
+		QueryDefinitionsByManufacturer(gomock.Any(), 42, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{
 			defToyota(2006, "Camry", "id-old"),
 			defToyota(2007, "Camry", "id-keep"),
@@ -43,11 +43,11 @@ func TestBuildManufacturerDocuments_FiltersPre2007(t *testing.T) {
 
 func TestBuildManufacturerDocuments_PopulatesFields(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 7, Name: "Land Rover"}
 
 	onChain.EXPECT().
-		QueryDefinitionsCustom(gomock.Any(), 7, "", 0).
+		QueryDefinitionsByManufacturer(gomock.Any(), 7, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{
 			{ID: "ddid-1", Model: "Range Rover", Year: 2021, ImageURI: "https://img/rr"},
 		}, nil)
@@ -73,7 +73,7 @@ func TestBuildManufacturerDocuments_PopulatesFields(t *testing.T) {
 
 func TestBuildManufacturerDocuments_TerminatesOnShortPage(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 1, Name: "Honda"}
 
 	// 10 rows on page 0 is < 500 → loop should break without requesting page 1.
@@ -82,7 +82,7 @@ func TestBuildManufacturerDocuments_TerminatesOnShortPage(t *testing.T) {
 		page[i] = defToyota(2020, "Civic", "id")
 	}
 	onChain.EXPECT().
-		QueryDefinitionsCustom(gomock.Any(), 1, "", 0).
+		QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
 		Return(page, nil).
 		Times(1)
 
@@ -93,34 +93,34 @@ func TestBuildManufacturerDocuments_TerminatesOnShortPage(t *testing.T) {
 
 func TestBuildManufacturerDocuments_PagesUntilShortPage(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 1, Name: "Honda"}
 
-	full := make([]coremodels.DeviceDefinitionTablelandModel, tablelandPageSize)
+	full := make([]coremodels.DeviceDefinitionTablelandModel, catalogPageSize)
 	for i := range full {
 		full[i] = defToyota(2020, "Civic", "id")
 	}
 	short := []coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Accord", "id-last")}
 
 	gomock.InOrder(
-		onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 1, "", 0).Return(full, nil),
-		onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 1, "", 1).Return(full, nil),
-		onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 1, "", 2).Return(short, nil),
+		onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).Return(full, nil),
+		onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 1).Return(full, nil),
+		onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 2).Return(short, nil),
 	)
 
 	docs, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
-	assert.Len(t, docs, 2*tablelandPageSize+1)
+	assert.Len(t, docs, 2*catalogPageSize+1)
 }
 
 func TestBuildManufacturerDocuments_PropagatesError(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 1, Name: "Honda"}
 
 	boom := errors.New("tableland down")
 	onChain.EXPECT().
-		QueryDefinitionsCustom(gomock.Any(), 1, "", 0).
+		QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
 		Return(nil, boom)
 
 	_, err := buildManufacturerDocuments(context.Background(), onChain, dm)
@@ -130,7 +130,7 @@ func TestBuildManufacturerDocuments_PropagatesError(t *testing.T) {
 func TestRunSearchSync_FlushesPerManufacturer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
@@ -138,9 +138,9 @@ func TestRunSearchSync_FlushesPerManufacturer(t *testing.T) {
 		{TokenID: 2, Name: "Toyota"},
 	}, nil)
 
-	onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 1, "", 0).
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Civic", "h1")}, nil)
-	onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 2, "", 0).
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 2, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Camry", "t1")}, nil)
 
 	// One upsert per manufacturer, each with exactly that make's docs.
@@ -164,7 +164,7 @@ func TestRunSearchSync_FlushesPerManufacturer(t *testing.T) {
 func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
@@ -172,7 +172,7 @@ func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 	}, nil)
 
 	// All pre-2007 → filtered out → builder returns zero docs.
-	onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 9, "", 0).
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 9, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(1950, "Champion", "s1")}, nil)
 
 	// No UpsertDocuments expectation → gomock will fail the test if it's called.
@@ -184,7 +184,7 @@ func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 func TestRunSearchSync_PropagatesManufacturersError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
 
 	boom := errors.New("identity down")
@@ -197,13 +197,13 @@ func TestRunSearchSync_PropagatesManufacturersError(t *testing.T) {
 func TestRunSearchSync_PropagatesUpsertError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
-	onChain := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Honda"},
 	}, nil)
-	onChain.EXPECT().QueryDefinitionsCustom(gomock.Any(), 1, "", 0).
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
 		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Civic", "h1")}, nil)
 
 	boom := errors.New("typesense down")

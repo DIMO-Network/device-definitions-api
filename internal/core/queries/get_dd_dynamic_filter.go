@@ -51,13 +51,13 @@ func (*GetDeviceDefinitionByDynamicFilterQuery) Key() string {
 
 type GetDeviceDefinitionByDynamicFilterQueryHandler struct {
 	DBS        func() *db.ReaderWriter
-	onChainSvc gateways.DeviceDefinitionOnChainService
+	catalogSvc gateways.DeviceDefinitionCatalogService
 }
 
-func NewGetDeviceDefinitionByDynamicFilterQueryHandler(dbs func() *db.ReaderWriter, onChainSvc gateways.DeviceDefinitionOnChainService) GetDeviceDefinitionByDynamicFilterQueryHandler {
+func NewGetDeviceDefinitionByDynamicFilterQueryHandler(dbs func() *db.ReaderWriter, catalogSvc gateways.DeviceDefinitionCatalogService) GetDeviceDefinitionByDynamicFilterQueryHandler {
 	return GetDeviceDefinitionByDynamicFilterQueryHandler{
 		DBS:        dbs,
-		onChainSvc: onChainSvc,
+		catalogSvc: catalogSvc,
 	}
 }
 
@@ -66,7 +66,7 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 	qry := query.(*GetDeviceDefinitionByDynamicFilterQuery)
 
 	if len(qry.DefinitionID) > 1 {
-		dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DefinitionID)
+		dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, qry.DefinitionID)
 		if err != nil {
 			return nil, err
 		}
@@ -78,14 +78,14 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 	manufacturerID := types.NullDecimal{}
 
 	if len(qry.MakeSlug) > 1 {
-		manufacturer, err := ch.onChainSvc.GetManufacturer(qry.MakeSlug)
+		manufacturer, err := ch.catalogSvc.GetManufacturer(qry.MakeSlug)
 		if err != nil {
 			return nil, err
 		}
 		manufacturerID = types.NewNullDecimal(decimal.New(int64(manufacturer.TokenID), 0))
 	}
 
-	definitions, err := ch.onChainSvc.GetDeviceDefinitions(ctx, manufacturerID, "", qry.Model, qry.Year, int32(qry.PageIndex), int32(qry.PageSize))
+	definitions, err := ch.catalogSvc.GetDeviceDefinitions(ctx, manufacturerID, "", qry.Model, qry.Year, int32(qry.PageIndex), int32(qry.PageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQu
 	}
 	split := strings.Split(dd.ID, "_")
 	manufacturerSlug := split[0]
-	manufacturer, _ := ch.onChainSvc.GetManufacturer(manufacturerSlug)
+	manufacturer, _ := ch.catalogSvc.GetManufacturer(manufacturerSlug)
 	mdStr := []byte("{}")
 	if dd.Metadata != nil {
 		mdStr, _ = json.Marshal(dd.Metadata)

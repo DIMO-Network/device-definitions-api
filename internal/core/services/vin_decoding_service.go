@@ -39,15 +39,15 @@ type vinDecodingService struct {
 	japan17VINAPI      gateways.Japan17VINAPI
 	carvxAPI           gateways.CarVxVINAPI
 	elevaAPI           gateways.ElevaAPI
-	onChainSvc         gateways.DeviceDefinitionOnChainService
+	catalogSvc         gateways.DeviceDefinitionCatalogService
 	dbs                func() *db.ReaderWriter
 }
 
 func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
-	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
+	catalogSvc gateways.DeviceDefinitionCatalogService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
 	japan17VINAPI gateways.Japan17VINAPI, carvxAPI gateways.CarVxVINAPI, elevaAPI gateways.ElevaAPI) VINDecodingService {
 	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso,
-		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, onChainSvc: onChainSvc,
+		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, catalogSvc: catalogSvc,
 		DATGroupAPIService: datGroupAPIService, dbs: dbs, elevaAPI: elevaAPI}
 }
 
@@ -75,7 +75,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, _, err := c.onChainSvc.GetDefinitionByID(ctx, DefaultDefinitionID)
+		dd, _, err := c.catalogSvc.GetDefinitionByID(ctx, DefaultDefinitionID)
 		if err != nil {
 			return nil, nil, err
 		}

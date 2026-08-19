@@ -14,8 +14,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
@@ -32,8 +30,6 @@ import (
 type addVINCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
-
-	sender sender.Sender
 }
 
 func (*addVINCmd) Name() string     { return "addvin" }
@@ -61,16 +57,7 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+	catalogSvc := gateways.NewDeviceDefinitionCatalogService(&p.settings, &p.logger)
 
 	vinDecodeNumber, err := models.FindVinNumber(ctx, pdb.DBS().Reader, vin)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -117,13 +104,13 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitFailure
 	}
 
-	manufacturer, err := onChainSvc.GetManufacturer(stringutils.SlugString(wmi.ManufacturerName))
+	manufacturer, err := catalogSvc.GetManufacturer(stringutils.SlugString(wmi.ManufacturerName))
 	if err != nil {
 		fmt.Println(err.Error())
 		return subcommands.ExitFailure
 	}
 	definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(model), int16(vinNumber.Year))
-	deviceDefinition, err := onChainSvc.GetDefinitionTableland(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
+	deviceDefinition, err := catalogSvc.GetDefinition(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
 
 	if err != nil {
 		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))

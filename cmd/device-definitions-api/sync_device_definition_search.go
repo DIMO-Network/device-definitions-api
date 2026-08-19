@@ -7,10 +7,7 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -23,9 +20,9 @@ import (
 )
 
 const (
-	minSearchYear         = 2007
-	tablelandPageSize     = 500
-	searchDefaultScore    = 1
+	minSearchYear      = 2007
+	catalogPageSize    = 500
+	searchDefaultScore = 1
 )
 
 type syncDeviceDefinitionSearchCmd struct {
@@ -33,7 +30,6 @@ type syncDeviceDefinitionSearchCmd struct {
 	settings config.Settings
 
 	createIndex bool
-	sender      sender.Sender
 }
 
 func (*syncDeviceDefinitionSearchCmd) Name() string { return "sync-device-definitions-search" }
@@ -52,16 +48,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-
-	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+	catalogSvc := gateways.NewDeviceDefinitionCatalogService(&p.settings, &p.logger)
 	identity := gateways.NewIdentityAPIService(&p.logger, &p.settings)
 
 	client := typesense.NewClient(
@@ -79,7 +66,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		fmt.Printf("Index %s created\n", collectionName)
 	}
 
-	if err := runSearchSync(ctx, identity, onChainSvc, indexer, collectionName); err != nil {
+	if err := runSearchSync(ctx, identity, catalogSvc, indexer, collectionName); err != nil {
 		p.logger.Error().Err(err).Msg("sync failed")
 		return subcommands.ExitFailure
 	}
@@ -94,7 +81,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 func runSearchSync(
 	ctx context.Context,
 	identity gateways.IdentityAPI,
-	onChainSvc gateways.DeviceDefinitionOnChainService,
+	catalogSvc gateways.DeviceDefinitionCatalogService,
 	indexer SearchIndexer,
 	collectionName string,
 ) error {
@@ -105,7 +92,7 @@ func runSearchSync(
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
 	for _, dm := range makes {
-		docs, err := buildManufacturerDocuments(ctx, onChainSvc, dm)
+		docs, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
 		if err != nil {
 			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
 		}
@@ -125,7 +112,7 @@ func runSearchSync(
 // and converts the ones from model year >= minSearchYear into SearchEntryItems.
 func buildManufacturerDocuments(
 	ctx context.Context,
-	onChainSvc gateways.DeviceDefinitionOnChainService,
+	catalogSvc gateways.DeviceDefinitionCatalogService,
 	dm coremodels.Manufacturer,
 ) ([]SearchEntryItem, error) {
 	makeSlug := stringutils.SlugString(dm.Name)
@@ -133,7 +120,7 @@ func buildManufacturerDocuments(
 
 	pageIndex := 0
 	for {
-		page, err := onChainSvc.QueryDefinitionsCustom(ctx, dm.TokenID, "", pageIndex)
+		page, err := catalogSvc.QueryDefinitionsByManufacturer(ctx, dm.TokenID, pageIndex)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +143,7 @@ func buildManufacturerDocuments(
 				Score:               searchDefaultScore,
 			})
 		}
-		if len(page) < tablelandPageSize {
+		if len(page) < catalogPageSize {
 			break
 		}
 		pageIndex++

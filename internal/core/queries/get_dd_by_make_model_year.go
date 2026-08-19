@@ -27,13 +27,13 @@ func (*GetDeviceDefinitionByMakeModelYearQuery) Key() string {
 
 type GetDeviceDefinitionByMakeModelYearQueryHandler struct {
 	dbs        func() *db.ReaderWriter
-	onChainSvc gateways.DeviceDefinitionOnChainService
+	catalogSvc gateways.DeviceDefinitionCatalogService
 	identity   gateways.IdentityAPI
 }
 
-func NewGetDeviceDefinitionByMakeModelYearQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter, identity gateways.IdentityAPI) GetDeviceDefinitionByMakeModelYearQueryHandler {
+func NewGetDeviceDefinitionByMakeModelYearQueryHandler(catalogSvc gateways.DeviceDefinitionCatalogService, dbs func() *db.ReaderWriter, identity gateways.IdentityAPI) GetDeviceDefinitionByMakeModelYearQueryHandler {
 	return GetDeviceDefinitionByMakeModelYearQueryHandler{
-		onChainSvc: onChainSvc,
+		catalogSvc: catalogSvc,
 		dbs:        dbs,
 		identity:   identity,
 	}
@@ -43,13 +43,13 @@ func (ch GetDeviceDefinitionByMakeModelYearQueryHandler) Handle(ctx context.Cont
 
 	qry := query.(*GetDeviceDefinitionByMakeModelYearQuery)
 	makeSlug := stringutils.SlugString(qry.Make)
-	manufacturer, err := ch.onChainSvc.GetManufacturer(makeSlug)
+	manufacturer, err := ch.catalogSvc.GetManufacturer(makeSlug)
 	if err != nil {
 		return nil, err
 	}
 
 	manufacturerID := types.NewNullDecimal(decimal.New(int64(manufacturer.TokenID), 0))
-	definitions, err := ch.onChainSvc.GetDeviceDefinitions(ctx, manufacturerID, "", qry.Model, qry.Year, 0, 100)
+	definitions, err := ch.catalogSvc.GetDeviceDefinitions(ctx, manufacturerID, "", qry.Model, qry.Year, 0, 100)
 	if err != nil {
 		return nil, err
 	}

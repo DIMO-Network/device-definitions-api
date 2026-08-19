@@ -40,7 +40,7 @@ type DecodeVINQueryHandler struct {
 	vinRepository                  repositories.VINRepository
 	fuelAPIService                 gateways.FuelAPIService
 	powerTrainTypeService          services.PowerTrainTypeService
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService
 	identity                       gateways.IdentityAPI
 }
 
@@ -58,7 +58,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 	logger *zerolog.Logger,
 	fuelAPIService gateways.FuelAPIService,
 	powerTrainTypeService services.PowerTrainTypeService,
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService,
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService,
 	identity gateways.IdentityAPI) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
 		dbs:                            dbs,
@@ -67,7 +67,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 		vinRepository:                  vinRepository,
 		fuelAPIService:                 fuelAPIService,
 		powerTrainTypeService:          powerTrainTypeService,
-		deviceDefinitionOnChainService: deviceDefinitionOnChainService,
+		deviceDefinitionCatalogService: deviceDefinitionCatalogService,
 		identity:                       identity,
 	}
 }
@@ -211,13 +211,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
-	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid)
+	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, tid)
 	if errTbl != nil {
-		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
+		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
-		dc.logger.Warn().Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
+		dc.logger.Warn().Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else {
-		dc.logger.Info().Str(logfields.VIN, vinObj.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
+		dc.logger.Info().Str(logfields.VIN, vinObj.String()).Msgf("found definition from catalog %s: %+v", tid, tblDef)
 	}
 
 	// add images if we don't have any for this definition_id
@@ -255,7 +255,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		// todo load up some metadata from what was decoded. Powertrain too
 		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
 
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
+		trx, err := dc.deviceDefinitionCatalogService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
 			ID:         tid,
 			KSUID:      ksuid.New().String(),
 			Model:      resp.Model,
@@ -320,7 +320,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 	// call on-chain svc to get the DD and pull out the powertrain
 	powertrain := "" // this is what we're trying to resolve in part
 	trx := ""
-	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID)
+	tblDef, manufID, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), vn.DefinitionID)
 	if err == nil && tblDef != nil {
 		if tblDef.Metadata != nil {
 			for _, attribute := range tblDef.Metadata.DeviceAttributes {
@@ -331,7 +331,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 			}
 		}
 		if powertrain == "" {
-			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
+			makeName, _ := dc.deviceDefinitionCatalogService.GetManufacturerNameByID(context.Background(), manufID)
 			powertrain, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
 		}
 	} else {
@@ -467,7 +467,7 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 		for _, wmi := range wmis {
 			makeNamesForError += wmi.ManufacturerName + ", "
 			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
-			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), definitionID)
+			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), definitionID)
 			if err == nil && deviceDefinitionTablelandModel != nil {
 				vinInfo.Make = wmi.ManufacturerName
 				break

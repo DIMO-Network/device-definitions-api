@@ -3,14 +3,10 @@ package api
 import (
 	"context"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
-
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -35,7 +31,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, send sender.Sender) {
+func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) {
 
 	//db
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
@@ -43,16 +39,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	// redis
 	//redisCache := redis.NewRedisCacheService(settings.IsProd(), settings.Redis)
-
-	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
 
 	//infra
 	identityAPI := gateways.NewIdentityAPIService(&logger, settings)
@@ -63,46 +49,42 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 	japan17VINAPI := gateways.NewJapan17VINAPI(&logger, settings)
 	carvxAPI := gateways.NewCarVxVINAPI(&logger, settings)
 	elevaAPI := gateways.NewElevaAPI(settings)
-	registryInstance, err := contracts.NewRegistry(settings.EthereumRegistryAddress, ethClient)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create registry query instance.")
-	}
-	ddOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, &logger, ethClient, chainID, send, pdb.DBS)
+	ddCatalogService := gateways.NewDeviceDefinitionCatalogService(settings, &logger)
 	datGroupWSService := gateways.NewDATGroupAPIService(settings, &logger)
 
 	//repos
 	//makeRepository := repositories.NewDeviceMakeRepository(pdb.DBS)
 	deviceStyleRepository := repositories.NewDeviceStyleRepository(pdb.DBS)
-	vinRepository := repositories.NewVINRepository(pdb.DBS, registryInstance, identityAPI)
+	vinRepository := repositories.NewVINRepository(pdb.DBS, identityAPI)
 
 	//cache services
-	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, ddOnChainService, datGroupWSService, pdb.DBS, japan17VINAPI, carvxAPI, elevaAPI)
-	powerTrainTypeService, err := services.NewPowerTrainTypeService("powertrain_type_rule.yaml", &logger, ddOnChainService)
+	vincDecodingService := services.NewVINDecodingService(drivlyAPIService, vincarioAPIService, autoIsoAPIService, &logger, ddCatalogService, datGroupWSService, pdb.DBS, japan17VINAPI, carvxAPI, elevaAPI)
+	powerTrainTypeService, err := services.NewPowerTrainTypeService("powertrain_type_rule.yaml", &logger, ddCatalogService)
 	searchService := search.NewTypesenseAPIService(settings, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
 
-	decodeVINHandler := queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddOnChainService, identityAPI)
-	upsertVINHandler := queries.NewUpsertDecodingQueryHandler(pdb.DBS, &logger, ddOnChainService)
+	decodeVINHandler := queries.NewDecodeVINQueryHandler(pdb.DBS, vincDecodingService, vinRepository, &logger, fuelAPIService, powerTrainTypeService, ddCatalogService, identityAPI)
+	upsertVINHandler := queries.NewUpsertDecodingQueryHandler(pdb.DBS, &logger, ddCatalogService)
 
 	//custom commands
 	m, _ := mediator.New(
 		//mediator.WithBehaviour(common.NewLoggingBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddOnChainService, pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddOnChainService, pdb.DBS, identityAPI)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS, ddOnChainService)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCatalogService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddCatalogService, pdb.DBS, identityAPI)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS, ddCatalogService)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationByIDQuery{}, queries.NewGetIntegrationByIDQueryHandler(pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS, ddOnChainService)),
+		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS, ddCatalogService)),
 		mediator.WithHandler(&queries.GetDeviceStyleByFilterQuery{}, queries.NewGetDeviceStyleByFilterQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByDeviceDefinitionIDQuery{}, queries.NewGetDeviceStyleByDeviceDefinitionIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByExternalIDQuery{}, queries.NewGetDeviceStyleByExternalIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceTypeByIDQuery{}, queries.NewGetDeviceTypeByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionImagesByIDsQuery{}, queries.NewGetDeviceDefinitionImagesByIDsQueryHandler(pdb.DBS, &logger)),
-		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(ddOnChainService, pdb.DBS, powerTrainTypeService, fuelAPIService, &logger, identityAPI)),
+		mediator.WithHandler(&commands.CreateDeviceDefinitionCommand{}, commands.NewCreateDeviceDefinitionCommandHandler(ddCatalogService, pdb.DBS, powerTrainTypeService, fuelAPIService, &logger, identityAPI)),
 		mediator.WithHandler(&commands.CreateDeviceStyleCommand{}, commands.NewCreateDeviceStyleCommandHandler(deviceStyleRepository)),
 		mediator.WithHandler(&commands.UpdateDeviceStyleCommand{}, commands.NewUpdateDeviceStyleCommandHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetAllDeviceTypeQuery{}, queries.NewGetAllDeviceTypeQueryHandler(pdb.DBS)),
@@ -114,7 +96,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&commands.BulkValidateVinCommand{}, commands.NewBulkValidateVinCommandHandler(
 			pdb.DBS,
 			decodeVINHandler,
-			queries.NewGetDeviceDefinitionByIDQueryHandler(ddOnChainService, pdb.DBS),
+			queries.NewGetDeviceDefinitionByIDQueryHandler(ddCatalogService, pdb.DBS),
 		)),
 
 		mediator.WithHandler(&queries.GetIntegrationByTokenIDQuery{}, queries.NewGetIntegrationByTokenIDQueryHandler(pdb.DBS, &logger)),
@@ -122,7 +104,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 		mediator.WithHandler(&queries.GetR1CompatibilitySearch{}, queries.NewGetR1CompatibilitySearchQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetAllDeviceDefinitionByAutocompleteQuery{}, queries.NewGetAllDeviceDefinitionByAutocompleteQueryHandler(searchService)),
 		mediator.WithHandler(&queries.GetCompatibilityR1SheetQuery{}, queries.NewCompatibilityR1SheetQueryHandler(settings)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQueryV2{}, queries.NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainService, pdb.DBS)),
+		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQueryV2{}, queries.NewGetDeviceDefinitionByIDQueryV2Handler(ddCatalogService, pdb.DBS)),
 		mediator.WithHandler(&queries.GetVINProfileQuery{}, queries.NewGetVINProfileQueryHandler(pdb.DBS, &logger, powerTrainTypeService)),
 
 		mediator.WithHandler(&queries.UpsertDecodingQuery{}, upsertVINHandler),
@@ -152,7 +134,7 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings, 
 
 	app.Get("/v1/swagger/*", swagger.HandlerDefault)
 
-	go StartGrpcServer(logger, settings, *m, pdb.DBS, ddOnChainService, registryInstance, identityAPI, &decodeVINHandler, &upsertVINHandler)
+	go StartGrpcServer(logger, settings, *m, pdb.DBS, &decodeVINHandler, &upsertVINHandler)
 
 	// Start Server from a different go routine
 	go func() {

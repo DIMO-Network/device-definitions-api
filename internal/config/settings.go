@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/DIMO-Network/shared/pkg/db"
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/DIMO-Network/shared/pkg/redis"
 )
@@ -32,13 +31,9 @@ type Settings struct {
 	VincarioAPISecret                 string         `yaml:"VINCARIO_API_SECRET"`
 	AutoIsoAPIUid                     string         `yaml:"AUTO_ISO_API_UID"`
 	AutoIsoAPIKey                     string         `yaml:"AUTO_ISO_API_KEY"`
-	EthereumRPCURL                    url.URL        `yaml:"ETHEREUM_RPC_URL"`
-	PrivateKeyMode                    bool           `yaml:"PRIVATE_KEY_MODE"`
-	SenderPrivateKey                  string         `yaml:"SENDER_PRIVATE_KEY"`
-	KMSKeyID                          string         `yaml:"KMS_KEY_ID"`
-	EthereumSendTransaction           bool           `yaml:"ETHEREUM_SEND_TRANSACTION"`
-	EthereumRegistryAddress           common.Address `yaml:"ETHEREUM_REGISTRY_ADDRESS"`
-	TablelandAPIGateway               string         `yaml:"TABLELAND_API_GATEWAY"`
+	DefinitionsCatalogURL             string         `yaml:"DEFINITIONS_CATALOG_URL"`
+	DefinitionsWorkerURL              string         `yaml:"DEFINITIONS_WORKER_URL"`
+	DefinitionsWorkerToken            string         `yaml:"DEFINITIONS_WORKER_TOKEN"`
 	DatGroupURL                       url.URL        `yaml:"DAT_GROUP_URL"`
 	DatGroupCustomerLogin             string         `yaml:"DAT_GROUP_CUSTOMER_LOGIN"`
 	DatGroupCustomerNumber            string         `yaml:"DAT_GROUP_CUSTOMER_NUMBER"`
