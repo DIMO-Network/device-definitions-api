@@ -61,6 +61,22 @@ type catalogDoc struct {
 	Manufacturer catalogManufacturer `json:"manufacturer"`
 }
 
+// UnmarshalJSON exists because the embedded model's custom UnmarshalJSON
+// would otherwise be promoted to catalogDoc and silently drop Manufacturer.
+func (d *catalogDoc) UnmarshalJSON(data []byte) error {
+	if err := json.Unmarshal(data, &d.DeviceDefinitionTablelandModel); err != nil {
+		return err
+	}
+	var aux struct {
+		Manufacturer catalogManufacturer `json:"manufacturer"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	d.Manufacturer = aux.Manufacturer
+	return nil
+}
+
 type catalogManifest struct {
 	UpdatedAt   string       `json:"updatedAt"`
 	Count       int          `json:"count"`
@@ -288,7 +304,7 @@ type workerPutBody struct {
 
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
-	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
+	_, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
 		ID:         dd.ID,
 		Model:      dd.Model,
 		Year:       dd.Year,
@@ -297,10 +313,12 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 		Metadata:   dd.Metadata,
 		KSUID:      dd.KSUID,
 	})
-	if err != nil || !sent {
+	if err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)
+	// Returns the id even when the worker call was skipped (no URL set in
+	// local dev) so callers never dereference a nil result.
 	return &dd.ID, nil
 }
 
@@ -330,8 +348,7 @@ func (e *deviceDefinitionCatalogService) Update(ctx context.Context, manufacture
 	if input.Metadata != nil {
 		body.Metadata = input.Metadata
 	}
-	sent, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(input.ID), body)
-	if err != nil || !sent {
+	if _, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(input.ID), body); err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)
@@ -340,8 +357,7 @@ func (e *deviceDefinitionCatalogService) Update(ctx context.Context, manufacture
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {
 	e.logger.Info().Msgf("catalog delete for device definition %s (manufacturer %s)", id, manufacturerName)
-	sent, err := e.workerRequest(ctx, http.MethodDelete, "/definitions/"+url.PathEscape(id), nil)
-	if err != nil || !sent {
+	if _, err := e.workerRequest(ctx, http.MethodDelete, "/definitions/"+url.PathEscape(id), nil); err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)

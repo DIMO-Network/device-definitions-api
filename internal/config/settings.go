@@ -44,7 +44,6 @@ type Settings struct {
 	SearchServiceIndexName            string         `yaml:"SEARCH_SERVICE_DEVICE_DEFINITION_INDEX"`
 	JwtKeySetURL                      string         `yaml:"JWT_KEY_SET_URL"`
 	IdentityAPIURL                    url.URL        `yaml:"IDENTITY_API_URL"`
-	PolygonScanAPIKey                 string         `yaml:"POLYGON_SCAN_API_KEY"`
 	GoogleSheetsCredentials           string         `yaml:"GOOGLE_SHEETS_CREDENTIALS"`
 	Japan17VINUser                    string         `yaml:"JAPAN17_VIN_USER"`
 	Japan17VINPassword                string         `yaml:"JAPAN17_VIN_PASSWORD"`

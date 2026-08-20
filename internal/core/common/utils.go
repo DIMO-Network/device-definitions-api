@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -297,31 +296,6 @@ func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
 	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
-}
-
-func CheckTransactionStatus(txHash, apiKey string, useAmoy bool) (bool, error) {
-	baseURL := "https://api.polygonscan.com"
-	if useAmoy {
-		baseURL = "https://amoy.polygonscan.com"
-	}
-	url := fmt.Sprintf("%s/api?module=transaction&action=gettxreceiptstatus&txhash=%s&apikey=%s", baseURL, txHash, apiKey)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	var txStatus TxStatusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&txStatus); err != nil {
-		return false, err
-	}
-
-	// Check the transaction status
-	if txStatus.Status == "1" && txStatus.Result.Status == "1" {
-		return true, nil
-	}
-	return false, nil
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {

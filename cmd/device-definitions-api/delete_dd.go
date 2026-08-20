@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	dd_common "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/google/subcommands"
@@ -56,32 +54,12 @@ func (p *deleteDefinition) Execute(ctx context.Context, _ *flag.FlagSet, _ ...in
 
 	id := os.Args[len(os.Args)-1]
 
-	trx, err := deviceDefinitionCatalogService.Delete(ctx, manufacturer, id)
+	deleted, err := deviceDefinitionCatalogService.Delete(ctx, manufacturer, id)
 	if err != nil {
 		p.logger.Fatal().Err(err).Msg("Failed to delete.")
 	}
-
-	if len(*trx) > 0 {
-		trxFinished := false
-		loops := 0
-		for !trxFinished {
-			loops++
-			time.Sleep(time.Second * 2)
-			trxFinished, err = dd_common.CheckTransactionStatus(*trx, p.settings.PolygonScanAPIKey, !p.settings.IsProd())
-			if err != nil {
-				fmt.Println("Error checking transaction status: ", err)
-			}
-			fmt.Println("Transaction status: ", trxFinished)
-			if loops > 10 {
-				// get device definition from on chain to see if maybe got created but trx still showing false
-				onchainDD, _, err := deviceDefinitionCatalogService.GetDefinitionByID(ctx, id)
-				fmt.Println("onchainDD: ", onchainDD, err)
-				if onchainDD != nil {
-					break
-				}
-			}
-		}
-	}
+	// The worker delete is synchronous; nothing to poll.
+	fmt.Println("Deleted device definition: ", *deleted)
 
 	return subcommands.ExitSuccess
 }
