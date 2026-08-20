@@ -322,7 +322,7 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 	return &dd.ID, nil
 }
 
-func (e *deviceDefinitionCatalogService) Update(ctx context.Context, manufacturerName string, input coremodels.DeviceDefinitionUpdateInput) (*string, error) {
+func (e *deviceDefinitionCatalogService) Update(ctx context.Context, _ string, input coremodels.DeviceDefinitionUpdateInput) (*string, error) {
 	existing, _, err := e.GetDefinitionByID(ctx, input.ID)
 	if err != nil {
 		return nil, err

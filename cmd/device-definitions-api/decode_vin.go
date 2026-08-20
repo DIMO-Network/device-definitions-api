@@ -253,7 +253,7 @@ func readVINFile(filename string) ([]string, error) {
 	return values, nil
 }
 
-func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
+func instantiateVINDecodingSvc(_ context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
 	datAPI := gateways.NewDATGroupAPIService(settings, logger)
 	drivlyAPI := gateways.NewDrivlyAPIService(settings)
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
