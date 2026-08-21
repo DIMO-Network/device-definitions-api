@@ -15,11 +15,29 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 )
+
+// Metric method labels for the shared request counters; dashboards filter on
+// these the way they previously filtered on the Tableland* labels.
+const (
+	metricCatalogRead  = "CatalogRead"
+	metricManifestRead = "CatalogManifestRead"
+	metricCatalogWrite = "CatalogWrite"
+)
+
+func countOutcome(method string, err error) {
+	if err != nil {
+		metrics.InternalError.With(prometheus.Labels{"method": method}).Inc()
+		return
+	}
+	metrics.Success.With(prometheus.Labels{"method": method}).Inc()
+}
 
 //go:generate mockgen -source device_definition_catalog_service.go -destination mocks/device_definition_catalog_service_mock.go -package mocks
 
@@ -106,7 +124,25 @@ func (e *deviceDefinitionCatalogService) catalogURL(pathSuffix string) string {
 }
 
 func (e *deviceDefinitionCatalogService) fetchDoc(ctx context.Context, id string) (*catalogDoc, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/definitions/"+url.PathEscape(id)+".json"), nil)
+	doc, err := e.fetchDocFrom(ctx, e.catalogURL("/definitions/"+url.PathEscape(id)+".json"), id)
+	countOutcome(metricCatalogRead, err)
+	return doc, err
+}
+
+// fetchDocFresh bypasses the CDN by reading through the worker when
+// configured, so read-modify-write never merges a stale cached base.
+func (e *deviceDefinitionCatalogService) fetchDocFresh(ctx context.Context, id string) (*catalogDoc, error) {
+	base := e.settings.DefinitionsWorkerURL
+	if base == "" {
+		return e.fetchDoc(ctx, id)
+	}
+	doc, err := e.fetchDocFrom(ctx, strings.TrimSuffix(base, "/")+"/definitions/"+url.PathEscape(id), id)
+	countOutcome(metricCatalogRead, err)
+	return doc, err
+}
+
+func (e *deviceDefinitionCatalogService) fetchDocFrom(ctx context.Context, reqURL, id string) (*catalogDoc, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +182,10 @@ func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalog
 	}
 	var m catalogManifest
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		metrics.InternalError.With(prometheus.Labels{"method": metricManifestRead}).Inc()
 		return nil, errors.Wrap(err, "failed to decode definitions manifest")
 	}
+	metrics.Success.With(prometheus.Labels{"method": metricManifestRead}).Inc()
 	e.memCache.Set(manifestCacheKey, &m, manifestCacheTTL)
 	return &m, nil
 }
@@ -282,13 +320,16 @@ func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, meth
 	req.Header.Set("Authorization", "Bearer "+e.settings.DefinitionsWorkerToken)
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
+		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
 		return false, errors.Wrapf(err, "definitions-worker %s %s failed", method, pathSuffix)
 	}
 	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode >= 300 {
+		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
 		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
 		return false, fmt.Errorf("definitions-worker %s %s returned %d: %s", method, pathSuffix, resp.StatusCode, string(msg))
 	}
+	metrics.Success.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
 	return true, nil
 }
 
@@ -323,7 +364,11 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 }
 
 func (e *deviceDefinitionCatalogService) Update(ctx context.Context, _ string, input coremodels.DeviceDefinitionUpdateInput) (*string, error) {
-	existing, _, err := e.GetDefinitionByID(ctx, input.ID)
+	existingDoc, err := e.fetchDocFresh(ctx, input.ID)
+	var existing *coremodels.DeviceDefinitionTablelandModel
+	if existingDoc != nil {
+		existing = &existingDoc.DeviceDefinitionTablelandModel
+	}
 	if err != nil {
 		return nil, err
 	}
