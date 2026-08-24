@@ -51,6 +51,9 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		}
 	}
 	dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, ds.DefinitionID)
+	if err == nil && dd == nil {
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", ds.DefinitionID)}
+	}
 	if err != nil {
 		return nil, &exceptions.InternalError{
 			Err: fmt.Errorf("failed to get device definition"),

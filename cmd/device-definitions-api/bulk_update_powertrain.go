@@ -104,7 +104,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			continue
 		}
 		set := false
-		if deviceDefinition.Metadata != nil {
+		if deviceDefinition.Metadata == nil {
 			deviceDefinition.Metadata = &models.DeviceDefinitionMetadata{
 				DeviceAttributes: make([]models.DeviceTypeAttribute, 0),
 			}

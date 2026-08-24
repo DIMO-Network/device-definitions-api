@@ -345,7 +345,17 @@ type workerPutBody struct {
 
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
-	_, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
+	// The worker PUT is an upsert; preserve the old create semantics so a
+	// create can never silently overwrite a curated definition. Fresh read so
+	// a stale CDN 404 can't slip through.
+	existing, err := e.fetchDocFresh(ctx, dd.ID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, fmt.Errorf("cannot create device definition, already exists: %s", dd.ID)
+	}
+	_, err = e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
 		ID:         dd.ID,
 		Model:      dd.Model,
 		Year:       dd.Year,

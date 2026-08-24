@@ -55,6 +55,9 @@ func (dc UpsertDecodingQueryHandler) Handle(ctx context.Context, query mediator.
 
 	// check if the definition id exists on chain
 	dd, manuf, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, qry.DefinitionID)
+	if err == nil && dd == nil {
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", qry.DefinitionID)}
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find device definition by id %s when upserting vin decoding", qry.DefinitionID)
 	}
