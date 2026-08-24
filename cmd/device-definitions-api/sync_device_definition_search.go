@@ -20,7 +20,12 @@ import (
 )
 
 const (
-	minSearchYear      = 2007
+	minSearchYear = 2007
+	// Guardrail on the prune pass: deleting more than pruneFraction of the
+	// index (with a pruneFloor allowance for small collections) requires an
+	// explicit flag.
+	pruneFloor         = 100
+	pruneFraction      = 0.10
 	catalogPageSize    = 500
 	searchDefaultScore = 1
 )
@@ -29,7 +34,8 @@ type syncDeviceDefinitionSearchCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
 
-	createIndex bool
+	createIndex    bool
+	allowBulkPrune bool
 }
 
 func (*syncDeviceDefinitionSearchCmd) Name() string { return "sync-device-definitions-search" }
@@ -42,6 +48,8 @@ func (*syncDeviceDefinitionSearchCmd) Usage() string {
 
 func (p *syncDeviceDefinitionSearchCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.createIndex, "create-index", false, "create or recreate index")
+	f.BoolVar(&p.allowBulkPrune, "allow-bulk-prune", false,
+		"permit deleting an unusually large share of the search index (normally a sign of a partial catalog read)")
 }
 
 func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -66,7 +74,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		fmt.Printf("Index %s created\n", collectionName)
 	}
 
-	if err := runSearchSync(ctx, identity, catalogSvc, indexer, collectionName); err != nil {
+	if err := runSearchSync(ctx, identity, catalogSvc, indexer, collectionName, p.allowBulkPrune); err != nil {
 		p.logger.Error().Err(err).Msg("sync failed")
 		return subcommands.ExitFailure
 	}
@@ -84,6 +92,7 @@ func runSearchSync(
 	catalogSvc gateways.DeviceDefinitionCatalogService,
 	indexer SearchIndexer,
 	collectionName string,
+	allowBulkPrune bool,
 ) error {
 	makes, err := identity.GetManufacturers()
 	if err != nil {
@@ -91,10 +100,18 @@ func runSearchSync(
 	}
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
+	// Every id we upsert; the prune pass treats anything else in the index as
+	// an orphan. Pre-2007 definitions are deliberately absent, so a stale
+	// pre-2007 entry gets cleaned up too.
+	catalogIDs := make(map[string]struct{})
+
 	for _, dm := range makes {
 		docs, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
 		if err != nil {
 			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
+		}
+		for _, d := range docs {
+			catalogIDs[d.ID] = struct{}{}
 		}
 		if len(docs) == 0 {
 			fmt.Printf("%s: no definitions to sync\n", dm.Name)
@@ -104,6 +121,16 @@ func runSearchSync(
 			return fmt.Errorf("upsert %s: %w", dm.Name, err)
 		}
 		fmt.Printf("%s: upserted %d definitions\n", dm.Name, len(docs))
+	}
+
+	// Upserting alone leaves a definition deleted from the catalog searchable
+	// forever, returning an id that 404s.
+	pruned, err := pruneOrphans(ctx, indexer, collectionName, catalogIDs, allowBulkPrune)
+	if err != nil {
+		return err
+	}
+	if pruned > 0 {
+		fmt.Printf("pruned %d search documents with no definition in the catalog\n", pruned)
 	}
 	return nil
 }
@@ -149,6 +176,53 @@ func buildManufacturerDocuments(
 		pageIndex++
 	}
 	return docs, nil
+}
+
+// pruneOrphans deletes search documents whose definition no longer exists in
+// the catalog. The sync pass only ever upserts, so without this a definition
+// deleted from R2 stays searchable forever, returning an id that 404s.
+func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName string, catalogIDs map[string]struct{}, allowBulk bool) (int, error) {
+	// An empty catalog set means the catalog read failed or returned nothing.
+	// Pruning against it would empty the whole index.
+	if len(catalogIDs) == 0 {
+		return 0, nil
+	}
+
+	indexed, err := indexer.ExportIDs(ctx, collectionName)
+	if err != nil {
+		return 0, fmt.Errorf("export index ids: %w", err)
+	}
+
+	var stale []string
+	for _, id := range indexed {
+		if _, ok := catalogIDs[id]; !ok {
+			stale = append(stale, id)
+		}
+	}
+	if len(stale) == 0 {
+		return 0, nil
+	}
+
+	// A prune this large is far more likely to mean the catalog read was
+	// partial than that the catalog really shrank that much. Fail loud rather
+	// than quietly gut the index.
+	if limit := pruneLimit(len(indexed)); len(stale) > limit && !allowBulk {
+		return 0, fmt.Errorf(
+			"refusing to prune %d of %d search documents (limit %d); re-run with -allow-bulk-prune if this is expected",
+			len(stale), len(indexed), limit)
+	}
+
+	if err := indexer.DeleteDocuments(ctx, collectionName, stale); err != nil {
+		return 0, fmt.Errorf("delete orphaned search documents: %w", err)
+	}
+	return len(stale), nil
+}
+
+func pruneLimit(indexed int) int {
+	if limit := int(float64(indexed) * pruneFraction); limit > pruneFloor {
+		return limit
+	}
+	return pruneFloor
 }
 
 func deviceDefinitionSearchSchema(collectionName string) *api.CollectionSchema {

@@ -157,7 +157,10 @@ func TestRunSearchSync_FlushesPerManufacturer(t *testing.T) {
 			return nil
 		})
 
-	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search")
+	// Both makes are still in the catalog, so the prune pass deletes nothing.
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").Return([]string{"h1", "t1"}, nil)
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)
 }
 
@@ -177,7 +180,7 @@ func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 
 	// No UpsertDocuments expectation → gomock will fail the test if it's called.
 
-	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search")
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)
 }
 
@@ -190,7 +193,7 @@ func TestRunSearchSync_PropagatesManufacturersError(t *testing.T) {
 	boom := errors.New("identity down")
 	identity.EXPECT().GetManufacturers().Return(nil, boom)
 
-	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search")
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.ErrorIs(t, err, boom)
 }
 
@@ -209,6 +212,48 @@ func TestRunSearchSync_PropagatesUpsertError(t *testing.T) {
 	boom := errors.New("typesense down")
 	indexer.EXPECT().UpsertDocuments(gomock.Any(), "dd-search", gomock.Any()).Return(boom)
 
-	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search")
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.ErrorIs(t, err, boom)
+}
+
+func TestRunSearchSync_PrunesDefinitionsMissingFromCatalog(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
+		{TokenID: 1, Name: "Honda"},
+	}, nil)
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
+		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Civic", "h1")}, nil)
+	indexer.EXPECT().UpsertDocuments(gomock.Any(), "dd-search", gomock.Any()).Return(nil)
+
+	// The index still carries a definition the catalog no longer has.
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").
+		Return([]string{"h1", "deleted_1"}, nil)
+	indexer.EXPECT().DeleteDocuments(gomock.Any(), "dd-search", []string{"deleted_1"}).
+		Return(nil)
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.NoError(t, err)
+}
+
+func TestRunSearchSync_DoesNotPruneDefinitionsThatAreStillInTheCatalog(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
+		{TokenID: 1, Name: "Honda"},
+	}, nil)
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
+		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Civic", "h1")}, nil)
+	indexer.EXPECT().UpsertDocuments(gomock.Any(), "dd-search", gomock.Any()).Return(nil)
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").Return([]string{"h1"}, nil)
+	// No DeleteDocuments expectation: gomock fails the test if it is called.
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.NoError(t, err)
 }

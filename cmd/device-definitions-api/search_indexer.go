@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -13,6 +16,10 @@ import (
 type SearchIndexer interface {
 	RecreateIndex(ctx context.Context, schema *api.CollectionSchema) error
 	UpsertDocuments(ctx context.Context, collectionName string, docs []SearchEntryItem) error
+	// ExportIDs returns the id of every document currently in the collection.
+	ExportIDs(ctx context.Context, collectionName string) ([]string, error)
+	// DeleteDocuments removes the given document ids from the collection.
+	DeleteDocuments(ctx context.Context, collectionName string, ids []string) error
 }
 
 type typesenseSearchIndexer struct {
@@ -48,6 +55,49 @@ func (t *typesenseSearchIndexer) UpsertDocuments(ctx context.Context, collection
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to import documents")
+	}
+	return nil
+}
+
+func (t *typesenseSearchIndexer) ExportIDs(ctx context.Context, collectionName string) ([]string, error) {
+	body, err := t.client.Collection(collectionName).Documents().Export(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to export documents")
+	}
+	defer body.Close() //nolint:errcheck
+
+	var ids []string
+	scanner := bufio.NewScanner(body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
+	for scanner.Scan() {
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
+		var doc struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(line, &doc); err != nil {
+			return nil, errors.Wrap(err, "failed to decode exported document")
+		}
+		if doc.ID != "" {
+			ids = append(ids, doc.ID)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, errors.Wrap(err, "failed to read the export stream")
+	}
+	return ids, nil
+}
+
+// DeleteDocuments removes ids one at a time rather than through a filter_by
+// set: definition ids legitimately contain & + ( ) and ", which would need
+// escaping inside a filter expression. Orphans are rare, so this stays cheap.
+func (t *typesenseSearchIndexer) DeleteDocuments(ctx context.Context, collectionName string, ids []string) error {
+	for _, id := range ids {
+		if _, err := t.client.Collection(collectionName).Document(id).Delete(ctx); err != nil {
+			return errors.Wrapf(err, "failed to delete document %s", id)
+		}
 	}
 	return nil
 }
