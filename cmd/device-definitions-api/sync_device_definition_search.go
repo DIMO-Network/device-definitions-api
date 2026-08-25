@@ -26,7 +26,6 @@ const (
 	// explicit flag.
 	pruneFloor         = 100
 	pruneFraction      = 0.10
-	catalogPageSize    = 500
 	searchDefaultScore = 1
 )
 
@@ -97,6 +96,13 @@ func runSearchSync(
 	makes, err := identity.GetManufacturers()
 	if err != nil {
 		return fmt.Errorf("get manufacturers: %w", err)
+	}
+	// identity-api answers HTTP 200 with a populated `errors` array and null
+	// data when it fails, which the client surfaces as (nil, nil). Without this
+	// the cron prints "Index Updated" having indexed nothing, and the prune
+	// pass runs with an empty keep-set.
+	if len(makes) == 0 {
+		return fmt.Errorf("identity returned no manufacturers; refusing to sync an empty catalog")
 	}
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
@@ -175,7 +181,7 @@ func buildManufacturerDocuments(
 				Score:               searchDefaultScore,
 			})
 		}
-		if len(page) < catalogPageSize {
+		if len(page) < gateways.CatalogPageSize {
 			break
 		}
 		pageIndex++

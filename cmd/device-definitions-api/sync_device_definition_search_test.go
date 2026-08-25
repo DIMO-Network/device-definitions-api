@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,7 +97,7 @@ func TestBuildManufacturerDocuments_PagesUntilShortPage(t *testing.T) {
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	dm := coremodels.Manufacturer{TokenID: 1, Name: "Honda"}
 
-	full := make([]coremodels.DeviceDefinitionTablelandModel, catalogPageSize)
+	full := make([]coremodels.DeviceDefinitionTablelandModel, gateways.CatalogPageSize)
 	for i := range full {
 		full[i] = defToyota(2020, "Civic", "id")
 	}
@@ -110,7 +111,7 @@ func TestBuildManufacturerDocuments_PagesUntilShortPage(t *testing.T) {
 
 	docs, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
-	assert.Len(t, docs, 2*catalogPageSize+1)
+	assert.Len(t, docs, 2*gateways.CatalogPageSize+1)
 }
 
 func TestBuildManufacturerDocuments_PropagatesError(t *testing.T) {

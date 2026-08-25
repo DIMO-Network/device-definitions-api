@@ -62,7 +62,10 @@ type DeviceDefinitionCatalogService interface {
 }
 
 const (
-	catalogPageSize     = 500
+	// CatalogPageSize is the page size QueryDefinitionsByManufacturer returns.
+	// Exported because callers page until a short page and must agree with it;
+	// a private copy elsewhere silently truncates their iteration if it drifts.
+	CatalogPageSize     = 500
 	manifestCacheKey    = "definitions_manifest"
 	manifestCacheTTL    = time.Minute
 	manufacturersCached = "manufacturers_by_token_id"
@@ -278,12 +281,12 @@ func (e *deviceDefinitionCatalogService) QueryDefinitionsByManufacturer(ctx cont
 			matches = append(matches, d.DeviceDefinitionTablelandModel)
 		}
 	}
-	return paginate(matches, pageIndex, catalogPageSize), nil
+	return paginate(matches, pageIndex, CatalogPageSize), nil
 }
 
 func paginate(items []coremodels.DeviceDefinitionTablelandModel, pageIndex, pageSize int) []coremodels.DeviceDefinitionTablelandModel {
 	if pageSize <= 0 {
-		pageSize = catalogPageSize
+		pageSize = CatalogPageSize
 	}
 	start := pageIndex * pageSize
 	if start >= len(items) {
@@ -297,11 +300,14 @@ func paginate(items []coremodels.DeviceDefinitionTablelandModel, pageIndex, page
 }
 
 // workerRequest sends an authenticated request to the definitions-worker.
-// When no worker URL is configured (local dev), writes are no-ops.
+// An unconfigured worker URL is an error, not a mode: silently skipping the
+// write and reporting success meant a decode could answer 200 with a definition
+// id that was never written to R2, and a delete could log success for a
+// definition that still exists.
 func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, method, pathSuffix string, body any) (bool, error) {
 	if e.settings.DefinitionsWorkerURL == "" {
-		e.logger.Info().Msgf("DefinitionsWorkerURL not set, skipping %s %s", method, pathSuffix)
-		return false, nil
+		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
+		return false, fmt.Errorf("definitions-worker is not configured (DEFINITIONS_WORKER_URL is empty); refusing to report %s %s as written", method, pathSuffix)
 	}
 	var reader io.Reader
 	if body != nil {
@@ -368,8 +374,6 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)
-	// Returns the id even when the worker call was skipped (no URL set in
-	// local dev) so callers never dereference a nil result.
 	return &dd.ID, nil
 }
 

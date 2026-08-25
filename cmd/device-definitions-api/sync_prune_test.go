@@ -108,3 +108,21 @@ func TestRunSearchSync_DoesNotPruneDefinitionsBelowTheIndexYearCutoff(t *testing
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)
 }
+
+// identity-api returns HTTP 200 with a populated `errors` array and null data
+// when it fails, and the client surfaces that as (nil, nil). Treating zero
+// manufacturers as success means the daily cron reports "Index Updated" having
+// indexed nothing -- and the prune pass then has an empty keep-set.
+func TestRunSearchSync_FailsWhenIdentityReturnsNoManufacturers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{}, nil)
+	// No upserts, no export, no deletes.
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no manufacturers")
+}

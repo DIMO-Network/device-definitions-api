@@ -1,9 +1,12 @@
 package gateways
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,4 +58,18 @@ func TestCatalogManifestDecode(t *testing.T) {
 	require.Len(t, m.Definitions, 1)
 	assert.Equal(t, 22, m.Definitions[0].Manufacturer.TokenID)
 	assert.Equal(t, "dodge_town-&-country_2012", m.Definitions[0].ID)
+}
+
+// An unconfigured worker URL used to make every write a no-op that still
+// reported success: Create returned the id, Delete logged "Deleted", and the
+// API answered 200 while nothing reached R2. A missing write endpoint is a
+// misconfiguration, not a mode of operation.
+func TestWritesFailWhenWorkerURLUnset(t *testing.T) {
+	logger := zerolog.Nop()
+	svc := NewDeviceDefinitionCatalogService(&config.Settings{DefinitionsCatalogURL: "http://127.0.0.1:1"}, &logger)
+
+	id, err := svc.Delete(context.Background(), "Toyota", "toyota_camry_2020")
+	require.Error(t, err, "a delete with no worker configured must not report success")
+	assert.Nil(t, id)
+	assert.Contains(t, err.Error(), "not configured")
 }
