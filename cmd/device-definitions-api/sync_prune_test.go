@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -74,4 +76,35 @@ func TestPruneOrphans_AllowsBulkPruneWhenFlagged(t *testing.T) {
 	n, err := pruneOrphans(context.Background(), indexer, "defs", idSet("id_0"), true)
 	require.NoError(t, err)
 	assert.Equal(t, 999, n)
+}
+
+// A definition below the index year cutoff is not an orphan: it exists in the
+// catalog, it is simply not indexed going forward. Pruning it deletes a
+// document that is live and searchable today.
+func TestRunSearchSync_DoesNotPruneDefinitionsBelowTheIndexYearCutoff(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
+		{TokenID: 1, Name: "Acura"},
+	}, nil)
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
+		Return([]coremodels.DeviceDefinitionTablelandModel{
+			defToyota(2005, "MDX", "acura_mdx_2005"), // in the catalog, below the cutoff
+			defToyota(2020, "MDX", "acura_mdx_2020"),
+		}, nil)
+
+	// Only the eligible definition is indexed.
+	indexer.EXPECT().UpsertDocuments(gomock.Any(), "dd-search", gomock.Len(1)).Return(nil)
+
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").
+		Return([]string{"acura_mdx_2005", "acura_mdx_2020", "acura_gone_2019"}, nil)
+	// Only the id absent from the catalog is deleted.
+	indexer.EXPECT().DeleteDocuments(gomock.Any(), "dd-search", []string{"acura_gone_2019"}).
+		Return(nil)
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.NoError(t, err)
 }

@@ -34,7 +34,7 @@ func TestBuildManufacturerDocuments_FiltersPre2007(t *testing.T) {
 			defToyota(2020, "Prius", "id-new"),
 		}, nil)
 
-	docs, err := buildManufacturerDocuments(context.Background(), onChain, dm)
+	docs, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
 	require.Len(t, docs, 2)
 	assert.Equal(t, "id-keep", docs[0].ID)
@@ -52,7 +52,7 @@ func TestBuildManufacturerDocuments_PopulatesFields(t *testing.T) {
 			{ID: "ddid-1", Model: "Range Rover", Year: 2021, ImageURI: "https://img/rr"},
 		}, nil)
 
-	docs, err := buildManufacturerDocuments(context.Background(), onChain, dm)
+	docs, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
 	require.Len(t, docs, 1)
 
@@ -86,7 +86,7 @@ func TestBuildManufacturerDocuments_TerminatesOnShortPage(t *testing.T) {
 		Return(page, nil).
 		Times(1)
 
-	docs, err := buildManufacturerDocuments(context.Background(), onChain, dm)
+	docs, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
 	assert.Len(t, docs, 10)
 }
@@ -108,7 +108,7 @@ func TestBuildManufacturerDocuments_PagesUntilShortPage(t *testing.T) {
 		onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 2).Return(short, nil),
 	)
 
-	docs, err := buildManufacturerDocuments(context.Background(), onChain, dm)
+	docs, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.NoError(t, err)
 	assert.Len(t, docs, 2*catalogPageSize+1)
 }
@@ -123,7 +123,7 @@ func TestBuildManufacturerDocuments_PropagatesError(t *testing.T) {
 		QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
 		Return(nil, boom)
 
-	_, err := buildManufacturerDocuments(context.Background(), onChain, dm)
+	_, _, err := buildManufacturerDocuments(context.Background(), onChain, dm)
 	require.ErrorIs(t, err, boom)
 }
 
@@ -179,6 +179,8 @@ func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(1950, "Champion", "s1")}, nil)
 
 	// No UpsertDocuments expectation → gomock will fail the test if it's called.
+	// The definition still exists though, so the prune pass runs and keeps it.
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").Return([]string{"s1"}, nil)
 
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)

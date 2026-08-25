@@ -100,18 +100,19 @@ func runSearchSync(
 	}
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
-	// Every id we upsert; the prune pass treats anything else in the index as
-	// an orphan. Pre-2007 definitions are deliberately absent, so a stale
-	// pre-2007 entry gets cleaned up too.
+	// Every id that exists in the catalog, whether or not it is indexed. The
+	// prune pass deletes index entries whose definition is gone; a definition
+	// below the year cutoff is not gone, it is just not indexed going forward,
+	// and deleting it would remove a document that is live and searchable.
 	catalogIDs := make(map[string]struct{})
 
 	for _, dm := range makes {
-		docs, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
+		docs, ids, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
 		if err != nil {
 			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
 		}
-		for _, d := range docs {
-			catalogIDs[d.ID] = struct{}{}
+		for _, id := range ids {
+			catalogIDs[id] = struct{}{}
 		}
 		if len(docs) == 0 {
 			fmt.Printf("%s: no definitions to sync\n", dm.Name)
@@ -135,23 +136,27 @@ func runSearchSync(
 	return nil
 }
 
-// buildManufacturerDocuments pulls every tableland definition for a manufacturer
-// and converts the ones from model year >= minSearchYear into SearchEntryItems.
+// buildManufacturerDocuments pulls every definition for a manufacturer and
+// converts the ones from model year >= minSearchYear into SearchEntryItems. It
+// also returns every id it saw, indexed or not: a definition below the cutoff
+// still exists, so the prune pass must not treat it as an orphan.
 func buildManufacturerDocuments(
 	ctx context.Context,
 	catalogSvc gateways.DeviceDefinitionCatalogService,
 	dm coremodels.Manufacturer,
-) ([]SearchEntryItem, error) {
+) ([]SearchEntryItem, []string, error) {
 	makeSlug := stringutils.SlugString(dm.Name)
 	var docs []SearchEntryItem
+	var allIDs []string
 
 	pageIndex := 0
 	for {
 		page, err := catalogSvc.QueryDefinitionsByManufacturer(ctx, dm.TokenID, pageIndex)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for _, dd := range page {
+			allIDs = append(allIDs, dd.ID)
 			if dd.Year < minSearchYear {
 				continue
 			}
@@ -175,7 +180,7 @@ func buildManufacturerDocuments(
 		}
 		pageIndex++
 	}
-	return docs, nil
+	return docs, allIDs, nil
 }
 
 // pruneOrphans deletes search documents whose definition no longer exists in
