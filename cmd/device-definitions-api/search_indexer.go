@@ -18,8 +18,9 @@ type SearchIndexer interface {
 	UpsertDocuments(ctx context.Context, collectionName string, docs []SearchEntryItem) error
 	// ExportIDs returns the id of every document currently in the collection.
 	ExportIDs(ctx context.Context, collectionName string) ([]string, error)
-	// DeleteDocuments removes the given document ids from the collection.
-	DeleteDocuments(ctx context.Context, collectionName string, ids []string) error
+	// DeleteDocuments removes the given ids and reports how many it actually
+	// removed, so a partial failure does not report ids that still exist.
+	DeleteDocuments(ctx context.Context, collectionName string, ids []string) (int, error)
 }
 
 type typesenseSearchIndexer struct {
@@ -93,11 +94,14 @@ func (t *typesenseSearchIndexer) ExportIDs(ctx context.Context, collectionName s
 // DeleteDocuments removes ids one at a time rather than through a filter_by
 // set: definition ids legitimately contain & + ( ) and ", which would need
 // escaping inside a filter expression. Orphans are rare, so this stays cheap.
-func (t *typesenseSearchIndexer) DeleteDocuments(ctx context.Context, collectionName string, ids []string) error {
+func (t *typesenseSearchIndexer) DeleteDocuments(ctx context.Context, collectionName string, ids []string) (int, error) {
+	deleted := 0
 	for _, id := range ids {
 		if _, err := t.client.Collection(collectionName).Document(id).Delete(ctx); err != nil {
-			return errors.Wrapf(err, "failed to delete document %s", id)
+			return deleted, errors.Wrapf(err, "failed to delete document %s", id)
 		}
+		deleted++
+		fmt.Printf("  pruned search document with no definition: %s\n", id)
 	}
-	return nil
+	return deleted, nil
 }

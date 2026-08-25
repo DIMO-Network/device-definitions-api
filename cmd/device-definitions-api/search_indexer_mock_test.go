@@ -42,11 +42,12 @@ func (m *MockSearchIndexer) EXPECT() *MockSearchIndexerMockRecorder {
 }
 
 // DeleteDocuments mocks base method.
-func (m *MockSearchIndexer) DeleteDocuments(ctx context.Context, collectionName string, ids []string) error {
+func (m *MockSearchIndexer) DeleteDocuments(ctx context.Context, collectionName string, ids []string) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteDocuments", ctx, collectionName, ids)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteDocuments indicates an expected call of DeleteDocuments.

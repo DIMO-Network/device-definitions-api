@@ -246,7 +246,7 @@ func TestRunSearchSync_PrunesDefinitionsMissingFromCatalog(t *testing.T) {
 	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").
 		Return([]string{"h1", "deleted_1"}, nil)
 	indexer.EXPECT().DeleteDocuments(gomock.Any(), "dd-search", []string{"deleted_1"}).
-		Return(nil)
+		Return(1, nil)
 
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)

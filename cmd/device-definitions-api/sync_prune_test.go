@@ -26,7 +26,7 @@ func TestPruneOrphans_DeletesIndexedIDsMissingFromCatalog(t *testing.T) {
 
 	indexer.EXPECT().ExportIDs(gomock.Any(), "defs").
 		Return([]string{"keep_1", "gone_1", "keep_2"}, nil)
-	indexer.EXPECT().DeleteDocuments(gomock.Any(), "defs", []string{"gone_1"}).Return(nil)
+	indexer.EXPECT().DeleteDocuments(gomock.Any(), "defs", []string{"gone_1"}).Return(1, nil)
 
 	n, err := pruneOrphans(context.Background(), indexer, "defs", idSet("keep_1", "keep_2"), false)
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestPruneOrphans_AllowsBulkPruneWhenFlagged(t *testing.T) {
 	indexer.EXPECT().ExportIDs(gomock.Any(), "defs").Return(indexed, nil)
 	indexer.EXPECT().
 		DeleteDocuments(gomock.Any(), "defs", gomock.Len(999)).
-		Return(nil)
+		Return(999, nil)
 
 	n, err := pruneOrphans(context.Background(), indexer, "defs", idSet("id_0"), true)
 	require.NoError(t, err)
@@ -105,7 +105,7 @@ func TestRunSearchSync_DoesNotPruneDefinitionsBelowTheIndexYearCutoff(t *testing
 		Return([]string{"acura_mdx_2005", "acura_mdx_2020", "acura_gone_2019"}, nil)
 	// Only the id absent from the catalog is deleted.
 	indexer.EXPECT().DeleteDocuments(gomock.Any(), "dd-search", []string{"acura_gone_2019"}).
-		Return(nil)
+		Return(1, nil)
 
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.NoError(t, err)

@@ -66,12 +66,16 @@ type DeviceDefinitionCatalogService interface {
 	// manufacturers: the manifest is the catalog, whereas a per-manufacturer
 	// walk is only as complete as identity-api's manufacturer list.
 	CatalogIDs(ctx context.Context) ([]string, error)
-	// PinCatalogSnapshot fetches the manifest bypassing the CDN and holds it for
-	// the caller's whole run. Anything that pages over the catalog to decide what
-	// to delete must call this first: the CDN serves the manifest with
-	// max-age=300, so a definition created in the last five minutes is missing
-	// from it, and the per-page cache expires mid-run so pages can come from
-	// different snapshots and skip a definition entirely.
+	// PinCatalogSnapshot fetches the manifest once and holds it for the caller's
+	// whole run. Anything paging over the catalog to decide what to delete must
+	// call it first: the per-request cache expires after a minute while a full
+	// sync takes several, so without pinning, pages come from different
+	// manifests and a definition that shifts position between them is returned
+	// by neither -- and is then deleted as an orphan.
+	//
+	// It is not a cache bypass. The worker generates every response for
+	// definitions.dimo.org (no cf-cache-status, no age, date advances per
+	// request), so there is no edge cache in front of the manifest.
 	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input coremodels.DeviceDefinitionUpdateInput) (*string, error)
@@ -233,15 +237,12 @@ func (e *deviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]stri
 }
 
 func (e *deviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
-	url := e.catalogURL("/manifest.json")
-	if base := e.settings.DefinitionsWorkerURL; base != "" {
-		url = strings.TrimSuffix(base, "/") + "/manifest.json"
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
 	if err != nil {
 		countOutcome(metricManifestRead, err)
 		return err
 	}
+	// Cheap insurance if an edge cache is ever put in front of the catalog.
 	req.Header.Set("Cache-Control", "no-cache")
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
@@ -258,6 +259,11 @@ func (e *deviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context)
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 		countOutcome(metricManifestRead, err)
 		return errors.Wrap(err, "failed to decode the fresh definitions manifest")
+	}
+	if m.Count != len(m.Definitions) {
+		err := fmt.Errorf("manifest count %d does not match the %d definitions it carries", m.Count, len(m.Definitions))
+		countOutcome(metricManifestRead, err)
+		return err
 	}
 	countOutcome(metricManifestRead, nil)
 	// Long TTL so every page of the caller's run reads the same snapshot.

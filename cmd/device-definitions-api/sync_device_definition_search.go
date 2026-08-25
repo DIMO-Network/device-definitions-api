@@ -124,6 +124,9 @@ func runSearchSync(
 	if err != nil {
 		return fmt.Errorf("read catalog ids: %w", err)
 	}
+	if len(allIDs) == 0 {
+		return fmt.Errorf("catalog returned no definitions; refusing to sync against an empty keep-set")
+	}
 	catalogIDs := make(map[string]struct{}, len(allIDs))
 	for _, id := range allIDs {
 		catalogIDs[id] = struct{}{}
@@ -158,8 +161,8 @@ func runSearchSync(
 
 // buildManufacturerDocuments pulls every definition for a manufacturer and
 // converts the ones from model year >= minSearchYear into SearchEntryItems. It
-// also returns every id it saw, indexed or not: a definition below the cutoff
-// still exists, so the prune pass must not treat it as an orphan.
+// also returns every id it saw, which callers may ignore: the prune's keep-set
+// comes from the manifest via CatalogIDs, not from this walk.
 func buildManufacturerDocuments(
 	ctx context.Context,
 	catalogSvc gateways.DeviceDefinitionCatalogService,
@@ -237,16 +240,15 @@ func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName str
 			len(stale), len(indexed), limit)
 	}
 
-	// Log every id before deleting. Documents below the index year cutoff are
-	// never re-upserted by a sync, so if this pass ever removes one wrongly
-	// there is otherwise no record of what it was.
-	for _, id := range stale {
-		fmt.Printf("  pruning search document with no definition: %s\n", id)
+	// Documents below the index year cutoff are never re-upserted by a sync, so
+	// a wrong deletion here is permanent and this log is the only record of it.
+	// DeleteDocuments reports how many it actually removed, so a partial
+	// failure does not claim ids that still exist.
+	deleted, err := indexer.DeleteDocuments(ctx, collectionName, stale)
+	if err != nil {
+		return deleted, fmt.Errorf("delete orphaned search documents: %w", err)
 	}
-	if err := indexer.DeleteDocuments(ctx, collectionName, stale); err != nil {
-		return 0, fmt.Errorf("delete orphaned search documents: %w", err)
-	}
-	return len(stale), nil
+	return deleted, nil
 }
 
 func pruneLimit(indexed int) int {
