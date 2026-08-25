@@ -21,7 +21,7 @@ env:
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
   DEFINITIONS_CATALOG_URL: https://definitions.dimo.org
-  DEFINITIONS_WORKER_URL: https://definitions-worker.dimo.workers.dev
+  DEFINITIONS_WORKER_URL: https://definitions.dimo.org
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod
   IDENTITY_API_URL: https://identity-api.dimo.zone/query
 ingress:

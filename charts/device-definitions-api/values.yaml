@@ -52,7 +52,7 @@ env:
   DAT_GROUP_URL: https://www.datgroup.com/myClaim/soap/v2/VehicleIdentificationService
   PRIVATE_KEY_MODE: false
   DEFINITIONS_CATALOG_URL: https://definitions.dev.dimo.org
-  DEFINITIONS_WORKER_URL: https://definitions-worker-dev.dimo.workers.dev
+  DEFINITIONS_WORKER_URL: https://definitions.dev.dimo.org
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_dev
   IDENTITY_API_URL: https://identity-api.dev.dimo.zone/query
 service:
