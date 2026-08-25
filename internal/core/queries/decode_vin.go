@@ -255,7 +255,11 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		// todo load up some metadata from what was decoded. Powertrain too
 		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
 
-		trx, err := dc.deviceDefinitionCatalogService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
+		// The id comes back in DefinitionId; NewTrxHash stays empty because
+		// definitions are no longer written on-chain and there is no
+		// transaction. Putting the slug here would hand a "0x..." consumer a
+		// value that is not a hash.
+		_, err = dc.deviceDefinitionCatalogService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
 			ID:         tid,
 			KSUID:      ksuid.New().String(),
 			Model:      resp.Model,
@@ -266,9 +270,8 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		})
 		if err != nil {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			return nil, errors.Wrap(err, "error creating new device definition on-chain from decoded vinObj")
+			return nil, errors.Wrap(err, "error creating new device definition from decoded vinObj")
 		}
-		resp.NewTrxHash = *trx
 	}
 
 	// match style - only process style if name is longer than 1

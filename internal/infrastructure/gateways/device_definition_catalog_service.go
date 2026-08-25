@@ -51,6 +51,11 @@ type DeviceDefinitionCatalogService interface {
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	// GetDefinitionByID gets a definition by slug ID and returns the manufacturer token id too.
 	GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error)
+	// GetDefinitionByIDFresh is GetDefinitionByID reading through the worker
+	// instead of the CDN. Callers that read, mutate and write back must use it:
+	// documents are served with max-age=86400, so a cached read silently
+	// discards any edit made in the last day when the result is PUT back.
+	GetDefinitionByIDFresh(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
@@ -171,24 +176,32 @@ func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalog
 	if v, ok := e.memCache.Get(manifestCacheKey); ok {
 		return v.(*catalogManifest), nil
 	}
+	// Every exit counts itself. Previously only a decode failure incremented the
+	// error metric, so a catalog outage showed up as these series dropping to
+	// zero rather than as an error spike -- invisible to any alert written as
+	// "error rate > X".
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
 	if err != nil {
+		countOutcome(metricManifestRead, err)
 		return nil, err
 	}
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
+		countOutcome(metricManifestRead, err)
 		return nil, errors.Wrap(err, "failed to fetch definitions manifest")
 	}
 	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("catalog returned %d for manifest", resp.StatusCode)
+		err := fmt.Errorf("catalog returned %d for manifest", resp.StatusCode)
+		countOutcome(metricManifestRead, err)
+		return nil, err
 	}
 	var m catalogManifest
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		metrics.InternalError.With(prometheus.Labels{"method": metricManifestRead}).Inc()
+		countOutcome(metricManifestRead, err)
 		return nil, errors.Wrap(err, "failed to decode definitions manifest")
 	}
-	metrics.Success.With(prometheus.Labels{"method": metricManifestRead}).Inc()
+	countOutcome(metricManifestRead, nil)
 	e.memCache.Set(manifestCacheKey, &m, manifestCacheTTL)
 	return &m, nil
 }
@@ -235,6 +248,14 @@ func (e *deviceDefinitionCatalogService) GetDefinition(ctx context.Context, manu
 
 func (e *deviceDefinitionCatalogService) GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error) {
 	doc, err := e.fetchDoc(ctx, ID)
+	if err != nil || doc == nil {
+		return nil, nil, err
+	}
+	return &doc.DeviceDefinitionTablelandModel, big.NewInt(int64(doc.Manufacturer.TokenID)), nil
+}
+
+func (e *deviceDefinitionCatalogService) GetDefinitionByIDFresh(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error) {
+	doc, err := e.fetchDocFresh(ctx, ID)
 	if err != nil || doc == nil {
 		return nil, nil, err
 	}

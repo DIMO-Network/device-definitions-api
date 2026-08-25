@@ -104,6 +104,22 @@ func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetDefinitionByID(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetDefinitionByID), ctx, ID)
 }
 
+// GetDefinitionByIDFresh mocks base method.
+func (m *MockDeviceDefinitionCatalogService) GetDefinitionByIDFresh(ctx context.Context, ID string) (*models.DeviceDefinitionTablelandModel, *big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDefinitionByIDFresh", ctx, ID)
+	ret0, _ := ret[0].(*models.DeviceDefinitionTablelandModel)
+	ret1, _ := ret[1].(*big.Int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetDefinitionByIDFresh indicates an expected call of GetDefinitionByIDFresh.
+func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetDefinitionByIDFresh(ctx, ID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDefinitionByIDFresh", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetDefinitionByIDFresh), ctx, ID)
+}
+
 // GetDeviceDefinitionByID mocks base method.
 func (m *MockDeviceDefinitionCatalogService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*models.DeviceDefinitionTablelandModel, error) {
 	m.ctrl.T.Helper()

@@ -86,7 +86,9 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		}
 		fmt.Printf("DefinitionID: %s, Powertrain: %s\n", definitionID, powertrain)
 
-		deviceDefinition, manufID, err := catalogSvc.GetDefinitionByID(ctx, definitionID)
+		// Fresh: this reads, mutates metadata and writes it back, so a CDN-cached
+		// base would silently drop any edit made in the last day.
+		deviceDefinition, manufID, err := catalogSvc.GetDefinitionByIDFresh(ctx, definitionID)
 		if err != nil {
 			fmt.Printf("%s: Error getting device definition: %v\n", definitionID, err)
 			notFoundDefinitions = append(notFoundDefinitions, definitionID)

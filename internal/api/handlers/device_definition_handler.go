@@ -226,6 +226,15 @@ func GetDeviceDefinitionSearch(m mediator.Mediator) fiber.Handler {
 
 		pageInt, _ := strconv.Atoi(page)
 		pageSizeInt, _ := strconv.Atoi(pageSize)
+		// c.Query's default only applies when the parameter is absent, so an
+		// explicit pageSize=0 (or an unparseable one) reaches the handler as 0
+		// and divides by zero when totalPages is computed.
+		if pageSizeInt <= 0 {
+			pageSizeInt = defaultPageSize
+		}
+		if pageInt <= 0 {
+			pageInt = defaultPage
+		}
 
 		query := &queries.GetAllDeviceDefinitionBySearchQuery{Query: q, Make: mk, Model: model, Year: yrInt, PageSize: pageSizeInt, Page: pageInt}
 
