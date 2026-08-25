@@ -43,6 +43,21 @@ func (m *MockDeviceDefinitionCatalogService) EXPECT() *MockDeviceDefinitionCatal
 	return m.recorder
 }
 
+// CatalogIDs mocks base method.
+func (m *MockDeviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CatalogIDs", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogIDs indicates an expected call of CatalogIDs.
+func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) CatalogIDs(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogIDs", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).CatalogIDs), ctx)
+}
+
 // Create mocks base method.
 func (m *MockDeviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd models.DeviceDefinitionTablelandModel) (*string, error) {
 	m.ctrl.T.Helper()
@@ -178,6 +193,20 @@ func (m *MockDeviceDefinitionCatalogService) GetManufacturerNameByID(ctx context
 func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetManufacturerNameByID(ctx, manufacturerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManufacturerNameByID", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetManufacturerNameByID), ctx, manufacturerID)
+}
+
+// PinCatalogSnapshot mocks base method.
+func (m *MockDeviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PinCatalogSnapshot", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PinCatalogSnapshot indicates an expected call of PinCatalogSnapshot.
+func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) PinCatalogSnapshot(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PinCatalogSnapshot", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).PinCatalogSnapshot), ctx)
 }
 
 // QueryDefinitionsByManufacturer mocks base method.

@@ -61,6 +61,18 @@ type DeviceDefinitionCatalogService interface {
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
 	// QueryDefinitionsByManufacturer pages through a manufacturer's definitions, 500 at a time.
 	QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID int, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error)
+	// CatalogIDs returns every definition id in the catalog, indexed or not.
+	// Deletion decisions must be based on this rather than on walking
+	// manufacturers: the manifest is the catalog, whereas a per-manufacturer
+	// walk is only as complete as identity-api's manufacturer list.
+	CatalogIDs(ctx context.Context) ([]string, error)
+	// PinCatalogSnapshot fetches the manifest bypassing the CDN and holds it for
+	// the caller's whole run. Anything that pages over the catalog to decide what
+	// to delete must call this first: the CDN serves the manifest with
+	// max-age=300, so a definition created in the last five minutes is missing
+	// from it, and the per-page cache expires mid-run so pages can come from
+	// different snapshots and skip a definition entirely.
+	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Update(ctx context.Context, manufacturerName string, input coremodels.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
@@ -70,9 +82,11 @@ const (
 	// CatalogPageSize is the page size QueryDefinitionsByManufacturer returns.
 	// Exported because callers page until a short page and must agree with it;
 	// a private copy elsewhere silently truncates their iteration if it drifts.
-	CatalogPageSize     = 500
-	manifestCacheKey    = "definitions_manifest"
-	manifestCacheTTL    = time.Minute
+	CatalogPageSize  = 500
+	manifestCacheKey = "definitions_manifest"
+	manifestCacheTTL = time.Minute
+	// Long enough to cover a full sync run, which pages over the whole catalog.
+	pinnedManifestTTL   = time.Hour
 	manufacturersCached = "manufacturers_by_token_id"
 )
 
@@ -206,6 +220,51 @@ func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalog
 	return &m, nil
 }
 
+func (e *deviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]string, error) {
+	m, err := e.manifest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(m.Definitions))
+	for _, d := range m.Definitions {
+		ids = append(ids, d.ID)
+	}
+	return ids, nil
+}
+
+func (e *deviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
+	url := e.catalogURL("/manifest.json")
+	if base := e.settings.DefinitionsWorkerURL; base != "" {
+		url = strings.TrimSuffix(base, "/") + "/manifest.json"
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		countOutcome(metricManifestRead, err)
+		return err
+	}
+	req.Header.Set("Cache-Control", "no-cache")
+	resp, err := e.httpClient.Do(req)
+	if err != nil {
+		countOutcome(metricManifestRead, err)
+		return errors.Wrap(err, "failed to fetch a fresh definitions manifest")
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("catalog returned %d for a fresh manifest", resp.StatusCode)
+		countOutcome(metricManifestRead, err)
+		return err
+	}
+	var m catalogManifest
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		countOutcome(metricManifestRead, err)
+		return errors.Wrap(err, "failed to decode the fresh definitions manifest")
+	}
+	countOutcome(metricManifestRead, nil)
+	// Long TTL so every page of the caller's run reads the same snapshot.
+	e.memCache.Set(manifestCacheKey, &m, pinnedManifestTTL)
+	return nil
+}
+
 func (e *deviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error) {
 	return e.identityAPI.GetManufacturer(manufacturerSlug)
 }
@@ -218,6 +277,14 @@ func (e *deviceDefinitionCatalogService) GetManufacturerNameByID(_ context.Conte
 		all, err := e.identityAPI.GetManufacturers()
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get manufacturers from identity")
+		}
+		// identity answers 200 with an `errors` array and null data when it
+		// fails, which the client surfaces as (nil, nil). Caching that empty
+		// map for ten minutes turns a brief blip into ten minutes of every
+		// lookup failing, and callers that treat the failure as "skip this row"
+		// drop work silently.
+		if len(all) == 0 {
+			return "", fmt.Errorf("identity returned no manufacturers")
 		}
 		for _, m := range all {
 			byID[m.TokenID] = m.Name

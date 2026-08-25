@@ -133,6 +133,8 @@ func TestRunSearchSync_FlushesPerManufacturer(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"h1", "t1"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Honda"},
@@ -170,6 +172,8 @@ func TestRunSearchSync_SkipsMakeWithNoEligibleDefs(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"s1"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 9, Name: "Studebaker"},
@@ -192,6 +196,8 @@ func TestRunSearchSync_PropagatesManufacturersError(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return(nil, nil).AnyTimes()
 
 	boom := errors.New("identity down")
 	identity.EXPECT().GetManufacturers().Return(nil, boom)
@@ -205,6 +211,8 @@ func TestRunSearchSync_PropagatesUpsertError(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"h1"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Honda"},
@@ -224,6 +232,8 @@ func TestRunSearchSync_PrunesDefinitionsMissingFromCatalog(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"h1"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Honda"},
@@ -247,6 +257,8 @@ func TestRunSearchSync_DoesNotPruneDefinitionsThatAreStillInTheCatalog(t *testin
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"h1"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Honda"},

@@ -93,6 +93,15 @@ func runSearchSync(
 	collectionName string,
 	allowBulkPrune bool,
 ) error {
+	// Pin one fresh manifest for the whole run before anything reads the
+	// catalog. The keep-set built below decides what gets deleted, and the CDN
+	// serves the manifest with max-age=300 while the per-page cache expires
+	// mid-run -- either would leave a live definition out of the keep-set and
+	// delete its search document.
+	if err := catalogSvc.PinCatalogSnapshot(ctx); err != nil {
+		return fmt.Errorf("pin catalog snapshot: %w", err)
+	}
+
 	makes, err := identity.GetManufacturers()
 	if err != nil {
 		return fmt.Errorf("get manufacturers: %w", err)
@@ -106,19 +115,24 @@ func runSearchSync(
 	}
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
-	// Every id that exists in the catalog, whether or not it is indexed. The
-	// prune pass deletes index entries whose definition is gone; a definition
-	// below the year cutoff is not gone, it is just not indexed going forward,
-	// and deleting it would remove a document that is live and searchable.
-	catalogIDs := make(map[string]struct{})
+	// The keep-set comes from the manifest, not from walking manufacturers. A
+	// walk is only as complete as identity-api's manufacturer list, and one
+	// make missing from it silently drops all of its definitions from the
+	// keep-set -- BMW alone is 1,618 documents, which slides under the bulk
+	// guard's 1,669 and gets deleted without tripping anything.
+	allIDs, err := catalogSvc.CatalogIDs(ctx)
+	if err != nil {
+		return fmt.Errorf("read catalog ids: %w", err)
+	}
+	catalogIDs := make(map[string]struct{}, len(allIDs))
+	for _, id := range allIDs {
+		catalogIDs[id] = struct{}{}
+	}
 
 	for _, dm := range makes {
-		docs, ids, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
+		docs, _, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
 		if err != nil {
 			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
-		}
-		for _, id := range ids {
-			catalogIDs[id] = struct{}{}
 		}
 		if len(docs) == 0 {
 			fmt.Printf("%s: no definitions to sync\n", dm.Name)
@@ -223,6 +237,12 @@ func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName str
 			len(stale), len(indexed), limit)
 	}
 
+	// Log every id before deleting. Documents below the index year cutoff are
+	// never re-upserted by a sync, so if this pass ever removes one wrongly
+	// there is otherwise no record of what it was.
+	for _, id := range stale {
+		fmt.Printf("  pruning search document with no definition: %s\n", id)
+	}
 	if err := indexer.DeleteDocuments(ctx, collectionName, stale); err != nil {
 		return 0, fmt.Errorf("delete orphaned search documents: %w", err)
 	}

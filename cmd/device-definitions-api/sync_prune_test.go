@@ -86,6 +86,8 @@ func TestRunSearchSync_DoesNotPruneDefinitionsBelowTheIndexYearCutoff(t *testing
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"acura_mdx_2005", "acura_mdx_2020"}, nil).AnyTimes()
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
 		{TokenID: 1, Name: "Acura"},
@@ -118,6 +120,7 @@ func TestRunSearchSync_FailsWhenIdentityReturnsNoManufacturers(t *testing.T) {
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
 	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	indexer := NewMockSearchIndexer(ctrl)
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
 
 	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{}, nil)
 	// No upserts, no export, no deletes.
@@ -125,4 +128,43 @@ func TestRunSearchSync_FailsWhenIdentityReturnsNoManufacturers(t *testing.T) {
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no manufacturers")
+}
+
+// The keep-set decides what gets deleted, so it must come from a manifest that
+// is both fresh and stable for the whole run. The CDN serves the manifest with
+// max-age=300, and the per-page cache expires mid-run, so without pinning a
+// definition created minutes ago -- or one that shifts pages during the run --
+// is absent from the keep-set and its search document is deleted.
+func TestRunSearchSync_PinsAFreshCatalogSnapshotBeforePruning(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	pinned := onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(nil)
+	identity.EXPECT().GetManufacturers().Return([]coremodels.Manufacturer{
+		{TokenID: 1, Name: "Honda"},
+	}, nil).After(pinned)
+	// The keep-set is read from the pinned snapshot, not from the walk.
+	onChain.EXPECT().CatalogIDs(gomock.Any()).Return([]string{"h1"}, nil).After(pinned)
+	onChain.EXPECT().QueryDefinitionsByManufacturer(gomock.Any(), 1, 0).
+		Return([]coremodels.DeviceDefinitionTablelandModel{defToyota(2020, "Civic", "h1")}, nil)
+	indexer.EXPECT().UpsertDocuments(gomock.Any(), "dd-search", gomock.Any()).Return(nil)
+	indexer.EXPECT().ExportIDs(gomock.Any(), "dd-search").Return([]string{"h1"}, nil)
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.NoError(t, err)
+}
+
+func TestRunSearchSync_FailsWhenTheSnapshotCannotBePinned(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	identity := mock_gateways.NewMockIdentityAPI(ctrl)
+	onChain := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
+	indexer := NewMockSearchIndexer(ctrl)
+
+	onChain.EXPECT().PinCatalogSnapshot(gomock.Any()).Return(fmt.Errorf("catalog returned 502"))
+	// Nothing else may run: a keep-set built on a stale manifest deletes.
+
+	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
+	require.Error(t, err)
 }

@@ -116,6 +116,12 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		fmt.Println(err.Error() + " " + model + " " + strconv.Itoa(vinNumber.Year))
 		return subcommands.ExitFailure
 	}
+	if deviceDefinition == nil {
+		// (nil, nil) is returned both for a missing definition and for one
+		// owned by a different manufacturer; dereferencing panics.
+		fmt.Println("no device definition found for " + definitionID)
+		return subcommands.ExitFailure
+	}
 	vinNumber.DefinitionID = deviceDefinition.ID
 
 	err = vinNumber.Insert(ctx, pdb.DBS().Writer, boil.Infer())
