@@ -16,7 +16,6 @@ import (
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/goccy/go-json"
 
@@ -254,7 +253,7 @@ func readVINFile(filename string) ([]string, error) {
 	return values, nil
 }
 
-func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
+func instantiateVINDecodingSvc(_ context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
 	datAPI := gateways.NewDATGroupAPIService(settings, logger)
 	drivlyAPI := gateways.NewDrivlyAPIService(settings)
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
@@ -265,21 +264,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 		return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, nil, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 	}
 
-	send, err := createSender(ctx, settings, logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create sender.")
-	}
+	deviceDefinitionCatalogService := gateways.NewDeviceDefinitionCatalogService(settings, logger)
 
-	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
-
-	return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
+	return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionCatalogService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 }

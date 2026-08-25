@@ -19,12 +19,12 @@ func (*GetDeviceDefinitionByIDQuery) Key() string { return "GetDeviceDefinitionB
 
 type GetDeviceDefinitionByIDQueryHandler struct {
 	dbs        func() *db.ReaderWriter
-	onChainSvc gateways.DeviceDefinitionOnChainService
+	catalogSvc gateways.DeviceDefinitionCatalogService
 }
 
-func NewGetDeviceDefinitionByIDQueryHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryHandler {
+func NewGetDeviceDefinitionByIDQueryHandler(catalogSvc gateways.DeviceDefinitionCatalogService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryHandler {
 	return GetDeviceDefinitionByIDQueryHandler{
-		onChainSvc: onChainSvc,
+		catalogSvc: catalogSvc,
 		dbs:        dbs,
 	}
 }
@@ -33,7 +33,7 @@ func (ch GetDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context, query 
 
 	qry := query.(*GetDeviceDefinitionByIDQuery)
 
-	dd, _, err := ch.onChainSvc.GetDefinitionByID(ctx, qry.DeviceDefinitionID)
+	dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, qry.DeviceDefinitionID)
 
 	if err != nil {
 		return nil, err

@@ -18,13 +18,13 @@ type GetDeviceDefinitionByIDQueryV2 struct {
 func (*GetDeviceDefinitionByIDQueryV2) Key() string { return "GetDeviceDefinitionByIdQueryV2" }
 
 type GetDeviceDefinitionByIDQueryV2Handler struct {
-	ddOnChainSvc gateways.DeviceDefinitionOnChainService
+	ddCatalogSvc gateways.DeviceDefinitionCatalogService
 	dbs          func() *db.ReaderWriter
 }
 
-func NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryV2Handler {
+func NewGetDeviceDefinitionByIDQueryV2Handler(ddCatalogSvc gateways.DeviceDefinitionCatalogService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryV2Handler {
 	return GetDeviceDefinitionByIDQueryV2Handler{
-		ddOnChainSvc: ddOnChainSvc,
+		ddCatalogSvc: ddCatalogSvc,
 		dbs:          dbs,
 	}
 }
@@ -33,7 +33,7 @@ func (ch GetDeviceDefinitionByIDQueryV2Handler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionByIDQueryV2)
 
-	dd, _, err := ch.ddOnChainSvc.GetDefinitionByID(ctx, qry.DefinitionID)
+	dd, _, err := ch.ddCatalogSvc.GetDefinitionByID(ctx, qry.DefinitionID)
 
 	if err != nil {
 		return nil, err

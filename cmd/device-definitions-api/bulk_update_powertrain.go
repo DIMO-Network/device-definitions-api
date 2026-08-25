@@ -3,21 +3,17 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
-	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
@@ -26,8 +22,6 @@ import (
 type bulkUpdatePowertrain struct {
 	logger   zerolog.Logger
 	settings config.Settings
-
-	sender sender.Sender
 }
 
 func (*bulkUpdatePowertrain) Name() string { return "bulk-update-powertrain" }
@@ -66,16 +60,7 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+	catalogSvc := gateways.NewDeviceDefinitionCatalogService(&p.settings, &p.logger)
 
 	notFoundDefinitions := make([]string, 0)
 
@@ -101,7 +86,9 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 		}
 		fmt.Printf("DefinitionID: %s, Powertrain: %s\n", definitionID, powertrain)
 
-		deviceDefinition, manufID, err := onChainSvc.GetDefinitionByID(ctx, definitionID)
+		// Fresh: this reads, mutates metadata and writes it back, so a CDN-cached
+		// base would silently drop any edit made in the last day.
+		deviceDefinition, manufID, err := catalogSvc.GetDefinitionByIDFresh(ctx, definitionID)
 		if err != nil {
 			fmt.Printf("%s: Error getting device definition: %v\n", definitionID, err)
 			notFoundDefinitions = append(notFoundDefinitions, definitionID)
@@ -113,13 +100,13 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			continue
 		}
 
-		manufName, err := onChainSvc.GetManufacturerNameByID(ctx, manufID)
+		manufName, err := catalogSvc.GetManufacturerNameByID(ctx, manufID)
 		if err != nil {
 			fmt.Printf("%s: Error getting manufacturer name: %v\n", manufID, err)
 			continue
 		}
 		set := false
-		if deviceDefinition.Metadata != nil {
+		if deviceDefinition.Metadata == nil {
 			deviceDefinition.Metadata = &models.DeviceDefinitionMetadata{
 				DeviceAttributes: make([]models.DeviceTypeAttribute, 0),
 			}
@@ -138,16 +125,15 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 				Value: powertrain,
 			})
 		}
-		md, _ := json.Marshal(deviceDefinition.Metadata)
-		updateContract := contracts.DeviceDefinitionUpdateInput{
-			Id:         deviceDefinition.ID,
-			Metadata:   string(md),
-			Ksuid:      deviceDefinition.KSUID,
+		updateInput := models.DeviceDefinitionUpdateInput{
+			ID:         deviceDefinition.ID,
+			Metadata:   deviceDefinition.Metadata,
+			KSUID:      deviceDefinition.KSUID,
 			DeviceType: deviceDefinition.DeviceType,
 			ImageURI:   deviceDefinition.ImageURI,
 		}
 
-		update, err := onChainSvc.Update(ctx, manufName, updateContract)
+		update, err := catalogSvc.Update(ctx, manufName, updateInput)
 		if err != nil {
 			fmt.Printf("%s: Error updating device definition: %v\n", definitionID, err)
 			return subcommands.ExitFailure

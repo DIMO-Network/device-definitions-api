@@ -20,7 +20,7 @@ import (
 type UpsertDecodingQueryHandler struct {
 	dbs                            func() *db.ReaderWriter
 	logger                         *zerolog.Logger
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService
 }
 
 type UpsertDecodingQuery struct {
@@ -32,11 +32,11 @@ func (*UpsertDecodingQuery) Key() string { return "UpsertDecodingQuery" }
 
 func NewUpsertDecodingQueryHandler(dbs func() *db.ReaderWriter,
 	logger *zerolog.Logger,
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService) UpsertDecodingQueryHandler {
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService) UpsertDecodingQueryHandler {
 	return UpsertDecodingQueryHandler{
 		dbs:                            dbs,
 		logger:                         logger,
-		deviceDefinitionOnChainService: deviceDefinitionOnChainService,
+		deviceDefinitionCatalogService: deviceDefinitionCatalogService,
 	}
 }
 
@@ -54,11 +54,14 @@ func (dc UpsertDecodingQueryHandler) Handle(ctx context.Context, query mediator.
 		Logger()
 
 	// check if the definition id exists on chain
-	dd, manuf, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, qry.DefinitionID)
+	dd, manuf, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, qry.DefinitionID)
+	if err == nil && dd == nil {
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", qry.DefinitionID)}
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find device definition by id %s when upserting vin decoding", qry.DefinitionID)
 	}
-	manufacturerName, err := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(ctx, manuf)
+	manufacturerName, err := dc.deviceDefinitionCatalogService.GetManufacturerNameByID(ctx, manuf)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find manufacturer name by id %s when upserting vin decoding", manuf)
 	}

@@ -2,158 +2,46 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 
-	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/DIMO-Network/device-definitions-api/internal/contracts"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
-	"github.com/friendsofgo/errors"
 	"github.com/rs/zerolog"
 )
 
 type GrpcDefinitionsService struct {
 	p_grpc.DeviceDefinitionServiceServer
-	Mediator          mediator.Mediator
-	logger            *zerolog.Logger
-	dbs               *db.ReaderWriter
-	onChainDeviceDefs gateways.DeviceDefinitionOnChainService
-	queryInstance     *contracts.Registry
-	identity          gateways.IdentityAPI
+	Mediator mediator.Mediator
+	logger   *zerolog.Logger
+	dbs      *db.ReaderWriter
 }
 
-func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter,
-	onChainDefs gateways.DeviceDefinitionOnChainService, queryInstance *contracts.Registry, identity gateways.IdentityAPI) p_grpc.DeviceDefinitionServiceServer {
-	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs(), onChainDeviceDefs: onChainDefs, queryInstance: queryInstance, identity: identity}
+func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.DeviceDefinitionServiceServer {
+	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs()}
 }
 
 //** Device Definitions
+// Definition create/update/list moved to the definitions-worker (R2 catalog)
+// and the public identity-api / catalog endpoints. The RPCs remain registered
+// for wire compatibility but are no longer implemented.
 
-// GetFilteredDeviceDefinition used by: admin, cs-support-platform
-func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(ctx context.Context, in *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
-
-	qryResult, _ := s.Mediator.Send(ctx, &queries.GetDeviceDefinitionByDynamicFilterQuery{
-		DefinitionID:    in.DefinitionId,
-		MakeSlug:        in.MakeSlug,
-		Year:            int(in.Year),
-		Model:           in.Model,
-		VerifiedVinList: in.VerifiedVinList,
-		PageIndex:       int(in.PageIndex),
-		PageSize:        int(in.PageSize),
-	})
-
-	ddResult := qryResult.([]queries.DeviceDefinitionQueryResponse)
-
-	result := &p_grpc.GetFilteredDeviceDefinitionsResponse{}
-
-	for _, deviceDefinition := range ddResult {
-		var ei map[string]string
-		var extIDs []*p_grpc.ExternalID
-		if err := deviceDefinition.ExternalIDs.Unmarshal(&ei); err != nil {
-			for vendor, id := range ei {
-				extIDs = append(extIDs, &p_grpc.ExternalID{
-					Vendor: vendor,
-					Id:     id,
-				})
-			}
-		}
-		result.Items = append(result.Items, &p_grpc.FilterDeviceDefinitionsReponse{
-			Id:           deviceDefinition.ID,
-			NameSlug:     deviceDefinition.NameSlug,
-			Model:        deviceDefinition.Model,
-			Year:         int32(deviceDefinition.Year),
-			ImageUrl:     deviceDefinition.ImageURL.String,
-			CreatedAt:    deviceDefinition.CreatedAt.UnixMilli(),
-			UpdatedAt:    deviceDefinition.UpdatedAt.UnixMilli(),
-			Metadata:     string(deviceDefinition.Metadata.JSON),
-			Verified:     deviceDefinition.Verified,
-			DeviceMakeId: deviceDefinition.DeviceMakeID,
-			Make:         deviceDefinition.Make,
-			ExternalIds:  extIDs,
-		})
-	}
-
-	return result, nil
+func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(_ context.Context, _ *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "device definition reads moved to identity-api and the definitions catalog")
 }
 
-// CreateDeviceDefinition used by: dimo-admin
-func (s *GrpcDefinitionsService) CreateDeviceDefinition(ctx context.Context, in *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
-	// todo we could call the command directly, but maintain testability, what about the update, could it share logic
-	command := &commands.CreateDeviceDefinitionCommand{
-		Source:             in.Source,
-		Make:               in.Make,
-		Model:              in.Model,
-		Year:               int(in.Year),
-		DeviceTypeID:       in.DeviceTypeId,
-		HardwareTemplateID: in.HardwareTemplateId,
-		Verified:           in.Verified,
-	}
-
-	if len(in.DeviceAttributes) > 0 {
-		for _, attribute := range in.DeviceAttributes {
-			command.DeviceAttributes = append(command.DeviceAttributes, &coremodels.UpdateDeviceTypeAttribute{
-				Name:  attribute.Name,
-				Value: attribute.Value,
-			})
-		}
-	}
-
-	commandResult, _ := s.Mediator.Send(ctx, command)
-	result := commandResult.(commands.CreateDeviceDefinitionCommandResult)
-
-	return &p_grpc.CreateDeviceDefinitionResponse{Id: result.ID, NameSlug: result.NameSlug}, nil
+func (s *GrpcDefinitionsService) CreateDeviceDefinition(_ context.Context, _ *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "device definition writes moved to the definitions-worker")
 }
 
-// UpdateDeviceDefinition is used by admin tool to update tableland properties of a dd, and a couple augmented properties
-func (s *GrpcDefinitionsService) UpdateDeviceDefinition(ctx context.Context, in *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
-	// if verified = true, send update request to tableland
-	dm, err := s.identity.GetManufacturer(stringutils.SlugString(in.ManufacturerName))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to find device make")
-	}
-	// get manufacturer from chain
-	manufacturerID, err := s.queryInstance.GetManufacturerIdByName(&bind.CallOpts{Context: ctx, Pending: true}, dm.Name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to GetManufacturerIdByName for update: %s", dm.Name)
-	}
-	ddTbland, err := s.onChainDeviceDefs.GetDefinitionTableland(ctx, manufacturerID, in.DeviceDefinitionId) // repurposed for definitionID
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to find device definition in tableland for update: %s", in.DeviceDefinitionId)
-	}
-	shouldUpdate := false
-	metadata := gateways.BuildDeviceTypeAttributesTbland(in.DeviceAttributes)
-	tblMetadata, err := json.Marshal(ddTbland.Metadata)
-	if err != nil {
-		s.logger.Err(err).Msgf("failed to unmarshall metadata for: %s", in.DeviceDefinitionId)
-	}
-	// check for any changes
-	if string(tblMetadata) != metadata || ddTbland.DeviceType != in.DeviceTypeId || ddTbland.ImageURI != in.ImageUrl {
-		shouldUpdate = true
-	}
-	if shouldUpdate {
-		// on chain portion of update
-		_, err = s.onChainDeviceDefs.Update(ctx, dm.Name, contracts.DeviceDefinitionUpdateInput{
-			Id:         in.DeviceDefinitionId, // name slug
-			Metadata:   metadata,
-			Ksuid:      ddTbland.KSUID,
-			DeviceType: in.DeviceTypeId,
-			ImageURI:   in.ImageUrl,
-		})
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to update device definition on chain")
-		}
-	}
-
-	return &p_grpc.BaseResponse{Id: in.DeviceDefinitionId}, nil
+func (s *GrpcDefinitionsService) UpdateDeviceDefinition(_ context.Context, _ *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "device definition writes moved to the definitions-worker")
 }
 
 //** Integrations

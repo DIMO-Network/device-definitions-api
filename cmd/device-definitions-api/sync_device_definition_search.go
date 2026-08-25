@@ -7,10 +7,7 @@ import (
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
-
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
@@ -23,17 +20,21 @@ import (
 )
 
 const (
-	minSearchYear         = 2007
-	tablelandPageSize     = 500
-	searchDefaultScore    = 1
+	minSearchYear = 2007
+	// Most search documents the prune will delete in one run without
+	// -allow-bulk-prune. Prod carries 41 orphans; a keep-set that lost a whole
+	// manufacturer is ~1,615 documents. Anything in between means the keep-set
+	// is wrong, not that the catalog shrank.
+	maxPruneWithoutFlag = 500
+	searchDefaultScore  = 1
 )
 
 type syncDeviceDefinitionSearchCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
 
-	createIndex bool
-	sender      sender.Sender
+	createIndex    bool
+	allowBulkPrune bool
 }
 
 func (*syncDeviceDefinitionSearchCmd) Name() string { return "sync-device-definitions-search" }
@@ -46,22 +47,15 @@ func (*syncDeviceDefinitionSearchCmd) Usage() string {
 
 func (p *syncDeviceDefinitionSearchCmd) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&p.createIndex, "create-index", false, "create or recreate index")
+	f.BoolVar(&p.allowBulkPrune, "allow-bulk-prune", false,
+		"permit deleting an unusually large share of the search index (normally a sign of a partial catalog read)")
 }
 
 func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
 
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-
-	onChainSvc := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, p.sender, pdb.DBS)
+	catalogSvc := gateways.NewDeviceDefinitionCatalogService(&p.settings, &p.logger)
 	identity := gateways.NewIdentityAPIService(&p.logger, &p.settings)
 
 	client := typesense.NewClient(
@@ -79,7 +73,7 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 		fmt.Printf("Index %s created\n", collectionName)
 	}
 
-	if err := runSearchSync(ctx, identity, onChainSvc, indexer, collectionName); err != nil {
+	if err := runSearchSync(ctx, identity, catalogSvc, indexer, collectionName, p.allowBulkPrune); err != nil {
 		p.logger.Error().Err(err).Msg("sync failed")
 		return subcommands.ExitFailure
 	}
@@ -94,18 +88,52 @@ func (p *syncDeviceDefinitionSearchCmd) Execute(ctx context.Context, _ *flag.Fla
 func runSearchSync(
 	ctx context.Context,
 	identity gateways.IdentityAPI,
-	onChainSvc gateways.DeviceDefinitionOnChainService,
+	catalogSvc gateways.DeviceDefinitionCatalogService,
 	indexer SearchIndexer,
 	collectionName string,
+	allowBulkPrune bool,
 ) error {
+	// Pin one manifest for the whole run. This is not a freshness measure: the
+	// worker generates every response, so there is no edge cache, and the
+	// keep-set is a single CatalogIDs read that cannot span manifests either
+	// way. It keeps the per-manufacturer paging below consistent, whose failure
+	// mode is a missed upsert that the next daily run repairs.
+	if err := catalogSvc.PinCatalogSnapshot(ctx); err != nil {
+		return fmt.Errorf("pin catalog snapshot: %w", err)
+	}
+
 	makes, err := identity.GetManufacturers()
 	if err != nil {
 		return fmt.Errorf("get manufacturers: %w", err)
 	}
+	// identity-api answers HTTP 200 with a populated `errors` array and null
+	// data when it fails, which the client surfaces as (nil, nil). Without this
+	// the cron prints "Index Updated" having indexed nothing, and the prune
+	// pass runs with an empty keep-set.
+	if len(makes) == 0 {
+		return fmt.Errorf("identity returned no manufacturers; refusing to sync an empty catalog")
+	}
 	fmt.Printf("Found %d manufacturers\n", len(makes))
 
+	// The keep-set comes from the manifest, not from walking manufacturers. A
+	// walk is only as complete as identity-api's manufacturer list, and one
+	// make missing from it silently drops all of its definitions from the
+	// keep-set -- BMW alone is 1,618 documents, which slides under the bulk
+	// guard's 1,669 and gets deleted without tripping anything.
+	allIDs, err := catalogSvc.CatalogIDs(ctx)
+	if err != nil {
+		return fmt.Errorf("read catalog ids: %w", err)
+	}
+	if len(allIDs) == 0 {
+		return fmt.Errorf("catalog returned no definitions; refusing to sync against an empty keep-set")
+	}
+	catalogIDs := make(map[string]struct{}, len(allIDs))
+	for _, id := range allIDs {
+		catalogIDs[id] = struct{}{}
+	}
+
 	for _, dm := range makes {
-		docs, err := buildManufacturerDocuments(ctx, onChainSvc, dm)
+		docs, _, err := buildManufacturerDocuments(ctx, catalogSvc, dm)
 		if err != nil {
 			return fmt.Errorf("build documents for %s: %w", dm.Name, err)
 		}
@@ -118,26 +146,42 @@ func runSearchSync(
 		}
 		fmt.Printf("%s: upserted %d definitions\n", dm.Name, len(docs))
 	}
+
+	// Upserting alone leaves a definition deleted from the catalog searchable
+	// forever, returning an id that 404s.
+	pruned, err := pruneOrphans(ctx, indexer, collectionName, catalogIDs, allowBulkPrune)
+	if err != nil {
+		// Report what was actually removed before the failure: the deletes are
+		// not transactional and the removed documents do not come back.
+		return fmt.Errorf("pruned %d search documents before failing: %w", pruned, err)
+	}
+	if pruned > 0 {
+		fmt.Printf("pruned %d search documents with no definition in the catalog\n", pruned)
+	}
 	return nil
 }
 
-// buildManufacturerDocuments pulls every tableland definition for a manufacturer
-// and converts the ones from model year >= minSearchYear into SearchEntryItems.
+// buildManufacturerDocuments pulls every definition for a manufacturer and
+// converts the ones from model year >= minSearchYear into SearchEntryItems. It
+// also returns every id it saw, which callers may ignore: the prune's keep-set
+// comes from the manifest via CatalogIDs, not from this walk.
 func buildManufacturerDocuments(
 	ctx context.Context,
-	onChainSvc gateways.DeviceDefinitionOnChainService,
+	catalogSvc gateways.DeviceDefinitionCatalogService,
 	dm coremodels.Manufacturer,
-) ([]SearchEntryItem, error) {
+) ([]SearchEntryItem, []string, error) {
 	makeSlug := stringutils.SlugString(dm.Name)
 	var docs []SearchEntryItem
+	var allIDs []string
 
 	pageIndex := 0
 	for {
-		page, err := onChainSvc.QueryDefinitionsCustom(ctx, dm.TokenID, "", pageIndex)
+		page, err := catalogSvc.QueryDefinitionsByManufacturer(ctx, dm.TokenID, pageIndex)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for _, dd := range page {
+			allIDs = append(allIDs, dd.ID)
 			if dd.Year < minSearchYear {
 				continue
 			}
@@ -156,12 +200,57 @@ func buildManufacturerDocuments(
 				Score:               searchDefaultScore,
 			})
 		}
-		if len(page) < tablelandPageSize {
+		if len(page) < gateways.CatalogPageSize {
 			break
 		}
 		pageIndex++
 	}
-	return docs, nil
+	return docs, allIDs, nil
+}
+
+// pruneOrphans deletes search documents whose definition no longer exists in
+// the catalog. The sync pass only ever upserts, so without this a definition
+// deleted from R2 stays searchable forever, returning an id that 404s.
+func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName string, catalogIDs map[string]struct{}, allowBulk bool) (int, error) {
+	// An empty catalog set means the catalog read failed or returned nothing.
+	// Pruning against it would empty the whole index.
+	if len(catalogIDs) == 0 {
+		return 0, nil
+	}
+
+	indexed, err := indexer.ExportIDs(ctx, collectionName)
+	if err != nil {
+		return 0, fmt.Errorf("export index ids: %w", err)
+	}
+
+	var stale []string
+	for _, id := range indexed {
+		if _, ok := catalogIDs[id]; !ok {
+			stale = append(stale, id)
+		}
+	}
+	if len(stale) == 0 {
+		return 0, nil
+	}
+
+	// A prune this large is far more likely to mean the catalog read was
+	// partial than that the catalog really shrank that much. Fail loud rather
+	// than quietly gut the index.
+	if len(stale) > maxPruneWithoutFlag && !allowBulk {
+		return 0, fmt.Errorf(
+			"refusing to prune %d of %d search documents (limit %d); re-run with -allow-bulk-prune if this is expected",
+			len(stale), len(indexed), maxPruneWithoutFlag)
+	}
+
+	// Documents below the index year cutoff are never re-upserted by a sync, so
+	// a wrong deletion here is permanent and this log is the only record of it.
+	// DeleteDocuments reports how many it actually removed, so a partial
+	// failure does not claim ids that still exist.
+	deleted, err := indexer.DeleteDocuments(ctx, collectionName, stale)
+	if err != nil {
+		return deleted, fmt.Errorf("delete orphaned search documents: %w", err)
+	}
+	return deleted, nil
 }
 
 func deviceDefinitionSearchSchema(collectionName string) *api.CollectionSchema {

@@ -18,10 +18,10 @@ func Test_powerTrainTypeService_ResolvePowerTrainType(t *testing.T) {
 	logger := dbtesthelper.Logger()
 
 	ctrl := gomock.NewController(t)
-	onChainSvc := mock_gateways.NewMockDeviceDefinitionOnChainService(ctrl)
+	catalogSvc := mock_gateways.NewMockDeviceDefinitionCatalogService(ctrl)
 	defer ctrl.Finish()
 
-	ptSvc, err := NewPowerTrainTypeService("../../../powertrain_type_rule.yaml", logger, onChainSvc)
+	ptSvc, err := NewPowerTrainTypeService("../../../powertrain_type_rule.yaml", logger, catalogSvc)
 	require.NoError(t, err)
 
 	type args struct {

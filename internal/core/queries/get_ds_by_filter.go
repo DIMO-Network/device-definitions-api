@@ -50,7 +50,7 @@ func (ch GetDeviceStyleByFilterQueryHandler) Handle(ctx context.Context, query m
 		}
 	}
 
-	response := []coremodels.GetDeviceStyleQueryResult{}
+	response := make([]coremodels.GetDeviceStyleQueryResult, 0, 1)
 
 	if style == nil {
 		return response, nil

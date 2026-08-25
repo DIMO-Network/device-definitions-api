@@ -34,7 +34,7 @@ type VINDecodingServiceSuite struct {
 	mockJapan17VINAPI      *mock_gateways.MockJapan17VINAPI
 	mockCarvxAPI           *mock_gateways.MockCarVxVINAPI
 
-	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionOnChainService
+	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionCatalogService
 	vinDecodingService VINDecodingService
 	mockElevaAPI       *mock_gateways.MockElevaAPI
 }
@@ -63,7 +63,7 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockJapan17VINAPI = mock_gateways.NewMockJapan17VINAPI(s.ctrl)
 	s.mockCarvxAPI = mock_gateways.NewMockCarVxVINAPI(s.ctrl)
 	s.mockElevaAPI = mock_gateways.NewMockElevaAPI(s.ctrl)
-	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionCatalogService(s.ctrl)
 
 	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(),
 		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI, s.mockCarvxAPI, s.mockElevaAPI)

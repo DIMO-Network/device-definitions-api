@@ -46,7 +46,7 @@ type DecodeVINQueryHandlerSuite struct {
 	mockVINService                     *mock_services.MockVINDecodingService
 	mockFuelAPIService                 *mock_gateways.MockFuelAPIService
 	mockPowerTrainTypeService          *mock_services.MockPowerTrainTypeService
-	mockDeviceDefinitionOnChainService *mock_gateways.MockDeviceDefinitionOnChainService
+	mockDeviceDefinitionCatalogService *mock_gateways.MockDeviceDefinitionCatalogService
 
 	queryHandler DecodeVINQueryHandler
 	mockVINRepo  *mock_repository.MockVINRepository
@@ -66,14 +66,14 @@ func (s *DecodeVINQueryHandlerSuite) SetupTest() {
 
 	s.mockVINService = mock_services.NewMockVINDecodingService(s.ctrl)
 	s.mockPowerTrainTypeService = mock_services.NewMockPowerTrainTypeService(s.ctrl)
-	s.mockDeviceDefinitionOnChainService = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+	s.mockDeviceDefinitionCatalogService = mock_gateways.NewMockDeviceDefinitionCatalogService(s.ctrl)
 	s.mockFuelAPIService = mock_gateways.NewMockFuelAPIService(s.ctrl)
 
 	s.mockVINRepo = mock_repository.NewMockVINRepository(s.ctrl)
 	s.mockIdentity = mock_gateways.NewMockIdentityAPI(s.ctrl)
 
 	s.pdb, s.container = dbtesthelper.StartContainerDatabase(s.ctx, dbName, s.T(), migrationsDirRelPath)
-	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, s.mockVINRepo, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService, s.mockDeviceDefinitionOnChainService, s.mockIdentity)
+	s.queryHandler = NewDecodeVINQueryHandler(s.pdb.DBS, s.mockVINService, s.mockVINRepo, dbtesthelper.Logger(), s.mockFuelAPIService, s.mockPowerTrainTypeService, s.mockDeviceDefinitionCatalogService, s.mockIdentity)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TearDownTest() {
@@ -165,7 +165,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_UpdatesAt
 	vinExtra := &coremodels.VINDecodingVendorExtra{}
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, vinExtra, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	wmiDb := &models.Wmi{
 		Wmi:              vin[:3],
@@ -275,14 +275,14 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
 	styleLevelPT := "PHEV"
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		nil, nil, nil) // should return nil b/c doesn't exist
 	vinExtra := &coremodels.VINDecodingVendorExtra{}
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, vinExtra, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, dmLincoln.Name, gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, dmLincoln.Name, gomock.Any()).Return(&trxHashHex, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -344,7 +344,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_JapanChassisNumber_exist
 	err := vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	// mock setup for powertrain lookup, which is in the vin decode response
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID).Return(
 		&coremodels.DeviceDefinitionTablelandModel{
 			ID:         dd.ID,
 			Model:      dd.Model,
@@ -428,13 +428,13 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	vinDecodingInfoData.MetaData = null.JSONFrom(metaData)
 
 	styleLevelPT := "PHEV"
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		nil, nil, nil) // should return nil b/c doesn't exist
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
 
 	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionOnChainService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -545,7 +545,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleA
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("HEV")
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 	// db setup
 	ds := dbtesthelper.SetupCreateStyle(s.T(), definitionID, buildStyleName(vinInfoResp), "drivly", vinInfoResp.SubModel, s.pdb)
@@ -638,7 +638,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingWMI() {
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("HEV")
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, dd.Model, int(dd.Year)), nil, nil)
 
 	image := gateways.FuelImage{
@@ -690,7 +690,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_TeslaDecode() {
 
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.TeslaProvider, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("BEV")
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, dd.Model, dd.Year), nil, nil)
 
 	image := gateways.FuelImage{
@@ -747,7 +747,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingVINNumber() 
 	err = vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	s.Require().NoError(err)
 	// mock needed for powertrain lookup
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), dd.ID).Return(
 		&coremodels.DeviceDefinitionTablelandModel{
 			ID:         dd.ID,
 			Model:      dd.Model,
@@ -786,7 +786,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidVINYear_AutoIso()
 	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo("", "").Return("ICE") // normally this would return ""
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, "Escape", 2021), nil, nil)
 	wmiDb := &models.Wmi{
 		Wmi:              vin[:3],
@@ -827,7 +827,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_InvalidStyleName_AutoIso
 	definitionID := "ford_escape_2017"
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo("1", "").Return("ICE")
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, "Escape", 2017), nil, nil)
 	wmiDb := &models.Wmi{
 		Wmi:              vin[:3],
@@ -885,7 +885,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_DecodeKnownFallback() {
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(nil, nil, fmt.Errorf("unable to decode"))
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo("", "").Return("ICE")
 
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), definitionID).Return(
 		buildTestTblDD(definitionID, "Bronco", 20222), nil, nil)
 
 	image := gateways.FuelImage{
@@ -980,7 +980,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	// mock call to get definition by id
 	definitionID := "ford_escape_2020"
 
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).AnyTimes().Return(&coremodels.DeviceDefinitionTablelandModel{
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).AnyTimes().Return(&coremodels.DeviceDefinitionTablelandModel{
 		ID:         definitionID,
 		KSUID:      ksuid.New().String(),
 		Model:      "Escape",
@@ -989,7 +989,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 		ImageURI:   "",
 		Metadata:   nil,
 	}, nil, nil)
-	//s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), "lincoln_escape_2020").AnyTimes().Return(nil, nil, fmt.Errorf("not found"))
+	//s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), "lincoln_escape_2020").AnyTimes().Return(nil, nil, fmt.Errorf("not found"))
 
 	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
 	require.NoError(s.T(), err)
@@ -1037,7 +1037,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	require.NoError(s.T(), err)
 	// mock call to get definition by id
 	definitionID := "ford_escape_2020"
-	s.mockDeviceDefinitionOnChainService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).Times(2).Return(nil, nil, fmt.Errorf("not found"))
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetDefinitionByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).Times(2).Return(nil, nil, fmt.Errorf("not found"))
 
 	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
 	require.Error(s.T(), err, "vinInfoFromKnown: unable to determine the right OEM between Ford, Lincoln for WMI %s 1FM")
