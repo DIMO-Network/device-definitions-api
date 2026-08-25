@@ -130,11 +130,9 @@ func TestRunSearchSync_FailsWhenIdentityReturnsNoManufacturers(t *testing.T) {
 	assert.Contains(t, err.Error(), "no manufacturers")
 }
 
-// The keep-set decides what gets deleted, so it must come from a manifest that
-// is both fresh and stable for the whole run. The CDN serves the manifest with
-// max-age=300, and the per-page cache expires mid-run, so without pinning a
-// definition created minutes ago -- or one that shifts pages during the run --
-// is absent from the keep-set and its search document is deleted.
+// The sync pins one manifest before reading the catalog. Not for freshness --
+// there is no edge cache in front of the worker -- but so the per-manufacturer
+// paging below cannot span two manifests mid-run.
 func TestRunSearchSync_PinsAFreshCatalogSnapshotBeforePruning(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	identity := mock_gateways.NewMockIdentityAPI(ctrl)
@@ -167,4 +165,14 @@ func TestRunSearchSync_FailsWhenTheSnapshotCannotBePinned(t *testing.T) {
 
 	err := runSearchSync(context.Background(), identity, onChain, indexer, "dd-search", false)
 	require.Error(t, err)
+}
+
+// Pins the cap. One number, so there is no regime where a different constant
+// silently takes over -- which is how a change to the old fraction shipped in a
+// commit message and not in the code.
+func TestPruneCapSitsBetweenChurnAndCatastrophe(t *testing.T) {
+	// Prod carries 41 real orphans; routine churn must never trip the guard.
+	assert.Greater(t, maxPruneWithoutFlag, 41)
+	// A keep-set that lost its largest manufacturer is ~1,615 documents.
+	assert.Less(t, maxPruneWithoutFlag, 1615)
 }

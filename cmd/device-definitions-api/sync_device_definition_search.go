@@ -21,12 +21,12 @@ import (
 
 const (
 	minSearchYear = 2007
-	// Guardrail on the prune pass: deleting more than pruneFraction of the
-	// index (with a pruneFloor allowance for small collections) requires an
-	// explicit flag.
-	pruneFloor         = 100
-	pruneFraction      = 0.10
-	searchDefaultScore = 1
+	// Most search documents the prune will delete in one run without
+	// -allow-bulk-prune. Prod carries 41 orphans; a keep-set that lost a whole
+	// manufacturer is ~1,615 documents. Anything in between means the keep-set
+	// is wrong, not that the catalog shrank.
+	maxPruneWithoutFlag = 500
+	searchDefaultScore  = 1
 )
 
 type syncDeviceDefinitionSearchCmd struct {
@@ -93,11 +93,11 @@ func runSearchSync(
 	collectionName string,
 	allowBulkPrune bool,
 ) error {
-	// Pin one fresh manifest for the whole run before anything reads the
-	// catalog. The keep-set built below decides what gets deleted, and the CDN
-	// serves the manifest with max-age=300 while the per-page cache expires
-	// mid-run -- either would leave a live definition out of the keep-set and
-	// delete its search document.
+	// Pin one manifest for the whole run. This is not a freshness measure: the
+	// worker generates every response, so there is no edge cache, and the
+	// keep-set is a single CatalogIDs read that cannot span manifests either
+	// way. It keeps the per-manufacturer paging below consistent, whose failure
+	// mode is a missed upsert that the next daily run repairs.
 	if err := catalogSvc.PinCatalogSnapshot(ctx); err != nil {
 		return fmt.Errorf("pin catalog snapshot: %w", err)
 	}
@@ -151,7 +151,9 @@ func runSearchSync(
 	// forever, returning an id that 404s.
 	pruned, err := pruneOrphans(ctx, indexer, collectionName, catalogIDs, allowBulkPrune)
 	if err != nil {
-		return err
+		// Report what was actually removed before the failure: the deletes are
+		// not transactional and the removed documents do not come back.
+		return fmt.Errorf("pruned %d search documents before failing: %w", pruned, err)
 	}
 	if pruned > 0 {
 		fmt.Printf("pruned %d search documents with no definition in the catalog\n", pruned)
@@ -234,10 +236,10 @@ func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName str
 	// A prune this large is far more likely to mean the catalog read was
 	// partial than that the catalog really shrank that much. Fail loud rather
 	// than quietly gut the index.
-	if limit := pruneLimit(len(indexed)); len(stale) > limit && !allowBulk {
+	if len(stale) > maxPruneWithoutFlag && !allowBulk {
 		return 0, fmt.Errorf(
 			"refusing to prune %d of %d search documents (limit %d); re-run with -allow-bulk-prune if this is expected",
-			len(stale), len(indexed), limit)
+			len(stale), len(indexed), maxPruneWithoutFlag)
 	}
 
 	// Documents below the index year cutoff are never re-upserted by a sync, so
@@ -249,13 +251,6 @@ func pruneOrphans(ctx context.Context, indexer SearchIndexer, collectionName str
 		return deleted, fmt.Errorf("delete orphaned search documents: %w", err)
 	}
 	return deleted, nil
-}
-
-func pruneLimit(indexed int) int {
-	if limit := int(float64(indexed) * pruneFraction); limit > pruneFloor {
-		return limit
-	}
-	return pruneFloor
 }
 
 func deviceDefinitionSearchSchema(collectionName string) *api.CollectionSchema {
