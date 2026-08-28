@@ -63,13 +63,13 @@ type DecodeVINResponse struct {
 }
 
 // GetDeviceDefinitionByID godoc
-// @Summary gets a device definition, from tableland on-chain records. Only support mmy style id's eg. ford_escape_2025
+// @Summary gets a vehicle template from the definitions catalog. Only supports mmy style id's eg. ford_escape_2025
 // @ID GetDeviceDefinitionByID
-// @Description gets a device definition
+// @Description gets a vehicle template: the model-year plus every trim it shipped in. This replaced the flat on-chain device definition; the response now carries typed `attributes` and a `trims` array instead of `metadata.device_attributes`.
 // @Tags device-definitions
 // @Param  id path string true "mmy definition_id eg. ford_escape_2020"
 // @Produce json
-// @Success 200 {object} models.DeviceDefinitionTablelandModel
+// @Success 200 {object} models.Template
 // @Failure 404
 // @Failure 400
 // @Failure 500

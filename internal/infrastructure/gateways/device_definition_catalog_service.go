@@ -65,9 +65,17 @@ type DeviceDefinitionCatalogService interface {
 	// silently serving the flat pre-migration record.
 	GetTemplateByID(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetTemplateByIDFresh is GetTemplateByID reading through the worker
-	// instead of the CDN. Callers that read, mutate and write back must use it:
-	// documents are served with max-age=86400, so a cached read silently
+	// instead of the CDN. A caller that reads, mutates and writes back must use
+	// it: documents are served with max-age=86400, so a cached read silently
 	// discards any edit made in the last day when the result is PUT back.
+	//
+	// It has NO production caller today. Its only one was the bulk powertrain
+	// tool, deleted with the legacy Update() write path earlier on this branch.
+	// It is kept because Create() is still on the pre-migration
+	// /definitions/<id> route the new worker does not serve, and migrating that
+	// write to templates is the read-modify-write this method exists for. If
+	// that migration lands without using it, delete it -- do not leave it here
+	// on the strength of this comment alone.
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
