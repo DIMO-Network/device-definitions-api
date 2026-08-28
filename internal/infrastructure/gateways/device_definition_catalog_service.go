@@ -82,7 +82,6 @@ type DeviceDefinitionCatalogService interface {
 	// request), so there is no edge cache in front of the manifest.
 	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
-	Update(ctx context.Context, manufacturerName string, input coremodels.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
 
@@ -518,43 +517,6 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 	}
 	e.memCache.Delete(manifestCacheKey)
 	return &dd.ID, nil
-}
-
-func (e *deviceDefinitionCatalogService) Update(ctx context.Context, _ string, input coremodels.DeviceDefinitionUpdateInput) (*string, error) {
-	existingDoc, err := e.fetchDocFresh(ctx, input.ID)
-	var existing *coremodels.DeviceDefinitionTablelandModel
-	if existingDoc != nil {
-		existing = &existingDoc.DeviceDefinitionTablelandModel
-	}
-	if err != nil {
-		return nil, err
-	}
-	if existing == nil {
-		return nil, fmt.Errorf("device definition %s not found in catalog to update", input.ID)
-	}
-	body := workerPutBody{
-		ID:       input.ID,
-		Model:    existing.Model,
-		Year:     existing.Year,
-		KSUID:    existing.KSUID,
-		Metadata: existing.Metadata,
-	}
-	body.DeviceType = existing.DeviceType
-	if input.DeviceType != "" {
-		body.DeviceType = input.DeviceType
-	}
-	body.ImageURI = existing.ImageURI
-	if input.ImageURI != "" {
-		body.ImageURI = input.ImageURI
-	}
-	if input.Metadata != nil {
-		body.Metadata = input.Metadata
-	}
-	if _, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(input.ID), body); err != nil {
-		return nil, err
-	}
-	e.memCache.Delete(manifestCacheKey)
-	return &input.ID, nil
 }
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {

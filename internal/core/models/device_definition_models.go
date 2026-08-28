@@ -107,15 +107,6 @@ type DeviceDefinitionTablelandModel struct {
 	Metadata   *DeviceDefinitionMetadata `json:"metadata"`
 }
 
-// DeviceDefinitionUpdateInput carries partial updates applied through the definitions-worker.
-type DeviceDefinitionUpdateInput struct {
-	ID         string
-	Metadata   *DeviceDefinitionMetadata
-	KSUID      string
-	DeviceType string
-	ImageURI   string
-}
-
 // DeviceDefinitionMetadata part of tableland DD: includes a list of device-specific attributes.
 type DeviceDefinitionMetadata struct {
 	DeviceAttributes []DeviceTypeAttribute `json:"device_attributes"`
