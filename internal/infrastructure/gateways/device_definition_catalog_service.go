@@ -31,6 +31,15 @@ const (
 	metricCatalogWrite = "CatalogWrite"
 )
 
+// ErrTemplateNotFound is returned by GetTemplateByID/GetTemplateByIDFresh
+// only for a genuine 404 from t/<id>.json -- the template import has not run
+// for this id. Callers must check it with errors.Is, never by inspecting the
+// error's message: any other status, a transport error, or a decode failure
+// returns a distinct, non-sentinel error, so a catalog outage is never
+// mistaken for "this vehicle does not exist." Conflating the two would let a
+// caller respond to a 500 by creating a duplicate definition mid-outage.
+var ErrTemplateNotFound = errors.New("template not found in catalog")
+
 func countOutcome(method string, err error) {
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": method}).Inc()
@@ -225,10 +234,17 @@ func (e *deviceDefinitionCatalogService) fetchTemplateDocFrom(ctx context.Contex
 		return nil, errors.Wrapf(err, "failed to fetch template %s from catalog", id)
 	}
 	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
 		// Unlike fetchDocFrom, a 404 is an error here, not a nil result: it
 		// means the template import for this id has not run, and that must
-		// fail loudly rather than be treated as a normal "not found".
+		// fail loudly rather than be treated as a normal "not found". It is
+		// ErrTemplateNotFound specifically -- and only this -- so a caller
+		// can tell "does not exist" apart from every other failure below.
+		return nil, errors.Wrapf(ErrTemplateNotFound, "template %s", id)
+	}
+	if resp.StatusCode != http.StatusOK {
+		// Any other status is a catalog problem, not a missing template:
+		// callers must not reclassify this as not-found.
 		return nil, fmt.Errorf("catalog returned %d for template %s", resp.StatusCode, id)
 	}
 	var tmpl coremodels.Template

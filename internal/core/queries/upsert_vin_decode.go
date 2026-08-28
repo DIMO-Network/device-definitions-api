@@ -53,13 +53,17 @@ func (dc UpsertDecodingQueryHandler) Handle(ctx context.Context, query mediator.
 		Str("handler", query.Key()).
 		Logger()
 
-	// check if the definition id exists on chain
+	// check if the definition id exists in the catalog. GetTemplateByID's
+	// error is only ever "does not exist" when it is ErrTemplateNotFound
+	// (checked by identity, never by message); anything else -- a catalog
+	// outage, a timeout, a decode failure -- is an internal error and must
+	// not be reported as a missing definition.
 	dd, manuf, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, qry.DefinitionID)
-	if err == nil && dd == nil {
-		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", qry.DefinitionID)}
-	}
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to find device definition by id %s when upserting vin decoding", qry.DefinitionID)
+		if errors.Is(err, gateways.ErrTemplateNotFound) {
+			return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s: %w", qry.DefinitionID, err)}
+		}
+		return nil, &exceptions.InternalError{Err: fmt.Errorf("failed to find device definition by id %s when upserting vin decoding: %w", qry.DefinitionID, err)}
 	}
 	manufacturerName, err := dc.deviceDefinitionCatalogService.GetManufacturerNameByID(ctx, manuf)
 	if err != nil {

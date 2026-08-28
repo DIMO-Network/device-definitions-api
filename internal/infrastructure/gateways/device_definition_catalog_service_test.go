@@ -119,10 +119,33 @@ func TestTemplateUnmarshal(t *testing.T) {
 }
 
 func TestTemplateHasNoLegacyFields(t *testing.T) {
-	// ksuid and tableId were removed from the model deliberately; a template
-	// carrying them would mean the worker regressed.
+	// ksuid and tableId were removed from the model deliberately. Asserting
+	// on the fixture JSON alone can never fail -- the fixture just doesn't
+	// carry those keys, and nothing here reads the type. Round-tripping a
+	// document that DOES carry them through coremodels.Template is what
+	// would catch a regression: if the struct ever grew a field capturing
+	// either key, it would come back out on re-marshal.
+	withLegacyFields := `{
+  "id": "toyota_camry_2020",
+  "deviceType": "vehicle",
+  "manufacturer": {"slug": "toyota", "name": "Toyota", "tokenId": 131},
+  "model": "Camry",
+  "year": 2020,
+  "ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+  "tableId": 42,
+  "attributes": {},
+  "trims": [{"name": "LE", "attributes": {}}],
+  "version": 1
+}`
+
+	var tmpl coremodels.Template
+	require.NoError(t, json.Unmarshal([]byte(withLegacyFields), &tmpl))
+
+	out, err := json.Marshal(tmpl)
+	require.NoError(t, err)
+
 	var raw map[string]any
-	require.NoError(t, json.Unmarshal([]byte(templateJSON), &raw))
+	require.NoError(t, json.Unmarshal(out, &raw))
 	assert.NotContains(t, raw, "ksuid")
 	assert.NotContains(t, raw, "tableId")
 }
@@ -163,4 +186,49 @@ func TestGetTemplateByIDDoesNotFallBackToTheOldKey(t *testing.T) {
 	_, _, err := svc.GetTemplateByID(context.Background(), "toyota_camry_2020")
 	require.Error(t, err)
 	assert.Equal(t, []string{"/t/toyota_camry_2020.json"}, paths)
+	// A genuine 404 must be the typed sentinel, checked by identity, so a
+	// caller can tell "does not exist" apart from every other failure.
+	assert.ErrorIs(t, err, ErrTemplateNotFound)
+}
+
+// A 500 from the catalog is an outage, not a missing template. It must not
+// satisfy errors.Is(err, ErrTemplateNotFound): a caller that reclassified it
+// as not-found could react by creating a duplicate definition for a vehicle
+// that already exists, during the worst possible moment to do so.
+func TestGetTemplateByID500IsNotErrTemplateNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDeviceDefinitionCatalogService(&config.Settings{DefinitionsCatalogURL: srv.URL}, &logger)
+
+	_, _, err := svc.GetTemplateByID(context.Background(), "toyota_camry_2020")
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, ErrTemplateNotFound)
+}
+
+// GetTemplateByIDFresh shares fetchTemplateDocFrom with GetTemplateByID, so
+// the no-fallback guarantee holds for it by inspection -- but this proves it
+// for the worker-backed path itself rather than leaving it proven for only
+// one of the two exported methods.
+func TestGetTemplateByIDFreshDoesNotFallBackToTheOldKey(t *testing.T) {
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDeviceDefinitionCatalogService(&config.Settings{
+		DefinitionsCatalogURL: srv.URL,
+		DefinitionsWorkerURL:  srv.URL,
+	}, &logger)
+
+	_, _, err := svc.GetTemplateByIDFresh(context.Background(), "toyota_camry_2020")
+	require.Error(t, err)
+	assert.Equal(t, []string{"/t/toyota_camry_2020.json"}, paths)
+	assert.ErrorIs(t, err, ErrTemplateNotFound)
 }

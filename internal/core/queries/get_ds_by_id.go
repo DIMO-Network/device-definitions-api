@@ -52,10 +52,16 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 	}
 	dd, _, err := ch.catalogSvc.GetTemplateByID(ctx, ds.DefinitionID)
 	if err != nil {
-		// GetTemplateByID fails loudly on a missing template (no fallback to
-		// the pre-migration flat record), so any error here means the parent
-		// device definition is not in the catalog.
-		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s: %w", ds.DefinitionID, err)}
+		// GetTemplateByID's error is a genuine "does not exist" only when it
+		// is ErrTemplateNotFound (checked by identity, never by message): a
+		// catalog outage -- a 5xx, a timeout, a decode failure -- must not be
+		// reclassified as not-found, or a caller reacting to the spurious 404
+		// could create a duplicate definition for a vehicle that already
+		// exists, during the worst possible moment to do so.
+		if errors.Is(err, gateways.ErrTemplateNotFound) {
+			return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s: %w", ds.DefinitionID, err)}
+		}
+		return nil, &exceptions.InternalError{Err: fmt.Errorf("failed to get device definition %s from catalog: %w", ds.DefinitionID, err)}
 	}
 
 	deviceStyleResult := coremodels.GetDeviceStyleQueryResult{
