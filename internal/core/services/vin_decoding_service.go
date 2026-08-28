@@ -75,7 +75,7 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, _, err := c.catalogSvc.GetDefinitionByID(ctx, DefaultDefinitionID)
+		dd, _, err := c.catalogSvc.GetTemplateByID(ctx, DefaultDefinitionID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -364,7 +364,7 @@ func buildDrivlyStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 }
 
 // buildFromDDForTestVIN meant for use with test VIN's
-func buildFromDDForTestVIN(vin string, info *coremodels.DeviceDefinitionTablelandModel) *coremodels.VINDecodingInfoData {
+func buildFromDDForTestVIN(vin string, info *coremodels.Template) *coremodels.VINDecodingInfoData {
 	makeSlug := strings.Split(info.ID, "_")[0]
 
 	v := &coremodels.VINDecodingInfoData{

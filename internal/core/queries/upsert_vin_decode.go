@@ -54,7 +54,7 @@ func (dc UpsertDecodingQueryHandler) Handle(ctx context.Context, query mediator.
 		Logger()
 
 	// check if the definition id exists on chain
-	dd, manuf, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, qry.DefinitionID)
+	dd, manuf, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, qry.DefinitionID)
 	if err == nil && dd == nil {
 		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", qry.DefinitionID)}
 	}

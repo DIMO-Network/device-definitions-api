@@ -5,6 +5,7 @@
 //
 //	mockgen -source fuel_api_service.go -destination mocks/fuel_api_service_mock.go -package mocks
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -19,6 +20,7 @@ import (
 type MockFuelAPIService struct {
 	ctrl     *gomock.Controller
 	recorder *MockFuelAPIServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockFuelAPIServiceMockRecorder is the mock recorder for MockFuelAPIService.

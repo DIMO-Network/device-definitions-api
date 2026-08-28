@@ -50,14 +50,12 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 			Err: fmt.Errorf("failed to get device styles"),
 		}
 	}
-	dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, ds.DefinitionID)
-	if err == nil && dd == nil {
-		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s", ds.DefinitionID)}
-	}
+	dd, _, err := ch.catalogSvc.GetTemplateByID(ctx, ds.DefinitionID)
 	if err != nil {
-		return nil, &exceptions.InternalError{
-			Err: fmt.Errorf("failed to get device definition"),
-		}
+		// GetTemplateByID fails loudly on a missing template (no fallback to
+		// the pre-migration flat record), so any error here means the parent
+		// device definition is not in the catalog.
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition not found in catalog: %s: %w", ds.DefinitionID, err)}
 	}
 
 	deviceStyleResult := coremodels.GetDeviceStyleQueryResult{
@@ -69,7 +67,7 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		SubModel:           ds.SubModel,
 		HardwareTemplateID: ds.HardwareTemplateID.String,
 		DeviceDefinition: coremodels.GetDeviceDefinitionStyleQueryResult{
-			DeviceAttributes: common.ConvertMetadataToDeviceAttributes(dd.Metadata), // copy any attributes from parent DD
+			DeviceAttributes: convertTemplateAttributesToDeviceAttributes(dd.Attributes), // copy any attributes from parent template
 		},
 	}
 	// first see if style metadata has powertrain, most cases will be blank
@@ -106,14 +104,13 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 		}
 	}
 
-	// if no powertrain attribute found, set it, defaulting to parent DD if nothing resulted from above logic
+	// if no powertrain attribute found, set it, defaulting to parent template if nothing resulted from above logic
 	if !hasPowertrain {
 		if len(powerTrainType) == 0 {
 			powerTrainType = models.PowertrainICE // default to ICE if nothing found
-			for _, attribute := range dd.Metadata.DeviceAttributes {
-				if attribute.Name == common.PowerTrainType {
-					powerTrainType = attribute.Value
-					break
+			if v, ok := dd.Attributes[common.PowerTrainType]; ok {
+				if s, ok := v.(string); ok {
+					powerTrainType = s
 				}
 			}
 		}
@@ -126,4 +123,20 @@ func (ch GetDeviceStyleByIDQueryHandler) Handle(ctx context.Context, query media
 	}
 
 	return deviceStyleResult, nil
+}
+
+// convertTemplateAttributesToDeviceAttributes adapts a template's typed
+// attribute map to the legacy DeviceTypeAttributeEditor shape this handler's
+// response is built from.
+func convertTemplateAttributesToDeviceAttributes(attributes map[string]any) []coremodels.DeviceTypeAttributeEditor {
+	dta := make([]coremodels.DeviceTypeAttributeEditor, 0, len(attributes))
+	for name, value := range attributes {
+		dta = append(dta, coremodels.DeviceTypeAttributeEditor{
+			Name:        name,
+			Label:       name,
+			Description: name,
+			Value:       fmt.Sprint(value),
+		})
+	}
+	return dta
 }

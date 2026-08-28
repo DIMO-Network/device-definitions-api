@@ -88,14 +88,9 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 
 		// Fresh: this reads, mutates metadata and writes it back, so a CDN-cached
 		// base would silently drop any edit made in the last day.
-		deviceDefinition, manufID, err := catalogSvc.GetDefinitionByIDFresh(ctx, definitionID)
+		deviceDefinition, manufID, err := catalogSvc.GetTemplateByIDFresh(ctx, definitionID)
 		if err != nil {
 			fmt.Printf("%s: Error getting device definition: %v\n", definitionID, err)
-			notFoundDefinitions = append(notFoundDefinitions, definitionID)
-			continue
-		}
-		if deviceDefinition == nil {
-			fmt.Printf("%s: Device definition not found\n", definitionID)
 			notFoundDefinitions = append(notFoundDefinitions, definitionID)
 			continue
 		}
@@ -105,30 +100,30 @@ func (p *bulkUpdatePowertrain) Execute(ctx context.Context, _ *flag.FlagSet, _ .
 			fmt.Printf("%s: Error getting manufacturer name: %v\n", manufID, err)
 			continue
 		}
+		// Templates carry attributes as a typed map rather than the legacy
+		// metadata.device_attributes list Update()'s worker PUT still expects,
+		// so rebuild that list from the template's attributes, stringified the
+		// way the legacy shape always stored them.
 		set := false
-		if deviceDefinition.Metadata == nil {
-			deviceDefinition.Metadata = &models.DeviceDefinitionMetadata{
-				DeviceAttributes: make([]models.DeviceTypeAttribute, 0),
-			}
-		}
-		for i2, attribute := range deviceDefinition.Metadata.DeviceAttributes {
-			if attribute.Name == common.PowerTrainType {
-				deviceDefinition.Metadata.DeviceAttributes[i2].Value = powertrain
+		deviceAttributes := make([]models.DeviceTypeAttribute, 0, len(deviceDefinition.Attributes))
+		for name, value := range deviceDefinition.Attributes {
+			v := fmt.Sprint(value)
+			if name == common.PowerTrainType {
+				v = powertrain
 				set = true
-				break
 			}
+			deviceAttributes = append(deviceAttributes, models.DeviceTypeAttribute{Name: name, Value: v})
 		}
 
 		if !set {
-			deviceDefinition.Metadata.DeviceAttributes = append(deviceDefinition.Metadata.DeviceAttributes, models.DeviceTypeAttribute{
+			deviceAttributes = append(deviceAttributes, models.DeviceTypeAttribute{
 				Name:  common.PowerTrainType,
 				Value: powertrain,
 			})
 		}
 		updateInput := models.DeviceDefinitionUpdateInput{
 			ID:         deviceDefinition.ID,
-			Metadata:   deviceDefinition.Metadata,
-			KSUID:      deviceDefinition.KSUID,
+			Metadata:   &models.DeviceDefinitionMetadata{DeviceAttributes: deviceAttributes},
 			DeviceType: deviceDefinition.DeviceType,
 			ImageURI:   deviceDefinition.ImageURI,
 		}

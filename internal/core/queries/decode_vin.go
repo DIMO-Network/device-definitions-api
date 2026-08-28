@@ -211,7 +211,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
-	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, tid)
+	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, tid)
 	if errTbl != nil {
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
@@ -323,14 +323,11 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 	// call on-chain svc to get the DD and pull out the powertrain
 	powertrain := "" // this is what we're trying to resolve in part
 	trx := ""
-	tblDef, manufID, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), vn.DefinitionID)
+	tblDef, manufID, err := dc.deviceDefinitionCatalogService.GetTemplateByID(context.Background(), vn.DefinitionID)
 	if err == nil && tblDef != nil {
-		if tblDef.Metadata != nil {
-			for _, attribute := range tblDef.Metadata.DeviceAttributes {
-				if attribute.Name == common.PowerTrainType {
-					powertrain = attribute.Value
-					break
-				}
+		if v, ok := tblDef.Attributes[common.PowerTrainType]; ok {
+			if s, ok := v.(string); ok {
+				powertrain = s
 			}
 		}
 		if powertrain == "" {
@@ -470,8 +467,8 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 		for _, wmi := range wmis {
 			makeNamesForError += wmi.ManufacturerName + ", "
 			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
-			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), definitionID)
-			if err == nil && deviceDefinitionTablelandModel != nil {
+			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(context.Background(), definitionID)
+			if err == nil && tmpl != nil {
 				vinInfo.Make = wmi.ManufacturerName
 				break
 			}
