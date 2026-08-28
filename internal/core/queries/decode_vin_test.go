@@ -490,9 +490,10 @@ func buildTestTemplate(definitionID, model string, year int) *coremodels.Templat
 // on styleName -- LE (ICE) and Hybrid LE (HEV) -- mirroring the real
 // toyota_camry_2020 bug this migration exists to fix: a template whose
 // top-level attributes say ICE while a specific trim actually carries HEV.
-// Trims are disambiguated on styleName, not manufacturerCode, because
-// nothing in the live decode path supplies a manufacturer code today (see
-// decode_vin.go's MatchSignals comment).
+// Trims are disambiguated on styleName here (rather than manufacturerCode,
+// see buildTestCamryTemplate below) to prove that axis still works too --
+// vincario/autoiso/dat-decoded VINs never carry a manufacturer code, so
+// styleName selectors remain the only reachable signal for that population.
 func buildTestTemplateWithTrims(definitionID, model string, year, version int) *coremodels.Template {
 	return &coremodels.Template{
 		ID:         definitionID,
@@ -510,6 +511,35 @@ func buildTestTemplateWithTrims(definitionID, model string, year, version int) *
 			{
 				Name:       "Hybrid LE",
 				Selectors:  coremodels.TrimSelectors{StyleName: []string{"Hybrid LE"}},
+				Attributes: map[string]any{"powertrain_type": "HEV"},
+			},
+		},
+	}
+}
+
+// buildTestCamryTemplate mirrors trim_match_test.go's camry() fixture and,
+// more importantly, mirrors what the extraction pipeline actually emits
+// (emit.mjs:166 emits only manufacturerCode selectors, never styleName).
+// LE/Hybrid LE are disambiguated purely on manufacturerCode -- the axis
+// that requires VINDecodingInfoData.ManufacturerCode (populated in
+// buildFromDrivly) to reach decode_vin's MatchSignals at all.
+func buildTestCamryTemplate(definitionID, model string, year, version int) *coremodels.Template {
+	return &coremodels.Template{
+		ID:         definitionID,
+		Model:      model,
+		Year:       year,
+		DeviceType: "vehicle",
+		Version:    version,
+		Attributes: map[string]any{"powertrain_type": "ICE"},
+		Trims: []coremodels.Trim{
+			{
+				Name:       "LE",
+				Selectors:  coremodels.TrimSelectors{ManufacturerCode: []string{"2532"}},
+				Attributes: map[string]any{"powertrain_type": "ICE"},
+			},
+			{
+				Name:       "Hybrid LE",
+				Selectors:  coremodels.TrimSelectors{ManufacturerCode: []string{"2559"}},
 				Attributes: map[string]any{"powertrain_type": "HEV"},
 			},
 		},
@@ -745,6 +775,92 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_AmbiguousTrimMatch_PopulatesCand
 	s.Assert().ElementsMatch([]string{"LE", "Hybrid LE"}, qryResult.MatchCandidates)
 	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
 	s.Assert().Equal("ICE", qryResult.Powertrain, "disagreeing candidates must not leak one trim's value into the response")
+}
+
+// The scenario the manufacturer-code finding said was structurally
+// unreachable: a drivly decode whose upstream response carries a
+// manufacturerCode now forwards it into MatchSignals, and narrows a
+// manufacturerCode-keyed template -- the only selector kind the extraction
+// pipeline actually emits (emit.mjs:166) -- to a single trim.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_DrivlyManufacturerCode_ExactTrimMatch() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName:        "Hybrid LE",
+		Source:           coremodels.DrivlyProvider,
+		Year:             2021,
+		Make:             dm.Name,
+		Model:            "Escape",
+		ManufacturerCode: "2559",
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTestCamryTemplate(definitionID, "Escape", 2021, 3), nil, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.NotNil(qryResult, "expected qryResult not nil")
+
+	s.Assert().Equal("Hybrid LE", qryResult.Trim)
+	s.Assert().Equal("exact", qryResult.MatchQuality)
+	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
+	s.Assert().Equal("HEV", qryResult.Powertrain)
+	s.Assert().Empty(qryResult.MatchCandidates)
+}
+
+// A decode from a provider that supplies no manufacturer code (every
+// provider except drivly, and drivly itself whenever its response omits
+// one) must not error just because the template's selectors are
+// manufacturerCode-only: matching simply can't succeed on that axis, and
+// the response reports model-only like any other no-match, not a failure.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_NoManufacturerCode_IsModelOnlyNotError() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "XLE",
+		Source:    coremodels.VincarioProvider, // never carries a manufacturer code
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+		// ManufacturerCode intentionally left at its zero value.
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTestCamryTemplate(definitionID, "Escape", 2021, 3), nil, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err, "no manufacturer code must not error the decode")
+	s.NotNil(qryResult, "expected qryResult not nil")
+
+	s.Assert().Empty(qryResult.Trim)
+	s.Assert().Equal("model-only", qryResult.MatchQuality)
+	s.Assert().Empty(qryResult.MatchCandidates)
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleAndMetadata() {

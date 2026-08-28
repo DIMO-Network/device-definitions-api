@@ -267,16 +267,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
 
-		// Narrow the template to the trim this VIN decoded to. StyleName and
-		// the VIN itself are the only signals the decoder produces today --
-		// no upstream source surfaces a manufacturer code per VIN (see
-		// vin_decoding_service.go's buildFromDrivly, which reads
-		// DrivlyVINResponse.ManufacturerCode but never carries it into
-		// VINDecodingInfoData), so ManufacturerCode is left unset here and
-		// matching falls back to styleName/vinPattern selectors.
+		// Narrow the template to the trim this VIN decoded to. ManufacturerCode
+		// only ever arrives via drivly (VINDecodingInfoData.ManufacturerCode,
+		// populated in vin_decoding_service.go's buildFromDrivly from
+		// DrivlyVINResponse.ManufacturerCode); every other provider leaves it
+		// empty, so a manufacturerCode-keyed selector simply can't match for
+		// those decodes -- not an error, just a signal that isn't there.
 		resolved := services.MatchTrim(tblDef, services.MatchSignals{
-			StyleName: vinInfo.StyleName,
-			VIN:       vinObj.String(),
+			ManufacturerCode: vinInfo.ManufacturerCode,
+			StyleName:        vinInfo.StyleName,
+			VIN:              vinObj.String(),
 		})
 		resp.Trim = resolved.Trim
 		resp.TemplateVersion = int32(resolved.TemplateVersion)

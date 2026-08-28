@@ -170,6 +170,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
 	assert.Equal(s.T(), result.Source, coremodels.DrivlyProvider)
+	assert.Equal(s.T(), "1234", result.ManufacturerCode, "buildFromDrivly must carry DrivlyVINResponse.ManufacturerCode through, not drop it")
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Tesla() {
