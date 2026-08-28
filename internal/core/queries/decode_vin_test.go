@@ -1411,3 +1411,209 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	require.Error(s.T(), err, "vinInfoFromKnown: unable to determine the right OEM between Ford, Lincoln for WMI %s 1FM")
 	require.Nil(s.T(), got)
 }
+
+// buildTrimOnlyPowertrainTemplate is the shape the extraction actually emits
+// for a model-year sold in more than one powertrain: powertrain_type lives on
+// the trims, NOT at the template level, because the trims disagree about it.
+// A template-level lookup finds nothing here, which is the whole reason the
+// cached decode path has to run the matcher rather than read Attributes.
+func buildTrimOnlyPowertrainTemplate(definitionID, model string, year, version int) *coremodels.Template {
+	return &coremodels.Template{
+		ID:                 definitionID,
+		Model:              model,
+		Year:               year,
+		DeviceType:         "vehicle",
+		Version:            version,
+		HardwareTemplateID: "130",
+		Attributes:         map[string]any{"number_of_doors": float64(4)},
+		Trims: []coremodels.Trim{
+			{
+				Name:       "LE",
+				Selectors:  coremodels.TrimSelectors{ManufacturerCode: []string{"2532"}},
+				Attributes: map[string]any{"powertrain_type": "ICE", "fuel_tank_capacity_gal": 16.0},
+			},
+			{
+				Name:               "Hybrid LE",
+				Selectors:          coremodels.TrimSelectors{ManufacturerCode: []string{"2559"}},
+				HardwareTemplateID: "115",
+				Attributes:         map[string]any{"powertrain_type": "HEV", "fuel_tank_capacity_gal": 13.2},
+			},
+		},
+	}
+}
+
+// The cached path -- the one every VIN takes from its second decode onward --
+// must answer with the same trim, quality and powertrain a fresh decode would.
+// Before this was wired up it returned an empty match_quality and read
+// powertrain from template-level attributes only, which on a multi-trim
+// template finds nothing and falls through to a make/model heuristic: the
+// blended answer this migration exists to replace, served to the majority of
+// traffic while the freshly-decoded path returned the right one.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_ExistingVINNumber_ResolvesTrimLikeAFreshDecode() {
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const definitionID = "ford_escape_2021"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.Name, s.pdb)
+
+	v := vinutil.VIN(vin)
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              null.StringFrom(v.VIS()),
+		ManufacturerName: dm.Name,
+		DefinitionID:     definitionID,
+		Year:             2021,
+		DecodeProvider:   null.StringFrom("drivly"),
+		// The marshalled DrivlyVINResponse saveVinDecodeNumber persisted; it
+		// is the same payload vinInfo.ManufacturerCode was read from on the
+		// fresh decode, so the cached path can recover the signal from it.
+		DrivlyData: null.JSONFrom([]byte(`{"vin":"1FMCU0G61MUA52727","manufacturerCode":"2559","trim":"Hybrid LE"}`)),
+	}
+	s.Require().NoError(vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()))
+
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTrimOnlyPowertrainTemplate(definitionID, "Escape", 2021, 3), big.NewInt(1), nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.Require().NotNil(qryResult)
+
+	s.Assert().Equal("Hybrid LE", qryResult.Trim)
+	s.Assert().Equal("exact", qryResult.MatchQuality)
+	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
+	s.Assert().Equal([]string{"manufacturerCode"}, qryResult.MatchBy)
+	// From the matched trim, not from the template and not from a heuristic.
+	s.Assert().Equal("HEV", qryResult.Powertrain)
+	// The trim's hardware override wins over the template's default.
+	s.Assert().Equal("115", qryResult.HardwareTemplateId)
+	s.Assert().Empty(qryResult.MatchCandidates)
+}
+
+// The cached path's styleName signal comes from the persisted device_styles
+// row, which is where processDeviceStyle wrote the decoded style name. A
+// styleName-keyed template must therefore resolve on a cached decode exactly
+// as it does on a fresh one.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_ExistingVINNumber_MatchesOnPersistedStyleName() {
+	const vin = "1FMCU0G61MUA52727"
+	const definitionID = "ford_escape_2021"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.Name, s.pdb)
+	style := dbtesthelper.SetupCreateStyle(s.T(), definitionID, "Hybrid LE", "drivly", "Hybrid LE", s.pdb)
+
+	tmpl := buildTrimOnlyPowertrainTemplate(definitionID, "Escape", 2021, 4)
+	// A styleName-keyed template, the shape the extraction is expected to
+	// emit once it stops keying trims on manufacturerCode alone.
+	tmpl.Trims[0].Selectors = coremodels.TrimSelectors{StyleName: []string{"LE"}}
+	tmpl.Trims[1].Selectors = coremodels.TrimSelectors{StyleName: []string{"Hybrid LE"}}
+
+	v := vinutil.VIN(vin)
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              null.StringFrom(v.VIS()),
+		ManufacturerName: dm.Name,
+		DefinitionID:     definitionID,
+		Year:             2021,
+		DecodeProvider:   null.StringFrom("drivly"),
+		StyleID:          null.StringFrom(style.ID),
+	}
+	s.Require().NoError(vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()))
+
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(tmpl, big.NewInt(1), nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.Require().NotNil(qryResult)
+
+	s.Assert().Equal("Hybrid LE", qryResult.Trim)
+	s.Assert().Equal("exact", qryResult.MatchQuality)
+	s.Assert().Equal([]string{"styleName"}, qryResult.MatchBy)
+	s.Assert().Equal("HEV", qryResult.Powertrain)
+}
+
+// When no signal narrows the template, the cached path says model-only and
+// reports no powertrain -- the same answer, and the same silence, the fresh
+// path gives. It must not reach for a make/model heuristic just because it
+// happens to have a manufacturer id in hand.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_ExistingVINNumber_NoSignalIsModelOnlyWithNoPowertrain() {
+	const vin = "1FMCU0G61MUA52727"
+	const definitionID = "ford_escape_2021"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.Name, s.pdb)
+
+	v := vinutil.VIN(vin)
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              null.StringFrom(v.VIS()),
+		ManufacturerName: dm.Name,
+		DefinitionID:     definitionID,
+		Year:             2021,
+		// vincario supplies no manufacturer code and stored no drivly payload.
+		DecodeProvider: null.StringFrom("vincario"),
+	}
+	s.Require().NoError(vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()))
+
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTrimOnlyPowertrainTemplate(definitionID, "Escape", 2021, 3), big.NewInt(1), nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.Require().NotNil(qryResult)
+
+	s.Assert().Equal("model-only", qryResult.MatchQuality)
+	s.Assert().Empty(qryResult.Trim)
+	s.Assert().Empty(qryResult.Powertrain, "no trim matched, so no trim's powertrain may leak into the response")
+	// The template's default, never a candidate trim's override.
+	s.Assert().Equal("130", qryResult.HardwareTemplateId)
+}
+
+// match_quality has three values, all of which assert that the matcher ran.
+// When it could not run at all -- no template to match against -- the field
+// stays empty rather than claiming "model-only", which would assert that a
+// real template was read and nothing in it matched.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_ExistingVINNumber_NoTemplateLeavesMatchQualityEmpty() {
+	const vin = "1FMCU0G61MUA52727"
+	const definitionID = "ford_escape_2021"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateWMI(s.T(), "1FM", dm.Name, s.pdb)
+
+	v := vinutil.VIN(vin)
+	vinNumb := models.VinNumber{
+		Vin:              vin,
+		Wmi:              null.StringFrom(v.Wmi()),
+		VDS:              null.StringFrom(v.VDS()),
+		CheckDigit:       null.StringFrom(v.CheckDigit()),
+		SerialNumber:     v.SerialNumber(),
+		Vis:              null.StringFrom(v.VIS()),
+		ManufacturerName: dm.Name,
+		DefinitionID:     definitionID,
+		Year:             2021,
+		DecodeProvider:   null.StringFrom("drivly"),
+	}
+	s.Require().NoError(vinNumb.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer()))
+
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		nil, nil, gateways.ErrTemplateNotFound)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.Require().NotNil(qryResult)
+
+	s.Assert().Empty(qryResult.MatchQuality)
+	s.Assert().Empty(qryResult.Trim)
+	s.Assert().Equal(definitionID, qryResult.DefinitionId)
+}
