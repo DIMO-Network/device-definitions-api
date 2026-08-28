@@ -62,7 +62,11 @@ type Resolved struct {
 // attribute; it is resolved independently of Attributes, taking the matched
 // trim's value when set and otherwise the template's. On an ambiguous or
 // model-only result, no single trim is chosen, so the template's value is
-// used unchanged.
+// used unchanged -- taking a candidate's hardware value when we have
+// explicitly declined to pick a candidate would still be picking one, in
+// the one field that decides what hardware DIMO ships. The template's value
+// is what every candidate shares by construction, so it's the only
+// non-arbitrary answer available.
 //
 // MatchTrim is pure: no I/O, no logging, no clock. The same tmpl and sig
 // always produce the same Resolved.
@@ -83,6 +87,8 @@ func MatchTrim(tmpl *coremodels.Template, sig MatchSignals) Resolved {
 
 	switch len(matches) {
 	case 0:
+		// res.HardwareTemplateID stays the template's value: no trim
+		// matched, so there is no candidate to defer to.
 		res.Quality = MatchModelOnly
 	case 1:
 		m := matches[0]
@@ -96,6 +102,14 @@ func MatchTrim(tmpl *coremodels.Template, sig MatchSignals) Resolved {
 			res.HardwareTemplateID = m.trim.HardwareTemplateID
 		}
 	default:
+		// res.HardwareTemplateID stays the template's value here too. Do
+		// NOT "improve" this by taking the first (or any) candidate's
+		// HardwareTemplateID: we have explicitly declined to pick a
+		// candidate trim, and doing so anyway -- even for just this field --
+		// reintroduces arbitrary selection in the one field that decides
+		// what hardware DIMO ships. The template's value is what every
+		// candidate shares by construction, so it's the only answer that
+		// isn't a guess.
 		res.Quality = MatchAmbiguous
 		res.Candidates = make([]string, len(matches))
 		for i, m := range matches {
@@ -164,12 +178,22 @@ func containsFold(values []string, want string) bool {
 	return false
 }
 
-// vinMatchesPattern treats a selector's vinPattern as a regular expression
-// matched against the full VIN. A malformed pattern is data the matcher
-// cannot trust, so it fails safe (no match) rather than panicking --
-// consistent with MatchTrim never panicking on odd template data.
+// vinMatchesPattern treats a selector's vinPattern as an anchored regular
+// expression over the full 17-character VIN. It is anchored here, not left
+// to the pattern's author: under the open-contribution model these
+// selectors are headed for, vinPattern is contributor-authored and the
+// least-reviewed input in this path. An unanchored pattern matches anywhere
+// in the string, so a pattern meant to identify one trim by a VIN prefix
+// would silently claim every VIN that merely contains it as a substring.
+// Anchoring here means correctness doesn't depend on every contributor
+// remembering to anchor their own pattern.
+//
+// A malformed pattern is data the matcher cannot trust, so it fails safe
+// (no match) rather than panicking -- consistent with MatchTrim never
+// panicking on odd template data. Go's regexp is RE2: a hostile pattern is
+// a compile error or a linear-time match, never catastrophic backtracking.
 func vinMatchesPattern(pattern, vin string) bool {
-	re, err := regexp.Compile(pattern)
+	re, err := regexp.Compile(`^(?:` + pattern + `)$`)
 	if err != nil {
 		return false
 	}

@@ -109,3 +109,60 @@ func TestMatchTrim_EmptyTemplateIsModelOnlyNotAPanic(t *testing.T) {
 	assert.Equal(t, MatchModelOnly, r.Quality)
 	require.NotNil(t, r.Attributes)
 }
+
+func TestMatchTrim_HardwareTemplateIDStaysTemplatesWhenAmbiguous(t *testing.T) {
+	tmpl := camry()
+	tmpl.HardwareTemplateID = "130"
+	tmpl.Trims[0].HardwareTemplateID = "115"
+	tmpl.Trims[1].HardwareTemplateID = "999"
+	// Both trims claim the same code: a template defect, not a decode failure.
+	tmpl.Trims[1].Selectors.ManufacturerCode = []string{"2532"}
+	r := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "2532"})
+	require.Equal(t, MatchAmbiguous, r.Quality)
+	// Neither candidate's HardwareTemplateID wins -- that would still be
+	// picking one, in the field that decides what hardware DIMO ships.
+	assert.Equal(t, "130", r.HardwareTemplateID)
+}
+
+func TestMatchTrim_HardwareTemplateIDStaysTemplatesWhenModelOnly(t *testing.T) {
+	tmpl := camry()
+	tmpl.HardwareTemplateID = "130"
+	tmpl.Trims[0].HardwareTemplateID = "115"
+	tmpl.Trims[1].HardwareTemplateID = "999"
+	r := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "9999"})
+	require.Equal(t, MatchModelOnly, r.Quality)
+	assert.Equal(t, "130", r.HardwareTemplateID)
+}
+
+func TestMatchTrim_VINPatternIsAnchoredToTheWholeVIN(t *testing.T) {
+	tmpl := camry()
+	tmpl.Trims = tmpl.Trims[:1]
+	tmpl.Trims[0].Selectors = coremodels.TrimSelectors{VINPattern: "4T1B11HK.{9}"}
+
+	whole := MatchTrim(tmpl, MatchSignals{VIN: "4T1B11HK5LU123456"})
+	assert.Equal(t, MatchExact, whole.Quality)
+
+	// The same pattern is a bare substring of a longer VIN. Unanchored,
+	// regexp.MatchString would find it anywhere in the string; anchored, it
+	// must not match unless the pattern accounts for the whole VIN.
+	substring := MatchTrim(tmpl, MatchSignals{VIN: "XX4T1B11HK5LU123456XX"})
+	assert.Equal(t, MatchModelOnly, substring.Quality)
+}
+
+func TestMatchTrim_InvalidVINPatternDoesNotMatchOrPanic(t *testing.T) {
+	tmpl := camry()
+	tmpl.Trims = tmpl.Trims[:1]
+	tmpl.Trims[0].Selectors = coremodels.TrimSelectors{VINPattern: "("}
+	assert.NotPanics(t, func() {
+		r := MatchTrim(tmpl, MatchSignals{VIN: "4T1B11HK5LU123456"})
+		assert.Equal(t, MatchModelOnly, r.Quality)
+	})
+}
+
+func TestMatchTrim_EmptyVINSignalDoesNotMatchVINPattern(t *testing.T) {
+	tmpl := camry()
+	tmpl.Trims = tmpl.Trims[:1]
+	tmpl.Trims[0].Selectors = coremodels.TrimSelectors{VINPattern: "4T1B11HK.{9}"}
+	r := MatchTrim(tmpl, MatchSignals{})
+	assert.Equal(t, MatchModelOnly, r.Quality)
+}
