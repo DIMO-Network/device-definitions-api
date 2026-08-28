@@ -166,3 +166,39 @@ func TestMatchTrim_EmptyVINSignalDoesNotMatchVINPattern(t *testing.T) {
 	r := MatchTrim(tmpl, MatchSignals{})
 	assert.Equal(t, MatchModelOnly, r.Quality)
 }
+
+// Selectors are a conjunction: a trim declaring both manufacturerCode and
+// styleName matches only when BOTH agree. Until now the AND was verified by
+// reading the code, and reading the code is exactly what has repeatedly
+// missed defects in this migration. If it ever degraded to an OR, a VIN
+// carrying the right style name but the wrong OEM code would resolve to a
+// trim it is not, silently -- the failure mode the matcher exists to prevent.
+func TestMatchTrim_SelectorsAreConjunctiveNotDisjunctive(t *testing.T) {
+	tmpl := camry()
+	tmpl.Trims[0].Selectors = coremodels.TrimSelectors{
+		ManufacturerCode: []string{"2532"},
+		StyleName:        []string{"LE 4dr Sedan"},
+	}
+	// Give the other trim selectors nothing can match, so any result other
+	// than "trim 0 matched" is unambiguously trim 0 failing to match.
+	tmpl.Trims[1].Selectors = coremodels.TrimSelectors{ManufacturerCode: []string{"none"}}
+
+	// Both agree: matched.
+	both := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "2532", StyleName: "LE 4dr Sedan"})
+	require.Equal(t, MatchExact, both.Quality)
+	assert.Equal(t, "LE", both.Trim)
+	assert.ElementsMatch(t, []string{"manufacturerCode", "styleName"}, both.MatchedBy)
+
+	// Only the style name agrees: no match.
+	styleOnly := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "9999", StyleName: "LE 4dr Sedan"})
+	assert.Equal(t, MatchModelOnly, styleOnly.Quality, "styleName alone must not satisfy a trim that also declares a manufacturerCode")
+
+	// Only the code agrees: no match.
+	codeOnly := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "2532", StyleName: "XSE 4dr Sedan"})
+	assert.Equal(t, MatchModelOnly, codeOnly.Quality, "manufacturerCode alone must not satisfy a trim that also declares a styleName")
+
+	// A declared selector with no corresponding signal is a non-match, not a
+	// free pass: an absent signal cannot confirm a selector.
+	codeOnlySignal := MatchTrim(tmpl, MatchSignals{ManufacturerCode: "2532"})
+	assert.Equal(t, MatchModelOnly, codeOnlySignal.Quality, "a missing styleName signal must not satisfy a declared styleName selector")
+}
