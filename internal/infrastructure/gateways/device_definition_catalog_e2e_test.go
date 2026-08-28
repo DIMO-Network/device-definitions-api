@@ -24,12 +24,12 @@ func TestCatalogServiceE2E(t *testing.T) {
 	svc := NewDeviceDefinitionCatalogService(&config.Settings{DefinitionsCatalogURL: url}, &logger)
 	ctx := context.Background()
 
-	dd, manufID, err := svc.GetDefinitionByID(ctx, "dodge_town-&-country_2012")
+	dd, manufID, err := svc.GetTemplateByID(ctx, "dodge_town-&-country_2012")
 	require.NoError(t, err)
 	require.NotNil(t, dd)
 	assert.Equal(t, "Town & Country", dd.Model)
 	assert.Equal(t, int64(33), manufID.Int64())
-	require.NotNil(t, dd.Metadata)
+	require.NotEmpty(t, dd.Trims)
 
 	// Manufacturer scoping: right owner resolves, wrong owner returns nil.
 	scoped, err := svc.GetDeviceDefinitionByID(ctx, big.NewInt(33), "dodge_town-&-country_2012")
@@ -54,7 +54,9 @@ func TestCatalogServiceE2E(t *testing.T) {
 	}
 	assert.Greater(t, total, 1500, "BMW should have >1500 definitions")
 
-	missing, _, err := svc.GetDefinitionByID(ctx, "not_areal_2020")
-	require.NoError(t, err)
+	// No fallback to the pre-migration definitions/<id>.json: a missing
+	// template must fail loudly, not resolve as a quiet nil.
+	missing, _, err := svc.GetTemplateByID(ctx, "not_areal_2020")
+	require.Error(t, err)
 	assert.Nil(t, missing)
 }

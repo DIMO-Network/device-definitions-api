@@ -33,7 +33,7 @@ func (ch GetDeviceDefinitionByIDQueryHandler) Handle(ctx context.Context, query 
 
 	qry := query.(*GetDeviceDefinitionByIDQuery)
 
-	dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, qry.DeviceDefinitionID)
+	dd, _, err := ch.catalogSvc.GetTemplateByID(ctx, qry.DeviceDefinitionID)
 
 	if err != nil {
 		return nil, err

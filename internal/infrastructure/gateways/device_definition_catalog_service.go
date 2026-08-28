@@ -31,6 +31,15 @@ const (
 	metricCatalogWrite = "CatalogWrite"
 )
 
+// ErrTemplateNotFound is returned by GetTemplateByID/GetTemplateByIDFresh
+// only for a genuine 404 from t/<id>.json -- the template import has not run
+// for this id. Callers must check it with errors.Is, never by inspecting the
+// error's message: any other status, a transport error, or a decode failure
+// returns a distinct, non-sentinel error, so a catalog outage is never
+// mistaken for "this vehicle does not exist." Conflating the two would let a
+// caller respond to a 500 by creating a duplicate definition mid-outage.
+var ErrTemplateNotFound = errors.New("template not found in catalog")
+
 func countOutcome(method string, err error) {
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": method}).Inc()
@@ -49,13 +58,25 @@ type DeviceDefinitionCatalogService interface {
 	GetManufacturerNameByID(ctx context.Context, manufacturerID *big.Int) (string, error)
 	// GetDeviceDefinitionByID gets a definition by slug ID, requiring it to belong to the given manufacturer.
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
-	// GetDefinitionByID gets a definition by slug ID and returns the manufacturer token id too.
-	GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error)
-	// GetDefinitionByIDFresh is GetDefinitionByID reading through the worker
-	// instead of the CDN. Callers that read, mutate and write back must use it:
-	// documents are served with max-age=86400, so a cached read silently
+	// GetTemplateByID reads the vehicle template for a slug ID from t/<id>.json
+	// and returns the manufacturer token id too. It does not fall back to the
+	// pre-migration definitions/<id>.json: a 404 here means the template
+	// import has not run for this id, and that must fail loudly rather than
+	// silently serving the flat pre-migration record.
+	GetTemplateByID(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
+	// GetTemplateByIDFresh is GetTemplateByID reading through the worker
+	// instead of the CDN. A caller that reads, mutates and writes back must use
+	// it: documents are served with max-age=86400, so a cached read silently
 	// discards any edit made in the last day when the result is PUT back.
-	GetDefinitionByIDFresh(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error)
+	//
+	// It has NO production caller today. Its only one was the bulk powertrain
+	// tool, deleted with the legacy Update() write path earlier on this branch.
+	// It is kept because Create() is still on the pre-migration
+	// /definitions/<id> route the new worker does not serve, and migrating that
+	// write to templates is the read-modify-write this method exists for. If
+	// that migration lands without using it, delete it -- do not leave it here
+	// on the strength of this comment alone.
+	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
@@ -78,7 +99,6 @@ type DeviceDefinitionCatalogService interface {
 	// request), so there is no edge cache in front of the manifest.
 	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
-	Update(ctx context.Context, manufacturerName string, input coremodels.DeviceDefinitionUpdateInput) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
 
@@ -188,6 +208,58 @@ func (e *deviceDefinitionCatalogService) fetchDocFrom(ctx context.Context, reqUR
 		return nil, errors.Wrapf(err, "failed to decode definition %s", id)
 	}
 	return &doc, nil
+}
+
+// fetchTemplateDoc reads the vehicle template for id from t/<id>.json. There
+// is deliberately no fallback to fetchDoc's definitions/<id>.json: falling
+// back would serve the pre-migration flat record and hide an incomplete
+// template import behind decodes that appear to work.
+func (e *deviceDefinitionCatalogService) fetchTemplateDoc(ctx context.Context, id string) (*coremodels.Template, error) {
+	tmpl, err := e.fetchTemplateDocFrom(ctx, e.catalogURL("/t/"+url.PathEscape(id)+".json"), id)
+	countOutcome(metricCatalogRead, err)
+	return tmpl, err
+}
+
+// fetchTemplateDocFresh bypasses the CDN by reading through the worker when
+// configured, so read-modify-write never merges a stale cached base.
+func (e *deviceDefinitionCatalogService) fetchTemplateDocFresh(ctx context.Context, id string) (*coremodels.Template, error) {
+	base := e.settings.DefinitionsWorkerURL
+	if base == "" {
+		return e.fetchTemplateDoc(ctx, id)
+	}
+	tmpl, err := e.fetchTemplateDocFrom(ctx, strings.TrimSuffix(base, "/")+"/t/"+url.PathEscape(id)+".json", id)
+	countOutcome(metricCatalogRead, err)
+	return tmpl, err
+}
+
+func (e *deviceDefinitionCatalogService) fetchTemplateDocFrom(ctx context.Context, reqURL, id string) (*coremodels.Template, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := e.httpClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch template %s from catalog", id)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	if resp.StatusCode == http.StatusNotFound {
+		// Unlike fetchDocFrom, a 404 is an error here, not a nil result: it
+		// means the template import for this id has not run, and that must
+		// fail loudly rather than be treated as a normal "not found". It is
+		// ErrTemplateNotFound specifically -- and only this -- so a caller
+		// can tell "does not exist" apart from every other failure below.
+		return nil, errors.Wrapf(ErrTemplateNotFound, "template %s", id)
+	}
+	if resp.StatusCode != http.StatusOK {
+		// Any other status is a catalog problem, not a missing template:
+		// callers must not reclassify this as not-found.
+		return nil, fmt.Errorf("catalog returned %d for template %s", resp.StatusCode, id)
+	}
+	var tmpl coremodels.Template
+	if err := json.NewDecoder(resp.Body).Decode(&tmpl); err != nil {
+		return nil, errors.Wrapf(err, "failed to decode template %s", id)
+	}
+	return &tmpl, nil
 }
 
 func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalogManifest, error) {
@@ -319,20 +391,20 @@ func (e *deviceDefinitionCatalogService) GetDefinition(ctx context.Context, manu
 	return e.GetDeviceDefinitionByID(ctx, manufacturerID, ID)
 }
 
-func (e *deviceDefinitionCatalogService) GetDefinitionByID(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error) {
-	doc, err := e.fetchDoc(ctx, ID)
-	if err != nil || doc == nil {
+func (e *deviceDefinitionCatalogService) GetTemplateByID(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error) {
+	tmpl, err := e.fetchTemplateDoc(ctx, ID)
+	if err != nil {
 		return nil, nil, err
 	}
-	return &doc.DeviceDefinitionTablelandModel, big.NewInt(int64(doc.Manufacturer.TokenID)), nil
+	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
 }
 
-func (e *deviceDefinitionCatalogService) GetDefinitionByIDFresh(ctx context.Context, ID string) (*coremodels.DeviceDefinitionTablelandModel, *big.Int, error) {
-	doc, err := e.fetchDocFresh(ctx, ID)
-	if err != nil || doc == nil {
+func (e *deviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error) {
+	tmpl, err := e.fetchTemplateDocFresh(ctx, ID)
+	if err != nil {
 		return nil, nil, err
 	}
-	return &doc.DeviceDefinitionTablelandModel, big.NewInt(int64(doc.Manufacturer.TokenID)), nil
+	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
 }
 
 func (e *deviceDefinitionCatalogService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error) {
@@ -469,43 +541,6 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 	}
 	e.memCache.Delete(manifestCacheKey)
 	return &dd.ID, nil
-}
-
-func (e *deviceDefinitionCatalogService) Update(ctx context.Context, _ string, input coremodels.DeviceDefinitionUpdateInput) (*string, error) {
-	existingDoc, err := e.fetchDocFresh(ctx, input.ID)
-	var existing *coremodels.DeviceDefinitionTablelandModel
-	if existingDoc != nil {
-		existing = &existingDoc.DeviceDefinitionTablelandModel
-	}
-	if err != nil {
-		return nil, err
-	}
-	if existing == nil {
-		return nil, fmt.Errorf("device definition %s not found in catalog to update", input.ID)
-	}
-	body := workerPutBody{
-		ID:       input.ID,
-		Model:    existing.Model,
-		Year:     existing.Year,
-		KSUID:    existing.KSUID,
-		Metadata: existing.Metadata,
-	}
-	body.DeviceType = existing.DeviceType
-	if input.DeviceType != "" {
-		body.DeviceType = input.DeviceType
-	}
-	body.ImageURI = existing.ImageURI
-	if input.ImageURI != "" {
-		body.ImageURI = input.ImageURI
-	}
-	if input.Metadata != nil {
-		body.Metadata = input.Metadata
-	}
-	if _, err := e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(input.ID), body); err != nil {
-		return nil, err
-	}
-	e.memCache.Delete(manifestCacheKey)
-	return &input.ID, nil
 }
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {

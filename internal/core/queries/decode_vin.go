@@ -10,6 +10,7 @@ import (
 
 	"github.com/DIMO-Network/shared/pkg/logfields"
 
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -119,7 +120,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	// if database vin_number match found, just return it here
-	if r := dc.hydrateResponseFromVinNumber(vinDecodeNumber); r != nil {
+	if r := dc.hydrateResponseFromVinNumber(ctx, vinDecodeNumber); r != nil {
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 		return r, nil
 	}
@@ -211,8 +212,19 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
 	resp.DefinitionId = tid
 
-	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetDefinitionByID(ctx, tid)
+	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, tid)
+	if errTbl != nil && !errors.Is(errTbl, gateways.ErrTemplateNotFound) {
+		// A catalog outage (5xx, timeout, decode failure) is not the same as
+		// the definition not existing. Falling through here would read
+		// tblDef as nil and run Create() below -- writing a duplicate
+		// definition for a vehicle that may already exist, on the VIN-decode
+		// hot path, at decode volume, during the worst possible moment for
+		// it. Abort the decode instead of continuing with a nil template.
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		return nil, errors.Wrapf(errTbl, "failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
+	}
 	if errTbl != nil {
+		// Genuinely not found (ErrTemplateNotFound): fall through and create it below.
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
 		dc.logger.Warn().Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
@@ -236,7 +248,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		}
 	}
 
-	// figure out powertrain
+	// figure out powertrain for the style write further down. This is the
+	// old heuristic derivation, kept alive because processDeviceStyle stamps
+	// its result onto device_styles -- the table the extraction pipeline
+	// reads to build templates in the first place. Changing what gets
+	// written there is a separate decision; pt is passed to
+	// processDeviceStyle explicitly below so this stays true regardless of
+	// what resp.Powertrain ends up holding for the response.
 	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo.StyleName, vinInfo.FuelType)
 	if pt == "" {
 		// try a different way
@@ -249,6 +267,45 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	// if dd not found in tableland, we want to create it
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
+
+		// Narrow the template to the trim this VIN decoded to. ManufacturerCode
+		// only ever arrives via drivly (VINDecodingInfoData.ManufacturerCode,
+		// populated in vin_decoding_service.go's buildFromDrivly from
+		// DrivlyVINResponse.ManufacturerCode); every other provider leaves it
+		// empty, so a manufacturerCode-keyed selector simply can't match for
+		// those decodes -- not an error, just a signal that isn't there.
+		resolved := services.MatchTrim(tblDef, services.MatchSignals{
+			ManufacturerCode: vinInfo.ManufacturerCode,
+			StyleName:        vinInfo.StyleName,
+			VIN:              vinObj.String(),
+		})
+		resp.Trim = resolved.Trim
+		resp.TemplateVersion = int32(resolved.TemplateVersion)
+		resp.MatchQuality = string(resolved.Quality)
+		resp.MatchCandidates = resolved.Candidates
+		// MatchBy and HardwareTemplateId are resolved by MatchTrim and were
+		// previously dropped here. match.by is how a consumer -- and our own
+		// dashboards -- can tell whether trim matching is firing on
+		// manufacturerCode or on styleName, and hardwareTemplateId is the
+		// template-default-with-trim-override resolution the contract
+		// requires be settled here "so callers never reimplement the
+		// fallback". Computing both and emitting neither left the only
+		// evidence of that work inside the matcher's own unit tests.
+		resp.MatchBy = resolved.MatchedBy
+		resp.HardwareTemplateId = resolved.HardwareTemplateID
+
+		observeTrimMatch(resolved, resp.Source)
+
+		// The response's powertrain comes from the resolved template/trim
+		// attributes now, not from the pt heuristic above -- that heuristic
+		// is what produced the ICE/hybrid-attributes mismatch this migration
+		// exists to fix. If the template carries no powertrain_type at all
+		// (template or matched trim), the response reports none rather than
+		// falling back to a guess.
+		resp.Powertrain = ""
+		if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
+			resp.Powertrain = v
+		}
 	} else {
 		// if any images were added above, they will be in the database
 		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
@@ -279,7 +336,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		var styleErr error
-		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, resp.Powertrain)
+		// pt, not resp.Powertrain: processDeviceStyle writes to device_styles,
+		// the extraction pipeline's input, and that write path is unchanged
+		// by this migration -- see the comment on pt's declaration above.
+		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, pt)
 		if styleErr != nil {
 			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vinObj: %s. continuing", vinObj.String())
 		}
@@ -293,6 +353,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 	localLog.Info().Str("device_definition_id", resp.DefinitionId).
 		Str("style_id", resp.DeviceStyleId).
+		// How the trim resolved, on the line that already records a
+		// successful decode: without these, "how often does a decode fail to
+		// narrow, and on which provider" is unanswerable from logs.
+		Str("match_quality", resp.MatchQuality).
+		Str("trim", resp.Trim).
+		Strs("match_by", resp.MatchBy).
+		Str("manufacturer_code", vinInfo.ManufacturerCode).
 		Str("wmi", wmi).
 		Str("vds", vinObj.VDS()).
 		Str("vis", vinObj.VIS()).
@@ -315,31 +382,21 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	return &md
 }
 
-// hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response
-func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumber) *p_grpc.DecodeVinResponse {
+// hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response.
+//
+// This is the cached path, and it is the one most decodes take: every VIN that
+// has been decoded once is answered from vin_numbers thereafter. It therefore
+// has to give the SAME answer a fresh decode of the same VIN would -- same
+// trim, same match quality, same powertrain. Leaving the match fields unset
+// here would emit an undocumented fourth match_quality ("") on the majority of
+// production traffic, and sourcing powertrain from template-level attributes
+// alone would silently miss it on exactly the multi-trim templates this
+// migration exists for (a template only carries powertrain_type at the top
+// level when every trim agrees on it), falling through to a make/model
+// heuristic -- the blended answer we are replacing.
+func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context, vn *models.VinNumber) *p_grpc.DecodeVinResponse {
 	if vn == nil {
 		return nil
-	}
-	// call on-chain svc to get the DD and pull out the powertrain
-	powertrain := "" // this is what we're trying to resolve in part
-	trx := ""
-	tblDef, manufID, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), vn.DefinitionID)
-	if err == nil && tblDef != nil {
-		if tblDef.Metadata != nil {
-			for _, attribute := range tblDef.Metadata.DeviceAttributes {
-				if attribute.Name == common.PowerTrainType {
-					powertrain = attribute.Value
-					break
-				}
-			}
-		}
-		if powertrain == "" {
-			makeName, _ := dc.deviceDefinitionCatalogService.GetManufacturerNameByID(context.Background(), manufID)
-			powertrain, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
-		}
-	} else {
-		// this is not good, somehow it got decoded in past without it being created on tableland
-		dc.logger.Warn().Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
 	}
 
 	resp := &p_grpc.DecodeVinResponse{
@@ -348,11 +405,81 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		DeviceStyleId: vn.StyleID.String,
 		Source:        vn.DecodeProvider.String,
 		DefinitionId:  vn.DefinitionID,
-		Powertrain:    powertrain,
-		NewTrxHash:    trx,
 	}
 
+	tblDef, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, vn.DefinitionID)
+	if err != nil || tblDef == nil {
+		// this is not good, somehow it got decoded in past without a template
+		// existing for it. MatchQuality stays empty rather than "model-only":
+		// the matcher did not run at all, and claiming a quality it never
+		// computed would be the kind of authoritative-looking wrong answer
+		// this migration exists to stop.
+		dc.logger.Warn().Err(err).Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
+		return resp
+	}
+
+	resolved := services.MatchTrim(tblDef, dc.matchSignalsFromVinNumber(ctx, vn))
+	resp.Trim = resolved.Trim
+	resp.TemplateVersion = int32(resolved.TemplateVersion)
+	resp.MatchQuality = string(resolved.Quality)
+	resp.MatchCandidates = resolved.Candidates
+	resp.MatchBy = resolved.MatchedBy
+	resp.HardwareTemplateId = resolved.HardwareTemplateID
+	// No heuristic fallback, deliberately: the live path in Handle reports no
+	// powertrain when the resolved attributes carry none, and these two paths
+	// answering the same VIN differently is the defect this function is
+	// fixing, not a behaviour worth keeping on one side of it.
+	if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
+		resp.Powertrain = v
+	}
+
+	observeTrimMatch(resolved, resp.Source)
+
 	return resp
+}
+
+// matchSignalsFromVinNumber rebuilds the signals a fresh decode of this VIN
+// would have produced, out of what saveVinDecodeNumber persisted. Every source
+// here is the same value the live path fed the matcher: drivly_data is the
+// marshalled DrivlyVINResponse vinInfo.ManufacturerCode was read from, and the
+// style row's name is the vinInfo.StyleName processDeviceStyle stored. A
+// signal that was never persisted stays empty, which the matcher treats as
+// "not available" rather than as a non-match.
+func (dc DecodeVINQueryHandler) matchSignalsFromVinNumber(ctx context.Context, vn *models.VinNumber) services.MatchSignals {
+	sig := services.MatchSignals{VIN: vn.Vin}
+
+	if vn.DrivlyData.Valid {
+		sig.ManufacturerCode = gjson.GetBytes(vn.DrivlyData.JSON, "manufacturerCode").String()
+	}
+
+	if vn.StyleID.Valid && vn.StyleID.String != "" {
+		style, err := models.DeviceStyles(models.DeviceStyleWhere.ID.EQ(vn.StyleID.String)).One(ctx, dc.dbs().Reader)
+		if err != nil {
+			// Best effort: a missing style row costs us one selector, which
+			// shows up as a lower match quality rather than as a wrong trim.
+			dc.logger.Debug().Err(err).Msgf("could not load style %s for cached decode of vin %s", vn.StyleID.String, vn.Vin)
+		} else {
+			sig.StyleName = style.Name
+		}
+	}
+
+	return sig
+}
+
+// observeTrimMatch records how a decode resolved, so the rate of exact vs
+// ambiguous vs model-only is answerable from production rather than from
+// inspection. The plan's riskiest assumption is that manufacturerCode reaches
+// a decode as a usable signal at all -- it only ever arrives via drivly -- and
+// this counter, broken down by decode source, is what makes that measurable
+// instead of merely asserted.
+func observeTrimMatch(resolved services.Resolved, source string) {
+	if source == "" {
+		source = "unknown"
+	}
+	metrics.TrimMatchQuality.With(prometheus.Labels{
+		"quality": string(resolved.Quality),
+		"source":  source,
+	}).Inc()
 }
 
 // processDeviceStyle saves new styles if needed to db and returns the style database ID
@@ -470,8 +597,8 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 		for _, wmi := range wmis {
 			makeNamesForError += wmi.ManufacturerName + ", "
 			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
-			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionCatalogService.GetDefinitionByID(context.Background(), definitionID)
-			if err == nil && deviceDefinitionTablelandModel != nil {
+			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(context.Background(), definitionID)
+			if err == nil && tmpl != nil {
 				vinInfo.Make = wmi.ManufacturerName
 				break
 			}

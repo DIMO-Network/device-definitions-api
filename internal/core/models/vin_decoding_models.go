@@ -35,6 +35,13 @@ type VINDecodingInfoData struct {
 	MetaData   null.JSON
 	Raw        []byte
 	FuelType   string
+	// ManufacturerCode is the OEM-issued trim/style code, when the decode
+	// provider supplies one. Only drivly does today (DrivlyVINResponse.ManufacturerCode);
+	// every other provider leaves this empty, the same way they already
+	// leave StyleName/FuelType empty when they have nothing to report --
+	// an empty code just means manufacturerCode-keyed trim selectors can't
+	// match for that decode, not an error.
+	ManufacturerCode string
 }
 
 // VINDecodingVendorExtra extra information from decoding process to store for failures

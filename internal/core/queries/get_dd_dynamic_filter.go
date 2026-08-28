@@ -66,12 +66,12 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) Handle(ctx context.Cont
 	qry := query.(*GetDeviceDefinitionByDynamicFilterQuery)
 
 	if len(qry.DefinitionID) > 1 {
-		dd, _, err := ch.catalogSvc.GetDefinitionByID(ctx, qry.DefinitionID)
+		dd, _, err := ch.catalogSvc.GetTemplateByID(ctx, qry.DefinitionID)
 		if err != nil {
 			return nil, err
 		}
 		dds := make([]DeviceDefinitionQueryResponse, 1)
-		dds[0] = ch.buildDeviceDefinitionQueryResponse(dd)
+		dds[0] = ch.buildDeviceDefinitionQueryResponseFromTemplate(dd)
 		return dds, nil
 	}
 
@@ -117,6 +117,35 @@ func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQu
 		Model:        dd.Model,
 		Year:         dd.Year,
 		ImageURL:     null.StringFrom(dd.ImageURI),
+		Verified:     true,
+		DeviceMakeID: strconv.Itoa(manufacturer.TokenID),
+		Make:         manufacturer.Name,
+		Metadata:     null.JSONFrom(mdStr),
+	}
+}
+
+// buildDeviceDefinitionQueryResponseFromTemplate is
+// buildDeviceDefinitionQueryResponse for the catalog's template-shaped read
+// path: same response, sourced from a *models.Template rather than the flat
+// tableland model GetDeviceDefinitions still returns.
+func (ch GetDeviceDefinitionByDynamicFilterQueryHandler) buildDeviceDefinitionQueryResponseFromTemplate(tmpl *models.Template) DeviceDefinitionQueryResponse {
+	if tmpl == nil {
+		return DeviceDefinitionQueryResponse{}
+	}
+	split := strings.Split(tmpl.ID, "_")
+	manufacturerSlug := split[0]
+	manufacturer, _ := ch.catalogSvc.GetManufacturer(manufacturerSlug)
+	mdStr := []byte("{}")
+	if tmpl.Attributes != nil {
+		mdStr, _ = json.Marshal(tmpl.Attributes)
+	}
+
+	return DeviceDefinitionQueryResponse{
+		ID:           tmpl.ID,
+		NameSlug:     tmpl.ID,
+		Model:        tmpl.Model,
+		Year:         tmpl.Year,
+		ImageURL:     null.StringFrom(tmpl.ImageURI),
 		Verified:     true,
 		DeviceMakeID: strconv.Itoa(manufacturer.TokenID),
 		Make:         manufacturer.Name,
