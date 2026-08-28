@@ -11,6 +11,7 @@ import (
 
 	mock_repository "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/repositories/mocks"
 	"github.com/aarondl/sqlboiler/v4/types"
+	"github.com/pkg/errors"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
@@ -275,7 +276,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 
 	styleLevelPT := "PHEV"
 	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
-		nil, nil, fmt.Errorf("not found")) // should return an error b/c doesn't exist
+		nil, nil, errors.Wrapf(gateways.ErrTemplateNotFound, "template %s", definitionID)) // genuine 404: creation path should still run
 	vinExtra := &coremodels.VINDecodingVendorExtra{}
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, vinExtra, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
@@ -426,7 +427,7 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 
 	styleLevelPT := "PHEV"
 	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
-		nil, nil, fmt.Errorf("not found")) // should return an error b/c doesn't exist
+		nil, nil, errors.Wrapf(gateways.ErrTemplateNotFound, "template %s", definitionID)) // genuine 404: creation path should still run
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
 
@@ -483,6 +484,97 @@ func buildTestTemplate(definitionID, model string, year int) *coremodels.Templat
 		ImageURI:   "",
 		Attributes: map[string]any{"powertrain_type": "ICE"},
 	}
+}
+
+// A catalog 404 (ErrTemplateNotFound) is the one case where GetTemplateByID
+// failing should still fall through to Create(): the definition genuinely
+// does not exist yet, exactly as it does today.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_CatalogNotFound_StillCreatesDefinition() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "XLE",
+		Source:    "drivly",
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		nil, nil, errors.Wrapf(gateways.ErrTemplateNotFound, "template %s", definitionID))
+
+	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&trxHashHex, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.NotNil(qryResult, "expected qryResult not nil")
+	s.Assert().Equal(definitionID, qryResult.DefinitionId)
+}
+
+// A catalog 500 (or any other non-ErrTemplateNotFound failure) must abort
+// the decode rather than being read as "the definition doesn't exist."
+// Reading it that way is exactly what would create a duplicate definition
+// for a vehicle that may already exist -- on the VIN-decode hot path, at
+// decode volume, during a catalog outage. The Times(0) on Create is the
+// whole point of this test: against the pre-fix code, GetTemplateByID
+// returning any error (not just ErrTemplateNotFound) fell through with a
+// nil template and Create() ran anyway, violating this expectation.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_CatalogOutage_AbortsWithoutCreatingDuplicate() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "XLE",
+		Source:    "drivly",
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	// A plain, non-sentinel error simulates a catalog 500 / timeout / decode
+	// failure -- deliberately not wrapping gateways.ErrTemplateNotFound.
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		nil, nil, fmt.Errorf("catalog returned 500 for template %s", definitionID))
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	// Permissive stubs for everything a correctly-aborting Handle() never
+	// reaches. They exist so that, against the pre-fix code (which falls
+	// through past the catalog error instead of aborting), the flow can run
+	// all the way to Create() and the failure this test reports is squarely
+	// "Create was called when it should not have been" -- not an incidental
+	// panic on some other unmocked call along the way.
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(gomock.Any(), gomock.Any()).AnyTimes().Return("ICE")
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.Error(err, "a catalog outage must abort the decode")
+	s.Nil(qryResult)
+
+	count, countErr := models.VinNumbers().Count(s.ctx, s.pdb.DBS().Reader)
+	require.NoError(s.T(), countErr)
+	assert.Equal(s.T(), int64(0), count, "an aborted decode must not persist a vin_number as if it succeeded")
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleAndMetadata() {

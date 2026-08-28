@@ -212,7 +212,18 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	resp.DefinitionId = tid
 
 	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, tid)
+	if errTbl != nil && !errors.Is(errTbl, gateways.ErrTemplateNotFound) {
+		// A catalog outage (5xx, timeout, decode failure) is not the same as
+		// the definition not existing. Falling through here would read
+		// tblDef as nil and run Create() below -- writing a duplicate
+		// definition for a vehicle that may already exist, on the VIN-decode
+		// hot path, at decode volume, during the worst possible moment for
+		// it. Abort the decode instead of continuing with a nil template.
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		return nil, errors.Wrapf(errTbl, "failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
+	}
 	if errTbl != nil {
+		// Genuinely not found (ErrTemplateNotFound): fall through and create it below.
 		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
 		dc.logger.Warn().Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
