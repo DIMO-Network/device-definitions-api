@@ -486,6 +486,36 @@ func buildTestTemplate(definitionID, model string, year int) *coremodels.Templat
 	}
 }
 
+// buildTestTemplateWithTrims returns a template with two trims disambiguated
+// on styleName -- LE (ICE) and Hybrid LE (HEV) -- mirroring the real
+// toyota_camry_2020 bug this migration exists to fix: a template whose
+// top-level attributes say ICE while a specific trim actually carries HEV.
+// Trims are disambiguated on styleName, not manufacturerCode, because
+// nothing in the live decode path supplies a manufacturer code today (see
+// decode_vin.go's MatchSignals comment).
+func buildTestTemplateWithTrims(definitionID, model string, year, version int) *coremodels.Template {
+	return &coremodels.Template{
+		ID:         definitionID,
+		Model:      model,
+		Year:       year,
+		DeviceType: "vehicle",
+		Version:    version,
+		Attributes: map[string]any{"powertrain_type": "ICE"},
+		Trims: []coremodels.Trim{
+			{
+				Name:       "LE",
+				Selectors:  coremodels.TrimSelectors{StyleName: []string{"LE"}},
+				Attributes: map[string]any{"powertrain_type": "ICE"},
+			},
+			{
+				Name:       "Hybrid LE",
+				Selectors:  coremodels.TrimSelectors{StyleName: []string{"Hybrid LE"}},
+				Attributes: map[string]any{"powertrain_type": "HEV"},
+			},
+		},
+	}
+}
+
 // A catalog 404 (ErrTemplateNotFound) is the one case where GetTemplateByID
 // failing should still fall through to Create(): the definition genuinely
 // does not exist yet, exactly as it does today.
@@ -575,6 +605,146 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_CatalogOutage_AbortsWithoutCreat
 	count, countErr := models.VinNumbers().Count(s.ctx, s.pdb.DBS().Reader)
 	require.NoError(s.T(), countErr)
 	assert.Equal(s.T(), int64(0), count, "an aborted decode must not persist a vin_number as if it succeeded")
+}
+
+// A styleName that matches exactly one trim's selectors narrows the
+// template to that trim: the response reports the trim, an "exact" match
+// quality, the template's version, and a powertrain taken from the matched
+// trim's attributes -- not the template's blended default.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_ExactTrimMatch_PopulatesMatchFieldsFromResolvedTrim() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "Hybrid LE",
+		Source:    "drivly",
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	// The style-write path (processDeviceStyle) is untouched by this change:
+	// it still derives from ResolvePowerTrainFromVinInfo, deliberately
+	// returning a different value ("ICE") than the matched trim's ("HEV") so
+	// the assertions below can tell the two paths apart.
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTestTemplateWithTrims(definitionID, "Escape", 2021, 3), nil, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.NotNil(qryResult, "expected qryResult not nil")
+
+	s.Assert().Equal("Hybrid LE", qryResult.Trim)
+	s.Assert().Equal("exact", qryResult.MatchQuality)
+	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
+	s.Assert().Equal("HEV", qryResult.Powertrain, "response powertrain must come from the resolved trim, not the ResolvePowerTrainFromVinInfo heuristic")
+	s.Assert().Empty(qryResult.MatchCandidates)
+
+	// processDeviceStyle's write is untouched: device_styles still gets the
+	// old heuristic's value ("ICE"), never the resolved trim's ("HEV").
+	ds, err := models.DeviceStyles().One(s.ctx, s.pdb.DBS().Reader)
+	s.Require().NoError(err)
+	s.Assert().Equal("ICE", gjson.GetBytes(ds.Metadata.JSON, common.PowerTrainType).Str)
+}
+
+// A styleName that matches none of the template's trims is model-only: no
+// trim is chosen, and the response's powertrain (if any) comes only from
+// the template's own attributes -- never from a trim that didn't match.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_NoTrimMatch_IsModelOnlyWithNoTrimPowertrain() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "Unknown Trim",
+		Source:    "drivly",
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+	}
+	definitionID := "ford_escape_2021"
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
+		buildTestTemplateWithTrims(definitionID, "Escape", 2021, 3), nil, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.NotNil(qryResult, "expected qryResult not nil")
+
+	s.Assert().Empty(qryResult.Trim)
+	s.Assert().Equal("model-only", qryResult.MatchQuality)
+	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
+	s.Assert().Empty(qryResult.MatchCandidates)
+	// The template's own attribute survives (it is not "from a trim"); it
+	// must not be either trim's own value.
+	s.Assert().Equal("ICE", qryResult.Powertrain)
+}
+
+// A styleName that matches more than one trim's selectors is ambiguous: no
+// trim is chosen, the still-contending trims are reported as candidates,
+// and only the attributes every candidate agrees on survive -- here LE and
+// Hybrid LE disagree on powertrain_type, so the response falls back to the
+// template's own value, never one candidate's arbitrarily.
+func (s *DecodeVINQueryHandlerSuite) TestHandle_AmbiguousTrimMatch_PopulatesCandidates() {
+	ctx := context.Background()
+	const vin = "1FMCU0G61MUA52727" // ford escape 2021
+	const wmi = "1FM"
+
+	dm := dbtesthelper.SetupCreateMake("Ford")
+	_ = dbtesthelper.SetupCreateAutoPiIntegration(s.T(), s.pdb)
+	_ = dbtesthelper.SetupCreateWMI(s.T(), wmi, dm.Name, s.pdb)
+
+	vinDecodingInfoData := &coremodels.VINDecodingInfoData{
+		StyleName: "SE",
+		Source:    "drivly",
+		Year:      2021,
+		Make:      dm.Name,
+		Model:     "Escape",
+	}
+	definitionID := "ford_escape_2021"
+	tmpl := buildTestTemplateWithTrims(definitionID, "Escape", 2021, 3)
+	tmpl.Trims[0].Selectors.StyleName = []string{"SE"}
+	tmpl.Trims[1].Selectors.StyleName = []string{"SE"}
+
+	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
+	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return("ICE")
+	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(tmpl, nil, nil)
+
+	image := gateways.FuelImage{SourceURL: "https://image"}
+	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}
+	s.mockFuelAPIService.EXPECT().FetchDeviceImages(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2).Return(fuelDeviceImagesMock, nil)
+
+	qryResult, err := s.queryHandler.Handle(s.ctx, &DecodeVINQuery{VIN: vin, Country: country})
+	s.NoError(err)
+	s.NotNil(qryResult, "expected qryResult not nil")
+
+	s.Assert().Empty(qryResult.Trim)
+	s.Assert().Equal("ambiguous", qryResult.MatchQuality)
+	s.Assert().ElementsMatch([]string{"LE", "Hybrid LE"}, qryResult.MatchCandidates)
+	s.Assert().Equal(int32(3), qryResult.TemplateVersion)
+	s.Assert().Equal("ICE", qryResult.Powertrain, "disagreeing candidates must not leak one trim's value into the response")
 }
 
 func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_WithExistingDD_AndStyleAndMetadata() {

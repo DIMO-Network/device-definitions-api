@@ -247,7 +247,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		}
 	}
 
-	// figure out powertrain
+	// figure out powertrain for the style write further down. This is the
+	// old heuristic derivation, kept alive because processDeviceStyle stamps
+	// its result onto device_styles -- the table the extraction pipeline
+	// reads to build templates in the first place. Changing what gets
+	// written there is a separate decision; pt is passed to
+	// processDeviceStyle explicitly below so this stays true regardless of
+	// what resp.Powertrain ends up holding for the response.
 	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo.StyleName, vinInfo.FuelType)
 	if pt == "" {
 		// try a different way
@@ -260,6 +266,33 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	// if dd not found in tableland, we want to create it
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
+
+		// Narrow the template to the trim this VIN decoded to. StyleName and
+		// the VIN itself are the only signals the decoder produces today --
+		// no upstream source surfaces a manufacturer code per VIN (see
+		// vin_decoding_service.go's buildFromDrivly, which reads
+		// DrivlyVINResponse.ManufacturerCode but never carries it into
+		// VINDecodingInfoData), so ManufacturerCode is left unset here and
+		// matching falls back to styleName/vinPattern selectors.
+		resolved := services.MatchTrim(tblDef, services.MatchSignals{
+			StyleName: vinInfo.StyleName,
+			VIN:       vinObj.String(),
+		})
+		resp.Trim = resolved.Trim
+		resp.TemplateVersion = int32(resolved.TemplateVersion)
+		resp.MatchQuality = string(resolved.Quality)
+		resp.MatchCandidates = resolved.Candidates
+
+		// The response's powertrain comes from the resolved template/trim
+		// attributes now, not from the pt heuristic above -- that heuristic
+		// is what produced the ICE/hybrid-attributes mismatch this migration
+		// exists to fix. If the template carries no powertrain_type at all
+		// (template or matched trim), the response reports none rather than
+		// falling back to a guess.
+		resp.Powertrain = ""
+		if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
+			resp.Powertrain = v
+		}
 	} else {
 		// if any images were added above, they will be in the database
 		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
@@ -290,7 +323,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		var styleErr error
-		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, resp.Powertrain)
+		// pt, not resp.Powertrain: processDeviceStyle writes to device_styles,
+		// the extraction pipeline's input, and that write path is unchanged
+		// by this migration -- see the comment on pt's declaration above.
+		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, pt)
 		if styleErr != nil {
 			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vinObj: %s. continuing", vinObj.String())
 		}

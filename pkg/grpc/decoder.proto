@@ -24,6 +24,15 @@ message DecodeVinResponse {
   string definition_id = 9;
   string model = 10;
   string manufacturer = 11;
+  // Trim the VIN narrowed to. Empty when match_quality is not "exact".
+  string trim = 12;
+  // Version of the template this answer came from, so a caller can pin,
+  // cache and reproduce a decode.
+  int32 template_version = 13;
+  // "exact", "ambiguous", or "model-only".
+  string match_quality = 14;
+  // Trim names still in contention when match_quality is "ambiguous".
+  repeated string match_candidates = 15;
 }
 
 message UpsertDecodingRequest {
