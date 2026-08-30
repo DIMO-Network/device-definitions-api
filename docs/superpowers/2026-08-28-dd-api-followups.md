@@ -10,52 +10,48 @@ Contract: `../definitions-worker/schema/{template,resolved}.schema.json`
 
 ---
 
-## 1. Deploy blocker: dd-api still speaks routes the new worker deletes
+## 1. Deploy blocker: CLEARED on branch `shrink-dd-api`
 
-**Severity: blocker. Not fixed here, deliberately — it belongs to the deferred
-"shrink dd-api" plan, which this raises from tidiness to mandatory.**
+**Status: fixed.** This section described the blocker; it is resolved by the
+`shrink-dd-api` branch stacked on `resolved-decode`. Recorded here rather than
+deleted, because the failure mode is worth keeping.
 
-Verified against `../definitions-worker` at `189a7df` (branch
-`trim-extraction`). The worker's entire route table in `src/index.ts` is:
+**What it was.** The worker's route table is `/t/:id`, `/schema/:doc`,
+`POST /admin/{import,build,build/publish}`, `GET /admin/history`, and a 404 for
+everything else. There is no `/definitions/:id` and no `/manifest.json`, and
+dd-api called both. `Create()` read `GET /definitions/<id>`, got the catch-all
+404, and `fetchDocFrom` translated that to `(nil, nil)` -- "does not exist" --
+so the existence guard always passed; it then `PUT` to a route that does not
+exist. Loud, not corrupting, but every catalog miss on the decode path and
+every search sync would have failed.
 
-| Route | Purpose |
+**What changed.**
+
+| Was | Now |
 |---|---|
-| `/t/:id` (`.json` optional) | templates, read and write |
-| `POST /admin/import` | bulk template import |
-| `POST /admin/build` | build a search index page |
-| `POST /admin/build/publish` | publish the built index |
-| `GET /admin/history` | change history |
-| *anything else* | `404 {"error":"not found"}` |
+| `Create()` → `PUT /definitions/<id>` | `PUT /t/<id>`, a template with one `Base` trim |
+| `Delete()` → `DELETE /definitions/<id>` | `DELETE /t/<id>` |
+| existence check → `fetchDocFresh` | `GetTemplateByIDFresh`, on the `ErrTemplateNotFound` sentinel |
+| `GetDeviceDefinitionByID` → `/definitions/<id>.json` | template read, flattened to shared attributes only |
+| `manifest()`, `CatalogIDs`, `PinCatalogSnapshot` | deleted with the search sync |
+| `GetDeviceDefinitions` + its two handlers | deleted; both handlers were registered and dispatched by nothing |
 
-There is **no** `/definitions/:id` route (GET, PUT or DELETE) and **no**
-`/manifest.json`. dd-api still calls all of them:
+dd-api now requests only `/t/…` and `/schema/…`.
 
-| dd-api call site | Route it uses |
-|---|---|
-| `Create()` → `fetchDocFresh` (`device_definition_catalog_service.go:527`) | `GET {worker}/definitions/<id>` |
-| `Create()` → `workerRequest` (same function) | `PUT {worker}/definitions/<id>` |
-| `Delete()` | `DELETE {worker}/definitions/<id>` |
-| `manifest()`, `PinCatalogSnapshot()` | `GET {catalog}/manifest.json` |
-| `fetchDoc()` → `GetDeviceDefinitionByID` / `GetDefinition` / `GetDeviceDefinitions` / `QueryDefinitionsByManufacturer` | `GET {catalog}/definitions/<id>.json` |
+**Two decisions inside it.**
 
-Live callers of those: `decode_vin.go` creates a definition on a catalog miss;
-`create_dd.go:141`; and the search sync via `CatalogIDs`/`PinCatalogSnapshot`.
+- Created templates carry attributes folded onto the DeviceType vocabulary by
+  `internal/core/vocabulary`, a port of the extraction's `vocabulary.mjs`. The
+  two write into the same contract, so they are held to parity by a test
+  against the JavaScript's own output on the real vocabulary. A vocabulary that
+  cannot be fetched aborts the create rather than writing fewer attributes.
+- The legacy flat shape carries only attributes **shared by every trim**.
+  Filling its single slot per attribute from an arbitrary trim is what produced
+  the blended record in the first place.
 
-**Failure mode if deployed as-is.** `Create()` reads `GET /definitions/<id>`,
-gets the worker's catch-all 404, and `fetchDocFrom` translates a 404 to
-`(nil, nil)` — "does not exist" — so the existence guard always passes. It
-then `PUT`s to a route that does not exist, gets 404, and `workerRequest`
-turns any status ≥ 300 into an error. So it fails loudly rather than
-corrupting anything, but **every catalog miss on the decode path and every
-search sync fails**. `manifest()` fails outright unless the R2 bucket still
-serves a `manifest.json` object of its own.
-
-**Gate:** dd-api cannot be deployed against the new worker until `Create`,
-`Delete` and the manifest reads are migrated to `/t/:id` and the build/publish
-surface. `GetTemplateByIDFresh` exists and is unused precisely because it is
-the read half of that migration.
-
----
+**Cutover ordering this imposes.** The worker must have built and published an
+index before dd-api ships without its sync, and the Typesense collection
+currently squatting the alias name has to be dropped so the alias can take it.
 
 ## 2. Not fixed, recorded
 
