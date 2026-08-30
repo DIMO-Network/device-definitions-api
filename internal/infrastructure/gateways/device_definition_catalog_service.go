@@ -78,24 +78,6 @@ type DeviceDefinitionCatalogService interface {
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
-	// QueryDefinitionsByManufacturer pages through a manufacturer's definitions, 500 at a time.
-	QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID int, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error)
-	// CatalogIDs returns every definition id in the catalog, indexed or not.
-	// Deletion decisions must be based on this rather than on walking
-	// manufacturers: the manifest is the catalog, whereas a per-manufacturer
-	// walk is only as complete as identity-api's manufacturer list.
-	CatalogIDs(ctx context.Context) ([]string, error)
-	// PinCatalogSnapshot fetches the manifest once and holds it for the caller's
-	// whole run. Anything paging over the catalog to decide what to delete must
-	// call it first: the per-request cache expires after a minute while a full
-	// sync takes several, so without pinning, pages come from different
-	// manifests and a definition that shifts position between them is returned
-	// by neither -- and is then deleted as an orphan.
-	//
-	// It is not a cache bypass. The worker generates every response for
-	// definitions.dimo.org (no cf-cache-status, no age, date advances per
-	// request), so there is no edge cache in front of the manifest.
-	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
@@ -104,11 +86,9 @@ const (
 	// CatalogPageSize is the page size QueryDefinitionsByManufacturer returns.
 	// Exported because callers page until a short page and must agree with it;
 	// a private copy elsewhere silently truncates their iteration if it drifts.
-	CatalogPageSize  = 500
-	manifestCacheKey = "definitions_manifest"
-	manifestCacheTTL = time.Minute
-	// Long enough to cover a full sync run, which pages over the whole catalog.
-	pinnedManifestTTL   = time.Hour
+	CatalogPageSize     = 500
+	manifestCacheKey    = "definitions_manifest"
+	manifestCacheTTL    = time.Minute
 	manufacturersCached = "manufacturers_by_token_id"
 )
 
@@ -282,53 +262,6 @@ func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalog
 	return &m, nil
 }
 
-func (e *deviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]string, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ids := make([]string, 0, len(m.Definitions))
-	for _, d := range m.Definitions {
-		ids = append(ids, d.ID)
-	}
-	return ids, nil
-}
-
-func (e *deviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	// Cheap insurance if an edge cache is ever put in front of the catalog.
-	req.Header.Set("Cache-Control", "no-cache")
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return errors.Wrap(err, "failed to fetch a fresh definitions manifest")
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("catalog returned %d for a fresh manifest", resp.StatusCode)
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	var m catalogManifest
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		countOutcome(metricManifestRead, err)
-		return errors.Wrap(err, "failed to decode the fresh definitions manifest")
-	}
-	if m.Count != len(m.Definitions) {
-		err := fmt.Errorf("manifest count %d does not match the %d definitions it carries", m.Count, len(m.Definitions))
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	countOutcome(metricManifestRead, nil)
-	// Long TTL so every page of the caller's run reads the same snapshot.
-	e.memCache.Set(manifestCacheKey, &m, pinnedManifestTTL)
-	return nil
-}
-
 func (e *deviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error) {
 	return e.identityAPI.GetManufacturer(manufacturerSlug)
 }
@@ -420,20 +353,6 @@ func (e *deviceDefinitionCatalogService) GetDeviceDefinitions(ctx context.Contex
 		matches = append(matches, d.DeviceDefinitionTablelandModel)
 	}
 	return paginate(matches, int(pageIndex), int(pageSize)), nil
-}
-
-func (e *deviceDefinitionCatalogService) QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID int, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	matches := make([]coremodels.DeviceDefinitionTablelandModel, 0)
-	for _, d := range m.Definitions {
-		if d.Manufacturer.TokenID == manufacturerID {
-			matches = append(matches, d.DeviceDefinitionTablelandModel)
-		}
-	}
-	return paginate(matches, pageIndex, CatalogPageSize), nil
 }
 
 func paginate(items []coremodels.DeviceDefinitionTablelandModel, pageIndex, pageSize int) []coremodels.DeviceDefinitionTablelandModel {

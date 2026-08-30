@@ -49,7 +49,6 @@ func main() {
 	subcommands.Register(&addVINCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&addVINsCSVCmd{logger: logger, settings: settings, identity: identity}, "")
 	subcommands.Register(&decodeVINCmd{logger: &logger, settings: &settings}, "")
-	subcommands.Register(&syncDeviceDefinitionSearchCmd{logger: logger, settings: settings}, "")
 	subcommands.Register(&deleteDefinition{logger: logger, settings: settings}, "")
 
 	if len(os.Args) == 1 {

@@ -118,9 +118,4 @@ serviceMonitor:
   path: /metrics
   port: mon-http
   interval: 30s
-jobs:
-  - name: search-index-load
-    schedule: 0 0 * * *
-    args:
-      - '-c'
-      - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "weekly typesense mmy search index sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+jobs: []

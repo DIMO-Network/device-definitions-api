@@ -39,21 +39,6 @@ func TestCatalogServiceE2E(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, wrong)
 
-	// Paged listing as the Typesense sync job consumes it.
-	page0, err := svc.QueryDefinitionsByManufacturer(ctx, 13, 0)
-	require.NoError(t, err)
-	assert.Len(t, page0, 500)
-	total := len(page0)
-	for i := 1; ; i++ {
-		page, err := svc.QueryDefinitionsByManufacturer(ctx, 13, i)
-		require.NoError(t, err)
-		total += len(page)
-		if len(page) < 500 {
-			break
-		}
-	}
-	assert.Greater(t, total, 1500, "BMW should have >1500 definitions")
-
 	// No fallback to the pre-migration definitions/<id>.json: a missing
 	// template must fail loudly, not resolve as a quiet nil.
 	missing, _, err := svc.GetTemplateByID(ctx, "not_areal_2020")
