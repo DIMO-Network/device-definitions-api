@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -231,4 +232,128 @@ func TestGetTemplateByIDFreshDoesNotFallBackToTheOldKey(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, []string{"/t/toyota_camry_2020.json"}, paths)
 	assert.ErrorIs(t, err, ErrTemplateNotFound)
+}
+
+// Create used to PUT the pre-migration /definitions/<id> route, which the new
+// worker does not serve at all: every catalog miss on the decode path would
+// have failed once deployed. These pin the route and the body shape, because
+// both are only observable from outside the process.
+func newCreateStub(t *testing.T, existing func(w http.ResponseWriter)) (*httptest.Server, *[]string, *map[string]any) {
+	t.Helper()
+	paths := []string{}
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path)
+		if r.Method == http.MethodGet {
+			existing(w)
+			return
+		}
+		if r.Method == http.MethodPut {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"id":"toyota_camry_2020"}`))
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &paths, &body
+}
+
+func createSvc(srv *httptest.Server) DeviceDefinitionCatalogService {
+	logger := zerolog.Nop()
+	// identity points at the stub too: the manufacturer tokenId lookup is best
+	// effort, and left unset it spends the http client's full timeout failing.
+	identity, err := url.Parse(srv.URL)
+	if err != nil {
+		panic(err)
+	}
+	return NewDeviceDefinitionCatalogService(&config.Settings{
+		DefinitionsCatalogURL:  srv.URL,
+		DefinitionsWorkerURL:   srv.URL,
+		DefinitionsWorkerToken: "test-token",
+		IdentityAPIURL:         *identity,
+	}, &logger)
+}
+
+var newDefinition = coremodels.DeviceDefinitionTablelandModel{
+	ID:         "toyota_camry_2020",
+	Model:      "Camry",
+	Year:       2020,
+	DeviceType: "vehicle",
+	KSUID:      "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
+}
+
+func TestCreateWritesATemplate(t *testing.T) {
+	srv, paths, body := newCreateStub(t, func(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound) })
+
+	id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
+	require.NoError(t, err)
+	require.NotNil(t, id)
+
+	assert.Contains(t, *paths, "PUT /t/toyota_camry_2020", "the write must go to the template route")
+	for _, p := range *paths {
+		assert.NotContains(t, p, "/definitions/", "no write may touch the pre-migration route")
+	}
+
+	// The worker rejects a client-supplied server-owned field by name rather
+	// than stripping it, so sending one fails the whole write.
+	for _, k := range []string{"version", "createdAt", "updatedAt", "author"} {
+		assert.NotContains(t, *body, k, "%s is server-owned and must not be sent", k)
+	}
+	assert.Equal(t, "toyota_camry_2020", (*body)["id"])
+	assert.Equal(t, "vehicle", (*body)["deviceType"])
+	assert.Equal(t, "Camry", (*body)["model"])
+	assert.Equal(t, float64(2020), (*body)["year"])
+	assert.Equal(t, map[string]any{"slug": "toyota", "name": "Toyota"}, (*body)["manufacturer"])
+	// ksuid is gone from the contract; it must not ride along in any form.
+	assert.NotContains(t, *body, "ksuid")
+
+	// trims has minItems 1 in the schema: a model-year sold in one
+	// configuration still has a trim.
+	trims, ok := (*body)["trims"].([]any)
+	require.True(t, ok, "trims must be present")
+	require.Len(t, trims, 1)
+	trim := trims[0].(map[string]any)
+	assert.Equal(t, "Base", trim["name"])
+	// A single-trim template has nothing to select on, and an empty selector
+	// object is what the worker rejects as degenerate on a multi-trim template.
+	assert.NotContains(t, trim, "selectors")
+}
+
+func TestCreateRefusesWhenTheTemplateExists(t *testing.T) {
+	srv, paths, _ := newCreateStub(t, func(w http.ResponseWriter) {
+		_, _ = w.Write([]byte(templateJSON))
+	})
+
+	id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
+	require.Error(t, err, "create must not overwrite a curated template")
+	assert.Nil(t, id)
+	assert.Contains(t, err.Error(), "already exists")
+	for _, p := range *paths {
+		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p, "nothing may be written")
+	}
+}
+
+// The reason Create reads through the worker and checks the sentinel: a
+// catalog outage returns 500, and treating that as "does not exist" is how a
+// duplicate definition gets written mid-incident.
+func TestCreateAbortsWhenTheCatalogIsDown(t *testing.T) {
+	srv, paths, _ := newCreateStub(t, func(w http.ResponseWriter) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
+	require.Error(t, err, "a 500 must abort the create, not authorise it")
+	assert.Nil(t, id)
+	for _, p := range *paths {
+		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p, "nothing may be written during an outage")
+	}
+}
+
+func TestDeleteUsesTheTemplateRoute(t *testing.T) {
+	srv, paths, _ := newCreateStub(t, func(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound) })
+
+	id, err := createSvc(srv).Delete(context.Background(), "Toyota", "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, id)
+	assert.Contains(t, *paths, "DELETE /t/toyota_camry_2020")
 }
