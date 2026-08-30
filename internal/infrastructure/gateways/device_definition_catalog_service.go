@@ -16,6 +16,7 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/vocabulary"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
 	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/patrickmn/go-cache"
@@ -441,18 +442,59 @@ type templatePutTrim struct {
 // configuration still has a trim, because the schema has no other shape for it.
 const defaultTrimName = "Base"
 
+const (
+	vocabularyCacheKey = "device_type_vocabulary"
+	// The worker serves /schema with max-age=300, so holding it longer than
+	// that would show a contributor a vocabulary the validator has stopped
+	// using.
+	vocabularyCacheTTL = 5 * time.Minute
+)
+
+// vocabulary fetches the DeviceType the template's attributes are validated
+// against. It is read from the worker rather than vendored: a stale local copy
+// would fold values the validator rejects, and the mismatch would only appear
+// as a failed write.
+func (e *deviceDefinitionCatalogService) vocabulary(ctx context.Context, deviceType string) (*vocabulary.DeviceType, error) {
+	key := vocabularyCacheKey + ":" + deviceType
+	if v, ok := e.memCache.Get(key); ok {
+		return v.(*vocabulary.DeviceType), nil
+	}
+	base := e.settings.DefinitionsWorkerURL
+	if base == "" {
+		base = e.settings.DefinitionsCatalogURL
+	}
+	reqURL := strings.TrimSuffix(base, "/") + "/schema/device-type-" + url.PathEscape(deviceType) + ".json"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := e.httpClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch the %s vocabulary", deviceType)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("catalog returned %d for the %s vocabulary", resp.StatusCode, deviceType)
+	}
+	var vocab vocabulary.DeviceType
+	if err := json.NewDecoder(resp.Body).Decode(&vocab); err != nil {
+		return nil, errors.Wrapf(err, "failed to decode the %s vocabulary", deviceType)
+	}
+	e.memCache.Set(key, &vocab, vocabularyCacheTTL)
+	return &vocab, nil
+}
+
 // templateFromDefinition builds the template for a definition that does not
-// exist yet.
+// exist yet, folding dd.Metadata onto the DeviceType vocabulary.
 //
-// Attributes are deliberately empty. dd.Metadata carries stringified values
-// under source-specific names ("15.800000"), and the contract requires typed
-// values drawn from the DeviceType vocabulary. Translating them needs that
-// vocabulary and the per-field precedence the extraction pipeline applies;
-// dumping them in untyped would write exactly the unvalidated, invented values
-// this migration exists to remove, and the worker would reject most of them
-// anyway. A definition created here exists so a decode can resolve to it; its
-// attributes arrive from the extraction import or from Console.
-func (e *deviceDefinitionCatalogService) templateFromDefinition(manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) templatePutBody {
+// A vocabulary that cannot be fetched is an error, not a reason to write fewer
+// attributes: silently storing less because a fetch failed is indistinguishable
+// afterwards from the source not having carried the value.
+//
+// Attributes go on the template rather than the trim. There is exactly one
+// trim, so every attribute is shared by all of them, and the contract requires
+// an attribute to be in one place or the other and never both.
+func (e *deviceDefinitionCatalogService) templateFromDefinition(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (templatePutBody, []vocabulary.DroppedAttribute, error) {
 	slug := dd.ID
 	if i := strings.Index(dd.ID, "_"); i > 0 {
 		slug = dd.ID[:i]
@@ -470,6 +512,19 @@ func (e *deviceDefinitionCatalogService) templateFromDefinition(manufacturerName
 	if deviceType == "" {
 		deviceType = common.DefaultDeviceType
 	}
+
+	vocab, err := e.vocabulary(ctx, deviceType)
+	if err != nil {
+		return templatePutBody{}, nil, err
+	}
+	raw := map[string]string{}
+	if dd.Metadata != nil {
+		for _, a := range dd.Metadata.DeviceAttributes {
+			raw[a.Name] = a.Value
+		}
+	}
+	attributes, dropped := vocabulary.MapAttributes(raw, vocab)
+
 	return templatePutBody{
 		ID:           dd.ID,
 		DeviceType:   deviceType,
@@ -477,9 +532,9 @@ func (e *deviceDefinitionCatalogService) templateFromDefinition(manufacturerName
 		Model:        dd.Model,
 		Year:         dd.Year,
 		ImageURI:     dd.ImageURI,
-		Attributes:   map[string]any{},
+		Attributes:   attributes,
 		Trims:        []templatePutTrim{{Name: defaultTrimName, Attributes: map[string]any{}}},
-	}
+	}, dropped, nil
 }
 
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
@@ -496,7 +551,17 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 	if !errors.Is(err, ErrTemplateNotFound) {
 		return nil, err
 	}
-	if _, err := e.workerRequest(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), e.templateFromDefinition(manufacturerName, dd)); err != nil {
+	body, dropped, err := e.templateFromDefinition(ctx, manufacturerName, dd)
+	if err != nil {
+		return nil, err
+	}
+	// Report what was read and not carried, not only what failed to parse. A
+	// value dropped without a trace is the defect class this migration keeps
+	// producing.
+	for _, d := range dropped {
+		e.logger.Info().Msgf("catalog create %s: dropped %s", dd.ID, d)
+	}
+	if _, err := e.workerRequest(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body); err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)

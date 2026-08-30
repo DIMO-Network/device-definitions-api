@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -244,6 +245,10 @@ func newCreateStub(t *testing.T, existing func(w http.ResponseWriter)) (*httptes
 	var body map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.Method+" "+r.URL.Path)
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/schema/") {
+			_, _ = w.Write([]byte(vocabularyJSON))
+			return
+		}
 		if r.Method == http.MethodGet {
 			existing(w)
 			return
@@ -273,6 +278,17 @@ func createSvc(srv *httptest.Server) DeviceDefinitionCatalogService {
 		IdentityAPIURL:         *identity,
 	}, &logger)
 }
+
+// A trim of the real /schema/device-type-vehicle.json the worker serves.
+const vocabularyJSON = `{
+  "id": "vehicle",
+  "attributes": [
+    {"name": "fuel_type", "type": "enum", "options": ["gasoline", "diesel", "electric"]},
+    {"name": "driven_wheels", "type": "enum", "options": ["FWD", "RWD", "AWD", "4WD"]},
+    {"name": "number_of_doors", "type": "integer", "minimum": 1, "maximum": 8},
+    {"name": "fuel_tank_capacity_gal", "type": "number", "minimum": 0, "maximum": 100}
+  ]
+}`
 
 var newDefinition = coremodels.DeviceDefinitionTablelandModel{
 	ID:         "toyota_camry_2020",
@@ -356,4 +372,83 @@ func TestDeleteUsesTheTemplateRoute(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, id)
 	assert.Contains(t, *paths, "DELETE /t/toyota_camry_2020")
+}
+
+// The decode path's metadata is stringified under source-specific names. The
+// contract requires typed values drawn from the DeviceType vocabulary, so the
+// create folds them the same way the extraction pipeline does.
+func TestCreateFoldsMetadataOntoTheVocabulary(t *testing.T) {
+	srv, _, body := newCreateStub(t, func(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound) })
+
+	withMetadata := newDefinition
+	withMetadata.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
+			{Name: "fuel_type", Value: "Petrol"},
+			{Name: "number_of_doors", Value: "4"},
+			{Name: "fuel_tank_capacity_gal", Value: "15.800000"},
+		},
+	}
+	_, err := createSvc(srv).Create(context.Background(), "Toyota", withMetadata)
+	require.NoError(t, err)
+
+	attrs, ok := (*body)["attributes"].(map[string]any)
+	require.True(t, ok)
+	// Folded to the vocabulary's spelling, and typed: 15.8, not "15.800000".
+	assert.Equal(t, "gasoline", attrs["fuel_type"])
+	assert.Equal(t, float64(4), attrs["number_of_doors"])
+	assert.Equal(t, 15.8, attrs["fuel_tank_capacity_gal"])
+
+	// Shared by every trim, so they belong on the template. The contract
+	// forbids an attribute being in both places.
+	trim := (*body)["trims"].([]any)[0].(map[string]any)
+	assert.Empty(t, trim["attributes"])
+}
+
+func TestCreateDropsValuesItCannotMap(t *testing.T) {
+	srv, _, body := newCreateStub(t, func(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound) })
+
+	withJunk := newDefinition
+	withJunk.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{
+			{Name: "fuel_type", Value: "gasoline"},
+			// Names a driven wheel count, not an axle: deliberately unmapped.
+			{Name: "driven_wheels", Value: "4x2"},
+			// Not in the vocabulary at all.
+			{Name: "generation", Value: "6"},
+			// The placeholders the contract makes unrepresentable.
+			{Name: "number_of_doors", Value: "<nil>"},
+		},
+	}
+	_, err := createSvc(srv).Create(context.Background(), "Toyota", withJunk)
+	require.NoError(t, err)
+
+	attrs := (*body)["attributes"].(map[string]any)
+	assert.Equal(t, map[string]any{"fuel_type": "gasoline"}, attrs,
+		"only values the vocabulary accepts may be written")
+}
+
+// Writing fewer attributes because a fetch failed is indistinguishable
+// afterwards from the source never having carried them.
+func TestCreateAbortsWhenTheVocabularyIsUnavailable(t *testing.T) {
+	paths := []string{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path)
+		if strings.HasPrefix(r.URL.Path, "/schema/") {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	withMetadata := newDefinition
+	withMetadata.Metadata = &coremodels.DeviceDefinitionMetadata{
+		DeviceAttributes: []coremodels.DeviceTypeAttribute{{Name: "fuel_type", Value: "Petrol"}},
+	}
+	id, err := createSvc(srv).Create(context.Background(), "Toyota", withMetadata)
+	require.Error(t, err, "a create must not silently write an attribute-free template")
+	assert.Nil(t, id)
+	for _, p := range paths {
+		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p)
+	}
 }
