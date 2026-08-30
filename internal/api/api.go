@@ -74,8 +74,6 @@ func Run(ctx context.Context, logger zerolog.Logger, settings *config.Settings) 
 		//mediator.WithBehaviour(common.NewValidationBehavior(&logger, settings)),
 		//mediator.WithBehaviour(common.NewErrorHandlingBehavior(&logger, settings)),
 		mediator.WithHandler(&queries.GetDeviceDefinitionByIDQuery{}, queries.NewGetDeviceDefinitionByIDQueryHandler(ddCatalogService, pdb.DBS)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByMakeModelYearQuery{}, queries.NewGetDeviceDefinitionByMakeModelYearQueryHandler(ddCatalogService, pdb.DBS, identityAPI)),
-		mediator.WithHandler(&queries.GetDeviceDefinitionByDynamicFilterQuery{}, queries.NewGetDeviceDefinitionByDynamicFilterQueryHandler(pdb.DBS, ddCatalogService)),
 		mediator.WithHandler(&queries.GetAllIntegrationQuery{}, queries.NewGetAllIntegrationQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetIntegrationByIDQuery{}, queries.NewGetIntegrationByIDQueryHandler(pdb.DBS)),
 		mediator.WithHandler(&queries.GetDeviceStyleByIDQuery{}, queries.NewGetDeviceStyleByIDQueryHandler(pdb.DBS, ddCatalogService)),

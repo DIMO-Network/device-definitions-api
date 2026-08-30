@@ -3,6 +3,7 @@ package gateways
 import (
 	"context"
 	"encoding/json"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,55 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// Worker-written document, verbatim shape.
-const catalogDocJSON = `{
-  "id": "dodge_town-&-country_2012",
-  "ksuid": "26G3iFH7Xc9Wvsw7pg6sD7uzoSS",
-  "model": "Town & Country",
-  "year": 2012,
-  "devicetype": "vehicle",
-  "imageuri": "https://image",
-  "metadata": {"device_attributes": [{"name": "powertrain_type", "value": "ICE"}]},
-  "manufacturer": {"tokenId": 22, "slug": "dodge", "name": "Dodge"},
-  "createdAt": "2026-08-19T00:00:00.000Z",
-  "updatedAt": "2026-08-19T00:00:00.000Z"
-}`
-
-// The embedded tableland model has a custom UnmarshalJSON; without the
-// catalogDoc override it gets promoted and Manufacturer silently stays zero.
-func TestCatalogDocUnmarshalKeepsManufacturer(t *testing.T) {
-	var doc catalogDoc
-	require.NoError(t, json.Unmarshal([]byte(catalogDocJSON), &doc))
-
-	assert.Equal(t, "dodge_town-&-country_2012", doc.ID)
-	assert.Equal(t, "Town & Country", doc.Model)
-	assert.Equal(t, 2012, doc.Year)
-	assert.Equal(t, "vehicle", doc.DeviceType)
-	assert.Equal(t, "https://image", doc.ImageURI)
-	require.NotNil(t, doc.Metadata)
-	require.Len(t, doc.Metadata.DeviceAttributes, 1)
-	assert.Equal(t, "powertrain_type", doc.Metadata.DeviceAttributes[0].Name)
-
-	assert.Equal(t, 22, doc.Manufacturer.TokenID)
-	assert.Equal(t, "dodge", doc.Manufacturer.Slug)
-	assert.Equal(t, "Dodge", doc.Manufacturer.Name)
-}
-
-func TestCatalogDocUnmarshalToleratesEmptyMetadata(t *testing.T) {
-	var doc catalogDoc
-	require.NoError(t, json.Unmarshal([]byte(`{"id":"bmw_x5_2019","model":"X5","year":2019,"metadata":"","manufacturer":{"tokenId":13,"slug":"bmw","name":"BMW"}}`), &doc))
-	assert.Nil(t, doc.Metadata)
-	assert.Equal(t, 13, doc.Manufacturer.TokenID)
-}
-
-func TestCatalogManifestDecode(t *testing.T) {
-	var m catalogManifest
-	require.NoError(t, json.Unmarshal([]byte(`{"updatedAt":"2026-08-19T00:00:00.000Z","count":1,"definitions":[`+catalogDocJSON+`]}`), &m))
-	require.Len(t, m.Definitions, 1)
-	assert.Equal(t, 22, m.Definitions[0].Manufacturer.TokenID)
-	assert.Equal(t, "dodge_town-&-country_2012", m.Definitions[0].ID)
-}
 
 // An unconfigured worker URL used to make every write a no-op that still
 // reported success: Create returned the id, Delete logged "Deleted", and the
@@ -451,4 +403,71 @@ func TestCreateAbortsWhenTheVocabularyIsUnavailable(t *testing.T) {
 	for _, p := range paths {
 		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p)
 	}
+}
+
+// The legacy flat shape has exactly one slot per attribute. Filling it from an
+// arbitrary trim is what produced the record claiming powertrain ICE while
+// carrying a hybrid's tank size, so only attributes shared by every trim cross
+// over. The Camry fixture holds ICE and HEV trims with different tank sizes.
+func TestGetDeviceDefinitionByIDCarriesOnlySharedAttributes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(templateJSON))
+	}))
+	defer srv.Close()
+
+	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), nil, "toyota_camry_2020")
+	require.NoError(t, err)
+	require.NotNil(t, dd)
+	require.NotNil(t, dd.Metadata)
+
+	got := map[string]string{}
+	for _, a := range dd.Metadata.DeviceAttributes {
+		got[a.Name] = a.Value
+	}
+	// Shared by every trim, and rendered without exponent notation.
+	assert.Equal(t, "4", got["number_of_doors"])
+	assert.Equal(t, "sedan", got["vehicle_type"])
+	// Trim-varying: present on the trims, absent here rather than guessed.
+	assert.NotContains(t, got, "powertrain_type")
+	assert.NotContains(t, got, "fuel_tank_capacity_gal")
+	assert.NotContains(t, got, "mpg_city")
+
+	// ksuid is gone from the contract; inventing one would put a value in a
+	// field consumers read as an identifier.
+	assert.Empty(t, dd.KSUID)
+}
+
+func TestGetDeviceDefinitionByIDIsNilForAnotherManufacturer(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(templateJSON))
+	}))
+	defer srv.Close()
+
+	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), big.NewInt(13), "toyota_camry_2020")
+	require.NoError(t, err)
+	assert.Nil(t, dd, "a template owned by another manufacturer must not resolve")
+}
+
+func TestGetDeviceDefinitionByIDIsNilWhenMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), nil, "toyota_camry_2020")
+	require.NoError(t, err, "not found is (nil, nil) here; callers branch on it and none create from it")
+	assert.Nil(t, dd)
+}
+
+// Any other status is a catalog problem and must not be reclassified as
+// not-found: that conflation is how an outage gets answered with a write.
+func TestGetDeviceDefinitionByIDPropagatesCatalogFailures(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), nil, "toyota_camry_2020")
+	require.Error(t, err)
+	assert.Nil(t, dd)
 }

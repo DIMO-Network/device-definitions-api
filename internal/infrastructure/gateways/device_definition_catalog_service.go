@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +20,6 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/vocabulary"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -78,7 +79,6 @@ type DeviceDefinitionCatalogService interface {
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
@@ -92,39 +92,6 @@ const (
 	manifestCacheTTL    = time.Minute
 	manufacturersCached = "manufacturers_by_token_id"
 )
-
-type catalogManufacturer struct {
-	TokenID int    `json:"tokenId"`
-	Slug    string `json:"slug"`
-	Name    string `json:"name"`
-}
-
-type catalogDoc struct {
-	coremodels.DeviceDefinitionTablelandModel
-	Manufacturer catalogManufacturer `json:"manufacturer"`
-}
-
-// UnmarshalJSON exists because the embedded model's custom UnmarshalJSON
-// would otherwise be promoted to catalogDoc and silently drop Manufacturer.
-func (d *catalogDoc) UnmarshalJSON(data []byte) error {
-	if err := json.Unmarshal(data, &d.DeviceDefinitionTablelandModel); err != nil {
-		return err
-	}
-	var aux struct {
-		Manufacturer catalogManufacturer `json:"manufacturer"`
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	d.Manufacturer = aux.Manufacturer
-	return nil
-}
-
-type catalogManifest struct {
-	UpdatedAt   string       `json:"updatedAt"`
-	Count       int          `json:"count"`
-	Definitions []catalogDoc `json:"definitions"`
-}
 
 type deviceDefinitionCatalogService struct {
 	settings    *config.Settings
@@ -148,39 +115,6 @@ func (e *deviceDefinitionCatalogService) catalogURL(pathSuffix string) string {
 	return strings.TrimSuffix(e.settings.DefinitionsCatalogURL, "/") + pathSuffix
 }
 
-func (e *deviceDefinitionCatalogService) fetchDoc(ctx context.Context, id string) (*catalogDoc, error) {
-	doc, err := e.fetchDocFrom(ctx, e.catalogURL("/definitions/"+url.PathEscape(id)+".json"), id)
-	countOutcome(metricCatalogRead, err)
-	return doc, err
-}
-
-func (e *deviceDefinitionCatalogService) fetchDocFrom(ctx context.Context, reqURL, id string) (*catalogDoc, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch definition %s from catalog", id)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("catalog returned %d for definition %s", resp.StatusCode, id)
-	}
-	var doc catalogDoc
-	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
-		return nil, errors.Wrapf(err, "failed to decode definition %s", id)
-	}
-	return &doc, nil
-}
-
-// fetchTemplateDoc reads the vehicle template for id from t/<id>.json. There
-// is deliberately no fallback to fetchDoc's definitions/<id>.json: falling
-// back would serve the pre-migration flat record and hide an incomplete
-// template import behind decodes that appear to work.
 func (e *deviceDefinitionCatalogService) fetchTemplateDoc(ctx context.Context, id string) (*coremodels.Template, error) {
 	tmpl, err := e.fetchTemplateDocFrom(ctx, e.catalogURL("/t/"+url.PathEscape(id)+".json"), id)
 	countOutcome(metricCatalogRead, err)
@@ -229,40 +163,6 @@ func (e *deviceDefinitionCatalogService) fetchTemplateDocFrom(ctx context.Contex
 	return &tmpl, nil
 }
 
-func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalogManifest, error) {
-	if v, ok := e.memCache.Get(manifestCacheKey); ok {
-		return v.(*catalogManifest), nil
-	}
-	// Every exit counts itself. Previously only a decode failure incremented the
-	// error metric, so a catalog outage showed up as these series dropping to
-	// zero rather than as an error spike -- invisible to any alert written as
-	// "error rate > X".
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, err
-	}
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, errors.Wrap(err, "failed to fetch definitions manifest")
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("catalog returned %d for manifest", resp.StatusCode)
-		countOutcome(metricManifestRead, err)
-		return nil, err
-	}
-	var m catalogManifest
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, errors.Wrap(err, "failed to decode definitions manifest")
-	}
-	countOutcome(metricManifestRead, nil)
-	e.memCache.Set(manifestCacheKey, &m, manifestCacheTTL)
-	return &m, nil
-}
-
 func (e *deviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error) {
 	return e.identityAPI.GetManufacturer(manufacturerSlug)
 }
@@ -296,15 +196,70 @@ func (e *deviceDefinitionCatalogService) GetManufacturerNameByID(_ context.Conte
 	return name, nil
 }
 
+// GetDeviceDefinitionByID returns the flat pre-migration shape for the callers
+// that still take it, built from the template's SHARED attributes only.
+//
+// Attributes that vary by trim are deliberately absent. This shape has exactly
+// one slot per attribute, and filling it from an arbitrary trim is precisely
+// what produced the record that claimed powertrain ICE while carrying a
+// hybrid's tank size. Absent is honest; a guess is not.
+//
+// (nil, nil) still means "not found", as it did before, and also covers a
+// template owned by a different manufacturer. Unlike GetTemplateByID this does
+// not turn a missing template into an error: its callers branch on nil and
+// report it, and none of them create anything on the strength of it.
 func (e *deviceDefinitionCatalogService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
-	doc, err := e.fetchDoc(ctx, ID)
-	if err != nil || doc == nil {
+	tmpl, tokenID, err := e.GetTemplateByID(ctx, ID)
+	if err != nil {
+		if errors.Is(err, ErrTemplateNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	if manufacturerID != nil && int64(doc.Manufacturer.TokenID) != manufacturerID.Int64() {
+	if manufacturerID != nil && tokenID.Int64() != manufacturerID.Int64() {
 		return nil, nil
 	}
-	return &doc.DeviceDefinitionTablelandModel, nil
+	return templateToDefinitionModel(tmpl), nil
+}
+
+// templateToDefinitionModel flattens a template into the legacy shape. KSUID is
+// not populated: it is gone from the contract, and inventing one here would put
+// a value into a field consumers read as an identifier.
+func templateToDefinitionModel(tmpl *coremodels.Template) *coremodels.DeviceDefinitionTablelandModel {
+	names := make([]string, 0, len(tmpl.Attributes))
+	for name := range tmpl.Attributes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	attrs := make([]coremodels.DeviceTypeAttribute, 0, len(names))
+	for _, name := range names {
+		attrs = append(attrs, coremodels.DeviceTypeAttribute{Name: name, Value: attributeString(tmpl.Attributes[name])})
+	}
+	return &coremodels.DeviceDefinitionTablelandModel{
+		ID:         tmpl.ID,
+		Model:      tmpl.Model,
+		Year:       tmpl.Year,
+		DeviceType: tmpl.DeviceType,
+		ImageURI:   tmpl.ImageURI,
+		Metadata:   &coremodels.DeviceDefinitionMetadata{DeviceAttributes: attrs},
+	}
+}
+
+// attributeString renders a typed attribute for the legacy string-valued shape.
+// strconv rather than fmt so 15.8 renders "15.8" and not "1.58e+01".
+func attributeString(v any) string {
+	switch t := v.(type) {
+	case string:
+		return t
+	case bool:
+		return strconv.FormatBool(t)
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	case int:
+		return strconv.Itoa(t)
+	default:
+		return fmt.Sprint(v)
+	}
 }
 
 func (e *deviceDefinitionCatalogService) GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
@@ -325,50 +280,6 @@ func (e *deviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Contex
 		return nil, nil, err
 	}
 	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
-}
-
-func (e *deviceDefinitionCatalogService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var manufTokenID *int64
-	if !manufacturerID.IsZero() {
-		v := manufacturerID.Big.Int(nil).Int64()
-		manufTokenID = &v
-	}
-	matches := make([]coremodels.DeviceDefinitionTablelandModel, 0)
-	for _, d := range m.Definitions {
-		if manufTokenID != nil && int64(d.Manufacturer.TokenID) != *manufTokenID {
-			continue
-		}
-		if ID != "" && d.ID != ID {
-			continue
-		}
-		if model != "" && !strings.EqualFold(d.Model, model) {
-			continue
-		}
-		if year > 0 && d.Year != year {
-			continue
-		}
-		matches = append(matches, d.DeviceDefinitionTablelandModel)
-	}
-	return paginate(matches, int(pageIndex), int(pageSize)), nil
-}
-
-func paginate(items []coremodels.DeviceDefinitionTablelandModel, pageIndex, pageSize int) []coremodels.DeviceDefinitionTablelandModel {
-	if pageSize <= 0 {
-		pageSize = CatalogPageSize
-	}
-	start := pageIndex * pageSize
-	if start >= len(items) {
-		return []coremodels.DeviceDefinitionTablelandModel{}
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-	return items[start:end]
 }
 
 // workerRequest sends an authenticated request to the definitions-worker.
