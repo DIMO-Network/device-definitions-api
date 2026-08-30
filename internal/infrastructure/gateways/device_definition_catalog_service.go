@@ -10,13 +10,16 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/vocabulary"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
-	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -69,35 +72,13 @@ type DeviceDefinitionCatalogService interface {
 	// it: documents are served with max-age=86400, so a cached read silently
 	// discards any edit made in the last day when the result is PUT back.
 	//
-	// It has NO production caller today. Its only one was the bulk powertrain
-	// tool, deleted with the legacy Update() write path earlier on this branch.
-	// It is kept because Create() is still on the pre-migration
-	// /definitions/<id> route the new worker does not serve, and migrating that
-	// write to templates is the read-modify-write this method exists for. If
-	// that migration lands without using it, delete it -- do not leave it here
-	// on the strength of this comment alone.
+	// Create() is that caller: it uses this to decide whether a template
+	// already exists before writing one, and must distinguish
+	// ErrTemplateNotFound from every other failure. Reading through the CDN
+	// there would let a stale 404 authorise a duplicate.
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
-	GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error)
-	// QueryDefinitionsByManufacturer pages through a manufacturer's definitions, 500 at a time.
-	QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID int, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error)
-	// CatalogIDs returns every definition id in the catalog, indexed or not.
-	// Deletion decisions must be based on this rather than on walking
-	// manufacturers: the manifest is the catalog, whereas a per-manufacturer
-	// walk is only as complete as identity-api's manufacturer list.
-	CatalogIDs(ctx context.Context) ([]string, error)
-	// PinCatalogSnapshot fetches the manifest once and holds it for the caller's
-	// whole run. Anything paging over the catalog to decide what to delete must
-	// call it first: the per-request cache expires after a minute while a full
-	// sync takes several, so without pinning, pages come from different
-	// manifests and a definition that shifts position between them is returned
-	// by neither -- and is then deleted as an orphan.
-	//
-	// It is not a cache bypass. The worker generates every response for
-	// definitions.dimo.org (no cf-cache-status, no age, date advances per
-	// request), so there is no edge cache in front of the manifest.
-	PinCatalogSnapshot(ctx context.Context) error
 	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
@@ -106,46 +87,11 @@ const (
 	// CatalogPageSize is the page size QueryDefinitionsByManufacturer returns.
 	// Exported because callers page until a short page and must agree with it;
 	// a private copy elsewhere silently truncates their iteration if it drifts.
-	CatalogPageSize  = 500
-	manifestCacheKey = "definitions_manifest"
-	manifestCacheTTL = time.Minute
-	// Long enough to cover a full sync run, which pages over the whole catalog.
-	pinnedManifestTTL   = time.Hour
+	CatalogPageSize     = 500
+	manifestCacheKey    = "definitions_manifest"
+	manifestCacheTTL    = time.Minute
 	manufacturersCached = "manufacturers_by_token_id"
 )
-
-type catalogManufacturer struct {
-	TokenID int    `json:"tokenId"`
-	Slug    string `json:"slug"`
-	Name    string `json:"name"`
-}
-
-type catalogDoc struct {
-	coremodels.DeviceDefinitionTablelandModel
-	Manufacturer catalogManufacturer `json:"manufacturer"`
-}
-
-// UnmarshalJSON exists because the embedded model's custom UnmarshalJSON
-// would otherwise be promoted to catalogDoc and silently drop Manufacturer.
-func (d *catalogDoc) UnmarshalJSON(data []byte) error {
-	if err := json.Unmarshal(data, &d.DeviceDefinitionTablelandModel); err != nil {
-		return err
-	}
-	var aux struct {
-		Manufacturer catalogManufacturer `json:"manufacturer"`
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	d.Manufacturer = aux.Manufacturer
-	return nil
-}
-
-type catalogManifest struct {
-	UpdatedAt   string       `json:"updatedAt"`
-	Count       int          `json:"count"`
-	Definitions []catalogDoc `json:"definitions"`
-}
 
 type deviceDefinitionCatalogService struct {
 	settings    *config.Settings
@@ -169,51 +115,6 @@ func (e *deviceDefinitionCatalogService) catalogURL(pathSuffix string) string {
 	return strings.TrimSuffix(e.settings.DefinitionsCatalogURL, "/") + pathSuffix
 }
 
-func (e *deviceDefinitionCatalogService) fetchDoc(ctx context.Context, id string) (*catalogDoc, error) {
-	doc, err := e.fetchDocFrom(ctx, e.catalogURL("/definitions/"+url.PathEscape(id)+".json"), id)
-	countOutcome(metricCatalogRead, err)
-	return doc, err
-}
-
-// fetchDocFresh bypasses the CDN by reading through the worker when
-// configured, so read-modify-write never merges a stale cached base.
-func (e *deviceDefinitionCatalogService) fetchDocFresh(ctx context.Context, id string) (*catalogDoc, error) {
-	base := e.settings.DefinitionsWorkerURL
-	if base == "" {
-		return e.fetchDoc(ctx, id)
-	}
-	doc, err := e.fetchDocFrom(ctx, strings.TrimSuffix(base, "/")+"/definitions/"+url.PathEscape(id), id)
-	countOutcome(metricCatalogRead, err)
-	return doc, err
-}
-
-func (e *deviceDefinitionCatalogService) fetchDocFrom(ctx context.Context, reqURL, id string) (*catalogDoc, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch definition %s from catalog", id)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("catalog returned %d for definition %s", resp.StatusCode, id)
-	}
-	var doc catalogDoc
-	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
-		return nil, errors.Wrapf(err, "failed to decode definition %s", id)
-	}
-	return &doc, nil
-}
-
-// fetchTemplateDoc reads the vehicle template for id from t/<id>.json. There
-// is deliberately no fallback to fetchDoc's definitions/<id>.json: falling
-// back would serve the pre-migration flat record and hide an incomplete
-// template import behind decodes that appear to work.
 func (e *deviceDefinitionCatalogService) fetchTemplateDoc(ctx context.Context, id string) (*coremodels.Template, error) {
 	tmpl, err := e.fetchTemplateDocFrom(ctx, e.catalogURL("/t/"+url.PathEscape(id)+".json"), id)
 	countOutcome(metricCatalogRead, err)
@@ -262,87 +163,6 @@ func (e *deviceDefinitionCatalogService) fetchTemplateDocFrom(ctx context.Contex
 	return &tmpl, nil
 }
 
-func (e *deviceDefinitionCatalogService) manifest(ctx context.Context) (*catalogManifest, error) {
-	if v, ok := e.memCache.Get(manifestCacheKey); ok {
-		return v.(*catalogManifest), nil
-	}
-	// Every exit counts itself. Previously only a decode failure incremented the
-	// error metric, so a catalog outage showed up as these series dropping to
-	// zero rather than as an error spike -- invisible to any alert written as
-	// "error rate > X".
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, err
-	}
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, errors.Wrap(err, "failed to fetch definitions manifest")
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("catalog returned %d for manifest", resp.StatusCode)
-		countOutcome(metricManifestRead, err)
-		return nil, err
-	}
-	var m catalogManifest
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		countOutcome(metricManifestRead, err)
-		return nil, errors.Wrap(err, "failed to decode definitions manifest")
-	}
-	countOutcome(metricManifestRead, nil)
-	e.memCache.Set(manifestCacheKey, &m, manifestCacheTTL)
-	return &m, nil
-}
-
-func (e *deviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]string, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ids := make([]string, 0, len(m.Definitions))
-	for _, d := range m.Definitions {
-		ids = append(ids, d.ID)
-	}
-	return ids, nil
-}
-
-func (e *deviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.catalogURL("/manifest.json"), nil)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	// Cheap insurance if an edge cache is ever put in front of the catalog.
-	req.Header.Set("Cache-Control", "no-cache")
-	resp, err := e.httpClient.Do(req)
-	if err != nil {
-		countOutcome(metricManifestRead, err)
-		return errors.Wrap(err, "failed to fetch a fresh definitions manifest")
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("catalog returned %d for a fresh manifest", resp.StatusCode)
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	var m catalogManifest
-	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
-		countOutcome(metricManifestRead, err)
-		return errors.Wrap(err, "failed to decode the fresh definitions manifest")
-	}
-	if m.Count != len(m.Definitions) {
-		err := fmt.Errorf("manifest count %d does not match the %d definitions it carries", m.Count, len(m.Definitions))
-		countOutcome(metricManifestRead, err)
-		return err
-	}
-	countOutcome(metricManifestRead, nil)
-	// Long TTL so every page of the caller's run reads the same snapshot.
-	e.memCache.Set(manifestCacheKey, &m, pinnedManifestTTL)
-	return nil
-}
-
 func (e *deviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string) (*coremodels.Manufacturer, error) {
 	return e.identityAPI.GetManufacturer(manufacturerSlug)
 }
@@ -376,15 +196,70 @@ func (e *deviceDefinitionCatalogService) GetManufacturerNameByID(_ context.Conte
 	return name, nil
 }
 
+// GetDeviceDefinitionByID returns the flat pre-migration shape for the callers
+// that still take it, built from the template's SHARED attributes only.
+//
+// Attributes that vary by trim are deliberately absent. This shape has exactly
+// one slot per attribute, and filling it from an arbitrary trim is precisely
+// what produced the record that claimed powertrain ICE while carrying a
+// hybrid's tank size. Absent is honest; a guess is not.
+//
+// (nil, nil) still means "not found", as it did before, and also covers a
+// template owned by a different manufacturer. Unlike GetTemplateByID this does
+// not turn a missing template into an error: its callers branch on nil and
+// report it, and none of them create anything on the strength of it.
 func (e *deviceDefinitionCatalogService) GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
-	doc, err := e.fetchDoc(ctx, ID)
-	if err != nil || doc == nil {
+	tmpl, tokenID, err := e.GetTemplateByID(ctx, ID)
+	if err != nil {
+		if errors.Is(err, ErrTemplateNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	if manufacturerID != nil && int64(doc.Manufacturer.TokenID) != manufacturerID.Int64() {
+	if manufacturerID != nil && tokenID.Int64() != manufacturerID.Int64() {
 		return nil, nil
 	}
-	return &doc.DeviceDefinitionTablelandModel, nil
+	return templateToDefinitionModel(tmpl), nil
+}
+
+// templateToDefinitionModel flattens a template into the legacy shape. KSUID is
+// not populated: it is gone from the contract, and inventing one here would put
+// a value into a field consumers read as an identifier.
+func templateToDefinitionModel(tmpl *coremodels.Template) *coremodels.DeviceDefinitionTablelandModel {
+	names := make([]string, 0, len(tmpl.Attributes))
+	for name := range tmpl.Attributes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	attrs := make([]coremodels.DeviceTypeAttribute, 0, len(names))
+	for _, name := range names {
+		attrs = append(attrs, coremodels.DeviceTypeAttribute{Name: name, Value: attributeString(tmpl.Attributes[name])})
+	}
+	return &coremodels.DeviceDefinitionTablelandModel{
+		ID:         tmpl.ID,
+		Model:      tmpl.Model,
+		Year:       tmpl.Year,
+		DeviceType: tmpl.DeviceType,
+		ImageURI:   tmpl.ImageURI,
+		Metadata:   &coremodels.DeviceDefinitionMetadata{DeviceAttributes: attrs},
+	}
+}
+
+// attributeString renders a typed attribute for the legacy string-valued shape.
+// strconv rather than fmt so 15.8 renders "15.8" and not "1.58e+01".
+func attributeString(v any) string {
+	switch t := v.(type) {
+	case string:
+		return t
+	case bool:
+		return strconv.FormatBool(t)
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	case int:
+		return strconv.Itoa(t)
+	default:
+		return fmt.Sprint(v)
+	}
 }
 
 func (e *deviceDefinitionCatalogService) GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error) {
@@ -405,64 +280,6 @@ func (e *deviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Contex
 		return nil, nil, err
 	}
 	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
-}
-
-func (e *deviceDefinitionCatalogService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID string, model string, year int, pageIndex, pageSize int32) ([]coremodels.DeviceDefinitionTablelandModel, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var manufTokenID *int64
-	if !manufacturerID.IsZero() {
-		v := manufacturerID.Big.Int(nil).Int64()
-		manufTokenID = &v
-	}
-	matches := make([]coremodels.DeviceDefinitionTablelandModel, 0)
-	for _, d := range m.Definitions {
-		if manufTokenID != nil && int64(d.Manufacturer.TokenID) != *manufTokenID {
-			continue
-		}
-		if ID != "" && d.ID != ID {
-			continue
-		}
-		if model != "" && !strings.EqualFold(d.Model, model) {
-			continue
-		}
-		if year > 0 && d.Year != year {
-			continue
-		}
-		matches = append(matches, d.DeviceDefinitionTablelandModel)
-	}
-	return paginate(matches, int(pageIndex), int(pageSize)), nil
-}
-
-func (e *deviceDefinitionCatalogService) QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID int, pageIndex int) ([]coremodels.DeviceDefinitionTablelandModel, error) {
-	m, err := e.manifest(ctx)
-	if err != nil {
-		return nil, err
-	}
-	matches := make([]coremodels.DeviceDefinitionTablelandModel, 0)
-	for _, d := range m.Definitions {
-		if d.Manufacturer.TokenID == manufacturerID {
-			matches = append(matches, d.DeviceDefinitionTablelandModel)
-		}
-	}
-	return paginate(matches, pageIndex, CatalogPageSize), nil
-}
-
-func paginate(items []coremodels.DeviceDefinitionTablelandModel, pageIndex, pageSize int) []coremodels.DeviceDefinitionTablelandModel {
-	if pageSize <= 0 {
-		pageSize = CatalogPageSize
-	}
-	start := pageIndex * pageSize
-	if start >= len(items) {
-		return []coremodels.DeviceDefinitionTablelandModel{}
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-	return items[start:end]
 }
 
 // workerRequest sends an authenticated request to the definitions-worker.
@@ -505,38 +322,157 @@ func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, meth
 	return true, nil
 }
 
-type workerPutBody struct {
-	ID         string                               `json:"id"`
-	Model      string                               `json:"model"`
-	Year       int                                  `json:"year"`
-	DeviceType string                               `json:"devicetype,omitempty"`
-	ImageURI   string                               `json:"imageuri,omitempty"`
-	Metadata   *coremodels.DeviceDefinitionMetadata `json:"metadata,omitempty"`
-	KSUID      string                               `json:"ksuid,omitempty"`
+// templatePutBody is Template minus the fields definitions-worker owns.
+// Marshalling coremodels.Template directly would send "version": 0, and the
+// worker rejects a client-supplied version, createdAt, updatedAt or author by
+// name rather than stripping it -- a writer that thinks it set them and was
+// quietly overruled has learned nothing.
+type templatePutBody struct {
+	ID                 string                          `json:"id"`
+	DeviceType         string                          `json:"deviceType"`
+	Manufacturer       coremodels.TemplateManufacturer `json:"manufacturer"`
+	Model              string                          `json:"model"`
+	Year               int                             `json:"year"`
+	ImageURI           string                          `json:"imageURI,omitempty"`
+	HardwareTemplateID string                          `json:"hardwareTemplateId,omitempty"`
+	Attributes         map[string]any                  `json:"attributes"`
+	Trims              []templatePutTrim               `json:"trims"`
+}
+
+// templatePutTrim omits Selectors when empty. coremodels.Trim marshals them
+// unconditionally, and a single-trim template has nothing to select on.
+type templatePutTrim struct {
+	Name               string                    `json:"name"`
+	Selectors          *coremodels.TrimSelectors `json:"selectors,omitempty"`
+	HardwareTemplateID string                    `json:"hardwareTemplateId,omitempty"`
+	Attributes         map[string]any            `json:"attributes"`
+}
+
+// defaultTrimName matches the extraction pipeline's fallback
+// (definitions-worker/scripts/extract/trims.mjs): a model-year sold in one
+// configuration still has a trim, because the schema has no other shape for it.
+const defaultTrimName = "Base"
+
+const (
+	vocabularyCacheKey = "device_type_vocabulary"
+	// The worker serves /schema with max-age=300, so holding it longer than
+	// that would show a contributor a vocabulary the validator has stopped
+	// using.
+	vocabularyCacheTTL = 5 * time.Minute
+)
+
+// vocabulary fetches the DeviceType the template's attributes are validated
+// against. It is read from the worker rather than vendored: a stale local copy
+// would fold values the validator rejects, and the mismatch would only appear
+// as a failed write.
+func (e *deviceDefinitionCatalogService) vocabulary(ctx context.Context, deviceType string) (*vocabulary.DeviceType, error) {
+	key := vocabularyCacheKey + ":" + deviceType
+	if v, ok := e.memCache.Get(key); ok {
+		return v.(*vocabulary.DeviceType), nil
+	}
+	base := e.settings.DefinitionsWorkerURL
+	if base == "" {
+		base = e.settings.DefinitionsCatalogURL
+	}
+	reqURL := strings.TrimSuffix(base, "/") + "/schema/device-type-" + url.PathEscape(deviceType) + ".json"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := e.httpClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch the %s vocabulary", deviceType)
+	}
+	defer resp.Body.Close() //nolint:errcheck
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("catalog returned %d for the %s vocabulary", resp.StatusCode, deviceType)
+	}
+	var vocab vocabulary.DeviceType
+	if err := json.NewDecoder(resp.Body).Decode(&vocab); err != nil {
+		return nil, errors.Wrapf(err, "failed to decode the %s vocabulary", deviceType)
+	}
+	e.memCache.Set(key, &vocab, vocabularyCacheTTL)
+	return &vocab, nil
+}
+
+// templateFromDefinition builds the template for a definition that does not
+// exist yet, folding dd.Metadata onto the DeviceType vocabulary.
+//
+// A vocabulary that cannot be fetched is an error, not a reason to write fewer
+// attributes: silently storing less because a fetch failed is indistinguishable
+// afterwards from the source not having carried the value.
+//
+// Attributes go on the template rather than the trim. There is exactly one
+// trim, so every attribute is shared by all of them, and the contract requires
+// an attribute to be in one place or the other and never both.
+func (e *deviceDefinitionCatalogService) templateFromDefinition(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (templatePutBody, []vocabulary.DroppedAttribute, error) {
+	slug := dd.ID
+	if i := strings.Index(dd.ID, "_"); i > 0 {
+		slug = dd.ID[:i]
+	}
+	manufacturer := coremodels.TemplateManufacturer{Slug: slug, Name: manufacturerName}
+	// Best effort: tokenId is optional in the contract precisely so that a
+	// template can be created for a brand with no on-chain storage yet.
+	if m, err := e.GetManufacturer(slug); err == nil && m != nil {
+		manufacturer.TokenID = m.TokenID
+		if manufacturer.Name == "" {
+			manufacturer.Name = m.Name
+		}
+	}
+	deviceType := dd.DeviceType
+	if deviceType == "" {
+		deviceType = common.DefaultDeviceType
+	}
+
+	vocab, err := e.vocabulary(ctx, deviceType)
+	if err != nil {
+		return templatePutBody{}, nil, err
+	}
+	raw := map[string]string{}
+	if dd.Metadata != nil {
+		for _, a := range dd.Metadata.DeviceAttributes {
+			raw[a.Name] = a.Value
+		}
+	}
+	attributes, dropped := vocabulary.MapAttributes(raw, vocab)
+
+	return templatePutBody{
+		ID:           dd.ID,
+		DeviceType:   deviceType,
+		Manufacturer: manufacturer,
+		Model:        dd.Model,
+		Year:         dd.Year,
+		ImageURI:     dd.ImageURI,
+		Attributes:   attributes,
+		Trims:        []templatePutTrim{{Name: defaultTrimName, Attributes: map[string]any{}}},
+	}, dropped, nil
 }
 
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
 	// The worker PUT is an upsert; preserve the old create semantics so a
-	// create can never silently overwrite a curated definition. Fresh read so
-	// a stale CDN 404 can't slip through.
-	existing, err := e.fetchDocFresh(ctx, dd.ID)
+	// create can never silently overwrite a curated template. Fresh read so a
+	// stale CDN 404 can't slip through. Only ErrTemplateNotFound means "does
+	// not exist" -- every other error must abort, or a catalog outage reads as
+	// a green light to create a duplicate.
+	_, _, err := e.GetTemplateByIDFresh(ctx, dd.ID)
+	if err == nil {
+		return nil, fmt.Errorf("cannot create device definition, already exists: %s", dd.ID)
+	}
+	if !errors.Is(err, ErrTemplateNotFound) {
+		return nil, err
+	}
+	body, dropped, err := e.templateFromDefinition(ctx, manufacturerName, dd)
 	if err != nil {
 		return nil, err
 	}
-	if existing != nil {
-		return nil, fmt.Errorf("cannot create device definition, already exists: %s", dd.ID)
+	// Report what was read and not carried, not only what failed to parse. A
+	// value dropped without a trace is the defect class this migration keeps
+	// producing.
+	for _, d := range dropped {
+		e.logger.Info().Msgf("catalog create %s: dropped %s", dd.ID, d)
 	}
-	_, err = e.workerRequest(ctx, http.MethodPut, "/definitions/"+url.PathEscape(dd.ID), workerPutBody{
-		ID:         dd.ID,
-		Model:      dd.Model,
-		Year:       dd.Year,
-		DeviceType: dd.DeviceType,
-		ImageURI:   dd.ImageURI,
-		Metadata:   dd.Metadata,
-		KSUID:      dd.KSUID,
-	})
-	if err != nil {
+	if _, err := e.workerRequest(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body); err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)
@@ -545,7 +481,7 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {
 	e.logger.Info().Msgf("catalog delete for device definition %s (manufacturer %s)", id, manufacturerName)
-	if _, err := e.workerRequest(ctx, http.MethodDelete, "/definitions/"+url.PathEscape(id), nil); err != nil {
+	if _, err := e.workerRequest(ctx, http.MethodDelete, "/t/"+url.PathEscape(id), nil); err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)

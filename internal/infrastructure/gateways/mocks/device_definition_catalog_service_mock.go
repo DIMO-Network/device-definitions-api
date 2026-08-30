@@ -15,7 +15,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/DIMO-Network/device-definitions-api/internal/core/models"
-	types "github.com/aarondl/sqlboiler/v4/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,21 +40,6 @@ func NewMockDeviceDefinitionCatalogService(ctrl *gomock.Controller) *MockDeviceD
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDeviceDefinitionCatalogService) EXPECT() *MockDeviceDefinitionCatalogServiceMockRecorder {
 	return m.recorder
-}
-
-// CatalogIDs mocks base method.
-func (m *MockDeviceDefinitionCatalogService) CatalogIDs(ctx context.Context) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CatalogIDs", ctx)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CatalogIDs indicates an expected call of CatalogIDs.
-func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) CatalogIDs(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogIDs", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).CatalogIDs), ctx)
 }
 
 // Create mocks base method.
@@ -118,21 +102,6 @@ func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetDeviceDefinitionByI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitionByID", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetDeviceDefinitionByID), ctx, manufacturerID, ID)
 }
 
-// GetDeviceDefinitions mocks base method.
-func (m *MockDeviceDefinitionCatalogService) GetDeviceDefinitions(ctx context.Context, manufacturerID types.NullDecimal, ID, model string, year int, pageIndex, pageSize int32) ([]models.DeviceDefinitionTablelandModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDeviceDefinitions", ctx, manufacturerID, ID, model, year, pageIndex, pageSize)
-	ret0, _ := ret[0].([]models.DeviceDefinitionTablelandModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDeviceDefinitions indicates an expected call of GetDeviceDefinitions.
-func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetDeviceDefinitions(ctx, manufacturerID, ID, model, year, pageIndex, pageSize any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeviceDefinitions", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetDeviceDefinitions), ctx, manufacturerID, ID, model, year, pageIndex, pageSize)
-}
-
 // GetManufacturer mocks base method.
 func (m *MockDeviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string) (*models.Manufacturer, error) {
 	m.ctrl.T.Helper()
@@ -193,33 +162,4 @@ func (m *MockDeviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Co
 func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) GetTemplateByIDFresh(ctx, ID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTemplateByIDFresh", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).GetTemplateByIDFresh), ctx, ID)
-}
-
-// PinCatalogSnapshot mocks base method.
-func (m *MockDeviceDefinitionCatalogService) PinCatalogSnapshot(ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PinCatalogSnapshot", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PinCatalogSnapshot indicates an expected call of PinCatalogSnapshot.
-func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) PinCatalogSnapshot(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PinCatalogSnapshot", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).PinCatalogSnapshot), ctx)
-}
-
-// QueryDefinitionsByManufacturer mocks base method.
-func (m *MockDeviceDefinitionCatalogService) QueryDefinitionsByManufacturer(ctx context.Context, manufacturerID, pageIndex int) ([]models.DeviceDefinitionTablelandModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryDefinitionsByManufacturer", ctx, manufacturerID, pageIndex)
-	ret0, _ := ret[0].([]models.DeviceDefinitionTablelandModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// QueryDefinitionsByManufacturer indicates an expected call of QueryDefinitionsByManufacturer.
-func (mr *MockDeviceDefinitionCatalogServiceMockRecorder) QueryDefinitionsByManufacturer(ctx, manufacturerID, pageIndex any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryDefinitionsByManufacturer", reflect.TypeOf((*MockDeviceDefinitionCatalogService)(nil).QueryDefinitionsByManufacturer), ctx, manufacturerID, pageIndex)
 }
