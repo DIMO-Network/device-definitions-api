@@ -9,7 +9,6 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/aarondl/null/v8"
 )
@@ -44,17 +43,6 @@ func BuildExternalIDs(externalIDsJSON null.JSON) []*coremodels.ExternalID {
 		}
 	}
 	return externalIDs
-}
-
-func ExternalIDsToGRPC(externalIDs []*coremodels.ExternalID) []*grpc.ExternalID {
-	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIDs))
-	for i, ei := range externalIDs {
-		externalIDsGRPC[i] = &grpc.ExternalID{
-			Vendor: ei.Vendor,
-			Id:     ei.ID,
-		}
-	}
-	return externalIDsGRPC
 }
 
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic

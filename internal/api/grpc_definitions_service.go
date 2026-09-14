@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/commands"
@@ -25,23 +23,6 @@ type GrpcDefinitionsService struct {
 
 func NewGrpcService(mediator mediator.Mediator, logger *zerolog.Logger, dbs func() *db.ReaderWriter) p_grpc.DeviceDefinitionServiceServer {
 	return &GrpcDefinitionsService{Mediator: mediator, logger: logger, dbs: dbs()}
-}
-
-//** Device Definitions
-// Definition create/update/list moved to the definitions-worker (R2 catalog)
-// and the public identity-api / catalog endpoints. The RPCs remain registered
-// for wire compatibility but are no longer implemented.
-
-func (s *GrpcDefinitionsService) GetFilteredDeviceDefinition(_ context.Context, _ *p_grpc.FilterDeviceDefinitionRequest) (*p_grpc.GetFilteredDeviceDefinitionsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "device definition reads moved to identity-api and the definitions catalog")
-}
-
-func (s *GrpcDefinitionsService) CreateDeviceDefinition(_ context.Context, _ *p_grpc.CreateDeviceDefinitionRequest) (*p_grpc.CreateDeviceDefinitionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "device definition writes moved to the definitions-worker")
-}
-
-func (s *GrpcDefinitionsService) UpdateDeviceDefinition(_ context.Context, _ *p_grpc.UpdateDeviceDefinitionRequest) (*p_grpc.BaseResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "device definition writes moved to the definitions-worker")
 }
 
 //** Integrations
