@@ -163,6 +163,36 @@ func TestGetTemplateByID500IsNotErrTemplateNotFound(t *testing.T) {
 	assert.NotErrorIs(t, err, ErrTemplateNotFound)
 }
 
+// manufacturer.tokenId is optional in the worker's schema (minimum 1 when
+// present). Reporting an absent one as token id 0 sent UpsertDecoding to look
+// up manufacturer 0, and made addvin reject a template that exists because 0
+// never equals the caller's manufacturer.
+const templateWithoutTokenIDJSON = `{
+  "id": "toyota_camry_2026",
+  "deviceType": "vehicle",
+  "manufacturer": {"slug": "toyota", "name": "Toyota"},
+  "model": "Camry",
+  "year": 2026,
+  "attributes": {"number_of_doors": 4},
+  "trims": [{"name": "Base", "attributes": {}}],
+  "version": 1
+}`
+
+func TestGetTemplateByIDReportsAnAbsentTokenIDAsUnknown(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(templateWithoutTokenIDJSON))
+	}))
+	defer srv.Close()
+
+	logger := zerolog.Nop()
+	svc := NewDeviceDefinitionCatalogService(&config.Settings{DefinitionsCatalogURL: srv.URL}, &logger)
+
+	tmpl, tokenID, err := svc.GetTemplateByID(context.Background(), "toyota_camry_2026")
+	require.NoError(t, err)
+	require.NotNil(t, tmpl)
+	assert.Nil(t, tokenID, "an absent tokenId is unknown, not manufacturer 0")
+}
+
 // GetTemplateByIDFresh shares fetchTemplateDocFrom with GetTemplateByID, so
 // the no-fallback guarantee holds for it by inspection -- but this proves it
 // for the worker-backed path itself rather than leaving it proven for only
@@ -197,6 +227,11 @@ func newCreateStub(t *testing.T, existing func(w http.ResponseWriter)) (*httptes
 	var body map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.Method+" "+r.URL.Path)
+		if r.Method == http.MethodPost {
+			// identity-api's GraphQL endpoint; createSvc points identity here.
+			_, _ = w.Write([]byte(identityToyotaJSON))
+			return
+		}
 		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/schema/") {
 			_, _ = w.Write([]byte(vocabularyJSON))
 			return
@@ -217,8 +252,8 @@ func newCreateStub(t *testing.T, existing func(w http.ResponseWriter)) (*httptes
 
 func createSvc(srv *httptest.Server) DeviceDefinitionCatalogService {
 	logger := zerolog.Nop()
-	// identity points at the stub too: the manufacturer tokenId lookup is best
-	// effort, and left unset it spends the http client's full timeout failing.
+	// identity points at the stub too: Create resolves the manufacturer there
+	// before it writes anything.
 	identity, err := url.Parse(srv.URL)
 	if err != nil {
 		panic(err)
@@ -241,6 +276,9 @@ const vocabularyJSON = `{
     {"name": "fuel_tank_capacity_gal", "type": "number", "minimum": 0, "maximum": 100}
   ]
 }`
+
+// What identity-api answers for a minted make.
+const identityToyotaJSON = `{"data":{"manufacturer":{"tokenId":131,"name":"Toyota","tableId":0,"owner":"0x0000000000000000000000000000000000000000"}}}`
 
 var newDefinition = coremodels.DeviceDefinitionTablelandModel{
 	ID:         "toyota_camry_2020",
@@ -271,7 +309,9 @@ func TestCreateWritesATemplate(t *testing.T) {
 	assert.Equal(t, "vehicle", (*body)["deviceType"])
 	assert.Equal(t, "Camry", (*body)["model"])
 	assert.Equal(t, float64(2020), (*body)["year"])
-	assert.Equal(t, map[string]any{"slug": "toyota", "name": "Toyota"}, (*body)["manufacturer"])
+	// tokenId is optional in the schema, but a create must never omit it:
+	// UpsertDecoding and addvin both resolve the template through it.
+	assert.Equal(t, map[string]any{"slug": "toyota", "name": "Toyota", "tokenId": float64(131)}, (*body)["manufacturer"])
 	// ksuid is gone from the contract; it must not ride along in any form.
 	assert.NotContains(t, *body, "ksuid")
 
@@ -385,6 +425,11 @@ func TestCreateAbortsWhenTheVocabularyIsUnavailable(t *testing.T) {
 	paths := []string{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paths = append(paths, r.Method+" "+r.URL.Path)
+		if r.Method == http.MethodPost {
+			// identity resolves the make, so the vocabulary is what fails.
+			_, _ = w.Write([]byte(identityToyotaJSON))
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/schema/") {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -402,6 +447,40 @@ func TestCreateAbortsWhenTheVocabularyIsUnavailable(t *testing.T) {
 	assert.Nil(t, id)
 	for _, p := range paths {
 		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p)
+	}
+}
+
+// The on-chain create this replaced refused a make identity could not resolve.
+// Writing the template without a tokenId instead produced definitions that
+// UpsertDecoding and addvin could not use, so nothing may be written at all.
+func TestCreateRefusesAManufacturerIdentityCannotResolve(t *testing.T) {
+	for name, identityAnswer := range map[string]string{
+		"not minted":  `{"data":{"manufacturer":null}}`,
+		"no token id": `{"data":{"manufacturer":{"tokenId":0,"name":"Toyota"}}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			puts := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case r.Method == http.MethodPost:
+					_, _ = w.Write([]byte(identityAnswer))
+				case r.Method == http.MethodPut:
+					puts++
+					w.WriteHeader(http.StatusOK)
+				case strings.HasPrefix(r.URL.Path, "/schema/"):
+					_, _ = w.Write([]byte(vocabularyJSON))
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer srv.Close()
+
+			id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrManufacturerUnresolved)
+			assert.Nil(t, id)
+			assert.Zero(t, puts, "nothing may be written for a manufacturer identity cannot resolve")
+		})
 	}
 }
 
@@ -448,6 +527,20 @@ func TestGetDeviceDefinitionByIDIsNilForAnotherManufacturer(t *testing.T) {
 	assert.Nil(t, dd, "a template owned by another manufacturer must not resolve")
 }
 
+// Ownership can only be compared when both sides are known. A template with no
+// tokenId belongs to no token, so it cannot belong to another manufacturer's.
+func TestGetDeviceDefinitionByIDResolvesATemplateWithoutATokenID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(templateWithoutTokenIDJSON))
+	}))
+	defer srv.Close()
+
+	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), big.NewInt(131), "toyota_camry_2026")
+	require.NoError(t, err)
+	require.NotNil(t, dd, "a template that exists must resolve for the manufacturer whose id it carries")
+	assert.Equal(t, "toyota_camry_2026", dd.ID)
+}
+
 func TestGetDeviceDefinitionByIDIsNilWhenMissing(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -470,4 +563,24 @@ func TestGetDeviceDefinitionByIDPropagatesCatalogFailures(t *testing.T) {
 	dd, err := createSvc(srv).GetDeviceDefinitionByID(context.Background(), nil, "toyota_camry_2020")
 	require.Error(t, err)
 	assert.Nil(t, dd)
+}
+
+// GetTemplateByID reports an absent tokenId as nil. A lookup handed that, or a
+// 0, must fail cleanly: not dereference nil, and not ask identity for a
+// manufacturer that cannot exist.
+func TestGetManufacturerNameByIDRejectsAnUnknownTokenID(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		_, _ = w.Write([]byte(`{"data":{"manufacturers":{"totalCount":1,"nodes":[{"tokenId":131,"name":"Toyota"}]}}}`))
+	}))
+	defer srv.Close()
+
+	svc := createSvc(srv)
+	for _, tokenID := range []*big.Int{big.NewInt(0), nil} {
+		name, err := svc.GetManufacturerNameByID(context.Background(), tokenID)
+		require.Error(t, err, "token id %v", tokenID)
+		assert.Empty(t, name)
+	}
+	assert.Zero(t, calls, "an unknown token id is not worth a round trip to identity")
 }

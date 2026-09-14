@@ -43,6 +43,14 @@ const (
 // caller respond to a 500 by creating a duplicate definition mid-outage.
 var ErrTemplateNotFound = errors.New("template not found in catalog")
 
+// ErrManufacturerUnresolved is returned by Create when identity-api cannot
+// resolve the definition's manufacturer to a minted token id, whether because
+// the make is not minted or because identity failed to answer. Nothing is
+// written. A template created without a tokenId cannot be used by
+// UpsertDecoding or addvin, and the on-chain create this replaced refused the
+// same case.
+var ErrManufacturerUnresolved = errors.New("manufacturer not resolved in identity")
+
 func countOutcome(method string, err error) {
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": method}).Inc()
@@ -62,8 +70,10 @@ type DeviceDefinitionCatalogService interface {
 	// GetDeviceDefinitionByID gets a definition by slug ID, requiring it to belong to the given manufacturer.
 	GetDeviceDefinitionByID(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
 	// GetTemplateByID reads the vehicle template for a slug ID from t/<id>.json
-	// and returns the manufacturer token id too. It does not fall back to the
-	// pre-migration definitions/<id>.json: a 404 here means the template
+	// and returns the manufacturer token id too. The token id is nil when the
+	// template carries none: tokenId is optional in the contract, and a caller
+	// must treat nil as unknown, never as manufacturer 0. It does not fall
+	// back to the pre-migration definitions/<id>.json: a 404 here means the template
 	// import has not run for this id, and that must fail loudly rather than
 	// silently serving the flat pre-migration record.
 	GetTemplateByID(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
@@ -168,6 +178,12 @@ func (e *deviceDefinitionCatalogService) GetManufacturer(manufacturerSlug string
 }
 
 func (e *deviceDefinitionCatalogService) GetManufacturerNameByID(_ context.Context, manufacturerID *big.Int) (string, error) {
+	// A template's tokenId is optional, so a caller can hold none. No
+	// manufacturer has a token id below 1: asking identity would only fail
+	// after a round trip, and a nil id would panic below.
+	if manufacturerID == nil || manufacturerID.Sign() <= 0 {
+		return "", fmt.Errorf("no manufacturer token id to look up: %v", manufacturerID)
+	}
 	byID := map[int]string{}
 	if v, ok := e.memCache.Get(manufacturersCached); ok {
 		byID = v.(map[int]string)
@@ -216,7 +232,9 @@ func (e *deviceDefinitionCatalogService) GetDeviceDefinitionByID(ctx context.Con
 		}
 		return nil, err
 	}
-	if manufacturerID != nil && tokenID.Int64() != manufacturerID.Int64() {
+	// Ownership is compared only when both sides are known. A template with no
+	// tokenId belongs to no token, so it cannot belong to another manufacturer's.
+	if manufacturerID != nil && tokenID != nil && tokenID.Int64() != manufacturerID.Int64() {
 		return nil, nil
 	}
 	return templateToDefinitionModel(tmpl), nil
@@ -271,7 +289,7 @@ func (e *deviceDefinitionCatalogService) GetTemplateByID(ctx context.Context, ID
 	if err != nil {
 		return nil, nil, err
 	}
-	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
+	return tmpl, manufacturerTokenID(tmpl), nil
 }
 
 func (e *deviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error) {
@@ -279,7 +297,19 @@ func (e *deviceDefinitionCatalogService) GetTemplateByIDFresh(ctx context.Contex
 	if err != nil {
 		return nil, nil, err
 	}
-	return tmpl, big.NewInt(int64(tmpl.Manufacturer.TokenID)), nil
+	return tmpl, manufacturerTokenID(tmpl), nil
+}
+
+// manufacturerTokenID is the template's manufacturer token id, or nil when the
+// template carries none. tokenId is optional in the contract and at least 1
+// when present, so the zero value can only mean absent. Reporting it as token
+// id 0 sent callers to look up, and compare against, a manufacturer that does
+// not exist.
+func manufacturerTokenID(tmpl *coremodels.Template) *big.Int {
+	if tmpl.Manufacturer.TokenID <= 0 {
+		return nil
+	}
+	return big.NewInt(int64(tmpl.Manufacturer.TokenID))
 }
 
 // workerRequest sends an authenticated request to the definitions-worker.
@@ -398,6 +428,10 @@ func (e *deviceDefinitionCatalogService) vocabulary(ctx context.Context, deviceT
 // templateFromDefinition builds the template for a definition that does not
 // exist yet, folding dd.Metadata onto the DeviceType vocabulary.
 //
+// The manufacturer is resolved through identity first, and a make identity
+// cannot resolve to a token id fails with ErrManufacturerUnresolved before
+// anything else is fetched or written.
+//
 // A vocabulary that cannot be fetched is an error, not a reason to write fewer
 // attributes: silently storing less because a fetch failed is indistinguishable
 // afterwards from the source not having carried the value.
@@ -410,14 +444,20 @@ func (e *deviceDefinitionCatalogService) templateFromDefinition(ctx context.Cont
 	if i := strings.Index(dd.ID, "_"); i > 0 {
 		slug = dd.ID[:i]
 	}
-	manufacturer := coremodels.TemplateManufacturer{Slug: slug, Name: manufacturerName}
-	// Best effort: tokenId is optional in the contract precisely so that a
-	// template can be created for a brand with no on-chain storage yet.
-	if m, err := e.GetManufacturer(slug); err == nil && m != nil {
-		manufacturer.TokenID = m.TokenID
-		if manufacturer.Name == "" {
-			manufacturer.Name = m.Name
-		}
+	// Not best effort. tokenId is optional in the contract, but a template
+	// written without one is unusable by UpsertDecoding and addvin, and best
+	// effort turned a single identity blip into a permanently tokenless
+	// template. The on-chain create this replaced refused the same case.
+	m, err := e.GetManufacturer(slug)
+	if err != nil {
+		return templatePutBody{}, nil, fmt.Errorf("%w: %s: %w", ErrManufacturerUnresolved, slug, err)
+	}
+	if m == nil || m.TokenID <= 0 {
+		return templatePutBody{}, nil, fmt.Errorf("%w: %s has no manufacturer token id", ErrManufacturerUnresolved, slug)
+	}
+	manufacturer := coremodels.TemplateManufacturer{Slug: slug, Name: manufacturerName, TokenID: m.TokenID}
+	if manufacturer.Name == "" {
+		manufacturer.Name = m.Name
 	}
 	deviceType := dd.DeviceType
 	if deviceType == "" {
