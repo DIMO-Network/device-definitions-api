@@ -155,3 +155,15 @@ func TestCreateOrAdoptTemplateFailsWhenTheWorkerRejectsTheTemplate(t *testing.T)
 	assert.Nil(t, tmpl)
 	assert.Zero(t, fw.templateGets)
 }
+
+// A catalog miss from one of these sources answers not found instead of
+// creating a template (#312). Pinning the set keeps a new provider from being
+// trusted, or an untrusted one from being dropped, without a decision.
+func TestIsLowConfidenceSourceGatesOnlyTheUntrustedDecoders(t *testing.T) {
+	for _, src := range []coremodels.DecodeProviderEnum{coremodels.Japan17VIN, coremodels.CarVXVIN, coremodels.AutoIsoProvider, coremodels.ElevaKaufmannProvider} {
+		assert.True(t, isLowConfidenceSource(src), "%s", src)
+	}
+	for _, src := range []coremodels.DecodeProviderEnum{"drivly", "vincario", "datgroup", "tesla", ""} {
+		assert.False(t, isLowConfidenceSource(src), "%q", src)
+	}
+}
