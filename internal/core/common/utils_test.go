@@ -5,6 +5,12 @@ import (
 	"regexp"
 	"testing"
 
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	stringutils "github.com/DIMO-Network/shared/pkg/strings"
@@ -201,7 +207,7 @@ func TestDeviceDefinitionSlugMatchesWorkerIDRegex(t *testing.T) {
 		// Characters the worker accepts survive.
 		{make: "Dodge", model: "Town & Country", year: 2012, want: "dodge_town-&-country_2012"},
 		{make: "Mercedes-Benz", model: "GLE 450+", year: 2024, want: "mercedes-benz_gle-450+_2024"},
-		// Stripping must not leave a run of dashes or a dangling one.
+		// A stripped character leaves its neighbours as they were.
 		{make: "Kia", model: "Soul !EV!", year: 2020, want: "kia_soul-ev_2020"},
 	}
 	for _, tt := range tests {
@@ -219,4 +225,109 @@ func TestDeviceDefinitionSlugMatchesWorkerIDRegex(t *testing.T) {
 			assert.Regexp(t, workerIDRegex, raw)
 		})
 	}
+}
+
+// legacyDeviceDefinitionSlug is DeviceDefinitionSlug as it was before ids were
+// checked against the worker. Every id it builds that the worker accepts must
+// come out of DeviceDefinitionSlug unchanged, or new decodes of that model stop
+// finding their template and create a duplicate.
+func legacyDeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
+	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
+	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
+	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
+	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
+}
+
+func TestDeviceDefinitionSlugKeepsIDsTheWorkerAccepts(t *testing.T) {
+	// Live catalog ids whose model slug carries a dash run or a trailing dash.
+	tests := []struct {
+		make  string
+		model string
+		year  int16
+	}{
+		{"volkswagen", "id--buzz", 2024},
+		{"volkswagen", "id--buzz-cargo", 2025},
+		{"ford", "ranger---ra", 2022},
+		{"bmw", "x3-", 2026},
+	}
+	for _, tt := range tests {
+		want := fmt.Sprintf("%s_%s_%d", tt.make, tt.model, tt.year)
+		t.Run(want, func(t *testing.T) {
+			assert.Equal(t, want, DeviceDefinitionSlug(tt.make, tt.model, tt.year))
+		})
+	}
+	// The decode path slugs "ID. Buzz" to id--buzz; the raw cmd path must agree.
+	assert.Equal(t, "volkswagen_id--buzz_2024", DeviceDefinitionSlug(stringutils.SlugString("Volkswagen"), stringutils.SlugString("ID. Buzz"), 2024))
+	assert.Equal(t, "volkswagen_id--buzz_2024", DeviceDefinitionSlug("Volkswagen", "ID. Buzz", 2024))
+}
+
+// TestDeviceDefinitionSlugAgainstManifest replays every id in a definitions
+// manifest through DeviceDefinitionSlug. Run it with
+// DEFINITIONS_MANIFEST=path/to/manifest.json (for example a download of
+// https://definitions.dimo.org/manifest.json). An id the legacy builder
+// produces and the worker accepts must be unchanged; one the worker refuses
+// must be repaired into one it accepts.
+func TestDeviceDefinitionSlugAgainstManifest(t *testing.T) {
+	path := os.Getenv("DEFINITIONS_MANIFEST")
+	if path == "" {
+		t.Skip("DEFINITIONS_MANIFEST not set")
+	}
+	raw, err := os.ReadFile(path)
+	require.NoError(t, err)
+	ids := manifestIDs(t, raw)
+	require.NotEmpty(t, ids)
+
+	var checked, unchanged, repaired int
+	for _, id := range ids {
+		first, last := strings.Index(id, "_"), strings.LastIndex(id, "_")
+		if first <= 0 || last <= first {
+			continue
+		}
+		year, err := strconv.Atoi(id[last+1:])
+		if err != nil {
+			continue
+		}
+		mk, model := id[:first], id[first+1:last]
+		legacy := legacyDeviceDefinitionSlug(mk, model, int16(year))
+		got := DeviceDefinitionSlug(mk, model, int16(year))
+		checked++
+		if workerIDRegex.MatchString(legacy) {
+			if assert.Equal(t, legacy, got, "an id the worker accepts changed: %s", id) {
+				unchanged++
+			}
+			continue
+		}
+		if assert.Regexp(t, workerIDRegex, got, "a refused id was not repaired: %s", id) {
+			repaired++
+		}
+	}
+	t.Logf("manifest ids=%d checked=%d unchanged=%d repaired=%d", len(ids), checked, unchanged, repaired)
+}
+
+// manifestIDs reads the definition ids from a manifest whose definitions are
+// either a list of objects with an id or an object keyed by id.
+func manifestIDs(t *testing.T, raw []byte) []string {
+	var doc struct {
+		Definitions json.RawMessage `json:"definitions"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	var list []struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(doc.Definitions, &list); err == nil {
+		ids := make([]string, 0, len(list))
+		for _, d := range list {
+			if d.ID != "" {
+				ids = append(ids, d.ID)
+			}
+		}
+		return ids
+	}
+	var byID map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(doc.Definitions, &byID))
+	ids := make([]string, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+	return ids
 }

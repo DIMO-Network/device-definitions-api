@@ -301,31 +301,37 @@ func BuildDeviceDefinitionName(year int16, mk string, model string) string {
 // fails identically on every retry. So the id must never carry a character the
 // worker rejects. DeviceDefinitionSlug is the one place every id is built.
 var (
+	workerIDValid      = regexp.MustCompile(`^[a-z0-9][a-z0-9._&+-]*_[a-z0-9._&+-]+_[0-9]{4}$`)
 	workerIDDisallowed = regexp.MustCompile(`[^a-z0-9._&+-]`)
-	workerIDDashRuns   = regexp.MustCompile(`-{2,}`)
 )
 
-// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id. Both
-// parts are reduced to what the worker's id regex accepts.
+// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id.
+//
+// An id the worker already accepts is returned exactly as it has always been
+// built. The catalog holds ids like volkswagen_id--buzz_2024 (model "ID. Buzz"
+// slugs to id--buzz) and bmw_x3-_2026, and reshaping those would point every
+// new decode of that model at an id with no template, which the decode then
+// creates as a duplicate. Only an id the worker would refuse is repaired: each
+// part is slugged, which also covers cmd/device-definitions-api passing the
+// make and model raw, and stripped of every character outside the worker's
+// class. Nothing else changes, so the raw and slugged inputs for one model
+// still agree. An underscore can never survive inside a part: it is the
+// separator, and templateFromDefinition reads the manufacturer slug back as
+// everything before the first one.
 func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
+	if id := fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year); workerIDValid.MatchString(id) {
+		return id
+	}
 	return fmt.Sprintf("%s_%s_%d", workerIDPart(makeSlug), workerIDPart(modelSlugCleaned), year)
 }
 
-// workerIDPart reduces one id part to the worker's character class. The decode
-// path passes SlugString output already, and SlugString is idempotent on it;
-// cmd/device-definitions-api passes the decoded make and model raw, and
-// slugging here lowercases and dashes the whitespace for that path too. An
-// underscore can never appear inside a part: it is the separator, and
-// templateFromDefinition reads the manufacturer slug back as everything before
-// the first one.
+// workerIDPart repairs one part of an id the worker would refuse: slug it, then
+// drop every character outside the worker's class.
 func workerIDPart(part string) string {
-	part = stringutils.SlugString(part)
-	part = workerIDDisallowed.ReplaceAllString(part, "")
-	part = workerIDDashRuns.ReplaceAllString(part, "-")
-	return strings.Trim(part, "-")
+	return workerIDDisallowed.ReplaceAllString(stringutils.SlugString(part), "")
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {
