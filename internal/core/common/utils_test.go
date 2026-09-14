@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+	"math"
 )
 
 func TestBuildExternalIds(t *testing.T) {
@@ -330,4 +331,74 @@ func manifestIDs(t *testing.T, raw []byte) []string {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// manifestDefinition is one catalog definition as the manifest carries it: the
+// stored id, and the manufacturer name, model and year a decode builds it from.
+type manifestDefinition struct {
+	ID           string `json:"id"`
+	Manufacturer struct {
+		Name string `json:"name"`
+	} `json:"manufacturer"`
+	Model string `json:"model"`
+	Year  int    `json:"year"`
+}
+
+func manifestDefinitions(t *testing.T, raw []byte) []manifestDefinition {
+	var doc struct {
+		Definitions []manifestDefinition `json:"definitions"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	return doc.Definitions
+}
+
+// TestDeviceDefinitionSlugAgainstManifestNames builds every definition's id
+// from its real manufacturer name and model, the inputs a decode starts from,
+// through both call shapes: slugged first, as the decode path passes them, and
+// raw, as cmd/device-definitions-api does. The shapes must agree, an id the
+// legacy builder produced that the worker accepts must be unchanged, and a
+// refused one must be repaired into one the worker accepts. Feeding a stored
+// id's own parts back in cannot show this: the legacy builder returns most of
+// those unchanged by construction. Run with DEFINITIONS_MANIFEST as above.
+func TestDeviceDefinitionSlugAgainstManifestNames(t *testing.T) {
+	path := os.Getenv("DEFINITIONS_MANIFEST")
+	if path == "" {
+		t.Skip("DEFINITIONS_MANIFEST not set")
+	}
+	raw, err := os.ReadFile(path)
+	require.NoError(t, err)
+	defs := manifestDefinitions(t, raw)
+	require.NotEmpty(t, defs)
+
+	var checked, agree, unchanged, repaired, newRebuildsStored, legacyRebuildsStored int
+	for _, d := range defs {
+		name := d.Manufacturer.Name
+		if name == "" || d.Model == "" || d.Year <= 0 || d.Year > math.MaxInt16 {
+			continue
+		}
+		year := int16(d.Year)
+		mk, model := stringutils.SlugString(name), stringutils.SlugString(d.Model)
+		legacy := legacyDeviceDefinitionSlug(mk, model, year)
+		slugged := DeviceDefinitionSlug(mk, model, year)
+		rawID := DeviceDefinitionSlug(name, d.Model, year)
+		checked++
+		if assert.Equal(t, slugged, rawID, "raw and slugged inputs disagree for %s (%q %q)", d.ID, name, d.Model) {
+			agree++
+		}
+		if workerIDRegex.MatchString(legacy) {
+			if assert.Equal(t, legacy, slugged, "an id the worker accepts changed for %s (%q %q)", d.ID, name, d.Model) {
+				unchanged++
+			}
+		} else if assert.Regexp(t, workerIDRegex, slugged, "a refused id was not repaired for %s (%q %q)", d.ID, name, d.Model) {
+			repaired++
+		}
+		if slugged == d.ID {
+			newRebuildsStored++
+		}
+		if legacy == d.ID {
+			legacyRebuildsStored++
+		}
+	}
+	t.Logf("definitions=%d checked=%d raw-agrees=%d valid-unchanged=%d repaired=%d rebuilds-stored-id new=%d legacy=%d",
+		len(defs), checked, agree, unchanged, repaired, newRebuildsStored, legacyRebuildsStored)
 }
