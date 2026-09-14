@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 
+	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
 	"github.com/typesense/typesense-go/typesense/api"
@@ -88,7 +89,7 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 			// device_definition_id. The field stays on the wire for
 			// compatibility and carries the slug id, the only id there is.
 			DeviceDefinitionID: id,
-			Name:               docString(doc, "name"),
+			Name:               definitionName(doc),
 			Make:               docString(doc, "make"),
 			Model:              docString(doc, "model"),
 			Year:               docInt(doc, "year"),
@@ -97,6 +98,9 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 		deviceDefinitions = append(deviceDefinitions, item)
 	}
 
+	// Facet counts are per document and the index holds one document per
+	// trim, so each count is trims, not definitions: Typesense does not count
+	// groups.
 	var makes []GetAllDeviceDefinitionFacetItem
 	var models []GetAllDeviceDefinitionFacetItem
 	var years []GetAllDeviceDefinitionFacetItem
@@ -209,4 +213,17 @@ func docInt(doc map[string]interface{}, key string) int {
 		return v
 	}
 	return 0
+}
+
+// definitionName is the definition-level display name. Each document in the
+// index is a trim and its name carries the trim ("2020 Toyota Camry LE"), but
+// this endpoint answers one item per definition and ranking decides which
+// trim's document leads the group. It is built the way definitions were always
+// named, falling back to the document's name when a part is missing.
+func definitionName(doc map[string]interface{}) string {
+	year, mk, model := docInt(doc, "year"), docString(doc, "make"), docString(doc, "model")
+	if year == 0 || mk == "" || model == "" {
+		return docString(doc, "name")
+	}
+	return common.BuildDeviceDefinitionName(int16(year), mk, model)
 }

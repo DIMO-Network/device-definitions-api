@@ -25,8 +25,9 @@ func searchResultFromJSON(t *testing.T, body string) *api.SearchResult {
 
 // The definitions-worker indexes ONE DOCUMENT PER TRIM with the fields below.
 // There is no device_definition_id (legacy ksuids are gone) and image_url may
-// be empty. A grouped search on definition_id returns each definition once,
-// with its top trim document as the group's first hit.
+// be empty, and each document's name carries its trim. A grouped search on
+// definition_id returns each definition once, with its top trim document as the
+// group's first hit.
 const workerGroupedSearchJSON = `{
   "found": 2,
   "found_docs": 3,
@@ -43,10 +44,10 @@ const workerGroupedSearchJSON = `{
       "found": 2,
       "hits": [
         {"document": {"id": "toyota_camry_2020#LE", "definition_id": "toyota_camry_2020", "trim": "LE",
-                      "name": "2020 Toyota Camry", "make": "Toyota", "make_slug": "toyota", "make_token_id": 131,
+                      "name": "2020 Toyota Camry LE", "make": "Toyota", "make_slug": "toyota", "make_token_id": 131,
                       "model": "Camry", "model_slug": "camry", "year": 2020, "image_url": "", "score": 10}},
         {"document": {"id": "toyota_camry_2020#Hybrid LE", "definition_id": "toyota_camry_2020", "trim": "Hybrid LE",
-                      "name": "2020 Toyota Camry", "make": "Toyota", "make_slug": "toyota", "make_token_id": 131,
+                      "name": "2020 Toyota Camry Hybrid LE", "make": "Toyota", "make_slug": "toyota", "make_token_id": 131,
                       "model": "Camry", "model_slug": "camry", "year": 2020, "image_url": "", "score": 9}}
       ]
     },
@@ -55,7 +56,7 @@ const workerGroupedSearchJSON = `{
       "found": 1,
       "hits": [
         {"document": {"id": "ford_f-150_2021#XLT", "definition_id": "ford_f-150_2021", "trim": "XLT",
-                      "name": "2021 Ford F-150", "make": "Ford", "make_slug": "ford", "make_token_id": 46,
+                      "name": "2021 Ford F-150 XLT", "make": "Ford", "make_slug": "ford", "make_token_id": 46,
                       "model": "F-150", "model_slug": "f-150", "year": 2021, "image_url": "https://img/f150.png", "score": 8}}
       ]
     }
