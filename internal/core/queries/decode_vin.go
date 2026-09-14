@@ -264,9 +264,20 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		resp.Powertrain = pt
 	}
 
-	// Not in the catalog yet, so create it. Create is create-only: if another
-	// writer stored the template after the read above, the decode continues
-	// with their template instead of overwriting it.
+	// Not in the catalog yet. A low-confidence decoder is not trusted to name a
+	// new template: the Japanese chassis decoders have returned body-style codes
+	// such as "4D" as the model, which became garbage definitions like
+	// toyota_4d_2017. Answer not found instead, so the client falls back to the
+	// manual make/model/year picker.
+	if tblDef == nil && isLowConfidenceSource(vinInfo.Source) {
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		localLog.Warn().Str("decode_source", string(vinInfo.Source)).Msg("low-confidence decode and catalog miss; returning not found so the client opens the manual picker")
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition %s is not in the catalog and decode source %s is low-confidence; manual selection required", tid, vinInfo.Source)}
+	}
+
+	// Every other source creates it. Create is create-only: if another writer
+	// stored the template after the read above, the decode continues with their
+	// template instead of overwriting it.
 	if tblDef == nil {
 		// if any images were added above, they will be in the database
 		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
@@ -681,4 +692,18 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 	}
 
 	return nil
+}
+
+// isLowConfidenceSource returns true for decode providers whose output has historically
+// produced bad device definitions (e.g., Japanese chassis decoders returning body-style
+// codes as model names). For these sources a decode refuses to create a template on a
+// catalog miss and surfaces a NotFoundError so the client can fall back to manual
+// make/model/year selection. High-confidence Western providers (Drivly, Vincario, DATGroup,
+// Tesla) keep creating the template.
+func isLowConfidenceSource(src coremodels.DecodeProviderEnum) bool {
+	switch src {
+	case coremodels.Japan17VIN, coremodels.CarVXVIN, coremodels.AutoIsoProvider, coremodels.ElevaKaufmannProvider:
+		return true
+	}
+	return false
 }
