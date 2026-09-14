@@ -2,10 +2,12 @@ package common
 
 import (
 	_ "embed"
+	"regexp"
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/aarondl/null/v8"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
@@ -174,6 +176,47 @@ func TestDeviceDefinitionSlug(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.makeSlug+""+tt.modelSlug, func(t *testing.T) {
 			assert.Equalf(t, tt.want, DeviceDefinitionSlug(tt.makeSlug, tt.modelSlug, tt.year), "SlugString(%v)", tt.makeSlug)
+		})
+	}
+}
+
+// workerIDRegex mirrors definitions-worker/src/template.ts ID_RE. The worker
+// answers 422 for any id outside it, and dd-api has no other way to learn
+// that: a decode that builds such an id fails on every retry, forever.
+var workerIDRegex = regexp.MustCompile(`^[a-z0-9][a-z0-9._&+-]*_[a-z0-9._&+-]+_[0-9]{4}$`)
+
+func TestDeviceDefinitionSlugMatchesWorkerIDRegex(t *testing.T) {
+	tests := []struct {
+		make  string
+		model string
+		year  int16
+		want  string
+	}{
+		// The two shapes seen in production decodes.
+		{make: "Volkswagen", model: "up!", year: 2025, want: "volkswagen_up_2025"},
+		{make: "Subaru", model: "Tribeca (NY/NJ)", year: 2008, want: "subaru_tribeca-ny-nj_2008"},
+		{make: "Ford", model: `"Special" Edition`, year: 2019, want: "ford_special-edition_2019"},
+		{make: "Tesla", model: "Model 3", year: 2022, want: "tesla_model-3_2022"},
+		{make: "Chrysler", model: "C/D 4.5", year: 2001, want: "chrysler_c-d-4-5_2001"},
+		// Characters the worker accepts survive.
+		{make: "Dodge", model: "Town & Country", year: 2012, want: "dodge_town-&-country_2012"},
+		{make: "Mercedes-Benz", model: "GLE 450+", year: 2024, want: "mercedes-benz_gle-450+_2024"},
+		// Stripping must not leave a run of dashes or a dangling one.
+		{make: "Kia", model: "Soul !EV!", year: 2020, want: "kia_soul-ev_2020"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.make+" "+tt.model, func(t *testing.T) {
+			// The decode path slugs both parts first; the sanitizer must
+			// hold for what SlugString leaves behind.
+			got := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+			assert.Equal(t, tt.want, got)
+			assert.Regexp(t, workerIDRegex, got)
+
+			// cmd/device-definitions-api/decode_vin.go passes the decoded
+			// make and model raw, so the raw shape must be safe as well.
+			raw := DeviceDefinitionSlug(tt.make, tt.model, tt.year)
+			assert.Equal(t, tt.want, raw)
+			assert.Regexp(t, workerIDRegex, raw)
 		})
 	}
 }

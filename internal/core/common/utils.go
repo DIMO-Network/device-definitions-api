@@ -3,12 +3,14 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/aarondl/null/v8"
 )
 
@@ -291,11 +293,39 @@ func BuildDeviceDefinitionName(year int16, mk string, model string) string {
 	return fmt.Sprintf("%d %s %s", year, mk, model)
 }
 
+// definitions-worker accepts template ids matching
+// ^[a-z0-9][a-z0-9._&+-]*_[a-z0-9._&+-]+_[0-9]{4}$ (src/template.ts ID_RE) and
+// answers 422 for anything else. dd-api cannot learn that from the response in
+// any way it can act on: a decode that builds such an id -- volkswagen_up!_2025,
+// subaru_tribeca-(ny/nj)_2008 -- 404s on the read, 422s on the create, and
+// fails identically on every retry. So the id must never carry a character the
+// worker rejects. DeviceDefinitionSlug is the one place every id is built.
+var (
+	workerIDDisallowed = regexp.MustCompile(`[^a-z0-9._&+-]`)
+	workerIDDashRuns   = regexp.MustCompile(`-{2,}`)
+)
+
+// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id. Both
+// parts are reduced to what the worker's id regex accepts.
 func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
-	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
+	return fmt.Sprintf("%s_%s_%d", workerIDPart(makeSlug), workerIDPart(modelSlugCleaned), year)
+}
+
+// workerIDPart reduces one id part to the worker's character class. The decode
+// path passes SlugString output already, and SlugString is idempotent on it;
+// cmd/device-definitions-api passes the decoded make and model raw, and
+// slugging here lowercases and dashes the whitespace for that path too. An
+// underscore can never appear inside a part: it is the separator, and
+// templateFromDefinition reads the manufacturer slug back as everything before
+// the first one.
+func workerIDPart(part string) string {
+	part = stringutils.SlugString(part)
+	part = workerIDDisallowed.ReplaceAllString(part, "")
+	part = workerIDDashRuns.ReplaceAllString(part, "-")
+	return strings.Trim(part, "-")
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {
