@@ -51,6 +51,13 @@ var ErrTemplateNotFound = errors.New("template not found in catalog")
 // same case.
 var ErrManufacturerUnresolved = errors.New("manufacturer not resolved in identity")
 
+// ErrTemplateExists is returned by Create when a template is already stored at
+// the id: the worker answered 412 to its If-None-Match: * write, and nothing
+// was written. A caller that only needs the template to exist -- the decode
+// path -- treats it as success by another writer and reads the stored template
+// back; it must not retry the write unconditionally.
+var ErrTemplateExists = errors.New("template already exists in catalog")
+
 func countOutcome(method string, err error) {
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": method}).Inc()
@@ -82,10 +89,9 @@ type DeviceDefinitionCatalogService interface {
 	// it: documents are served with max-age=86400, so a cached read silently
 	// discards any edit made in the last day when the result is PUT back.
 	//
-	// Create() is that caller: it uses this to decide whether a template
-	// already exists before writing one, and must distinguish
-	// ErrTemplateNotFound from every other failure. Reading through the CDN
-	// there would let a stale 404 authorise a duplicate.
+	// The decode path uses it after Create returns ErrTemplateExists, to read
+	// back the template another writer just stored: the CDN may still be
+	// serving the 404 the decode saw moments earlier.
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
@@ -317,39 +323,54 @@ func manufacturerTokenID(tmpl *coremodels.Template) *big.Int {
 // write and reporting success meant a decode could answer 200 with a definition
 // id that was never written to R2, and a delete could log success for a
 // definition that still exists.
-func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, method, pathSuffix string, body any) (bool, error) {
+//
+// It returns the worker's status code alongside any error, so a caller can act
+// on a refusal it understands without reading the message; 0 means no response
+// was received.
+func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, method, pathSuffix string, body any) (int, error) {
+	return e.workerRequestWithHeader(ctx, method, pathSuffix, body, nil)
+}
+
+// workerRequestWithHeader is workerRequest with extra request headers, such as
+// a write precondition.
+func (e *deviceDefinitionCatalogService) workerRequestWithHeader(ctx context.Context, method, pathSuffix string, body any, header http.Header) (int, error) {
 	if e.settings.DefinitionsWorkerURL == "" {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-		return false, fmt.Errorf("definitions-worker is not configured (DEFINITIONS_WORKER_URL is empty); refusing to report %s %s as written", method, pathSuffix)
+		return 0, fmt.Errorf("definitions-worker is not configured (DEFINITIONS_WORKER_URL is empty); refusing to report %s %s as written", method, pathSuffix)
 	}
 	var reader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
-			return false, err
+			return 0, err
 		}
 		reader = bytes.NewReader(b)
 	}
 	reqURL := strings.TrimSuffix(e.settings.DefinitionsWorkerURL, "/") + pathSuffix
 	req, err := http.NewRequestWithContext(ctx, method, reqURL, reader)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+e.settings.DefinitionsWorkerToken)
+	for name, values := range header {
+		for _, v := range values {
+			req.Header.Add(name, v)
+		}
+	}
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-		return false, errors.Wrapf(err, "definitions-worker %s %s failed", method, pathSuffix)
+		return 0, errors.Wrapf(err, "definitions-worker %s %s failed", method, pathSuffix)
 	}
 	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode >= 300 {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
 		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return false, fmt.Errorf("definitions-worker %s %s returned %d: %s", method, pathSuffix, resp.StatusCode, string(msg))
+		return resp.StatusCode, fmt.Errorf("definitions-worker %s %s returned %d: %s", method, pathSuffix, resp.StatusCode, string(msg))
 	}
 	metrics.Success.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-	return true, nil
+	return resp.StatusCode, nil
 }
 
 // templatePutBody is Template minus the fields definitions-worker owns.
@@ -488,20 +509,18 @@ func (e *deviceDefinitionCatalogService) templateFromDefinition(ctx context.Cont
 	}, dropped, nil
 }
 
+// Create writes the template for a definition that does not exist yet, and
+// never overwrites one. The worker's PUT is an upsert unless told otherwise, so
+// the write carries If-None-Match: * and the existence check happens at the
+// worker, atomically with the write. Reading first and then writing
+// unconditionally left a window in which a curator's save was replaced by a
+// single Base trim while the create reported success.
+//
+// A template already stored at the id returns an error wrapping
+// ErrTemplateExists, with nothing written. Every other refusal -- a 422 for an
+// invalid template, an outage -- is a plain error.
 func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
-	// The worker PUT is an upsert; preserve the old create semantics so a
-	// create can never silently overwrite a curated template. Fresh read so a
-	// stale CDN 404 can't slip through. Only ErrTemplateNotFound means "does
-	// not exist" -- every other error must abort, or a catalog outage reads as
-	// a green light to create a duplicate.
-	_, _, err := e.GetTemplateByIDFresh(ctx, dd.ID)
-	if err == nil {
-		return nil, fmt.Errorf("cannot create device definition, already exists: %s", dd.ID)
-	}
-	if !errors.Is(err, ErrTemplateNotFound) {
-		return nil, err
-	}
 	body, dropped, err := e.templateFromDefinition(ctx, manufacturerName, dd)
 	if err != nil {
 		return nil, err
@@ -512,7 +531,12 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 	for _, d := range dropped {
 		e.logger.Info().Msgf("catalog create %s: dropped %s", dd.ID, d)
 	}
-	if _, err := e.workerRequest(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body); err != nil {
+	createOnly := http.Header{"If-None-Match": []string{"*"}}
+	status, err := e.workerRequestWithHeader(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body, createOnly)
+	if status == http.StatusPreconditionFailed {
+		return nil, fmt.Errorf("%w: %s: %w", ErrTemplateExists, dd.ID, err)
+	}
+	if err != nil {
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)

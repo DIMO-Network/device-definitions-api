@@ -264,7 +264,34 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		resp.Powertrain = pt
 	}
 
-	// if dd not found in tableland, we want to create it
+	// Not in the catalog yet, so create it. Create is create-only: if another
+	// writer stored the template after the read above, the decode continues
+	// with their template instead of overwriting it.
+	if tblDef == nil {
+		// if any images were added above, they will be in the database
+		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
+		// todo load up some metadata from what was decoded. Powertrain too
+		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
+
+		// The id comes back in DefinitionId; NewTrxHash stays empty because
+		// definitions are no longer written on-chain and there is no
+		// transaction. Putting the slug here would hand a "0x..." consumer a
+		// value that is not a hash.
+		tblDef, err = createOrAdoptTemplate(ctx, dc.deviceDefinitionCatalogService, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
+			ID:         tid,
+			KSUID:      ksuid.New().String(),
+			Model:      resp.Model,
+			Year:       int(resp.Year),
+			DeviceType: common.DefaultDeviceType,
+			ImageURI:   common.GetDefaultImageURL(latestImages),
+			Metadata:   md,
+		})
+		if err != nil {
+			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+			return nil, errors.Wrap(err, "error creating new device definition from decoded vinObj")
+		}
+	}
+
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
 
@@ -305,29 +332,6 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		resp.Powertrain = ""
 		if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
 			resp.Powertrain = v
-		}
-	} else {
-		// if any images were added above, they will be in the database
-		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
-		// todo load up some metadata from what was decoded. Powertrain too
-		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
-
-		// The id comes back in DefinitionId; NewTrxHash stays empty because
-		// definitions are no longer written on-chain and there is no
-		// transaction. Putting the slug here would hand a "0x..." consumer a
-		// value that is not a hash.
-		_, err = dc.deviceDefinitionCatalogService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
-			ID:         tid,
-			KSUID:      ksuid.New().String(),
-			Model:      resp.Model,
-			Year:       int(resp.Year),
-			DeviceType: common.DefaultDeviceType,
-			ImageURI:   common.GetDefaultImageURL(latestImages),
-			Metadata:   md,
-		})
-		if err != nil {
-			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			return nil, errors.Wrap(err, "error creating new device definition from decoded vinObj")
 		}
 	}
 
@@ -380,6 +384,32 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	}
 
 	return &md
+}
+
+// createOrAdoptTemplate creates the template for the first decode of a
+// make/model/year. It returns nil when this call wrote it, and the decode
+// carries on as it always has.
+//
+// Create is create-only. When another writer -- a Console curator saving trims,
+// or a concurrent first decode -- stored the template between the decode's
+// catalog read and this write, Create returns ErrTemplateExists instead of
+// replacing their version with a single Base trim. That is success by someone
+// else: the stored template is read back through the worker, since the CDN may
+// still be serving the 404 the decode just saw, and returned so the decode
+// narrows it like any template it found.
+func createOrAdoptTemplate(ctx context.Context, catalog gateways.DeviceDefinitionCatalogService, manufacturer string, dd coremodels.DeviceDefinitionTablelandModel) (*coremodels.Template, error) {
+	_, err := catalog.Create(ctx, manufacturer, dd)
+	if err == nil {
+		return nil, nil
+	}
+	if !errors.Is(err, gateways.ErrTemplateExists) {
+		return nil, err
+	}
+	stored, _, err := catalog.GetTemplateByIDFresh(ctx, dd.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "template %s was created by another writer but could not be read back", dd.ID)
+	}
+	return stored, nil
 }
 
 // hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response.

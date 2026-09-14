@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -327,33 +328,93 @@ func TestCreateWritesATemplate(t *testing.T) {
 	assert.NotContains(t, trim, "selectors")
 }
 
-func TestCreateRefusesWhenTheTemplateExists(t *testing.T) {
-	srv, paths, _ := newCreateStub(t, func(w http.ResponseWriter) {
-		_, _ = w.Write([]byte(templateJSON))
-	})
+// The worker's PUT is an upsert unless told otherwise. Create used to read the
+// template and then write unconditionally, and in between a Console curator
+// could save the same id with its trims: the create replaced them with a single
+// Base trim and reported success. The existence check is now the write's own
+// precondition, so there is no read before it to race.
+func TestCreateIsCreateOnly(t *testing.T) {
+	paths := []string{}
+	var ifNoneMatch []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path)
+		switch {
+		case r.Method == http.MethodPost:
+			_, _ = w.Write([]byte(identityToyotaJSON))
+		case strings.HasPrefix(r.URL.Path, "/schema/"):
+			_, _ = w.Write([]byte(vocabularyJSON))
+		case r.Method == http.MethodPut:
+			ifNoneMatch = append(ifNoneMatch, r.Header.Get("If-None-Match"))
+			_, _ = w.Write([]byte(`{"id":"toyota_camry_2020"}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
 
 	id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
-	require.Error(t, err, "create must not overwrite a curated template")
-	assert.Nil(t, id)
-	assert.Contains(t, err.Error(), "already exists")
-	for _, p := range *paths {
-		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p, "nothing may be written")
+	require.NoError(t, err)
+	require.NotNil(t, id)
+	assert.Equal(t, []string{"*"}, ifNoneMatch, "exactly one PUT, and it must be create-only")
+	for _, p := range paths {
+		assert.False(t, strings.HasPrefix(p, "GET /t/"), "a read before the write is the race, not a guard against it: %s", p)
 	}
 }
 
-// The reason Create reads through the worker and checks the sentinel: a
-// catalog outage returns 500, and treating that as "does not exist" is how a
-// duplicate definition gets written mid-incident.
-func TestCreateAbortsWhenTheCatalogIsDown(t *testing.T) {
-	srv, paths, _ := newCreateStub(t, func(w http.ResponseWriter) {
-		w.WriteHeader(http.StatusInternalServerError)
-	})
+// A 412 to If-None-Match: * means a template is already stored at the id. It is
+// the one refusal a caller may treat as someone else's success, so it is the
+// typed sentinel, and the write is neither retried nor forced.
+func TestCreateReportsAnExistingTemplateAsErrTemplateExists(t *testing.T) {
+	puts := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost:
+			_, _ = w.Write([]byte(identityToyotaJSON))
+		case strings.HasPrefix(r.URL.Path, "/schema/"):
+			_, _ = w.Write([]byte(vocabularyJSON))
+		case r.Method == http.MethodPut:
+			puts++
+			w.WriteHeader(http.StatusPreconditionFailed)
+			_, _ = w.Write([]byte(`{"error":"template toyota_camry_2020 already exists","expected":null,"actual":2}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
 
 	id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
-	require.Error(t, err, "a 500 must abort the create, not authorise it")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrTemplateExists)
 	assert.Nil(t, id)
-	for _, p := range *paths {
-		assert.NotEqual(t, "PUT /t/toyota_camry_2020", p, "nothing may be written during an outage")
+	assert.Equal(t, 1, puts, "the write must not be retried or forced")
+}
+
+// Every other refusal is a failure. An invalid body must not be mistaken for a
+// template someone else stored, and neither may an outage.
+func TestCreateSurfacesOtherWorkerFailures(t *testing.T) {
+	for _, status := range []int{http.StatusUnprocessableEntity, http.StatusInternalServerError} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case r.Method == http.MethodPost:
+					_, _ = w.Write([]byte(identityToyotaJSON))
+				case strings.HasPrefix(r.URL.Path, "/schema/"):
+					_, _ = w.Write([]byte(vocabularyJSON))
+				case r.Method == http.MethodPut:
+					w.WriteHeader(status)
+					_, _ = w.Write([]byte(`{"errors":["rejected"]}`))
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer srv.Close()
+
+			id, err := createSvc(srv).Create(context.Background(), "Toyota", newDefinition)
+			require.Error(t, err)
+			assert.NotErrorIs(t, err, ErrTemplateExists)
+			assert.Nil(t, id)
+			assert.Contains(t, err.Error(), strconv.Itoa(status))
+		})
 	}
 }
 
