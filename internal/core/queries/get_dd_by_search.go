@@ -5,7 +5,7 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
-	"github.com/mitchellh/mapstructure"
+	"github.com/typesense/typesense-go/typesense/api"
 )
 
 type GetAllDeviceDefinitionBySearchQuery struct {
@@ -74,21 +74,25 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 		return nil, err
 	}
 
-	deviceDefinitions := make([]GetAllDeviceDefinitionItem, 0, len(*result.Hits))
-	for _, hit := range *result.Hits {
-		var doc map[string]interface{}
-		if err := mapstructure.Decode(hit.Document, &doc); err != nil {
+	hits := firstHitPerGroup(result)
+	deviceDefinitions := make([]GetAllDeviceDefinitionItem, 0, len(hits))
+	for _, hit := range hits {
+		if hit.Document == nil {
 			continue
 		}
+		doc := *hit.Document
+		id := docString(doc, "definition_id")
 		item := GetAllDeviceDefinitionItem{
-			ID:                 doc["definition_id"].(string), // new slug id
-			DeviceDefinitionID: doc["device_definition_id"].(string),
-			Name:               doc["name"].(string),
-			Make:               doc["make"].(string),
-			//ManufacturerTokenID: int(doc["manufacturer_token_id"].(float64)),
-			Model:    doc["model"].(string),
-			Year:     int(doc["year"].(float64)),
-			ImageURL: doc["image_url"].(string),
+			ID: id,
+			// Legacy ksuids no longer exist and the index carries no
+			// device_definition_id. The field stays on the wire for
+			// compatibility and carries the slug id, the only id there is.
+			DeviceDefinitionID: id,
+			Name:               docString(doc, "name"),
+			Make:               docString(doc, "make"),
+			Model:              docString(doc, "model"),
+			Year:               docInt(doc, "year"),
+			ImageURL:           docString(doc, "image_url"),
 		}
 		deviceDefinitions = append(deviceDefinitions, item)
 	}
@@ -97,7 +101,14 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 	var models []GetAllDeviceDefinitionFacetItem
 	var years []GetAllDeviceDefinitionFacetItem
 
-	for _, facet := range *result.FacetCounts {
+	var facetCounts []api.FacetCounts
+	if result.FacetCounts != nil {
+		facetCounts = *result.FacetCounts
+	}
+	for _, facet := range facetCounts {
+		if facet.Counts == nil || facet.FieldName == nil {
+			continue
+		}
 		for _, count := range *facet.Counts {
 			if *facet.FieldName == "make" {
 				makes = append(makes, GetAllDeviceDefinitionFacetItem{
@@ -126,11 +137,15 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 		Years:  years,
 	}
 
+	found := 0
+	if result.Found != nil {
+		found = *result.Found
+	}
 	pagination := GetAllDeviceDefinitionPagination{
 		Page:       qry.Page,
 		PageSize:   qry.PageSize,
-		TotalItems: *result.Found,
-		TotalPages: (*result.Found + qry.PageSize - 1) / qry.PageSize,
+		TotalItems: found,
+		TotalPages: (found + qry.PageSize - 1) / qry.PageSize,
 	}
 
 	response := &GetAllDeviceDefinitionBySearchQueryResult{
@@ -153,4 +168,45 @@ func (ch GetAllDeviceDefinitionBySearchQueryHandler) Handle(ctx context.Context,
 	}
 
 	return response, nil
+}
+
+// firstHitPerGroup flattens a group_by=definition_id result to one hit per
+// definition. The worker indexes one document per trim, so without grouping a
+// query for "camry" returns toyota_camry_2020 once per trim; the endpoint's
+// contract is one item per definition. Ungrouped hits are the fallback so a
+// fake, or an index queried without group_by, still works.
+func firstHitPerGroup(result *api.SearchResult) []api.SearchResultHit {
+	if result.GroupedHits != nil {
+		hits := make([]api.SearchResultHit, 0, len(*result.GroupedHits))
+		for _, group := range *result.GroupedHits {
+			if len(group.Hits) > 0 {
+				hits = append(hits, group.Hits[0])
+			}
+		}
+		return hits
+	}
+	if result.Hits != nil {
+		return *result.Hits
+	}
+	return nil
+}
+
+// docString reads a string field from a Typesense document, "" when absent
+// or not a string. Documents are untyped maps: a direct type assertion on a
+// key the index does not carry panics, and fiber's recover turns that into a
+// 500 on every hit.
+func docString(doc map[string]interface{}, key string) string {
+	s, _ := doc[key].(string)
+	return s
+}
+
+// docInt reads a numeric field, 0 when absent. JSON numbers decode as float64.
+func docInt(doc map[string]interface{}, key string) int {
+	switch v := doc[key].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	}
+	return 0
 }
