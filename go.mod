@@ -3,6 +3,7 @@ module github.com/DIMO-Network/device-definitions-api
 go 1.24
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/DIMO-Network/shared v1.0.7
 	github.com/aarondl/null/v8 v8.1.3
 	github.com/aarondl/sqlboiler/v4 v4.19.5

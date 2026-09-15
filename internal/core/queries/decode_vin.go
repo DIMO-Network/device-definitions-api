@@ -107,17 +107,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
-	txVinNumbers, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	// The transaction opens and closes inside this call. Everything below it
+	// is slow -- hydrateResponseFromVinNumber alone makes a catalog request
+	// and a reader query -- and none of it may run while a writer connection
+	// and a serializable snapshot are held.
+	vinDecodeNumber, err := dc.readCachedVinNumber(ctx, vinObj.String())
 	if err != nil {
-		return nil, errors.Wrap(err, "error when beginning transaction")
-	}
-	defer txVinNumbers.Rollback() //nolint
-	vinDecodeNumber, err := models.VinNumbers(
-		models.VinNumberWhere.Vin.EQ(vinObj.String())).
-		One(ctx, txVinNumbers)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, errors.Wrap(err, "error when querying for existing VIN number")
+		return nil, err
 	}
 	// if database vin_number match found, just return it here
 	cached, errCached := dc.hydrateResponseFromVinNumber(ctx, vinDecodeNumber)
@@ -411,6 +408,41 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	}
 
 	return &md
+}
+
+// readCachedVinNumber reads the vin_numbers row for a VIN, or nil when this
+// VIN has not been decoded before.
+//
+// The transaction holds nothing but this one read, and it is closed before the
+// function returns -- on every path, including a failed query and a failed
+// begin. Handle used to open it and keep it open across
+// hydrateResponseFromVinNumber, which was pure in-memory when that was
+// written. It now issues a catalog GET through a client with a 30 second
+// timeout and a device_styles query against the reader, and returns early on a
+// cache hit, so the path the code itself calls "the one most decodes take"
+// held a writer connection and a SERIALIZABLE snapshot across a full CDN round
+// trip -- and took a reader connection while holding it. A two second catalog
+// stall pinned every writer connection for two seconds per decode; a thirty
+// second stall exhausted the pool while unrelated writes queued behind it.
+//
+// The isolation level is unchanged: what this row is read at is a separate
+// decision from how long the read is held.
+func (dc DecodeVINQueryHandler) readCachedVinNumber(ctx context.Context, vinStr string) (*models.VinNumber, error) {
+	tx, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, errors.Wrap(err, "error when beginning transaction")
+	}
+	// Nothing is written here, so Rollback is how this transaction ends, and
+	// deferring it closes the error paths too rather than only the happy one.
+	defer tx.Rollback() //nolint:errcheck
+	vn, err := models.VinNumbers(models.VinNumberWhere.Vin.EQ(vinStr)).One(ctx, tx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "error when querying for existing VIN number")
+	}
+	return vn, nil
 }
 
 // definitionIDForDecode builds the template id for a decoded make/model/year,
