@@ -2,12 +2,15 @@ package queries
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	mock_gateways "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways/mocks"
 	"github.com/aarondl/null/v8"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,8 +70,9 @@ func TestHydrateResponseFromVinNumberAnswersTheModel(t *testing.T) {
 	dc, catalog := hydrateHandler(t)
 	catalog.EXPECT().GetTemplateByID(gomock.Any(), "toyota_camry_2026").Return(hydrateTemplate(), nil, nil)
 
-	resp := dc.hydrateResponseFromVinNumber(context.Background(), cachedVinNumber())
+	resp, err := dc.hydrateResponseFromVinNumber(context.Background(), cachedVinNumber())
 
+	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, "Camry", resp.Model, "the cached path must answer the model the fresh path does")
 	// The rest of the fresh path's fields, so a future edit cannot drop one
@@ -79,4 +83,42 @@ func TestHydrateResponseFromVinNumberAnswersTheModel(t *testing.T) {
 	assert.Equal(t, "toyota_camry_2026", resp.DefinitionId)
 	assert.Equal(t, int32(2), resp.TemplateVersion)
 	assert.Equal(t, "model-only", resp.MatchQuality)
+}
+
+// A catalog outage -- a 502, a TLS blip, a truncated body -- is not proof that
+// the template does not exist. Answering 200 with empty trim, match quality,
+// candidates, powertrain and hardware template id makes an outage
+// indistinguishable from a genuinely template-less definition, and emits the
+// undocumented fourth match_quality ("") this function's doc comment forbids.
+func TestHydrateResponseFromVinNumberFailsOnCatalogOutage(t *testing.T) {
+	dc, catalog := hydrateHandler(t)
+	outage := errors.Wrap(fmt.Errorf("unexpected status 502 from catalog"), "failed to read template")
+	catalog.EXPECT().GetTemplateByID(gomock.Any(), "toyota_camry_2026").Return(nil, nil, outage)
+
+	resp, err := dc.hydrateResponseFromVinNumber(context.Background(), cachedVinNumber())
+
+	require.Error(t, err, "a catalog outage must surface as an error, not as a successful decode with empty fields")
+	assert.Nil(t, resp)
+	assert.NotErrorIs(t, err, gateways.ErrTemplateNotFound)
+}
+
+// A genuine 404 keeps today's behaviour: the VIN was decoded in the past
+// without a template existing for it, and the response says so by leaving the
+// match fields empty rather than by failing the decode.
+func TestHydrateResponseFromVinNumberStillAnswersWhenTheTemplateIsGenuinelyGone(t *testing.T) {
+	dc, catalog := hydrateHandler(t)
+	notFound := errors.Wrapf(gateways.ErrTemplateNotFound, "template %s", "toyota_camry_2026")
+	catalog.EXPECT().GetTemplateByID(gomock.Any(), "toyota_camry_2026").Return(nil, nil, notFound)
+
+	resp, err := dc.hydrateResponseFromVinNumber(context.Background(), cachedVinNumber())
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, "Toyota", resp.Manufacturer)
+	assert.Equal(t, "toyota_camry_2026", resp.DefinitionId)
+	assert.Empty(t, resp.Trim)
+	assert.Empty(t, resp.MatchQuality)
+	assert.Empty(t, resp.Powertrain)
+	assert.Empty(t, resp.HardwareTemplateId)
+	assert.Empty(t, resp.MatchCandidates)
 }

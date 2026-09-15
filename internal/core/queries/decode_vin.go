@@ -120,9 +120,14 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		return nil, errors.Wrap(err, "error when querying for existing VIN number")
 	}
 	// if database vin_number match found, just return it here
-	if r := dc.hydrateResponseFromVinNumber(ctx, vinDecodeNumber); r != nil {
+	cached, errCached := dc.hydrateResponseFromVinNumber(ctx, vinDecodeNumber)
+	if errCached != nil {
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		return nil, errCached
+	}
+	if cached != nil {
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
-		return r, nil
+		return cached, nil
 	}
 	// check if vin has failed in the past, and if it has just fail now
 	vinAlreadyFailed, _ := models.FailedVinDecodes(models.FailedVinDecodeWhere.Vin.EQ(vinObj.String())).Exists(ctx, dc.dbs().Writer)
@@ -435,9 +440,13 @@ func createOrAdoptTemplate(ctx context.Context, catalog gateways.DeviceDefinitio
 // migration exists for (a template only carries powertrain_type at the top
 // level when every trim agrees on it), falling through to a make/model
 // heuristic -- the blended answer we are replacing.
-func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context, vn *models.VinNumber) *p_grpc.DecodeVinResponse {
+//
+// It returns an error only when the catalog could not be read at all. A
+// template that is genuinely absent is answered, as before, with the fields
+// the matcher never got to compute left empty.
+func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context, vn *models.VinNumber) (*p_grpc.DecodeVinResponse, error) {
 	if vn == nil {
-		return nil
+		return nil, nil
 	}
 
 	resp := &p_grpc.DecodeVinResponse{
@@ -449,14 +458,26 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context
 	}
 
 	tblDef, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, vn.DefinitionID)
+	if err != nil && !errors.Is(err, gateways.ErrTemplateNotFound) {
+		// A catalog outage (5xx, timeout, decode failure) is not the same as
+		// the template not existing, and this is the path most decodes take.
+		// Answering OK with empty trim, match quality, candidates, powertrain
+		// and hardware template id would make an outage indistinguishable
+		// from a genuinely template-less definition -- and would emit the
+		// undocumented fourth match_quality ("") on the majority of
+		// production traffic. The live path checks the same sentinel the same
+		// way; fail the decode instead.
+		return nil, errors.Wrapf(err, "failed to read template %s from catalog for cached decode of vin %s", vn.DefinitionID, vn.Vin)
+	}
 	if err != nil || tblDef == nil {
-		// this is not good, somehow it got decoded in past without a template
-		// existing for it. MatchQuality stays empty rather than "model-only":
-		// the matcher did not run at all, and claiming a quality it never
-		// computed would be the kind of authoritative-looking wrong answer
-		// this migration exists to stop.
+		// Genuinely not found (ErrTemplateNotFound): this is not good, somehow
+		// it got decoded in past without a template existing for it.
+		// MatchQuality stays empty rather than "model-only": the matcher did
+		// not run at all, and claiming a quality it never computed would be
+		// the kind of authoritative-looking wrong answer this migration exists
+		// to stop.
 		dc.logger.Warn().Err(err).Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
-		return resp
+		return resp, nil
 	}
 
 	// The model is the template's, not the vin_numbers row's: vin_numbers
@@ -482,7 +503,7 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context
 
 	observeTrimMatch(resolved, resp.Source)
 
-	return resp
+	return resp, nil
 }
 
 // matchSignalsFromVinNumber rebuilds the signals a fresh decode of this VIN
