@@ -9,6 +9,7 @@ import (
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/queries"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
+	p_grpc "github.com/DIMO-Network/device-definitions-api/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
 )
 
@@ -65,19 +66,11 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 		devideDefinition, err := dc.DeviceDefinitionDataHandler.Handle(ctx, &queries.GetDeviceDefinitionByIDQuery{DeviceDefinitionID: decodedVIN.DefinitionId}) //nolint
 
 		if err == nil {
-			dd := devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult)
-			dm := coremodels.Manufacturer{
-				TokenID: dd.MakeTokenID,
-				Name:    dd.MakeName,
+			row, rowErr := decodedVINFrom(vin, decodedVIN, devideDefinition)
+			if rowErr != nil {
+				return nil, rowErr
 			}
-
-			decodedVINs = append(decodedVINs, DecodedVIN{
-				VIN:          vin,
-				DefinitionID: decodedVIN.DefinitionId,
-				DeviceYear:   decodedVIN.Year,
-				DeviceMake:   dm,
-				DeviceModel:  devideDefinition.(*coremodels.GetDeviceDefinitionQueryResult).DeviceStyles[0].SubModel,
-			})
+			decodedVINs = append(decodedVINs, row)
 		}
 	}
 
@@ -87,4 +80,35 @@ func (dc BulkValidateVinCommandHandler) Handle(ctx context.Context, query mediat
 	}
 
 	return response, nil
+}
+
+// decodedVINFrom builds one result row out of the decode and whatever
+// GetDeviceDefinitionByIDQuery answered for its definition id.
+//
+// That handler answers the catalog's *coremodels.Template. The checked form
+// is deliberate: an unchecked assertion here took the whole request down with
+// a panic on the SUCCESS path -- every VIN that decoded and whose definition
+// was in the catalog -- because it named a result type the handler had
+// stopped returning. A surprise type is a broken contract worth reporting,
+// not worth crashing over.
+//
+// DeviceModel is the template's model. It used to be the first device style's
+// sub-model, which was both a different thing from the field's name and an
+// unchecked index into a slice that is empty for any definition with no
+// styles.
+func decodedVINFrom(vin string, decoded *p_grpc.DecodeVinResponse, definition interface{}) (DecodedVIN, error) {
+	tmpl, ok := definition.(*coremodels.Template)
+	if !ok || tmpl == nil {
+		return DecodedVIN{}, fmt.Errorf("device definition %s: expected *models.Template from GetDeviceDefinitionByIDQuery, got %T", decoded.DefinitionId, definition)
+	}
+	return DecodedVIN{
+		VIN:          vin,
+		DefinitionID: decoded.DefinitionId,
+		DeviceYear:   decoded.Year,
+		DeviceMake: coremodels.Manufacturer{
+			TokenID: tmpl.Manufacturer.TokenID,
+			Name:    tmpl.Manufacturer.Name,
+		},
+		DeviceModel: tmpl.Model,
+	}, nil
 }
