@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -318,8 +319,36 @@ func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 
 // workerIDPart repairs one part of an id the worker would refuse: slug it, then
 // drop every character outside the worker's class.
+//
+// Dropping can empty a part outright -- a model written entirely in a script
+// with no character in the class, such as ハイエース or Нива, leaves nothing
+// behind -- and ID_RE requires at least one character in each. The repair
+// cannot fix that: there is no character to keep. ValidateDefinitionID is what
+// catches it, and every writer must call it before it builds on the id.
 func workerIDPart(part string) string {
 	return workerIDDisallowed.ReplaceAllString(stringutils.SlugString(part), "")
+}
+
+// ErrUnmintableDefinitionID reports an id no template can ever be stored at:
+// definitions-worker's ID_RE refuses it, so its create answers 422 and so does
+// every retry of every VIN of that model-year, forever. It is a sentinel so a
+// caller can tell this apart from a transient write failure with errors.Is and
+// stop rather than retry.
+var ErrUnmintableDefinitionID = errors.New("definition id is one definitions-worker can never accept")
+
+// ValidateDefinitionID reports whether definitions-worker can hold a template
+// at this id, and wraps ErrUnmintableDefinitionID when it cannot.
+//
+// DeviceDefinitionSlug repairs an id by dropping characters, and a repair that
+// drops every character of a part leaves a segment empty -- an id ID_RE
+// refuses just as firmly as the one the repair replaced. The repair never
+// re-checks its own output, so this is the check: nothing may PUT, or build a
+// vin_numbers row on, an id that fails it.
+func ValidateDefinitionID(id string) error {
+	if workerIDValid.MatchString(id) {
+		return nil
+	}
+	return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {

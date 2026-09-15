@@ -213,8 +213,19 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	resp.Year = vinInfo.Year
 	resp.Model = vinInfo.Model
 
-	modelSlug := stringutils.SlugString(vinInfo.Model)
-	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
+	tid, errID := definitionIDForDecode(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+	if errID != nil {
+		// Nothing below this can succeed: the catalog cannot hold a template
+		// at this id, so the read 404s and the create 422s -- identically, on
+		// every retry, for every VIN of this model-year. Stop here, with the
+		// same answer the low-confidence gate gives, so the client falls back
+		// to the manual make/model/year picker instead of being told the
+		// service is broken.
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		localLog.Warn().Err(errID).Str("decode_source", string(vinInfo.Source)).
+			Msg("decoded model yields an id definitions-worker can never accept; returning not found so the client opens the manual picker")
+		return nil, errID
+	}
 	resp.DefinitionId = tid
 
 	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, tid)
@@ -400,6 +411,33 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	}
 
 	return &md
+}
+
+// definitionIDForDecode builds the template id for a decoded make/model/year,
+// and refuses one definitions-worker can never hold.
+//
+// common.DeviceDefinitionSlug repairs an id by dropping characters outside the
+// worker's class, and does not re-check what it produced. A model written in a
+// script with no character in that class -- ハイエース, Нива, reachable through
+// vinInfoFromKnown's KnownModel, whose source is not low-confidence -- comes
+// back as toyota__2020, whose empty middle segment ID_RE refuses. Writing that
+// id would 422 the create and fail every retry of every VIN of that
+// model-year, so the failure belongs here, before the id is used for anything.
+//
+// The error is *exceptions.NotFoundError, the same type the low-confidence
+// gate returns: the remedy is the same one, a manual make/model/year pick, and
+// both the HTTP and gRPC layers already translate it (404, codes.NotFound)
+// rather than reporting the decoder as broken. It wraps
+// common.ErrUnmintableDefinitionID so a caller can tell this apart from a
+// vehicle that merely has no template yet.
+func definitionIDForDecode(makeName, modelName string, year int16) (string, error) {
+	id := common.DeviceDefinitionSlug(stringutils.SlugString(makeName), stringutils.SlugString(modelName), year)
+	if err := common.ValidateDefinitionID(id); err != nil {
+		return "", &exceptions.NotFoundError{
+			Err: fmt.Errorf("no device definition id can be built for %d %s %s: %w", year, makeName, modelName, err),
+		}
+	}
+	return id, nil
 }
 
 // createOrAdoptTemplate creates the template for the first decode of a

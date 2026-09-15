@@ -240,6 +240,56 @@ func TestDeviceDefinitionSlugKeepsIDsTheWorkerAccepts(t *testing.T) {
 	assert.Equal(t, "volkswagen_id--buzz_2024", DeviceDefinitionSlug("Volkswagen", "ID. Buzz", 2024))
 }
 
+// The repair in DeviceDefinitionSlug drops every character outside the
+// worker's class, so a model written in a script with no characters in that
+// class at all -- Japanese, Cyrillic -- leaves the model segment empty. ID_RE
+// requires at least one character there, so no template can ever be stored at
+// such an id: a create 422s, and so does every retry, forever. These are
+// reachable, not hypothetical: vinInfoFromKnown's KnownModel comes from
+// smartcar and software connections and its source is not low-confidence.
+func TestValidateDefinitionIDRefusesAnIDNoTemplateCanExistAt(t *testing.T) {
+	unmintable := []struct {
+		make  string
+		model string
+		year  int16
+	}{
+		{"Toyota", "ハイエース", 2020},
+		{"Lada", "Нива", 2021},
+		{"Toyota", "・・・", 2020},
+	}
+	for _, tt := range unmintable {
+		id := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+		t.Run(id, func(t *testing.T) {
+			assert.NotRegexp(t, workerIDRegex, id, "the premise: this id is one the worker refuses")
+			err := ValidateDefinitionID(id)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
+			assert.Contains(t, err.Error(), id, "the id the decode could not build must be in the message")
+		})
+	}
+}
+
+// Everything the worker accepts -- including the repaired ids the repair
+// exists to produce and the live catalog shapes it must leave alone -- passes.
+func TestValidateDefinitionIDAcceptsEveryIDTheWorkerAccepts(t *testing.T) {
+	mintable := []string{
+		"volkswagen_up_2020",
+		"subaru_tribeca-ny-nj_2020",
+		"toyota_camry_2026",
+		"volkswagen_id--buzz_2024",
+		"ford_ranger---ra_2022",
+		"bmw_x3-_2026",
+		"dodge_town-&-country_2012",
+		"mercedes-benz_gle-450+_2024",
+	}
+	for _, id := range mintable {
+		t.Run(id, func(t *testing.T) {
+			assert.Regexp(t, workerIDRegex, id, "the premise: this id is one the worker accepts")
+			assert.NoError(t, ValidateDefinitionID(id))
+		})
+	}
+}
+
 // TestDeviceDefinitionSlugAgainstManifest replays every id in a definitions
 // manifest through DeviceDefinitionSlug. Run it with
 // DEFINITIONS_MANIFEST=path/to/manifest.json (for example a download of
