@@ -459,6 +459,12 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context
 		return resp
 	}
 
+	// The model is the template's, not the vin_numbers row's: vin_numbers
+	// stores the manufacturer name and the definition id but never the model,
+	// and a response without it answered "" for every decode after the first
+	// while a fresh decode of the same VIN answered the model.
+	resp.Model = tblDef.Model
+
 	resolved := services.MatchTrim(tblDef, dc.matchSignalsFromVinNumber(ctx, vn))
 	resp.Trim = resolved.Trim
 	resp.TemplateVersion = int32(resolved.TemplateVersion)
