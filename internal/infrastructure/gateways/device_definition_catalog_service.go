@@ -95,7 +95,12 @@ type DeviceDefinitionCatalogService interface {
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
 	GetDefinition(ctx context.Context, manufacturerID *big.Int, ID string) (*coremodels.DeviceDefinitionTablelandModel, error)
-	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error)
+	// Create writes a template that does not exist yet and returns the
+	// document the worker stored -- the PUT's own response, so no read-back
+	// is needed. A caller must narrow that document to a trim exactly as it
+	// would a template it had found, or a definition's first decode answers
+	// differently from its second.
+	Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*coremodels.Template, error)
 	Delete(ctx context.Context, manufacturerName, id string) (*string, error)
 }
 
@@ -328,28 +333,40 @@ func manufacturerTokenID(tmpl *coremodels.Template) *big.Int {
 // on a refusal it understands without reading the message; 0 means no response
 // was received.
 func (e *deviceDefinitionCatalogService) workerRequest(ctx context.Context, method, pathSuffix string, body any) (int, error) {
-	return e.workerRequestWithHeader(ctx, method, pathSuffix, body, nil)
+	status, _, err := e.workerRequestWithHeader(ctx, method, pathSuffix, body, nil)
+	return status, err
 }
 
+// maxWorkerResponseBytes bounds the response body read back from a write. The
+// worker refuses a request body over 64KB (MAX_DOC_BYTES) and answers a write
+// with the document it stored, so this is generous by an order of magnitude
+// and exists only so a misbehaving upstream cannot be read without limit.
+const maxWorkerResponseBytes = 1 << 20
+
 // workerRequestWithHeader is workerRequest with extra request headers, such as
-// a write precondition.
-func (e *deviceDefinitionCatalogService) workerRequestWithHeader(ctx context.Context, method, pathSuffix string, body any, header http.Header) (int, error) {
+// a write precondition, and it returns the response body.
+//
+// The worker answers a write with the document it stored -- version, author
+// and timestamps stamped. A caller that needs that document must not have to
+// fetch it again: the read-back is a second round trip against a CDN that may
+// still be serving what the write just replaced.
+func (e *deviceDefinitionCatalogService) workerRequestWithHeader(ctx context.Context, method, pathSuffix string, body any, header http.Header) (int, []byte, error) {
 	if e.settings.DefinitionsWorkerURL == "" {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-		return 0, fmt.Errorf("definitions-worker is not configured (DEFINITIONS_WORKER_URL is empty); refusing to report %s %s as written", method, pathSuffix)
+		return 0, nil, fmt.Errorf("definitions-worker is not configured (DEFINITIONS_WORKER_URL is empty); refusing to report %s %s as written", method, pathSuffix)
 	}
 	var reader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
-			return 0, err
+			return 0, nil, err
 		}
 		reader = bytes.NewReader(b)
 	}
 	reqURL := strings.TrimSuffix(e.settings.DefinitionsWorkerURL, "/") + pathSuffix
 	req, err := http.NewRequestWithContext(ctx, method, reqURL, reader)
 	if err != nil {
-		return 0, err
+		return 0, nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+e.settings.DefinitionsWorkerToken)
@@ -361,16 +378,24 @@ func (e *deviceDefinitionCatalogService) workerRequestWithHeader(ctx context.Con
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-		return 0, errors.Wrapf(err, "definitions-worker %s %s failed", method, pathSuffix)
+		return 0, nil, errors.Wrapf(err, "definitions-worker %s %s failed", method, pathSuffix)
 	}
 	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode >= 300 {
 		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
 		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return resp.StatusCode, fmt.Errorf("definitions-worker %s %s returned %d: %s", method, pathSuffix, resp.StatusCode, string(msg))
+		return resp.StatusCode, nil, fmt.Errorf("definitions-worker %s %s returned %d: %s", method, pathSuffix, resp.StatusCode, string(msg))
+	}
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxWorkerResponseBytes))
+	if err != nil {
+		// The write landed; only the answer was lost. Report the status and
+		// the read failure and let the caller decide -- treating this as a
+		// failed write would have the decode path create a duplicate.
+		metrics.InternalError.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
+		return resp.StatusCode, nil, errors.Wrapf(err, "definitions-worker %s %s response could not be read", method, pathSuffix)
 	}
 	metrics.Success.With(prometheus.Labels{"method": metricCatalogWrite}).Inc()
-	return resp.StatusCode, nil
+	return resp.StatusCode, respBody, nil
 }
 
 // templatePutBody is Template minus the fields definitions-worker owns.
@@ -519,7 +544,18 @@ func (e *deviceDefinitionCatalogService) templateFromDefinition(ctx context.Cont
 // A template already stored at the id returns an error wrapping
 // ErrTemplateExists, with nothing written. Every other refusal -- a 422 for an
 // invalid template, an outage -- is a plain error.
-func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*string, error) {
+//
+// On success it returns the document the worker stored, which the worker
+// answers the PUT with: version stamped, and the Base trim the decode has to
+// narrow to. Discarding it left the decode that created a definition with no
+// template to match against, so it answered an empty trim and version zero
+// while the next decode of the same VIN answered Base and version 1.
+//
+// A response that cannot be read back as this template is (nil, nil): the
+// write did land, and reporting it as failed would have the caller create a
+// duplicate, but there is nothing to hand back and a caller that needs the
+// document must read it. It is never (nil, nil) in normal operation.
+func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd coremodels.DeviceDefinitionTablelandModel) (*coremodels.Template, error) {
 	e.logger.Info().Msgf("catalog create for device definition %s (manufacturer %s)", dd.ID, manufacturerName)
 	body, dropped, err := e.templateFromDefinition(ctx, manufacturerName, dd)
 	if err != nil {
@@ -532,7 +568,7 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 		e.logger.Info().Msgf("catalog create %s: dropped %s", dd.ID, d)
 	}
 	createOnly := http.Header{"If-None-Match": []string{"*"}}
-	status, err := e.workerRequestWithHeader(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body, createOnly)
+	status, respBody, err := e.workerRequestWithHeader(ctx, http.MethodPut, "/t/"+url.PathEscape(dd.ID), body, createOnly)
 	if status == http.StatusPreconditionFailed {
 		return nil, fmt.Errorf("%w: %s: %w", ErrTemplateExists, dd.ID, err)
 	}
@@ -540,7 +576,18 @@ func (e *deviceDefinitionCatalogService) Create(ctx context.Context, manufacture
 		return nil, err
 	}
 	e.memCache.Delete(manifestCacheKey)
-	return &dd.ID, nil
+	var stored coremodels.Template
+	if err := json.Unmarshal(respBody, &stored); err != nil {
+		e.logger.Warn().Err(err).Msgf("catalog create %s stored the template but its response could not be read as one", dd.ID)
+		return nil, nil
+	}
+	if stored.ID != dd.ID {
+		// Not the document we asked for. Handing it back would have a caller
+		// narrow trims for a different definition than the one it decoded.
+		e.logger.Warn().Msgf("catalog create %s answered with template %q", dd.ID, stored.ID)
+		return nil, nil
+	}
+	return &stored, nil
 }
 
 func (e *deviceDefinitionCatalogService) Delete(ctx context.Context, manufacturerName, id string) (*string, error) {

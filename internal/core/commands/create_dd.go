@@ -138,7 +138,11 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		Metadata:   common.ConvertDeviceTypeAttrsToDefinitionMetadata(command.DeviceAttributes),
 	}
 
-	create, err := ch.catalogSvc.Create(ctx, command.Make, ddTbl)
+	// The stored template is not used here: this command already answers with
+	// the id, which is the value Create used to return and the value
+	// TransactionID has carried since definitions stopped being written
+	// on-chain.
+	_, err = ch.catalogSvc.Create(ctx, command.Make, ddTbl)
 	if err != nil {
 		return nil, err // todo does mediator eat this error?
 	}
@@ -147,7 +151,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		ch.logger.Err(err).Msgf("failed to add images to database for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
-	return CreateDeviceDefinitionCommandResult{ID: ddTbl.ID, NameSlug: ddTbl.ID, TransactionID: create}, nil
+	return CreateDeviceDefinitionCommandResult{ID: ddTbl.ID, NameSlug: ddTbl.ID, TransactionID: &ddTbl.ID}, nil
 }
 
 func (ch CreateDeviceDefinitionCommandHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID string, img gateways.FuelDeviceImages) error {

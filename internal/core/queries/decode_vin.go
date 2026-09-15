@@ -441,22 +441,40 @@ func definitionIDForDecode(makeName, modelName string, year int16) (string, erro
 }
 
 // createOrAdoptTemplate creates the template for the first decode of a
-// make/model/year. It returns nil when this call wrote it, and the decode
-// carries on as it always has.
+// make/model/year and always returns the stored template, whoever wrote it.
+//
+// Both outcomes have to hand one back. A decode that returned nothing on the
+// path where its own create landed skipped trim matching entirely: the first
+// decode of a definition answered trim "", template_version 0 and
+// match_quality "", while the next decode of the same VIN read the stored Base
+// trim and answered "Base" with quality "exact". Two calls a second apart
+// disagreeing about one VIN is the defect hydrateResponseFromVinNumber's doc
+// comment forbids, and the trim-match counter under-reported every new
+// definition on top of it. Create answers with the document the worker stored,
+// so this costs no extra request.
 //
 // Create is create-only. When another writer -- a Console curator saving trims,
 // or a concurrent first decode -- stored the template between the decode's
 // catalog read and this write, Create returns ErrTemplateExists instead of
 // replacing their version with a single Base trim. That is success by someone
-// else: the stored template is read back through the worker, since the CDN may
-// still be serving the 404 the decode just saw, and returned so the decode
+// else: their template is read back with a cache-busting read, since the CDN
+// may still be serving the 404 the decode just saw, and returned so the decode
 // narrows it like any template it found.
 func createOrAdoptTemplate(ctx context.Context, catalog gateways.DeviceDefinitionCatalogService, manufacturer string, dd coremodels.DeviceDefinitionTablelandModel) (*coremodels.Template, error) {
-	_, err := catalog.Create(ctx, manufacturer, dd)
-	if err == nil {
-		return nil, nil
-	}
-	if !errors.Is(err, gateways.ErrTemplateExists) {
+	created, err := catalog.Create(ctx, manufacturer, dd)
+	switch {
+	case err == nil && created != nil:
+		return created, nil
+	case err == nil:
+		// The write landed but its response was not readable as this
+		// template. Rare, and not a reason to answer with no match data:
+		// read the document back instead.
+		stored, _, errRead := catalog.GetTemplateByIDFresh(ctx, dd.ID)
+		if errRead != nil {
+			return nil, errors.Wrapf(errRead, "template %s was created but could not be read back", dd.ID)
+		}
+		return stored, nil
+	case !errors.Is(err, gateways.ErrTemplateExists):
 		return nil, err
 	}
 	stored, _, err := catalog.GetTemplateByIDFresh(ctx, dd.ID)

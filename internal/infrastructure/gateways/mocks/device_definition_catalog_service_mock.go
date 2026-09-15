@@ -43,10 +43,10 @@ func (m *MockDeviceDefinitionCatalogService) EXPECT() *MockDeviceDefinitionCatal
 }
 
 // Create mocks base method.
-func (m *MockDeviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd models.DeviceDefinitionTablelandModel) (*string, error) {
+func (m *MockDeviceDefinitionCatalogService) Create(ctx context.Context, manufacturerName string, dd models.DeviceDefinitionTablelandModel) (*models.Template, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, manufacturerName, dd)
-	ret0, _ := ret[0].(*string)
+	ret0, _ := ret[0].(*models.Template)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

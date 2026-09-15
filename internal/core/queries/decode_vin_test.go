@@ -281,8 +281,10 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD_WithMismatchWM
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, vinExtra, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
 
-	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, dmLincoln.Name, gomock.Any()).Return(&trxHashHex, nil)
+	// Create answers with the document the worker stored, and the decode
+	// narrows it exactly as it narrows a template it found.
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, dmLincoln.Name, gomock.Any()).
+		Return(buildCreatedTemplate(definitionID, vinInfoResp.Model, 2022, styleLevelPT), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -431,8 +433,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	s.mockVINService.EXPECT().GetVIN(ctx, vin, coremodels.AllProviders, "USA").Times(1).Return(vinDecodingInfoData, nil, nil)
 	s.mockPowerTrainTypeService.EXPECT().ResolvePowerTrainFromVinInfo(vinDecodingInfoData.StyleName, vinDecodingInfoData.FuelType).Return(styleLevelPT)
 
-	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(ctx, gomock.Any(), gomock.Any()).
+		Return(buildCreatedTemplate(definitionID, vinInfoResp.Model, 2021, styleLevelPT), nil)
 
 	image := gateways.FuelImage{
 		SourceURL: "https://image",
@@ -473,6 +475,28 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_Success_CreatesDD() {
 	ddImages, err := models.Images(models.ImageWhere.DefinitionID.EQ(definitionID)).All(s.ctx, s.pdb.DBS().Reader)
 	s.Require().NoError(err)
 	s.Assert().NotEmpty(ddImages)
+}
+
+// buildCreatedTemplate is the document definitions-worker stores, and answers
+// the PUT with, for a template Create wrote: one Base trim, the decoded
+// powertrain as a template attribute, and version 1. A decode that creates a
+// definition must narrow this exactly as the next decode of the same VIN
+// narrows the same document read back out of the catalog.
+func buildCreatedTemplate(definitionID, model string, year int, powertrain string) *coremodels.Template {
+	attrs := map[string]any{}
+	if powertrain != "" {
+		attrs["powertrain_type"] = powertrain
+	}
+	return &coremodels.Template{
+		ID:           definitionID,
+		Model:        model,
+		Year:         year,
+		DeviceType:   "vehicle",
+		Manufacturer: coremodels.TemplateManufacturer{Slug: strings.Split(definitionID, "_")[0], TokenID: 1},
+		Attributes:   attrs,
+		Trims:        []coremodels.Trim{{Name: "Base", Attributes: map[string]any{}}},
+		Version:      1,
+	}
 }
 
 func buildTestTemplate(definitionID, model string, year int) *coremodels.Template {
@@ -572,8 +596,8 @@ func (s *DecodeVINQueryHandlerSuite) TestHandle_CatalogNotFound_StillCreatesDefi
 	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), definitionID).Return(
 		nil, nil, errors.Wrapf(gateways.ErrTemplateNotFound, "template %s", definitionID))
 
-	trxHashHex := "0xa90868fe9364dbf41695b3b87e630f6455cfd63a4711f56b64f631b828c02b35"
-	s.mockDeviceDefinitionCatalogService.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return(&trxHashHex, nil)
+	s.mockDeviceDefinitionCatalogService.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		Return(buildCreatedTemplate(definitionID, "Escape", 2021, "ICE"), nil)
 
 	image := gateways.FuelImage{SourceURL: "https://image"}
 	fuelDeviceImagesMock := gateways.FuelDeviceImages{FuelAPIID: "1", Height: 1, Width: 1, Images: []gateways.FuelImage{image}}

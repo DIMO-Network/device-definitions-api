@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,12 +13,14 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
+	"github.com/DIMO-Network/device-definitions-api/internal/core/services"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 )
 
 // The decode's create is only observable at the worker, so these run the real
@@ -56,6 +59,13 @@ type fakeWorker struct {
 	putPaths     []string // the path each PUT went to
 	templateGets int
 	cdnRequests  int
+	version      int
+}
+
+// nextVersion is the version the worker stamps on the document it stores.
+func (fw *fakeWorker) nextVersion() int {
+	fw.version++
+	return fw.version
 }
 
 func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalogService {
@@ -86,9 +96,12 @@ func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalo
 				_, _ = w.Write([]byte(`{"error":"template already exists","expected":null,"actual":2}`))
 				return
 			}
+			// The worker answers a PUT with the document it stored, version
+			// stamped. That body is what the decode matches trims against.
 			body, _ := io.ReadAll(r.Body)
-			fw.stored = string(body)
-			_, _ = w.Write(body)
+			stored, _ := sjson.SetBytes(body, "version", fw.nextVersion())
+			fw.stored = string(stored)
+			_, _ = w.Write(stored)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/t/"):
 			fw.templateGets++
 			if fw.stored == "" {
@@ -134,18 +147,60 @@ func TestCreateOrAdoptTemplateContinuesWithTheTemplateAnotherWriterStored(t *tes
 	assert.Equal(t, "Hybrid LE", tmpl.Trims[1].Name)
 }
 
-// When this decode's create is the one that lands, the decode carries on as it
-// always has: nothing to adopt, and no read-back.
-func TestCreateOrAdoptTemplateReturnsNothingWhenItWroteTheTemplate(t *testing.T) {
+// When this decode's create is the one that lands, it must still answer with
+// the template it wrote. Returning nothing skipped the whole match block, so
+// the very first decode of a definition answered trim "", template_version 0
+// and match_quality "" -- and the next decode of the same VIN, reading the
+// stored Base trim, answered trim "Base" with quality "exact". Two calls a
+// second apart disagreeing about one VIN is exactly what the cached path's
+// doc comment says must not happen, and the trim-match counter under-reported
+// every new definition.
+//
+// The worker's PUT already answers with the stored document, so there is
+// nothing extra to fetch: no read-back, one write.
+func TestCreateOrAdoptTemplateReturnsTheTemplateItWrote(t *testing.T) {
 	fw := &fakeWorker{}
 	catalog := newFakeWorker(t, fw)
 
 	tmpl, err := createOrAdoptTemplate(context.Background(), catalog, "Toyota", firstDecode)
 	require.NoError(t, err)
-	assert.Nil(t, tmpl)
+	require.NotNil(t, tmpl, "the decode has to narrow the template it just created")
 	assert.Equal(t, []string{"*"}, fw.puts)
 	assert.NotEmpty(t, fw.stored)
-	assert.Zero(t, fw.templateGets)
+	assert.Zero(t, fw.templateGets, "the PUT's own response is the stored template")
+
+	assert.Equal(t, "toyota_camry_2026", tmpl.ID)
+	assert.Equal(t, "Camry", tmpl.Model)
+	assert.Equal(t, 1, tmpl.Version, "the version the worker stamped, not zero")
+	require.Len(t, tmpl.Trims, 1)
+	assert.Equal(t, "Base", tmpl.Trims[0].Name)
+}
+
+// The invariant the return value exists for: the first decode of a VIN and
+// every decode after it answer the same thing. The created template, run
+// through the matcher Handle runs, must resolve exactly as the stored template
+// resolves for the cached path -- Base, exact, version 1 -- rather than the
+// empty match block a nil template produced.
+func TestTheCreatedTemplateResolvesTheWayTheNextDecodeWill(t *testing.T) {
+	fw := &fakeWorker{}
+	catalog := newFakeWorker(t, fw)
+
+	created, err := createOrAdoptTemplate(context.Background(), catalog, "Toyota", firstDecode)
+	require.NoError(t, err)
+	require.NotNil(t, created)
+
+	// What the next decode of the same VIN reads back out of the catalog.
+	var stored coremodels.Template
+	require.NoError(t, json.Unmarshal([]byte(fw.stored), &stored))
+
+	sig := services.MatchSignals{VIN: "4T1C11AK8NU123456", StyleName: "LE"}
+	fresh := services.MatchTrim(created, sig)
+	cached := services.MatchTrim(&stored, sig)
+
+	assert.Equal(t, cached, fresh, "the decode that created the definition must answer what the next one answers")
+	assert.Equal(t, "Base", fresh.Trim)
+	assert.Equal(t, services.MatchExact, fresh.Quality)
+	assert.Equal(t, 1, fresh.TemplateVersion)
 }
 
 // Only a 412 means there is someone else's template to use. Any other refusal
