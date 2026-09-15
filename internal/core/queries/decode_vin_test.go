@@ -1359,7 +1359,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	}, nil, nil)
 	//s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), "lincoln_escape_2020").AnyTimes().Return(nil, nil, fmt.Errorf("not found"))
 
-	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	got, err := s.queryHandler.vinInfoFromKnown(s.ctx, v, "Escape", 2020)
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "1FMCU0G61MUA52727", got.VIN)
 	assert.Equal(s.T(), "Ford", got.Make)
@@ -1379,7 +1379,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	err := wmi1.Insert(s.ctx, s.pdb.DBS().Writer, boil.Infer())
 	require.NoError(s.T(), err)
 
-	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	got, err := s.queryHandler.vinInfoFromKnown(s.ctx, v, "Escape", 2020)
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "1FMCU0G61MUA52727", got.VIN)
 	assert.Equal(s.T(), "Ford", got.Make)
@@ -1407,7 +1407,7 @@ func (s *DecodeVINQueryHandlerSuite) TestDecodeVINQueryHandler_vinInfoFromKnown_
 	definitionID := "ford_escape_2020"
 	s.mockDeviceDefinitionCatalogService.EXPECT().GetTemplateByID(gomock.Any(), gomock.AnyOf("lincoln_escape_2020", definitionID)).Times(2).Return(nil, nil, fmt.Errorf("not found"))
 
-	got, err := s.queryHandler.vinInfoFromKnown(v, "Escape", 2020)
+	got, err := s.queryHandler.vinInfoFromKnown(s.ctx, v, "Escape", 2020)
 	require.Error(s.T(), err, "vinInfoFromKnown: unable to determine the right OEM between Ford, Lincoln for WMI %s 1FM")
 	require.Nil(s.T(), got)
 }

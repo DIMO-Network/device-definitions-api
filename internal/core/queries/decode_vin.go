@@ -167,7 +167,7 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		if len(query.KnownModel) > 0 && query.KnownYear > 0 {
 			// note if this is successful, err gets set to nil
 			// todo: the knownModel should correspond with the Make
-			vinInfo, err = dc.vinInfoFromKnown(vinObj, query.KnownModel, query.KnownYear)
+			vinInfo, err = dc.vinInfoFromKnown(ctx, vinObj, query.KnownModel, query.KnownYear)
 		}
 	}
 
@@ -652,31 +652,16 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vinObj 
 }
 
 // vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set
-func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
+func (dc DecodeVINQueryHandler) vinInfoFromKnown(ctx context.Context, vin vin.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
 	vinInfo := &coremodels.VINDecodingInfoData{}
 	vinInfo.VIN = vin.String()
-	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(context.Background(), dc.dbs().Reader)
+	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(ctx, dc.dbs().Reader)
 	if err != nil {
-		return nil, errors.Wrap(err, "vinInfoFromKnown: unknown WMI "+vin.Wmi())
+		return nil, errors.Wrap(err, "vinInfoFromKnown: failed to read wmis for "+vin.Wmi())
 	}
-	if len(wmis) > 1 {
-		// see if we can find an existing device definition for this WMI
-		makeNamesForError := ""
-		for _, wmi := range wmis {
-			makeNamesForError += wmi.ManufacturerName + ", "
-			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
-			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(context.Background(), definitionID)
-			if err == nil && tmpl != nil {
-				vinInfo.Make = wmi.ManufacturerName
-				break
-			}
-		}
-		// if make is blank means no matching DD's found. We don't have a good way to determine the right Make / OEM
-		if vinInfo.Make == "" {
-			return nil, fmt.Errorf("vinInfoFromKnown: unable to determine the right OEM between %sfor WMI %s", makeNamesForError, vin.Wmi())
-		}
-	} else {
-		vinInfo.Make = wmis[0].ManufacturerName
+	vinInfo.Make, err = dc.makeFromWMIRows(ctx, vin.Wmi(), wmis, knownModel, knownYear)
+	if err != nil {
+		return nil, err
 	}
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
@@ -687,6 +672,35 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 	}
 
 	return vinInfo, nil
+}
+
+// makeFromWMIRows names the manufacturer for a VIN whose wmis rows have
+// already been read. A WMI can be shared by several marques of the same parent
+// OEM, in which case the one that already has a template for this model-year
+// is the right answer.
+func (dc DecodeVINQueryHandler) makeFromWMIRows(ctx context.Context, wmiCode string, wmis models.WmiSlice, knownModel string, knownYear int32) (string, error) {
+	if len(wmis) == 0 {
+		// .All() reports an unknown WMI as an empty slice with a nil error --
+		// unlike .One(), which returns sql.ErrNoRows -- so this has to be
+		// checked explicitly. Indexing element zero here panicked the decode
+		// handler for exactly the VINs this fallback exists to serve.
+		return "", &exceptions.NotFoundError{Err: fmt.Errorf("vinInfoFromKnown: unknown WMI %s", wmiCode)}
+	}
+	if len(wmis) > 1 {
+		// see if we can find an existing device definition for this WMI
+		makeNamesForError := ""
+		for _, wmi := range wmis {
+			makeNamesForError += wmi.ManufacturerName + ", "
+			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
+			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, definitionID)
+			if err == nil && tmpl != nil {
+				return wmi.ManufacturerName, nil
+			}
+		}
+		// no matching DD's found. We don't have a good way to determine the right Make / OEM
+		return "", fmt.Errorf("vinInfoFromKnown: unable to determine the right OEM between %sfor WMI %s", makeNamesForError, wmiCode)
+	}
+	return wmis[0].ManufacturerName, nil
 }
 
 func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID, mk, model string, year int, prodID int, prodFormat int) error {
