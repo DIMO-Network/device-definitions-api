@@ -20,6 +20,10 @@ env:
   REDIS_CLUSTER_MODE: true
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
+  # One hostname on purpose: definitions-worker is what serves
+  # definitions.dimo.org, so there is no separate origin to read through.
+  # A read that must not be served from the edge cache misses it by cache
+  # key instead -- see fetchTemplateDocFresh's cache-busting parameter.
   DEFINITIONS_CATALOG_URL: https://definitions.dimo.org
   DEFINITIONS_WORKER_URL: https://definitions.dimo.org
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod

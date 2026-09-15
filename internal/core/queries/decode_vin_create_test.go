@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -58,6 +59,9 @@ type fakeWorker struct {
 	puts         []string // the If-None-Match header each PUT carried
 	putPaths     []string // the path each PUT went to
 	templateGets int
+	getPaths     []string // the path each template GET went to
+	getQueries   []string // the query string each template GET carried
+	edgeHits     int      // template GETs the edge answered without the origin
 	cdnRequests  int
 	version      int
 }
@@ -68,15 +72,13 @@ func (fw *fakeWorker) nextVersion() int {
 	return fw.version
 }
 
-func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalogService {
-	t.Helper()
-	// The CDN still serves the 404 the decode's read saw.
-	cdn := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		fw.cdnRequests++
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	t.Cleanup(cdn.Close)
-	worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// workerHandler is definitions-worker's contract: GET /t/<id> serves the
+// stored template or 404, a PUT with If-None-Match: * answers 412 when one is
+// stored, and a PUT without it overwrites. Routing is on the path alone
+// (src/index.ts matches url.pathname), so a query string reaches nothing here
+// -- which is what makes a cache-busting parameter safe.
+func workerHandler(fw *fakeWorker) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodPost:
 			// identity-api's GraphQL endpoint.
@@ -104,6 +106,8 @@ func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalo
 			_, _ = w.Write(stored)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/t/"):
 			fw.templateGets++
+			fw.getPaths = append(fw.getPaths, r.URL.Path)
+			fw.getQueries = append(fw.getQueries, r.URL.RawQuery)
 			if fw.stored == "" {
 				w.WriteHeader(http.StatusNotFound)
 				return
@@ -112,15 +116,82 @@ func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalo
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
-	}))
-	t.Cleanup(worker.Close)
+	}
+}
 
-	identity, err := url.Parse(worker.URL)
+// edgeCache is Cloudflare in front of the worker. Template documents are
+// served `public, max-age=86400`, and the cache key is the whole URL -- path
+// AND query -- so a GET whose exact URL has been answered before is served
+// from cache for up to a day, and only a URL the edge has not seen reaches the
+// origin at all.
+func edgeCache(fw *fakeWorker, origin http.Handler) http.HandlerFunc {
+	type entry struct {
+		status int
+		body   string
+	}
+	cached := map[string]entry{}
+	var mu sync.Mutex
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || !strings.HasPrefix(r.URL.Path, "/t/") {
+			origin.ServeHTTP(w, r)
+			return
+		}
+		key := r.URL.RequestURI()
+		mu.Lock()
+		hit, ok := cached[key]
+		if !ok {
+			mu.Unlock()
+			rec := httptest.NewRecorder()
+			origin.ServeHTTP(rec, r)
+			hit = entry{status: rec.Code, body: rec.Body.String()}
+			mu.Lock()
+			cached[key] = hit
+		} else {
+			fw.edgeHits++
+		}
+		mu.Unlock()
+		w.WriteHeader(hit.status)
+		_, _ = w.Write([]byte(hit.body))
+	}
+}
+
+// newFakeWorker points the catalog and worker settings at two different
+// servers, so a request that reached the worker is unambiguous in a test. The
+// charts do NOT produce this shape -- see newOneHostFakeWorker, which does.
+func newFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalogService {
+	t.Helper()
+	// The CDN still serves the 404 the decode's read saw.
+	cdn := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fw.cdnRequests++
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(cdn.Close)
+	worker := httptest.NewServer(workerHandler(fw))
+	t.Cleanup(worker.Close)
+	return catalogService(t, cdn.URL, worker.URL)
+}
+
+// newOneHostFakeWorker is the configuration the charts actually deploy:
+// DEFINITIONS_CATALOG_URL and DEFINITIONS_WORKER_URL are the same hostname in
+// both dev and prod (values.yaml, values-prod.yaml), with Cloudflare's cache
+// in front of it. There is no second host to read "through the worker"
+// instead, so the only thing that can separate a fresh read from a cached one
+// is the cache key.
+func newOneHostFakeWorker(t *testing.T, fw *fakeWorker) gateways.DeviceDefinitionCatalogService {
+	t.Helper()
+	host := httptest.NewServer(edgeCache(fw, workerHandler(fw)))
+	t.Cleanup(host.Close)
+	return catalogService(t, host.URL, host.URL)
+}
+
+func catalogService(t *testing.T, catalogURL, workerURL string) gateways.DeviceDefinitionCatalogService {
+	t.Helper()
+	identity, err := url.Parse(workerURL)
 	require.NoError(t, err)
 	logger := zerolog.Nop()
 	return gateways.NewDeviceDefinitionCatalogService(&config.Settings{
-		DefinitionsCatalogURL:  cdn.URL,
-		DefinitionsWorkerURL:   worker.URL,
+		DefinitionsCatalogURL:  catalogURL,
+		DefinitionsWorkerURL:   workerURL,
 		DefinitionsWorkerToken: "test-token",
 		IdentityAPIURL:         *identity,
 	}, &logger)
@@ -139,8 +210,8 @@ func TestCreateOrAdoptTemplateContinuesWithTheTemplateAnotherWriterStored(t *tes
 
 	assert.Equal(t, []string{"*"}, fw.puts, "one create-only PUT, and no second write")
 	assert.JSONEq(t, curatedTemplateJSON, fw.stored, "the curated template must not be overwritten")
-	assert.Equal(t, 1, fw.templateGets, "the stored template is read back through the worker")
-	assert.Zero(t, fw.cdnRequests, "the CDN may still be serving the 404")
+	assert.Equal(t, 1, fw.templateGets, "the stored template is read back with a cache-busting read")
+	assert.Zero(t, fw.cdnRequests, "the edge may still be serving the 404")
 
 	assert.Equal(t, 2, tmpl.Version)
 	require.Len(t, tmpl.Trims, 2, "the curated trims, not a single Base trim")
@@ -311,6 +382,73 @@ func TestDefinitionIDForDecodeBuildsEveryIDTheWorkerAccepts(t *testing.T) {
 			assert.Equal(t, tt.wantID, id)
 		})
 	}
+}
+
+// The deployed configuration, end to end. DEFINITIONS_CATALOG_URL and
+// DEFINITIONS_WORKER_URL are one hostname, so "read through the worker instead
+// of the CDN" bypassed nothing: the read-back built a byte-identical request
+// to the read the decode had already made, and Cloudflare answered it from
+// cache. Against responses served `public, max-age=86400`, that means the
+// read-back was served the very 404 it exists to see past, and the decode
+// failed with "created by another writer but could not be read back" for a
+// template that plainly exists.
+func TestTheFreshReadIsNotServedTheCached404OnOneHost(t *testing.T) {
+	fw := &fakeWorker{}
+	catalog := newOneHostFakeWorker(t, fw)
+	ctx := context.Background()
+
+	// The decode's catalog read: no template yet. The edge now holds that 404
+	// for a day.
+	_, _, err := catalog.GetTemplateByID(ctx, firstDecode.ID)
+	require.ErrorIs(t, err, gateways.ErrTemplateNotFound)
+
+	// A curator saves the template through the worker a moment later.
+	fw.stored = curatedTemplateJSON
+	fw.version = 2
+
+	// The cached read still answers 404. That is the edge doing its job, and
+	// it is the reason the read-back cannot be an ordinary read.
+	_, _, err = catalog.GetTemplateByID(ctx, firstDecode.ID)
+	require.ErrorIs(t, err, gateways.ErrTemplateNotFound)
+	require.Positive(t, fw.edgeHits, "the premise: the second identical read never reached the origin")
+
+	tmpl, err := createOrAdoptTemplate(ctx, catalog, "Toyota", firstDecode)
+	require.NoError(t, err, "the read-back must not be served the 404 the decode already saw")
+	require.NotNil(t, tmpl)
+	assert.Equal(t, 2, tmpl.Version)
+	require.Len(t, tmpl.Trims, 2, "the curator's trims, read past the cache")
+	assert.Equal(t, "Hybrid LE", tmpl.Trims[1].Name)
+}
+
+// What separates the two reads is the cache key, and nothing else. The path is
+// identical because definitions-worker routes on url.pathname alone, so the
+// query it never reads costs nothing there and is the whole difference at the
+// edge. The cached read must stay cacheable -- it is the hot path -- so only
+// the fresh read carries the parameter, and it must differ every time or the
+// second fresh read of a day is served the first one's answer.
+func TestOnlyTheFreshReadCarriesACacheBuster(t *testing.T) {
+	fw := &fakeWorker{stored: curatedTemplateJSON}
+	catalog := newFakeWorker(t, fw)
+	ctx := context.Background()
+
+	_, _, err := catalog.GetTemplateByIDFresh(ctx, firstDecode.ID)
+	require.NoError(t, err)
+	_, _, err = catalog.GetTemplateByIDFresh(ctx, firstDecode.ID)
+	require.NoError(t, err)
+
+	require.Len(t, fw.getQueries, 2)
+	assert.NotEmpty(t, fw.getQueries[0], "a fresh read the edge has already seen is not a fresh read")
+	assert.NotEqual(t, fw.getQueries[0], fw.getQueries[1], "two fresh reads must not share a cache key")
+	for _, p := range fw.getPaths {
+		assert.Equal(t, "/t/"+firstDecode.ID+".json", p, "the worker routes on the path; the query must not move it")
+	}
+
+	// The cached read is the hot path and must keep the CDN's cache key.
+	fw.getQueries = nil
+	_, _, err = catalog.GetTemplateByID(ctx, firstDecode.ID)
+	require.ErrorIs(t, err, gateways.ErrTemplateNotFound, "the two-server fake's CDN always 404s")
+	assert.Zero(t, fw.cdnRequests-1, "the cached read goes to the CDN")
+	assert.Empty(t, fw.getQueries, "the cached read never reaches the worker")
 }
 
 // A catalog miss from one of these sources answers not found instead of

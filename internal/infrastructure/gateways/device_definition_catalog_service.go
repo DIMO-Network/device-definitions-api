@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
@@ -84,13 +85,17 @@ type DeviceDefinitionCatalogService interface {
 	// import has not run for this id, and that must fail loudly rather than
 	// silently serving the flat pre-migration record.
 	GetTemplateByID(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
-	// GetTemplateByIDFresh is GetTemplateByID reading through the worker
-	// instead of the CDN. A caller that reads, mutates and writes back must use
-	// it: documents are served with max-age=86400, so a cached read silently
+	// GetTemplateByIDFresh is GetTemplateByID with a request the edge cache
+	// cannot answer. A caller that reads, mutates and writes back must use it:
+	// documents are served with max-age=86400, so a cached read silently
 	// discards any edit made in the last day when the result is PUT back.
 	//
+	// The worker and the catalog are one hostname, so this is not a different
+	// host -- it is a different cache key, a unique query parameter the worker
+	// ignores. See fetchTemplateDocFresh.
+	//
 	// The decode path uses it after Create returns ErrTemplateExists, to read
-	// back the template another writer just stored: the CDN may still be
+	// back the template another writer just stored: the edge may still be
 	// serving the 404 the decode saw moments earlier.
 	GetTemplateByIDFresh(ctx context.Context, ID string) (*coremodels.Template, *big.Int, error)
 	// GetDefinition is GetDeviceDefinitionByID under its historical secondary name.
@@ -142,14 +147,43 @@ func (e *deviceDefinitionCatalogService) fetchTemplateDoc(ctx context.Context, i
 	return tmpl, err
 }
 
-// fetchTemplateDocFresh bypasses the CDN by reading through the worker when
-// configured, so read-modify-write never merges a stale cached base.
+// freshParam is the query parameter that makes a fresh read miss the edge
+// cache. definitions-worker routes on url.pathname alone (src/index.ts's
+// templateMatch), so it never reads this and the request reaches exactly the
+// same handler the cached read reaches; Cloudflare's cache key is the whole
+// URL, so a value it has not seen cannot be served from cache.
+const freshParam = "fresh"
+
+// freshSeq disambiguates two fresh reads minted inside one clock tick. The
+// value only has to be unique, never unguessable.
+var freshSeq atomic.Uint64
+
+func freshValue() string {
+	return strconv.FormatInt(time.Now().UnixNano(), 36) + "-" + strconv.FormatUint(freshSeq.Add(1), 36)
+}
+
+// fetchTemplateDocFresh reads a template past the edge cache, so
+// read-modify-write never merges a stale cached base and a read-back after a
+// create-only conflict is never served the 404 the create just saw.
+//
+// It does NOT read "through the worker instead of the CDN": there is no second
+// host to read through. DEFINITIONS_CATALOG_URL and DEFINITIONS_WORKER_URL are
+// the same hostname in both dev and prod (charts/device-definitions-api),
+// because the worker IS what serves definitions.dimo.org -- so the fresh read
+// built a byte-identical request to the cached one and got the cached answer.
+// Keeping one hostname and missing the cache by cache key is the decision:
+// a unique query parameter the worker ignores and the edge cannot match.
+//
+// A request header cannot do this job: Cloudflare does not honour a client's
+// Cache-Control on a cached response, and the document is served
+// `public, max-age=86400, stale-while-revalidate=604800`.
 func (e *deviceDefinitionCatalogService) fetchTemplateDocFresh(ctx context.Context, id string) (*coremodels.Template, error) {
 	base := e.settings.DefinitionsWorkerURL
 	if base == "" {
-		return e.fetchTemplateDoc(ctx, id)
+		base = e.settings.DefinitionsCatalogURL
 	}
-	tmpl, err := e.fetchTemplateDocFrom(ctx, strings.TrimSuffix(base, "/")+"/t/"+url.PathEscape(id)+".json", id)
+	reqURL := strings.TrimSuffix(base, "/") + "/t/" + url.PathEscape(id) + ".json?" + freshParam + "=" + freshValue()
+	tmpl, err := e.fetchTemplateDocFrom(ctx, reqURL, id)
 	countOutcome(metricCatalogRead, err)
 	return tmpl, err
 }

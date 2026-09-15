@@ -51,6 +51,10 @@ env:
   VINCARIO_API_URL: https://api.vindecoder.eu/3.2
   DAT_GROUP_URL: https://www.datgroup.com/myClaim/soap/v2/VehicleIdentificationService
   PRIVATE_KEY_MODE: false
+  # One hostname on purpose: definitions-worker is what serves
+  # definitions.dev.dimo.org, so there is no separate origin to read through.
+  # A read that must not be served from the edge cache misses it by cache
+  # key instead -- see fetchTemplateDocFresh's cache-busting parameter.
   DEFINITIONS_CATALOG_URL: https://definitions.dev.dimo.org
   DEFINITIONS_WORKER_URL: https://definitions.dev.dimo.org
   SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_dev
