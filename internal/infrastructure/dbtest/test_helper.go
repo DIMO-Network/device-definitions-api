@@ -142,8 +142,15 @@ func TruncateTables(db *sql.DB, t *testing.T) {
 
 func SetupCreateDeviceDefinition(t *testing.T, manufacturerName, model string, year int, pdb db.Store) *coremodels.DeviceDefinitionTablelandModel {
 	SetupCreateDeviceType(t, pdb)
+	// A fixture built on an id no template can exist at would make the test
+	// assert against a definition the catalog could never hold, so fail the
+	// test here rather than let it pass or fail for the wrong reason.
+	id, err := common.DeviceDefinitionSlug(stringutils.SlugString(manufacturerName), stringutils.SlugString(model), int16(year))
+	if err != nil {
+		t.Fatalf("test fixture asks for a definition id definitions-worker can never hold: %v", err)
+	}
 	dd := &coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(stringutils.SlugString(manufacturerName), stringutils.SlugString(model), int16(year)),
+		ID:         id,
 		KSUID:      ksuid.New().String(),
 		Model:      model,
 		Year:       year,

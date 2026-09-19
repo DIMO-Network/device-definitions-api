@@ -128,8 +128,20 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		ch.logger.Warn().Err(err).Msgf("failed to get images for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
+	// An id definitions-worker can never hold is a bad request, not a server
+	// fault: the worker answers the create with 422, that error propagated as
+	// a plain error, and fiber reported the service as broken with a 500 for
+	// what is a make/model the caller has to correct. A ValidationError is the
+	// 4xx both the HTTP and gRPC layers already translate.
+	definitionID, err := common.DeviceDefinitionSlug(stringutils.SlugString(dm.Name), stringutils.SlugString(command.Model), int16(command.Year))
+	if err != nil {
+		return nil, &exceptions.ValidationError{
+			Err: fmt.Errorf("no device definition id can be built for %d %s %s: %w", command.Year, dm.Name, command.Model, err),
+		}
+	}
+
 	ddTbl := coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(stringutils.SlugString(dm.Name), stringutils.SlugString(command.Model), int16(command.Year)),
+		ID:         definitionID,
 		KSUID:      ksuid.New().String(),
 		Model:      command.Model,
 		Year:       command.Year,

@@ -473,8 +473,8 @@ func (dc DecodeVINQueryHandler) readCachedVinNumber(ctx context.Context, vinStr 
 // common.ErrUnmintableDefinitionID so a caller can tell this apart from a
 // vehicle that merely has no template yet.
 func definitionIDForDecode(makeName, modelName string, year int16) (string, error) {
-	id := common.DeviceDefinitionSlug(stringutils.SlugString(makeName), stringutils.SlugString(modelName), year)
-	if err := common.ValidateDefinitionID(id); err != nil {
+	id, err := common.DeviceDefinitionSlug(stringutils.SlugString(makeName), stringutils.SlugString(modelName), year)
+	if err != nil {
 		return "", &exceptions.NotFoundError{
 			Err: fmt.Errorf("no device definition id can be built for %d %s %s: %w", year, makeName, modelName, err),
 		}
@@ -803,7 +803,14 @@ func (dc DecodeVINQueryHandler) makeFromWMIRows(ctx context.Context, wmiCode str
 		makeNamesForError := ""
 		for _, wmi := range wmis {
 			makeNamesForError += wmi.ManufacturerName + ", "
-			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
+			definitionID, errID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
+			if errID != nil {
+				// No template can be stored at an id the worker refuses, so
+				// this marque cannot be the one with a definition for the
+				// model-year. Skipping it costs a catalog request that would
+				// 404 anyway; the loop still reports every marque it weighed.
+				continue
+			}
 			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, definitionID)
 			if err == nil && tmpl != nil {
 				return wmi.ManufacturerName, nil

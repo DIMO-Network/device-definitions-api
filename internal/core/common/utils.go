@@ -294,7 +294,18 @@ var (
 	workerIDDisallowed = regexp.MustCompile(`[^a-z0-9._&+-]`)
 )
 
-// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id.
+// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id, and
+// refuses one definitions-worker can never hold.
+//
+// The repair below drops characters, and dropping every character of a part
+// leaves a segment ID_RE refuses just as firmly as the id it replaced. So the
+// builder checks its own output: an id that fails ValidateDefinitionID comes
+// back as ("", err) wrapping ErrUnmintableDefinitionID, and the id is not
+// returned alongside it -- a caller that ignores the error must not be able to
+// write the row or send the PUT anyway. Before this, only one of the five
+// production call sites validated, and the contract on ValidateDefinitionID
+// ("nothing may PUT, or build a vin_numbers row on, an id that fails it") was
+// enforced nowhere else.
 //
 // An id the worker already accepts is returned exactly as it has always been
 // built. The catalog holds ids like volkswagen_id--buzz_2024 (model "ID. Buzz"
@@ -307,14 +318,18 @@ var (
 // still agree. An underscore can never survive inside a part: it is the
 // separator, and templateFromDefinition reads the manufacturer slug back as
 // everything before the first one.
-func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
+func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) (string, error) {
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
 	if id := fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year); workerIDValid.MatchString(id) {
-		return id
+		return id, nil
 	}
-	return fmt.Sprintf("%s_%s_%d", workerIDPart(makeSlug), workerIDPart(modelSlugCleaned), year)
+	repaired := fmt.Sprintf("%s_%s_%d", workerIDPart(makeSlug), workerIDPart(modelSlugCleaned), year)
+	if err := ValidateDefinitionID(repaired); err != nil {
+		return "", err
+	}
+	return repaired, nil
 }
 
 // workerIDPart repairs one part of an id the worker would refuse: slug it, then
@@ -323,8 +338,9 @@ func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
 // Dropping can empty a part outright -- a model written entirely in a script
 // with no character in the class, such as ハイエース or Нива, leaves nothing
 // behind -- and ID_RE requires at least one character in each. The repair
-// cannot fix that: there is no character to keep. ValidateDefinitionID is what
-// catches it, and every writer must call it before it builds on the id.
+// cannot fix that: there is no character to keep. DeviceDefinitionSlug checks
+// its own output with ValidateDefinitionID and returns an error rather than
+// such an id, so no caller can build on one.
 func workerIDPart(part string) string {
 	return workerIDDisallowed.ReplaceAllString(stringutils.SlugString(part), "")
 }

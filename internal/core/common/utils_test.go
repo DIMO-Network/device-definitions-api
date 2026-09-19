@@ -160,7 +160,9 @@ func TestDeviceDefinitionSlug(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.makeSlug+""+tt.modelSlug, func(t *testing.T) {
-			assert.Equalf(t, tt.want, DeviceDefinitionSlug(tt.makeSlug, tt.modelSlug, tt.year), "SlugString(%v)", tt.makeSlug)
+			got, err := DeviceDefinitionSlug(tt.makeSlug, tt.modelSlug, tt.year)
+			require.NoError(t, err)
+			assert.Equalf(t, tt.want, got, "SlugString(%v)", tt.makeSlug)
 		})
 	}
 }
@@ -193,13 +195,15 @@ func TestDeviceDefinitionSlugMatchesWorkerIDRegex(t *testing.T) {
 		t.Run(tt.make+" "+tt.model, func(t *testing.T) {
 			// The decode path slugs both parts first; the sanitizer must
 			// hold for what SlugString leaves behind.
-			got := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+			got, err := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			assert.Regexp(t, workerIDRegex, got)
 
 			// cmd/device-definitions-api/decode_vin.go passes the decoded
 			// make and model raw, so the raw shape must be safe as well.
-			raw := DeviceDefinitionSlug(tt.make, tt.model, tt.year)
+			raw, err := DeviceDefinitionSlug(tt.make, tt.model, tt.year)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, raw)
 			assert.Regexp(t, workerIDRegex, raw)
 		})
@@ -232,12 +236,18 @@ func TestDeviceDefinitionSlugKeepsIDsTheWorkerAccepts(t *testing.T) {
 	for _, tt := range tests {
 		want := fmt.Sprintf("%s_%s_%d", tt.make, tt.model, tt.year)
 		t.Run(want, func(t *testing.T) {
-			assert.Equal(t, want, DeviceDefinitionSlug(tt.make, tt.model, tt.year))
+			got, err := DeviceDefinitionSlug(tt.make, tt.model, tt.year)
+			require.NoError(t, err)
+			assert.Equal(t, want, got)
 		})
 	}
 	// The decode path slugs "ID. Buzz" to id--buzz; the raw cmd path must agree.
-	assert.Equal(t, "volkswagen_id--buzz_2024", DeviceDefinitionSlug(stringutils.SlugString("Volkswagen"), stringutils.SlugString("ID. Buzz"), 2024))
-	assert.Equal(t, "volkswagen_id--buzz_2024", DeviceDefinitionSlug("Volkswagen", "ID. Buzz", 2024))
+	slugged, err := DeviceDefinitionSlug(stringutils.SlugString("Volkswagen"), stringutils.SlugString("ID. Buzz"), 2024)
+	require.NoError(t, err)
+	assert.Equal(t, "volkswagen_id--buzz_2024", slugged)
+	raw, err := DeviceDefinitionSlug("Volkswagen", "ID. Buzz", 2024)
+	require.NoError(t, err)
+	assert.Equal(t, "volkswagen_id--buzz_2024", raw)
 }
 
 // The repair in DeviceDefinitionSlug drops every character outside the
@@ -258,13 +268,70 @@ func TestValidateDefinitionIDRefusesAnIDNoTemplateCanExistAt(t *testing.T) {
 		{"Toyota", "・・・", 2020},
 	}
 	for _, tt := range unmintable {
-		id := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
-		t.Run(id, func(t *testing.T) {
-			assert.NotRegexp(t, workerIDRegex, id, "the premise: this id is one the worker refuses")
-			err := ValidateDefinitionID(id)
+		t.Run(tt.make+" "+tt.model, func(t *testing.T) {
+			// The premise: the repair produces an id the worker refuses.
+			repaired := fmt.Sprintf("%s_%s_%d", workerIDPart(stringutils.SlugString(tt.make)), workerIDPart(stringutils.SlugString(tt.model)), tt.year)
+			assert.NotRegexp(t, workerIDRegex, repaired, "the premise: this id is one the worker refuses")
+			err := ValidateDefinitionID(repaired)
 			require.Error(t, err)
 			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
-			assert.Contains(t, err.Error(), id, "the id the decode could not build must be in the message")
+			assert.Contains(t, err.Error(), repaired, "the id the decode could not build must be in the message")
+		})
+	}
+}
+
+// The builder validates what it produced, so no caller can be handed an id no
+// template can exist at -- which is what ValidateDefinitionID's own contract
+// demands and what four of the five call sites never did. The id is not
+// returned alongside the error: a caller that ignores the error must not be
+// able to write one anyway.
+func TestDeviceDefinitionSlugRefusesAnIDItCannotRepair(t *testing.T) {
+	unmintable := []struct {
+		make  string
+		model string
+		year  int16
+	}{
+		{"Toyota", "\u30cf\u30a4\u30a8\u30fc\u30b9", 2020},
+		{"Lada", "\u041d\u0438\u0432\u0430", 2021},
+		{"Toyota", "\u30fb\u30fb\u30fb", 2020},
+	}
+	for _, tt := range unmintable {
+		t.Run(tt.make+" "+tt.model, func(t *testing.T) {
+			// Both call shapes: the decode path slugs first, cmd passes raw.
+			slugged, err := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
+			assert.Empty(t, slugged, "an id that cannot be built must not be handed back anyway")
+
+			raw, err := DeviceDefinitionSlug(tt.make, tt.model, tt.year)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
+			assert.Empty(t, raw)
+		})
+	}
+}
+
+// An id the worker accepts comes back with no error, whether it needed the
+// repair or not.
+func TestDeviceDefinitionSlugAcceptsWhatItCanBuild(t *testing.T) {
+	ok := []struct {
+		make  string
+		model string
+		year  int16
+		want  string
+	}{
+		{"Toyota", "Camry", 2026, "toyota_camry_2026"},
+		{"Volkswagen", "up!", 2025, "volkswagen_up_2025"},
+		// A part with something left after the drop is repaired, not refused;
+		// the leading dash the drop leaves behind is inside the worker's class.
+		{"Toyota", "\u30cf\u30a4\u30a8\u30fc\u30b9 Van", 2020, "toyota_-van_2020"},
+	}
+	for _, tt := range ok {
+		t.Run(tt.want, func(t *testing.T) {
+			got, err := DeviceDefinitionSlug(stringutils.SlugString(tt.make), stringutils.SlugString(tt.model), tt.year)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Regexp(t, workerIDRegex, got)
 		})
 	}
 }
@@ -318,7 +385,10 @@ func TestDeviceDefinitionSlugAgainstManifest(t *testing.T) {
 		}
 		mk, model := id[:first], id[first+1:last]
 		legacy := legacyDeviceDefinitionSlug(mk, model, int16(year))
-		got := DeviceDefinitionSlug(mk, model, int16(year))
+		got, err := DeviceDefinitionSlug(mk, model, int16(year))
+		if !assert.NoError(t, err, "a stored id could not be rebuilt: %s", id) {
+			continue
+		}
 		checked++
 		if workerIDRegex.MatchString(legacy) {
 			if assert.Equal(t, legacy, got, "an id the worker accepts changed: %s", id) {
@@ -407,8 +477,12 @@ func TestDeviceDefinitionSlugAgainstManifestNames(t *testing.T) {
 		year := int16(d.Year)
 		mk, model := stringutils.SlugString(name), stringutils.SlugString(d.Model)
 		legacy := legacyDeviceDefinitionSlug(mk, model, year)
-		slugged := DeviceDefinitionSlug(mk, model, year)
-		rawID := DeviceDefinitionSlug(name, d.Model, year)
+		slugged, errSlugged := DeviceDefinitionSlug(mk, model, year)
+		rawID, errRaw := DeviceDefinitionSlug(name, d.Model, year)
+		if !assert.NoError(t, errSlugged, "a stored definition's id could not be rebuilt: %s (%q %q)", d.ID, name, d.Model) ||
+			!assert.NoError(t, errRaw, "a stored definition's id could not be rebuilt from raw inputs: %s (%q %q)", d.ID, name, d.Model) {
+			continue
+		}
 		checked++
 		if assert.Equal(t, slugged, rawID, "raw and slugged inputs disagree for %s (%q %q)", d.ID, name, d.Model) {
 			agree++

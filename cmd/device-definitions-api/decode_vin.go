@@ -180,7 +180,16 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 				dbVin.ManufacturerName = vinInfo.Make
 			}
 			dbVin.DatgroupData = null.JSONFrom(vinInfo.Raw)
-			dbVin.DefinitionID = common.DeviceDefinitionSlug(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+			definitionID, errID := common.DeviceDefinitionSlug(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+			if errID != nil {
+				// Inserting the row anyway is what the validator's contract
+				// forbids: every later DecodeVIN of this VIN would read the
+				// cached row, look its definition up in the catalog, 404
+				// forever, and answer with an empty trim and match quality.
+				fmt.Println("skipping, no definition id can be built: " + errID.Error())
+				continue
+			}
+			dbVin.DefinitionID = definitionID
 			dbVin.DecodeProvider = null.StringFrom(string(vinInfo.Source))
 			// todo future change to add field with StyleName
 

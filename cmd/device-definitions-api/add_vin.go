@@ -109,7 +109,13 @@ func (p *addVINCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface
 		fmt.Println(err.Error())
 		return subcommands.ExitFailure
 	}
-	definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(model), int16(vinNumber.Year))
+	definitionID, err := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(model), int16(vinNumber.Year))
+	if err != nil {
+		// No template can exist at this id, so the lookup below would 404 and
+		// the row would point at a definition that can never be created.
+		fmt.Println(err.Error())
+		return subcommands.ExitFailure
+	}
 	deviceDefinition, err := catalogSvc.GetDefinition(ctx, big.NewInt(int64(manufacturer.TokenID)), definitionID)
 
 	if err != nil {
