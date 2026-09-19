@@ -193,3 +193,37 @@ func TestStyleAttributesHandleATemplateWithNoTrims(t *testing.T) {
 	require.NotEmpty(t, attrs)
 	assert.Equal(t, "ICE", attributeByName(t, attrs, common.PowerTrainType))
 }
+
+// A template attribute decodes as a float64, so fmt.Sprint rendered a price of
+// 1250000 as "1.25e+06" -- while GetDeviceDefinitionByID served "1250000" for
+// the same definition, because the gateway already had a renderer written for
+// this. Both now share it.
+func TestStyleAttributesRenderNumbersWithoutScientificNotation(t *testing.T) {
+	attrs := styleDeviceAttributes(rav4(), "LE", nil)
+
+	assert.Equal(t, "1250000", attributeByName(t, attrs, "base_msrp"))
+	assert.Equal(t, "4", attributeByName(t, attrs, "number_of_doors"))
+	assert.Equal(t, "30", attributeByName(t, attrs, "mpg"))
+	for _, a := range attrs {
+		assert.NotContains(t, a.Value, "e+", "%s must not be served in scientific notation", a.Name)
+	}
+}
+
+// The attributes came out of a Go map, so the array was in a different order
+// on every request for the same style. The sibling definition path sorts.
+func TestStyleAttributesAreInAStableOrder(t *testing.T) {
+	want := namesOf(styleDeviceAttributes(rav4(), "Prime SE", nil))
+	assert.Equal(t, []string{"driven_wheels", "fuel_tank_capacity_gal", "mpg", "number_of_doors", "powertrain_type"}, want)
+	for i := 0; i < 20; i++ {
+		assert.Equal(t, want, namesOf(styleDeviceAttributes(rav4(), "Prime SE", nil)),
+			"the attribute array must not shuffle between requests for one style")
+	}
+}
+
+func namesOf(attrs []coremodels.DeviceTypeAttributeEditor) []string {
+	names := make([]string, 0, len(attrs))
+	for _, a := range attrs {
+		names = append(names, a.Name)
+	}
+	return names
+}

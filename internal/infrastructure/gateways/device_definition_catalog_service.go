@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -289,14 +288,10 @@ func (e *deviceDefinitionCatalogService) GetDeviceDefinitionByID(ctx context.Con
 // not populated: it is gone from the contract, and inventing one here would put
 // a value into a field consumers read as an identifier.
 func templateToDefinitionModel(tmpl *coremodels.Template) *coremodels.DeviceDefinitionTablelandModel {
-	names := make([]string, 0, len(tmpl.Attributes))
-	for name := range tmpl.Attributes {
-		names = append(names, name)
-	}
-	sort.Strings(names)
+	names := common.SortedAttributeNames(tmpl.Attributes)
 	attrs := make([]coremodels.DeviceTypeAttribute, 0, len(names))
 	for _, name := range names {
-		attrs = append(attrs, coremodels.DeviceTypeAttribute{Name: name, Value: attributeString(tmpl.Attributes[name])})
+		attrs = append(attrs, coremodels.DeviceTypeAttribute{Name: name, Value: common.AttributeString(tmpl.Attributes[name])})
 	}
 	return &coremodels.DeviceDefinitionTablelandModel{
 		ID:         tmpl.ID,
@@ -305,23 +300,6 @@ func templateToDefinitionModel(tmpl *coremodels.Template) *coremodels.DeviceDefi
 		DeviceType: tmpl.DeviceType,
 		ImageURI:   tmpl.ImageURI,
 		Metadata:   &coremodels.DeviceDefinitionMetadata{DeviceAttributes: attrs},
-	}
-}
-
-// attributeString renders a typed attribute for the legacy string-valued shape.
-// strconv rather than fmt so 15.8 renders "15.8" and not "1.58e+01".
-func attributeString(v any) string {
-	switch t := v.(type) {
-	case string:
-		return t
-	case bool:
-		return strconv.FormatBool(t)
-	case float64:
-		return strconv.FormatFloat(t, 'f', -1, 64)
-	case int:
-		return strconv.Itoa(t)
-	default:
-		return fmt.Sprint(v)
 	}
 }
 

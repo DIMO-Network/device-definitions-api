@@ -645,3 +645,31 @@ func TestGetManufacturerNameByIDRejectsAnUnknownTokenID(t *testing.T) {
 	}
 	assert.Zero(t, calls, "an unknown token id is not worth a round trip to identity")
 }
+
+// The definition path and the device-style path flatten the same template
+// attributes, so they share one renderer and one order: a number is never
+// served in scientific notation, and the array does not shuffle between calls.
+func TestTemplateToDefinitionModelRendersAndOrdersAttributes(t *testing.T) {
+	tmpl := &coremodels.Template{
+		ID:         "bugatti_veyron-16.4_2006",
+		Model:      "Veyron 16.4",
+		Year:       2006,
+		DeviceType: "vehicle",
+		Attributes: map[string]any{
+			"base_msrp":              float64(1250000),
+			"fuel_tank_capacity_gal": float64(15.8),
+			"number_of_doors":        float64(2),
+			"driven_wheels":          "AWD",
+		},
+	}
+
+	want := []coremodels.DeviceTypeAttribute{
+		{Name: "base_msrp", Value: "1250000"},
+		{Name: "driven_wheels", Value: "AWD"},
+		{Name: "fuel_tank_capacity_gal", Value: "15.8"},
+		{Name: "number_of_doors", Value: "2"},
+	}
+	for i := 0; i < 20; i++ {
+		assert.Equal(t, want, templateToDefinitionModel(tmpl).Metadata.DeviceAttributes)
+	}
+}

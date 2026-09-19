@@ -179,14 +179,21 @@ func powertrainFromStyleName(styleName string) string {
 // convertTemplateAttributesToDeviceAttributes adapts a template's typed
 // attribute map to the legacy DeviceTypeAttributeEditor shape this handler's
 // response is built from.
+//
+// The renderer and the ordering are common's, the same two the definition path
+// uses, so one definition's attributes read identically whichever endpoint
+// served them. fmt.Sprint served a price of 1250000 as "1.25e+06" here while
+// GetDeviceDefinitionByID served "1250000", and ranging over the map put the
+// array in a different order on every request for the same style.
 func convertTemplateAttributesToDeviceAttributes(attributes map[string]any) []coremodels.DeviceTypeAttributeEditor {
-	dta := make([]coremodels.DeviceTypeAttributeEditor, 0, len(attributes))
-	for name, value := range attributes {
+	names := common.SortedAttributeNames(attributes)
+	dta := make([]coremodels.DeviceTypeAttributeEditor, 0, len(names))
+	for _, name := range names {
 		dta = append(dta, coremodels.DeviceTypeAttributeEditor{
 			Name:        name,
 			Label:       name,
 			Description: name,
-			Value:       fmt.Sprint(value),
+			Value:       common.AttributeString(attributes[name]),
 		})
 	}
 	return dta
