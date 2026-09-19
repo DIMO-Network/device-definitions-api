@@ -158,6 +158,16 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	if vinInfo == nil || vinInfo.Model == "" {
 		vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
 	}
+	// GetVIN overwrites the initialiser above, and reports no vendor extra at
+	// all on the paths that fail before any vendor is tried: the invalid-VIN
+	// guard, and the 0SC test-VIN branch, which now reads a template from the
+	// catalog and hands back that read's error. The failure branch below reads
+	// six fields off this pointer, so a nil here panicked the decode instead of
+	// recording the failure -- and a decode that records nothing repeats the
+	// whole vendor fan-out, and the same panic, on every retry forever.
+	if vinExtra == nil {
+		vinExtra = &coremodels.VINDecodingVendorExtra{}
+	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
 	if err != nil {
