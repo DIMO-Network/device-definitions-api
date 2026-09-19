@@ -639,6 +639,14 @@ func observeTrimMatch(resolved services.Resolved, source string) {
 }
 
 // processDeviceStyle saves new styles if needed to db and returns the style database ID
+//
+// Every read here is checked for a failure that is not no-rows. sqlboiler's
+// One() answers such a failure with a nil row and a wrapped error, so a reader
+// that is merely unavailable for a moment -- a pool blip, a reset connection,
+// the caller's context deadline expiring right after the catalog round trip
+// above -- used to fall through both no-rows branches and nil-dereference the
+// style on the way out, panicking the decode hot path. Handle already treats
+// an error from here as "continue without a style id"; it just never got one.
 func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo *coremodels.VINDecodingInfoData, definitionID, powertrain string) (string, error) {
 	externalStyleID := stringutils.SlugString(vinInfo.StyleName)
 
@@ -648,6 +656,9 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 		models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
 		models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID),
 	).One(ctx, dc.dbs().Reader)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", errors.Wrapf(err, "error querying device_styles for definition %s by external style id %s", definitionID, externalStyleID)
+	}
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// Step 2: If not found, try searching by name
@@ -655,6 +666,9 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 			models.DeviceStyleWhere.DefinitionID.EQ(definitionID),
 			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName),
 		).One(ctx, dc.dbs().Reader)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return "", errors.Wrapf(err, "error querying device_styles for definition %s by name %s", definitionID, vinInfo.StyleName)
+		}
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
