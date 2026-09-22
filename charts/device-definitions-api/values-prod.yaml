@@ -26,7 +26,7 @@ env:
   # key instead -- see fetchTemplateDocFresh's cache-busting parameter.
   DEFINITIONS_CATALOG_URL: https://definitions.dimo.org
   DEFINITIONS_WORKER_URL: https://definitions.dimo.org
-  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod
+  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_v2_prod
   IDENTITY_API_URL: https://identity-api.dimo.zone/query
 ingress:
   enabled: true
