@@ -1,0 +1,217 @@
+[
+ {
+  "in": {
+   "fuel_type": "Petrol"
+  },
+  "mapped": {
+   "fuel_type": "gasoline"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "fuel_type": "Hybrid"
+  },
+  "mapped": {
+   "fuel_type": "gasoline"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "fuel_type": "Flexible Fuel Vehicle (FFV)"
+  },
+  "mapped": {
+   "fuel_type": "flex_fuel"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "driven_wheels": "4x2"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "driven_wheels",
+    "reason": "ambiguous: names a driven wheel count, not an axle — could be RWD or FWD (or split further on multi-axle trucks) depending on the vehicle"
+   }
+  ]
+ },
+ {
+  "in": {
+   "driven_wheels": "AWD/All-Wheel Drive"
+  },
+  "mapped": {
+   "driven_wheels": "AWD"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "driven_wheels": "4WD/4-Wheel Drive/4x4"
+  },
+  "mapped": {
+   "driven_wheels": "4WD"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "epa_class": "6L"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "epa_class",
+    "reason": "unmapped: a known epa_class code with no vocabulary equivalent, deliberately left unmapped pending identification of the source coding scheme"
+   }
+  ]
+ },
+ {
+  "in": {
+   "epa_class": "Euro 6d-Temp"
+  },
+  "mapped": {
+   "emissions_standard": "euro_6d"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "epa_class": "Calss III"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "epa_class",
+    "reason": "value not in the vocabulary and no mapping"
+   }
+  ]
+ },
+ {
+  "in": {
+   "vehicle_type": "Crossover Utility Vehicle (CUV)"
+  },
+  "mapped": {
+   "vehicle_type": "suv"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "vehicle_type": "Incomplete Vehicle"
+  },
+  "mapped": {
+   "vehicle_type": "chassis_cab"
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "wheelbase": "111.2 in"
+  },
+  "mapped": {
+   "wheelbase_in": 111.2
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "wheelbase": "abc"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "wheelbase",
+    "reason": "unparseable wheelbase"
+   }
+  ]
+ },
+ {
+  "in": {
+   "number_of_doors": "4"
+  },
+  "mapped": {
+   "number_of_doors": 4
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "number_of_doors": "4.5"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "number_of_doors",
+    "reason": "not an integer"
+   }
+  ]
+ },
+ {
+  "in": {
+   "number_of_doors": "99"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "number_of_doors",
+    "reason": "above the vocabulary range"
+   }
+  ]
+ },
+ {
+  "in": {
+   "fuel_tank_capacity_gal": "15.800000"
+  },
+  "mapped": {
+   "fuel_tank_capacity_gal": 15.8
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "mpg": "28"
+  },
+  "mapped": {
+   "mpg_combined": 28
+  },
+  "dropped": []
+ },
+ {
+  "in": {
+   "generation": "6"
+  },
+  "mapped": {},
+  "dropped": [
+   {
+    "name": "generation",
+    "reason": "no such attribute in the vocabulary"
+   }
+  ]
+ },
+ {
+  "in": {
+   "fuel_type": ""
+  },
+  "mapped": {},
+  "dropped": []
+ },
+ {
+  "in": {
+   "fuel_type": "<nil>"
+  },
+  "mapped": {},
+  "dropped": []
+ },
+ {
+  "in": {
+   "powertrain_type": "ICE"
+  },
+  "mapped": {
+   "powertrain_type": "ICE"
+  },
+  "dropped": []
+ }
+]

@@ -34,7 +34,7 @@ type VINDecodingServiceSuite struct {
 	mockJapan17VINAPI      *mock_gateways.MockJapan17VINAPI
 	mockCarvxAPI           *mock_gateways.MockCarVxVINAPI
 
-	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionOnChainService
+	mockOnChainSvc     *mock_gateways.MockDeviceDefinitionCatalogService
 	vinDecodingService VINDecodingService
 	mockElevaAPI       *mock_gateways.MockElevaAPI
 }
@@ -63,7 +63,7 @@ func (s *VINDecodingServiceSuite) SetupTest() {
 	s.mockJapan17VINAPI = mock_gateways.NewMockJapan17VINAPI(s.ctrl)
 	s.mockCarvxAPI = mock_gateways.NewMockCarVxVINAPI(s.ctrl)
 	s.mockElevaAPI = mock_gateways.NewMockElevaAPI(s.ctrl)
-	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionOnChainService(s.ctrl)
+	s.mockOnChainSvc = mock_gateways.NewMockDeviceDefinitionCatalogService(s.ctrl)
 
 	s.vinDecodingService = NewVINDecodingService(s.mockDrivlyAPISvc, s.mockVincarioAPISvc, s.mockAutoIsoAPISvc, dbtesthelper.Logger(),
 		s.mockOnChainSvc, s.mockDATGroupAPIService, s.pdb.DBS, s.mockJapan17VINAPI, s.mockCarvxAPI, s.mockElevaAPI)
@@ -170,6 +170,7 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_Drivly_Success() {
 	s.NoError(err)
 	assert.Equal(s.T(), result.VIN, vin)
 	assert.Equal(s.T(), result.Source, coremodels.DrivlyProvider)
+	assert.Equal(s.T(), "1234", result.ManufacturerCode, "buildFromDrivly must carry DrivlyVINResponse.ManufacturerCode through, not drop it")
 }
 
 func (s *VINDecodingServiceSuite) Test_VINDecodingService_Tesla() {
@@ -254,7 +255,11 @@ func (s *VINDecodingServiceSuite) Test_VINDecodingService_DD_Default_Success() {
 	dm := dbtesthelper.SetupCreateMake("Ford")
 	dd := dbtesthelper.SetupCreateDeviceDefinition(s.T(), dm.Name, "Escape", 2020, s.pdb)
 
-	s.mockOnChainSvc.EXPECT().GetDefinitionByID(ctx, dd.ID).Times(1).Return(dd, nil, nil)
+	s.mockOnChainSvc.EXPECT().GetTemplateByID(ctx, dd.ID).Times(1).Return(&coremodels.Template{
+		ID:    dd.ID,
+		Model: dd.Model,
+		Year:  dd.Year,
+	}, nil, nil)
 
 	result, _, err := s.vinDecodingService.GetVIN(ctx, vin, coremodels.AllProviders, country)
 

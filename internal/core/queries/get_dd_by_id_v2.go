@@ -2,6 +2,7 @@ package queries
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
@@ -18,13 +19,13 @@ type GetDeviceDefinitionByIDQueryV2 struct {
 func (*GetDeviceDefinitionByIDQueryV2) Key() string { return "GetDeviceDefinitionByIdQueryV2" }
 
 type GetDeviceDefinitionByIDQueryV2Handler struct {
-	ddOnChainSvc gateways.DeviceDefinitionOnChainService
+	ddCatalogSvc gateways.DeviceDefinitionCatalogService
 	dbs          func() *db.ReaderWriter
 }
 
-func NewGetDeviceDefinitionByIDQueryV2Handler(ddOnChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryV2Handler {
+func NewGetDeviceDefinitionByIDQueryV2Handler(ddCatalogSvc gateways.DeviceDefinitionCatalogService, dbs func() *db.ReaderWriter) GetDeviceDefinitionByIDQueryV2Handler {
 	return GetDeviceDefinitionByIDQueryV2Handler{
-		ddOnChainSvc: ddOnChainSvc,
+		ddCatalogSvc: ddCatalogSvc,
 		dbs:          dbs,
 	}
 }
@@ -33,10 +34,25 @@ func (ch GetDeviceDefinitionByIDQueryV2Handler) Handle(ctx context.Context, quer
 
 	qry := query.(*GetDeviceDefinitionByIDQueryV2)
 
-	dd, _, err := ch.ddOnChainSvc.GetDefinitionByID(ctx, qry.DefinitionID)
+	dd, _, err := ch.ddCatalogSvc.GetTemplateByID(ctx, qry.DefinitionID)
 
 	if err != nil {
-		return nil, err
+		// GetTemplateByID reports a genuine "does not exist" as the wrapped
+		// ErrTemplateNotFound sentinel, and the HTTP layer maps a not-found by
+		// type assertion on *exceptions.NotFoundError, which a wrapped
+		// sentinel never satisfies. Returning it raw answered 500 for every
+		// unknown id, where the pre-migration on-chain path answered 404.
+		// Anything else is a catalog outage and stays an internal error: a
+		// caller reacting to a spurious 404 could create a duplicate
+		// definition for a vehicle that already exists.
+		if errors.Is(err, gateways.ErrTemplateNotFound) {
+			return nil, &exceptions.NotFoundError{
+				Err: fmt.Errorf("could not find device definition id: %s: %w", qry.DefinitionID, err),
+			}
+		}
+		return nil, &exceptions.InternalError{
+			Err: fmt.Errorf("failed to get device definition %s from catalog: %w", qry.DefinitionID, err),
+		}
 	}
 
 	if dd == nil {

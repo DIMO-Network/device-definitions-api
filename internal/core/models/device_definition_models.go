@@ -43,6 +43,7 @@ type VehicleInfo struct {
 	MPGHighway          string `json:"mpg_highway,omitempty"`
 	MPGCity             string `json:"mpg_city,omitempty"`
 	FuelTankCapacityGal string `json:"fuel_tank_capacity_gal,omitempty"`
+	BatteryCapacityKwh  string `json:"battery_capacity_kwh,omitempty"`
 	MPG                 string `json:"mpg,omitempty"`
 }
 

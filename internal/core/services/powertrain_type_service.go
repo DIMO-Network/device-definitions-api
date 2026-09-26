@@ -23,10 +23,10 @@ type PowerTrainTypeService interface {
 type powerTrainTypeService struct {
 	logger                         *zerolog.Logger
 	powerTrainRuleData             coremodels.PowerTrainTypeRuleData
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService
 }
 
-func NewPowerTrainTypeService(rulesFileName string, logger *zerolog.Logger, ddOnChainSvc gateways.DeviceDefinitionOnChainService) (PowerTrainTypeService, error) {
+func NewPowerTrainTypeService(rulesFileName string, logger *zerolog.Logger, ddCatalogSvc gateways.DeviceDefinitionCatalogService) (PowerTrainTypeService, error) {
 	if rulesFileName == "" {
 		rulesFileName = "powertrain_type_rule.yaml"
 	}
@@ -41,7 +41,7 @@ func NewPowerTrainTypeService(rulesFileName string, logger *zerolog.Logger, ddOn
 		return nil, err
 	}
 
-	return &powerTrainTypeService{logger: logger, powerTrainRuleData: powerTrainTypeData, deviceDefinitionOnChainService: ddOnChainSvc}, nil
+	return &powerTrainTypeService{logger: logger, powerTrainRuleData: powerTrainTypeData, deviceDefinitionCatalogService: ddCatalogSvc}, nil
 }
 
 // ResolvePowerTrainFromVinInfo uses standard vin info StyleName and FuelType to figure out powertrain, otherwise returns an empty string

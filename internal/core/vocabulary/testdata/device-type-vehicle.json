@@ -1,0 +1,161 @@
+{
+  "id": "vehicle",
+  "name": "Vehicle",
+  "attributes": [
+    {
+      "name": "powertrain_type",
+      "label": "Powertrain",
+      "description": "Primary propulsion system.",
+      "type": "enum",
+      "variesByTrim": true,
+      "options": [
+        "ICE",
+        "HEV",
+        "PHEV",
+        "BEV",
+        "FCEV"
+      ]
+    },
+    {
+      "name": "fuel_type",
+      "label": "Fuel",
+      "description": "Fuel the vehicle consumes.",
+      "type": "enum",
+      "variesByTrim": true,
+      "options": [
+        "gasoline",
+        "diesel",
+        "electric",
+        "flex_fuel",
+        "hydrogen",
+        "cng",
+        "lpg"
+      ]
+    },
+    {
+      "name": "driven_wheels",
+      "label": "Drive",
+      "description": "Which wheels receive power.",
+      "type": "enum",
+      "variesByTrim": true,
+      "options": [
+        "FWD",
+        "RWD",
+        "AWD",
+        "4WD"
+      ]
+    },
+    {
+      "name": "vehicle_type",
+      "label": "Body style",
+      "type": "enum",
+      "variesByTrim": true,
+      "options": [
+        "sedan",
+        "hatchback",
+        "wagon",
+        "coupe",
+        "convertible",
+        "suv",
+        "minivan",
+        "van",
+        "pickup",
+        "truck",
+        "motorcycle",
+        "chassis_cab",
+        "other"
+      ]
+    },
+    {
+      "name": "number_of_doors",
+      "label": "Doors",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 8
+    },
+    {
+      "name": "base_msrp",
+      "label": "Base MSRP",
+      "type": "number",
+      "unit": "USD",
+      "minimum": 0,
+      "variesByTrim": true
+    },
+    {
+      "name": "fuel_tank_capacity_gal",
+      "label": "Fuel tank capacity",
+      "type": "number",
+      "unit": "gal",
+      "minimum": 0,
+      "maximum": 200,
+      "variesByTrim": true
+    },
+    {
+      "name": "battery_capacity_kwh",
+      "label": "Battery capacity",
+      "type": "number",
+      "unit": "kWh",
+      "minimum": 0,
+      "maximum": 500,
+      "variesByTrim": true
+    },
+    {
+      "name": "mpg_city",
+      "label": "MPG city",
+      "type": "number",
+      "unit": "mpg",
+      "minimum": 0,
+      "maximum": 200,
+      "variesByTrim": true
+    },
+    {
+      "name": "mpg_highway",
+      "label": "MPG highway",
+      "type": "number",
+      "unit": "mpg",
+      "minimum": 0,
+      "maximum": 200,
+      "variesByTrim": true
+    },
+    {
+      "name": "mpg_combined",
+      "label": "MPG combined",
+      "type": "number",
+      "unit": "mpg",
+      "minimum": 0,
+      "maximum": 200,
+      "variesByTrim": true
+    },
+    {
+      "name": "wheelbase_in",
+      "label": "Wheelbase",
+      "type": "number",
+      "unit": "in",
+      "minimum": 0,
+      "maximum": 400,
+      "variesByTrim": true
+    },
+    {
+      "name": "manufacturer_code",
+      "label": "OEM model code",
+      "description": "Manufacturer's own code for this trim. Used to match a decoded VIN.",
+      "type": "string",
+      "variesByTrim": true
+    },
+    {
+      "name": "emissions_standard",
+      "label": "Emissions standard",
+      "type": "enum",
+      "variesByTrim": true,
+      "options": [
+        "euro_4",
+        "euro_5",
+        "euro_6",
+        "euro_6d",
+        "tier_2",
+        "tier_3",
+        "other"
+      ]
+    }
+  ]
+}

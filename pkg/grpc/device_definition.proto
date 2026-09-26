@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 option go_package = "github.com/DIMO-Network/device-definitions-api/pkg/grpc";
@@ -25,11 +24,6 @@ message GetDevicesMMYItemResponse {
   string name_slug = 6;
 }
 
-message ExternalID {
-  string vendor = 1;
-  string id = 2;
-}
-
 message DeviceTypeAttribute {
   string name = 1;
   string label = 2;
@@ -39,11 +33,6 @@ message DeviceTypeAttribute {
   string value = 6;
   repeated string options = 7;
   string description = 8;
-}
-
-message DeviceTypeAttributeRequest {
-  string name = 1;
-  string value = 2;
 }
 
 message DeviceType {
@@ -99,87 +88,8 @@ message Integration {
   uint64 manufacturer_token_id = 10;
 }
 
-message CreateDeviceDefinitionRequest {
-  string make = 1;
-  string model = 2;
-  int32 year = 3;
-  string source = 4;
-  string device_type_id = 5;
-  repeated DeviceTypeAttributeRequest device_attributes = 6;
-  string hardware_template_id = 7;
-  bool verified = 8;
-}
-
 message BaseResponse {
   string id = 1;
-}
-
-message CreateDeviceDefinitionResponse {
-  string id = 1;
-  string name_slug = 2;
-}
-
-message UpdateDeviceDefinitionRequest {
-  // this is the name slug id now
-  string device_definition_id = 1;
-  string source = 3 [deprecated = true];
-  string image_url = 4;
-  bool verified = 5 [deprecated = true];
-  string model = 6;
-  int32 year = 7;
-  string device_make_id = 8 [deprecated = true];
-  repeated DeviceStyles device_styles = 9;
-  string external_id = 11 [deprecated = true];
-  string device_type_id = 12;
-  repeated DeviceTypeAttributeRequest device_attributes = 13;
-  repeated ExternalID external_ids = 14 [deprecated = true];
-  string hardware_template_id = 15 [deprecated = true];
-  string manufacturer_name = 16;
-
-  message DeviceStyles {
-    string id = 1;
-    string name = 2;
-    string external_style_id = 3;
-    string source = 4;
-    google.protobuf.Timestamp created_at = 5;
-    google.protobuf.Timestamp updated_at = 6;
-    string sub_model = 7;
-    string hardware_template_id = 8;
-  }
-}
-
-message FilterDeviceDefinitionRequest {
-  string make_id = 1 [deprecated=true];
-  string integration_id = 2 [deprecated=true];
-  string deviceDefinition_id = 3 [deprecated=true];
-  int32 year = 4;
-  string model = 5;
-  repeated string verified_vin_list = 6;
-  int32 page_index = 7;
-  int32 page_size = 8;
-  string make_slug = 9;
-  string definition_id = 10;
-}
-
-message GetFilteredDeviceDefinitionsResponse {
-  repeated FilterDeviceDefinitionsReponse items = 1;
-}
-
-message FilterDeviceDefinitionsReponse {
-  string id = 1;
-  string model = 2;
-  int32 year = 3;
-  string image_url = 4;
-  int64 created_at = 5;
-  int64 updated_at = 6;
-  string metadata = 7;
-  string source = 8 [deprecated = true];
-  bool verified = 9;
-  string external = 10 [deprecated = true];
-  string device_make_id = 11;
-  string make = 12;
-  repeated ExternalID external_ids = 13;
-  string name_slug = 14;
 }
 
 message CreateDeviceStyleRequest {
@@ -312,11 +222,8 @@ message GetDeviceDefinitionByMakeAndYearRangeRequest {
 service DeviceDefinitionService {
   rpc GetIntegrations(google.protobuf.Empty) returns (GetIntegrationResponse);
   rpc GetIntegrationByID(GetIntegrationRequest) returns (Integration);
-  rpc CreateDeviceDefinition(CreateDeviceDefinitionRequest) returns (CreateDeviceDefinitionResponse);
   rpc CreateDeviceStyle(CreateDeviceStyleRequest) returns (BaseResponse);
   rpc CreateIntegration(CreateIntegrationRequest) returns (BaseResponse);
-  rpc UpdateDeviceDefinition(UpdateDeviceDefinitionRequest) returns (BaseResponse);
-  rpc GetFilteredDeviceDefinition(FilterDeviceDefinitionRequest) returns (GetFilteredDeviceDefinitionsResponse);
   rpc GetDeviceStyleByID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStyleByExternalID(GetDeviceStyleByIDRequest) returns (DeviceStyle);
   rpc GetDeviceStylesByDeviceDefinitionID(GetDeviceStyleByDeviceDefinitionIDRequest) returns (GetDeviceStyleResponse);

@@ -2,14 +2,16 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
 	repoModel "github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/exceptions"
-	"github.com/DIMO-Network/device-definitions-api/pkg/grpc"
+	stringutils "github.com/DIMO-Network/shared/pkg/strings"
 	"github.com/aarondl/null/v8"
 )
 
@@ -43,17 +45,6 @@ func BuildExternalIDs(externalIDsJSON null.JSON) []*coremodels.ExternalID {
 		}
 	}
 	return externalIDs
-}
-
-func ExternalIDsToGRPC(externalIDs []*coremodels.ExternalID) []*grpc.ExternalID {
-	externalIDsGRPC := make([]*grpc.ExternalID, len(externalIDs))
-	for i, ei := range externalIDs {
-		externalIDsGRPC[i] = &grpc.ExternalID{
-			Vendor: ei.Vendor,
-			Id:     ei.ID,
-		}
-	}
-	return externalIDsGRPC
 }
 
 // GetDefaultImageURL if the images relation is not empty, looks for the best image to use based on some logic
@@ -292,36 +283,125 @@ func BuildDeviceDefinitionName(year int16, mk string, model string) string {
 	return fmt.Sprintf("%d %s %s", year, mk, model)
 }
 
-func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) string {
+// definitions-worker accepts template ids matching
+// ^[a-z0-9][a-z0-9._&+-]*_[a-z0-9._&+-]+_[0-9]{4}$ (src/template.ts ID_RE) and
+// answers 422 for anything else. dd-api cannot learn that from the response in
+// any way it can act on: a decode that builds such an id -- volkswagen_up!_2025,
+// subaru_tribeca-(ny/nj)_2008 -- 404s on the read, 422s on the create, and
+// fails identically on every retry. So the id must never carry a character the
+// worker rejects. DeviceDefinitionSlug is the one place every id is built.
+var (
+	workerIDValid      = regexp.MustCompile(`^[a-z0-9][a-z0-9._&+-]*_[a-z0-9._&+-]+_[0-9]{4}$`)
+	workerIDDisallowed = regexp.MustCompile(`[^a-z0-9._&+-]`)
+)
+
+// The year bounds a definition id must fall inside. ID_RE only constrains the
+// year to four digits, so it accepts 0000, 1000, 3500 and 9999 -- exactly what a
+// decoder produces when it misreads the model-year VIN digit, and
+// indistinguishable from a real template once it is in the catalog, because
+// nothing downstream checks it.
+//
+// The range is deliberately a plausibility check and not "no later than next
+// model year". This function also computes the lookup id for definitions that
+// already exist, and the production catalog holds templates out to
+// bmw_5-series_2031 and honda_fit_2029. A tight upper bound would refuse to
+// build their ids and break the decode for every vehicle already minted against
+// them -- turning historical bad data into a present outage. 1885 predates the
+// first production automobile, so nothing real falls below it.
+const (
+	minDefinitionYear = 1885
+	maxDefinitionYear = 2100
+)
+
+// DeviceDefinitionSlug builds <make>_<model>_<year>, the template id, and
+// refuses one definitions-worker can never hold.
+//
+// The repair below drops characters, and dropping every character of a part
+// leaves a segment ID_RE refuses just as firmly as the id it replaced. So the
+// builder checks its own output: an id that fails ValidateDefinitionID comes
+// back as ("", err) wrapping ErrUnmintableDefinitionID, and the id is not
+// returned alongside it -- a caller that ignores the error must not be able to
+// write the row or send the PUT anyway. Before this, only one of the five
+// production call sites validated, and the contract on ValidateDefinitionID
+// ("nothing may PUT, or build a vin_numbers row on, an id that fails it") was
+// enforced nowhere else.
+//
+// An id the worker already accepts is returned exactly as it has always been
+// built. The catalog holds ids like volkswagen_id--buzz_2024 (model "ID. Buzz"
+// slugs to id--buzz) and bmw_x3-_2026, and reshaping those would point every
+// new decode of that model at an id with no template, which the decode then
+// creates as a duplicate. Only an id the worker would refuse is repaired: each
+// part is slugged, which also covers cmd/device-definitions-api passing the
+// make and model raw, and stripped of every character outside the worker's
+// class. Nothing else changes, so the raw and slugged inputs for one model
+// still agree. An underscore can never survive inside a part: it is the
+// separator, and templateFromDefinition reads the manufacturer slug back as
+// everything before the first one.
+func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) (string, error) {
+	// Checked before anything else, and separately from ValidateDefinitionID: the
+	// fast path below returns as soon as the id matches ID_RE, so a year the
+	// regex happens to accept would never reach the validator, and the repair
+	// path cannot fix a bad year by reshaping the make or model anyway.
+	if int(year) < minDefinitionYear || int(year) > maxDefinitionYear {
+		return "", fmt.Errorf("%w: implausible model year %d (expected %d-%d)",
+			ErrUnmintableDefinitionID, year, minDefinitionYear, maxDefinitionYear)
+	}
+
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
-	return fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year)
+	if id := fmt.Sprintf("%s_%s_%d", makeSlug, modelSlugCleaned, year); workerIDValid.MatchString(id) {
+		return id, nil
+	}
+	repaired := fmt.Sprintf("%s_%s_%d", workerIDPart(makeSlug), workerIDPart(modelSlugCleaned), year)
+	if err := ValidateDefinitionID(repaired); err != nil {
+		return "", err
+	}
+	return repaired, nil
 }
 
-func CheckTransactionStatus(txHash, apiKey string, useAmoy bool) (bool, error) {
-	baseURL := "https://api.polygonscan.com"
-	if useAmoy {
-		baseURL = "https://amoy.polygonscan.com"
-	}
-	url := fmt.Sprintf("%s/api?module=transaction&action=gettxreceiptstatus&txhash=%s&apikey=%s", baseURL, txHash, apiKey)
+// workerIDPart repairs one part of an id the worker would refuse: slug it, then
+// drop every character outside the worker's class.
+//
+// Dropping can empty a part outright -- a model written entirely in a script
+// with no character in the class, such as ハイエース or Нива, leaves nothing
+// behind -- and ID_RE requires at least one character in each. The repair
+// cannot fix that: there is no character to keep. DeviceDefinitionSlug checks
+// its own output with ValidateDefinitionID and returns an error rather than
+// such an id, so no caller can build on one.
+func workerIDPart(part string) string {
+	return workerIDDisallowed.ReplaceAllString(stringutils.SlugString(part), "")
+}
 
-	resp, err := http.Get(url)
+// ErrUnmintableDefinitionID reports an id no template can ever be stored at:
+// definitions-worker's ID_RE refuses it, so its create answers 422 and so does
+// every retry of every VIN of that model-year, forever. It is a sentinel so a
+// caller can tell this apart from a transient write failure with errors.Is and
+// stop rather than retry.
+var ErrUnmintableDefinitionID = errors.New("definition id is one definitions-worker can never accept")
+
+// ValidateDefinitionID reports whether definitions-worker can hold a template
+// at this id, and wraps ErrUnmintableDefinitionID when it cannot.
+//
+// DeviceDefinitionSlug repairs an id by dropping characters, and a repair that
+// drops every character of a part leaves a segment empty -- an id ID_RE
+// refuses just as firmly as the one the repair replaced. The repair never
+// re-checks its own output, so this is the check: nothing may PUT, or build a
+// vin_numbers row on, an id that fails it.
+func ValidateDefinitionID(id string) error {
+	if !workerIDValid.MatchString(id) {
+		return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
+	}
+	// The regex above guarantees the last four characters are digits.
+	year, err := strconv.Atoi(id[len(id)-4:])
 	if err != nil {
-		return false, err
+		return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
 	}
-	defer resp.Body.Close()
-
-	var txStatus TxStatusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&txStatus); err != nil {
-		return false, err
+	if year < minDefinitionYear || year > maxDefinitionYear {
+		return fmt.Errorf("%w: %q has an implausible model year %d (expected %d-%d)",
+			ErrUnmintableDefinitionID, id, year, minDefinitionYear, maxDefinitionYear)
 	}
-
-	// Check the transaction status
-	if txStatus.Status == "1" && txStatus.Result.Status == "1" {
-		return true, nil
-	}
-	return false, nil
+	return nil
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {

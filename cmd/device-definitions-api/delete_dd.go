@@ -7,13 +7,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
-	dd_common "github.com/DIMO-Network/device-definitions-api/internal/core/common"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
 	"github.com/DIMO-Network/shared/pkg/db"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/subcommands"
 	"github.com/rs/zerolog"
 )
@@ -52,50 +49,17 @@ func (p *deleteDefinition) Execute(ctx context.Context, _ *flag.FlagSet, _ ...in
 
 	pdb := db.NewDbConnectionFromSettings(ctx, &p.settings.DB, true)
 	pdb.WaitForDB(p.logger)
-	send, err := createSender(ctx, &p.settings, &p.logger)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create sender.")
-	}
 
-	ethClient, err := ethclient.Dial(p.settings.EthereumRPCURL.String())
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		p.logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(&p.settings, &p.logger, ethClient, chainID, send, pdb.DBS)
+	deviceDefinitionCatalogService := gateways.NewDeviceDefinitionCatalogService(&p.settings, &p.logger)
 
 	id := os.Args[len(os.Args)-1]
 
-	trx, err := deviceDefinitionOnChainService.Delete(ctx, manufacturer, id)
+	deleted, err := deviceDefinitionCatalogService.Delete(ctx, manufacturer, id)
 	if err != nil {
 		p.logger.Fatal().Err(err).Msg("Failed to delete.")
 	}
-
-	if len(*trx) > 0 {
-		trxFinished := false
-		loops := 0
-		for !trxFinished {
-			loops++
-			time.Sleep(time.Second * 2)
-			trxFinished, err = dd_common.CheckTransactionStatus(*trx, p.settings.PolygonScanAPIKey, !p.settings.IsProd())
-			if err != nil {
-				fmt.Println("Error checking transaction status: ", err)
-			}
-			fmt.Println("Transaction status: ", trxFinished)
-			if loops > 10 {
-				// get device definition from on chain to see if maybe got created but trx still showing false
-				onchainDD, _, err := deviceDefinitionOnChainService.GetDefinitionByID(ctx, id)
-				fmt.Println("onchainDD: ", onchainDD, err)
-				if onchainDD != nil {
-					break
-				}
-			}
-		}
-	}
+	// The worker delete is synchronous; nothing to poll.
+	fmt.Println("Deleted device definition: ", *deleted)
 
 	return subcommands.ExitSuccess
 }
