@@ -19,9 +19,38 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// bodyStylePattern matches Japanese EPC body-style codes like "4D", "5D", "2D", "4DR", "5HB"
-// which sometimes appear in the "Model Name" column instead of an actual vehicle series.
-var bodyStylePattern = regexp.MustCompile(`^\d+[A-Za-z]{0,3}$`)
+// bodyStylePattern matches Japanese EPC body-style codes like "4D", "5D", "2D",
+// "4DR", "5HB", "4WD", which sometimes appear in the "Model Name" column instead
+// of an actual vehicle series.
+//
+// The shape is deliberately narrow: a single door/drive count followed by one of
+// a closed set of body-type abbreviations -- D/DR (door), HB (hatchback), W/WG
+// (wagon), WD (wheel drive), WS (wheel steering). An earlier version was
+// `^\d+[A-Za-z]{0,3}$`, which also swallowed genuine model names that happen to
+// be digit-led: 86, 911, 500, 300, 240, 370Z, 350Z, 240SX, 2000GT. Those decoded
+// to an empty model and then to an unresolvable definition id. Widening the
+// letter count to {1,3} is not sufficient either -- it still eats 370Z, 240SX and
+// 2000GT -- so the letters have to be enumerated rather than counted.
+var bodyStylePattern = regexp.MustCompile(`^[1-9](D|DR|HB|W|WG|WD|WS)$`)
+
+// nonModelTokens are EPC markers observed in the "Additional Vehicle
+// Infomation" column that are never a vehicle series. They only matter on the
+// last-resort path in extractModelName, which otherwise takes the column's first
+// multi-character token and would happily return "LHD" as a model.
+var nonModelTokens = map[string]struct{}{
+	"LHD":  {}, // left-hand drive
+	"RHD":  {}, // right-hand drive
+	"CBU":  {}, // completely built up
+	"DCB":  {}, // double cab
+	"SED":  {}, // sedan
+	"HB":   {}, // hatchback
+	"WGN":  {}, // wagon
+	"HTWC": {}, // EPC trim marker
+	"TBO":  {}, // turbo
+	"USA":  {}, // market
+	"CHI":  {}, // market
+	"UK":   {}, // market
+}
 
 // modelNameColumns lists Col_name candidates for the vehicle series, in priority order.
 // 17vin responses vary by brand; docs show "Model name" (lowercase), existing production
@@ -107,7 +136,7 @@ func extractModelName(parsed gjson.Result) string {
 		// fall back: first meaningful token of Additional Vehicle Infomation
 		if addl != "" {
 			for t := range strings.FieldsSeq(addl) {
-				if !isBodyStyleCode(t) && len(t) > 1 {
+				if isModelCandidateToken(t) {
 					return sanitizeModelName(t)
 				}
 			}
@@ -159,6 +188,26 @@ func pickModelCandidate(raw, hint string) string {
 func isBodyStyleCode(s string) bool {
 	return bodyStylePattern.MatchString(strings.TrimSpace(s))
 }
+
+// isModelCandidateToken reports whether a bare token from the additional-info
+// column could plausibly be a vehicle series. It must be longer than one
+// character, must contain a letter, and must be neither a body-style code nor a
+// known EPC marker. Trim/seating codes such as "05S" and "07S" are rejected by
+// the letter-position check: a series name does not lead with a digit and end in
+// a single letter.
+func isModelCandidateToken(t string) bool {
+	t = strings.TrimSpace(t)
+	if len(t) < 2 || isBodyStyleCode(t) {
+		return false
+	}
+	if _, ok := nonModelTokens[strings.ToUpper(t)]; ok {
+		return false
+	}
+	return strings.ContainsFunc(t, unicode.IsLetter) && !seatingCodePattern.MatchString(t)
+}
+
+// seatingCodePattern matches EPC seating/spec codes like "05S", "07S", "08S".
+var seatingCodePattern = regexp.MustCompile(`^\d{2}[A-Za-z]$`)
 
 func md5Hex(s string) string {
 	hash := md5.Sum([]byte(s))

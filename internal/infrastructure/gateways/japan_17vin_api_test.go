@@ -9,20 +9,106 @@ import (
 
 func Test_isBodyStyleCode(t *testing.T) {
 	cases := map[string]bool{
-		"4D":    true,
-		"5D":    true,
-		"2D":    true,
-		"4DR":   true,
-		"5HB":   true,
-		"123":   true,
+		// Genuine EPC body-style codes.
+		"4D":  true,
+		"5D":  true,
+		"2D":  true,
+		"3D":  true,
+		"2DR": true,
+		"4DR": true,
+		"5DR": true,
+		"3HB": true,
+		"5HB": true,
+		"2WD": true,
+		"4WD": true,
+		"4WS": true,
+		"5W":  true,
+		"5WG": true,
+
+		// Real model names that are digit-led. Every one of these matched the
+		// original `^\d+[A-Za-z]{0,3}$` and was therefore discarded, leaving the
+		// decode with an empty model. The starred ones also match the narrower
+		// `^\d+[A-Za-z]{1,3}$`, which is why the letters are enumerated instead.
+		"86":     false,
+		"911":    false,
+		"500":    false,
+		"300":    false,
+		"124":    false,
+		"240":    false,
+		"718":    false,
+		"2":      false, // Polestar 2
+		"4":      false, // Polestar 4
+		"370Z":   false, // *
+		"350Z":   false, // *
+		"240SX":  false, // *
+		"2000GT": false, // *
+		"600LT":  false, // *
+		"3000GT": false, // *
+
+		// Word-shaped names and edge cases.
 		"Crown": false,
 		"CAMRY": false,
 		"":      false,
 		"Q7":    false, // letter+digit, not digit-leading
+		"10D":   false, // no vehicle has ten doors; not a code we accept
 	}
 	for in, want := range cases {
 		assert.Equalf(t, want, isBodyStyleCode(in), "input %q", in)
 	}
+}
+
+// Test_pickModelCandidate_digitLedModels is the payload-level counterpart to the
+// unit cases above: a digit-led series name must survive candidate selection.
+func Test_pickModelCandidate_digitLedModels(t *testing.T) {
+	assert.Equal(t, "86", pickModelCandidate("86", ""))
+	assert.Equal(t, "370Z", pickModelCandidate("370Z", ""))
+	assert.Equal(t, "86", pickModelCandidate("4D/86", ""))
+	assert.Equal(t, "911", pickModelCandidate("911/CARRERA", ""))
+	assert.Equal(t, "CARRERA", pickModelCandidate("911/CARRERA", "CARRERA 4S"))
+}
+
+func Test_extractModelName_digitLedModelSurvives(t *testing.T) {
+	// Toyota 86 (ZN6). Before the body-style pattern was narrowed, "86" was
+	// classified as a body-style code, extractModelName returned "", and the
+	// decode produced no usable definition id.
+	payload := `{"data":{"epc":"toyota","model_year_from_vin":"2017",
+		"model_original_epc_list":[{"CarAttributes":[
+			{"Col_name":"Model Name","Col_value":"86"},
+			{"Col_name":"Additional Vehicle Infomation","Col_value":"2D   06S"}
+		]}]}}`
+	assert.Equal(t, "86", extractModelName(gjson.Parse(payload)))
+}
+
+func Test_isModelCandidateToken(t *testing.T) {
+	cases := map[string]bool{
+		"Crown":  true,
+		"CAMRY":  true,
+		"86":     false, // digits only: no letter, cannot be a token-level series
+		"4D":     false, // body-style code
+		"05S":    false, // seating code
+		"07S":    false,
+		"LHD":    false, // EPC marker
+		"RHD":    false,
+		"HTWC":   false,
+		"SED":    false,
+		"D":      false, // too short
+		"":       false,
+		"Hybrid": true,
+	}
+	for in, want := range cases {
+		assert.Equalf(t, want, isModelCandidateToken(in), "input %q", in)
+	}
+}
+
+// Test_extractModelName_fallbackRejectsMarkers covers the last-resort path: when
+// no model-name column resolves, the additional-info column must not hand back a
+// drive-side or trim marker as the vehicle series.
+func Test_extractModelName_fallbackRejectsMarkers(t *testing.T) {
+	payload := `{"data":{"model_original_epc_list":[{"CarAttributes":[
+		{"Col_name":"Model Name","Col_value":"4D"},
+		{"Col_name":"Additional Vehicle Infomation","Col_value":"LHD  05S  HTWC  Alphard"}
+	]}]}}`
+	assert.Equal(t, "Alphard", extractModelName(gjson.Parse(payload)))
 }
 
 func Test_pickModelCandidate(t *testing.T) {

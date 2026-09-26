@@ -34,6 +34,11 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+// failedDecodeTTL is how long a recorded decode failure suppresses a retry for
+// the same VIN. See the gate in Handle for why this is bounded rather than
+// permanent.
+const failedDecodeTTL = 14 * 24 * time.Hour
+
 type DecodeVINQueryHandler struct {
 	dbs                            func() *db.ReaderWriter
 	vinDecodingService             services.VINDecodingService
@@ -126,8 +131,21 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
 		return cached, nil
 	}
-	// check if vin has failed in the past, and if it has just fail now
-	vinAlreadyFailed, _ := models.FailedVinDecodes(models.FailedVinDecodeWhere.Vin.EQ(vinObj.String())).Exists(ctx, dc.dbs().Writer)
+	// Check whether this VIN failed recently, and if so fail fast rather than
+	// paying for the whole vendor fan-out again.
+	//
+	// The window matters. A row here means every vendor we tried had nothing for
+	// this VIN, which is worth remembering for a while: the fan-out is slow and
+	// billed per call. It is not worth remembering forever. Decoding coverage
+	// only ever grows -- a new provider, a new country branch, a fixed
+	// model-name extractor -- and an unbounded gate converts every historical
+	// miss into a permanent one that no amount of decoder improvement can
+	// recover, only a manual DELETE. Ageing the row out means each improvement
+	// picks up the backlog on its own.
+	vinAlreadyFailed, _ := models.FailedVinDecodes(
+		models.FailedVinDecodeWhere.Vin.EQ(vinObj.String()),
+		models.FailedVinDecodeWhere.CreatedAt.GT(time.Now().Add(-failedDecodeTTL)),
+	).Exists(ctx, dc.dbs().Writer)
 	if vinAlreadyFailed {
 		return nil, fmt.Errorf("vin %s failed decoding already", vinObj.String())
 	}
@@ -200,7 +218,27 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 			CountryCode:      null.StringFrom(query.Country),
 			ManufacturerName: null.StringFrom(resp.Manufacturer),
 		}
-		errFailedVin := failedVinDecode.Insert(ctx, dc.dbs().Writer, boil.Infer())
+		// Upsert, not Insert: vin is the primary key, so once a row has aged past
+		// failedDecodeTTL and the retry fails again, an Insert collides and the
+		// row keeps its original created_at. That would leave the VIN
+		// permanently past the window -- re-running the full vendor fan-out on
+		// every single request -- which is the opposite of what the gate is for.
+		// Writing created_at forward restarts the window.
+		failedVinDecode.CreatedAt = time.Now()
+		errFailedVin := failedVinDecode.Upsert(ctx, dc.dbs().Writer, true,
+			[]string{models.FailedVinDecodeColumns.Vin},
+			boil.Whitelist(
+				models.FailedVinDecodeColumns.VendorsTried,
+				models.FailedVinDecodeColumns.VincarioData,
+				models.FailedVinDecodeColumns.DrivlyData,
+				models.FailedVinDecodeColumns.AutoisoData,
+				models.FailedVinDecodeColumns.DatgroupData,
+				models.FailedVinDecodeColumns.Vin17Data,
+				models.FailedVinDecodeColumns.CountryCode,
+				models.FailedVinDecodeColumns.ManufacturerName,
+				models.FailedVinDecodeColumns.CreatedAt,
+			),
+			boil.Infer())
 		if errFailedVin != nil {
 			localLog.Err(errFailedVin).Msgf("failed to save failed vin decode to database")
 		}
@@ -328,6 +366,17 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 	if tblDef != nil {
 		resp.DefinitionId = tblDef.ID
+
+		// The model is the template's, not the provider's. resp.Model still
+		// holds vinInfo.Model here, which is whatever casing and spelling the
+		// decoder handed back ("LAND CRUISER PRADO", "CROWN"), while every
+		// cached decode of the same VIN answers tblDef.Model ("Land Cruiser
+		// Prado"). Leaving that in place means the first decode of a VIN and
+		// all of its repeats disagree about the model -- the same divergence
+		// hydrateResponseFromVinNumber was fixed for on the other side. It
+		// matters most on the adopt path, where the template already existed
+		// under a different spelling than this decoder produced.
+		resp.Model = tblDef.Model
 
 		// Narrow the template to the trim this VIN decoded to. ManufacturerCode
 		// only ever arrives via drivly (VINDecodingInfoData.ManufacturerCode,

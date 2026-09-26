@@ -128,7 +128,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/docker v28.3.1+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731
+	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect

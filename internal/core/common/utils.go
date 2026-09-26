@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	coremodels "github.com/DIMO-Network/device-definitions-api/internal/core/models"
@@ -294,6 +295,24 @@ var (
 	workerIDDisallowed = regexp.MustCompile(`[^a-z0-9._&+-]`)
 )
 
+// The year bounds a definition id must fall inside. ID_RE only constrains the
+// year to four digits, so it accepts 0000, 1000, 3500 and 9999 -- exactly what a
+// decoder produces when it misreads the model-year VIN digit, and
+// indistinguishable from a real template once it is in the catalog, because
+// nothing downstream checks it.
+//
+// The range is deliberately a plausibility check and not "no later than next
+// model year". This function also computes the lookup id for definitions that
+// already exist, and the production catalog holds templates out to
+// bmw_5-series_2031 and honda_fit_2029. A tight upper bound would refuse to
+// build their ids and break the decode for every vehicle already minted against
+// them -- turning historical bad data into a present outage. 1885 predates the
+// first production automobile, so nothing real falls below it.
+const (
+	minDefinitionYear = 1885
+	maxDefinitionYear = 2100
+)
+
 // DeviceDefinitionSlug builds <make>_<model>_<year>, the template id, and
 // refuses one definitions-worker can never hold.
 //
@@ -319,6 +338,15 @@ var (
 // separator, and templateFromDefinition reads the manufacturer slug back as
 // everything before the first one.
 func DeviceDefinitionSlug(makeSlug, modelSlug string, year int16) (string, error) {
+	// Checked before anything else, and separately from ValidateDefinitionID: the
+	// fast path below returns as soon as the id matches ID_RE, so a year the
+	// regex happens to accept would never reach the validator, and the repair
+	// path cannot fix a bad year by reshaping the make or model anyway.
+	if int(year) < minDefinitionYear || int(year) > maxDefinitionYear {
+		return "", fmt.Errorf("%w: implausible model year %d (expected %d-%d)",
+			ErrUnmintableDefinitionID, year, minDefinitionYear, maxDefinitionYear)
+	}
+
 	modelSlugCleaned := strings.ReplaceAll(modelSlug, ",", "")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, "/", "-")
 	modelSlugCleaned = strings.ReplaceAll(modelSlugCleaned, ".", "-")
@@ -361,10 +389,19 @@ var ErrUnmintableDefinitionID = errors.New("definition id is one definitions-wor
 // re-checks its own output, so this is the check: nothing may PUT, or build a
 // vin_numbers row on, an id that fails it.
 func ValidateDefinitionID(id string) error {
-	if workerIDValid.MatchString(id) {
-		return nil
+	if !workerIDValid.MatchString(id) {
+		return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
 	}
-	return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
+	// The regex above guarantees the last four characters are digits.
+	year, err := strconv.Atoi(id[len(id)-4:])
+	if err != nil {
+		return fmt.Errorf("%w: %q", ErrUnmintableDefinitionID, id)
+	}
+	if year < minDefinitionYear || year > maxDefinitionYear {
+		return fmt.Errorf("%w: %q has an implausible model year %d (expected %d-%d)",
+			ErrUnmintableDefinitionID, id, year, minDefinitionYear, maxDefinitionYear)
+	}
+	return nil
 }
 
 func ConvertMetadataToDeviceAttributes(metadata *coremodels.DeviceDefinitionMetadata) []coremodels.DeviceTypeAttributeEditor {

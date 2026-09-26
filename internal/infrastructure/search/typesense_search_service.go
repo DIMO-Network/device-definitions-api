@@ -87,10 +87,16 @@ func (t typesenseAPIService) GetDeviceDefinitions(ctx context.Context, search, m
 
 func (t typesenseAPIService) Autocomplete(ctx context.Context, search string) (*api.SearchResult, error) {
 
+	// Grouped on definition_id for the same reason GetDeviceDefinitions is: the
+	// worker indexes one document per trim, so an ungrouped top-10 for "camry"
+	// comes back as ten trims of a single Camry rather than ten Camrys. An
+	// autocomplete list of ten identical labels is worse than useless.
 	searchParameters := &api.SearchCollectionParams{
 		Q:                       search,
 		QueryBy:                 "name",
-		Limit:                   pointer.Int(10),
+		PerPage:                 pointer.Int(10),
+		GroupBy:                 pointer.String("definition_id"),
+		GroupLimit:              pointer.Int(1),
 		HighlightFullFields:     pointer.String("name"),
 		HighlightAffixNumTokens: pointer.Int(2),
 	}

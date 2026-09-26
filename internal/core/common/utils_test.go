@@ -504,3 +504,58 @@ func TestDeviceDefinitionSlugAgainstManifestNames(t *testing.T) {
 	t.Logf("definitions=%d checked=%d raw-agrees=%d valid-unchanged=%d repaired=%d rebuilds-stored-id new=%d legacy=%d",
 		len(defs), checked, agree, unchanged, repaired, newRebuildsStored, legacyRebuildsStored)
 }
+
+// ID_RE constrains the year to four digits and nothing more, so it accepts 0000,
+// 1000, 3500 and 9999 -- which is precisely the shape a decoder produces when it
+// misreads the model-year VIN digit. Nothing downstream re-checks it, so once
+// such a template is in the catalog it is indistinguishable from a real one.
+func TestValidateDefinitionIDRefusesImplausibleYears(t *testing.T) {
+	for _, id := range []string{
+		"toyota_camry_0000",
+		"toyota_camry_1000",
+		"toyota_camry_1884",
+		"toyota_camry_3500",
+		"toyota_camry_9999",
+	} {
+		t.Run(id, func(t *testing.T) {
+			// The premise: ID_RE itself is perfectly happy with this id.
+			assert.Regexp(t, workerIDRegex, id, "the premise: the worker's own regex accepts this")
+
+			err := ValidateDefinitionID(id)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
+			assert.Contains(t, err.Error(), id)
+		})
+	}
+}
+
+// The bound is a plausibility check, not "no later than next model year". The
+// production catalog holds templates out to bmw_5-series_2031 and
+// honda_fit_2029; refusing to build their ids would break the decode for every
+// vehicle already minted against them.
+func TestValidateDefinitionIDAcceptsYearsAlreadyInTheCatalog(t *testing.T) {
+	for _, id := range []string{
+		"toyota_camry_1988",
+		"toyota_camry_2020",
+		"honda_fit_2029",
+		"bmw_5-series_2031",
+	} {
+		t.Run(id, func(t *testing.T) {
+			assert.NoError(t, ValidateDefinitionID(id))
+		})
+	}
+}
+
+// DeviceDefinitionSlug returns early as soon as the assembled id matches ID_RE,
+// so the year has to be checked before that fast path or it is never checked at
+// all. No id may be returned alongside the error.
+func TestDeviceDefinitionSlugRefusesImplausibleYears(t *testing.T) {
+	for _, year := range []int16{0, 1, 999, 1884, 2101, 9999} {
+		t.Run(fmt.Sprintf("year %d", year), func(t *testing.T) {
+			id, err := DeviceDefinitionSlug("toyota", "camry", year)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrUnmintableDefinitionID)
+			assert.Empty(t, id, "no id may come back alongside the error")
+		})
+	}
+}
