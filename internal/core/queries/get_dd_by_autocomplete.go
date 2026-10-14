@@ -5,7 +5,6 @@ import (
 
 	"github.com/DIMO-Network/device-definitions-api/internal/core/mediator"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/search"
-	"github.com/mitchellh/mapstructure"
 )
 
 type GetAllDeviceDefinitionByAutocompleteQuery struct {
@@ -43,18 +42,30 @@ func (ch GetAllDeviceDefinitionByAutocompleteQueryHandler) Handle(ctx context.Co
 		return nil, err
 	}
 
-	deviceDefinitions := make([]GetAllDeviceDefinitionAutocompleteItem, 0, len(*result.Hits))
-	for _, hit := range *result.Hits {
-		var doc map[string]interface{}
-		if err := mapstructure.Decode(hit.Document, &doc); err != nil {
+	// firstHitPerGroup, not *result.Hits: Autocomplete groups on definition_id,
+	// and Typesense returns a grouped search in grouped_hits with hits unset --
+	// so the old dereference of result.Hits was both a nil panic and, ungrouped,
+	// ten trims of the same definition.
+	hits := firstHitPerGroup(result)
+	deviceDefinitions := make([]GetAllDeviceDefinitionAutocompleteItem, 0, len(hits))
+	for _, hit := range hits {
+		if hit.Document == nil {
 			continue
 		}
+		doc := *hit.Document
 
-		item := GetAllDeviceDefinitionAutocompleteItem{
-			ID:   doc["id"].(string),
-			Name: doc["name"].(string),
+		// docString and definitionName rather than bare type assertions: the
+		// documents are untyped maps, a missing key panics on assertion, and the
+		// per-trim document's own name carries the trim ("2020 Toyota Camry LE")
+		// while this endpoint lists definitions.
+		id := docString(doc, "definition_id")
+		if id == "" {
+			continue
 		}
-		deviceDefinitions = append(deviceDefinitions, item)
+		deviceDefinitions = append(deviceDefinitions, GetAllDeviceDefinitionAutocompleteItem{
+			ID:   id,
+			Name: definitionName(doc),
+		})
 	}
 
 	response := &GetAllDeviceDefinitionByAutocompleteQueryResult{

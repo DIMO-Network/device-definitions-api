@@ -27,6 +27,10 @@ import (
 
 type VINDecodingService interface {
 	// GetVIN decodes a vin using one of the providers passed in or if AllProviders applies an ordered logic. Only pass TeslaProvider if know it is a Tesla.
+	//
+	// The vendor extra is never nil, on any path including a failure: it is
+	// what the caller writes to failed_vin_decodes, and returning nil there
+	// panicked the decode instead of recording the failure.
 	GetVIN(ctx context.Context, vin string, provider coremodels.DecodeProviderEnum, country string) (*coremodels.VINDecodingInfoData, *coremodels.VINDecodingVendorExtra, error)
 }
 
@@ -39,15 +43,15 @@ type vinDecodingService struct {
 	japan17VINAPI      gateways.Japan17VINAPI
 	carvxAPI           gateways.CarVxVINAPI
 	elevaAPI           gateways.ElevaAPI
-	onChainSvc         gateways.DeviceDefinitionOnChainService
+	catalogSvc         gateways.DeviceDefinitionCatalogService
 	dbs                func() *db.ReaderWriter
 }
 
 func NewVINDecodingService(drivlyAPISvc gateways.DrivlyAPIService, vincarioAPISvc gateways.VincarioAPIService, autoIso gateways.AutoIsoAPIService, logger *zerolog.Logger,
-	onChainSvc gateways.DeviceDefinitionOnChainService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
+	catalogSvc gateways.DeviceDefinitionCatalogService, datGroupAPIService gateways.DATGroupAPIService, dbs func() *db.ReaderWriter,
 	japan17VINAPI gateways.Japan17VINAPI, carvxAPI gateways.CarVxVINAPI, elevaAPI gateways.ElevaAPI) VINDecodingService {
 	return &vinDecodingService{drivlyAPISvc: drivlyAPISvc, vincarioAPISvc: vincarioAPISvc, autoIsoAPIService: autoIso,
-		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, onChainSvc: onChainSvc,
+		japan17VINAPI: japan17VINAPI, carvxAPI: carvxAPI, logger: logger, catalogSvc: catalogSvc,
 		DATGroupAPIService: datGroupAPIService, dbs: dbs, elevaAPI: elevaAPI}
 }
 
@@ -62,11 +66,17 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 	if country == "CHL" {
 		providersToTry = append(providersToTry, coremodels.ElevaKaufmannProvider)
 		providersToTry = append(providersToTry, coremodels.VincarioProvider) // sometimes works in latam as backup
-	} else if provider == coremodels.AllProviders && ((len(vin) < 17 && len(vin) > 10) || country == "JPN") {
+	} else if provider == coremodels.AllProviders && ((len(vin) < 17 && len(vin) >= 10) || country == "JPN") {
+		// A Japan chassis number can be exactly 10 characters (ZWR9-80001);
+		// Handle admits one, and IsValidJapanChassis accepts one. Excluding
+		// that length sent a perfectly valid chassis number to the 17-character
+		// VIN validator, which refused it before any provider was tried.
 		providersToTry = append(providersToTry, coremodels.CarVXVIN)
 		providersToTry = append(providersToTry, coremodels.Japan17VIN)
 	} else if !ValidateVIN(vin) {
-		return nil, nil, fmt.Errorf("invalid vin: %s", vin)
+		// The vendor extra is returned on every path, never nil: the caller
+		// reads it to record the failure, and a nil there panicked the decode.
+		return nil, resultVendorExtra, fmt.Errorf("invalid vin: %s", vin)
 	}
 
 	localLog := c.logger.With().
@@ -75,12 +85,12 @@ func (c vinDecodingService) GetVIN(ctx context.Context, vin string, provider cor
 		Logger()
 
 	if strings.HasPrefix(vin, "0SC") {
-		dd, _, err := c.onChainSvc.GetDefinitionByID(ctx, DefaultDefinitionID)
+		dd, _, err := c.catalogSvc.GetTemplateByID(ctx, DefaultDefinitionID)
 		if err != nil {
-			return nil, nil, err
+			return nil, resultVendorExtra, errors.Wrapf(err, "unable to read the test-VIN template %s", DefaultDefinitionID)
 		}
 		result = buildFromDDForTestVIN(vin, dd)
-		return result, nil, nil
+		return result, resultVendorExtra, nil
 	}
 
 	if len(providersToTry) == 0 {
@@ -343,15 +353,16 @@ func buildFromDrivly(info *coremodels.DrivlyVINResponse) (*coremodels.VINDecodin
 	yrInt, _ := strconv.Atoi(info.Year)
 
 	v := &coremodels.VINDecodingInfoData{
-		VIN:        info.Vin,
-		Year:       int32(yrInt),
-		Make:       info.Make,
-		Model:      info.Model,
-		StyleName:  buildDrivlyStyleName(info),
-		ExternalID: info.GetExternalID(),
-		Source:     coremodels.DrivlyProvider,
-		Raw:        raw,
-		FuelType:   info.Fuel,
+		VIN:              info.Vin,
+		Year:             int32(yrInt),
+		Make:             info.Make,
+		Model:            info.Model,
+		StyleName:        buildDrivlyStyleName(info),
+		ExternalID:       info.GetExternalID(),
+		Source:           coremodels.DrivlyProvider,
+		Raw:              raw,
+		FuelType:         info.Fuel,
+		ManufacturerCode: info.ManufacturerCode,
 	}
 	if err := validateVinDecoding(v); err != nil {
 		return nil, err
@@ -364,7 +375,7 @@ func buildDrivlyStyleName(vinInfo *coremodels.DrivlyVINResponse) string {
 }
 
 // buildFromDDForTestVIN meant for use with test VIN's
-func buildFromDDForTestVIN(vin string, info *coremodels.DeviceDefinitionTablelandModel) *coremodels.VINDecodingInfoData {
+func buildFromDDForTestVIN(vin string, info *coremodels.Template) *coremodels.VINDecodingInfoData {
 	makeSlug := strings.Split(info.ID, "_")[0]
 
 	v := &coremodels.VINDecodingInfoData{

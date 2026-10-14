@@ -48,7 +48,7 @@ type CreateDeviceDefinitionCommandResult struct {
 func (*CreateDeviceDefinitionCommand) Key() string { return "CreateDeviceDefinitionCommand" }
 
 type CreateDeviceDefinitionCommandHandler struct {
-	onChainSvc            gateways.DeviceDefinitionOnChainService
+	catalogSvc            gateways.DeviceDefinitionCatalogService
 	dbs                   func() *db.ReaderWriter
 	powerTrainTypeService services.PowerTrainTypeService
 	fuelAPI               gateways.FuelAPIService
@@ -56,9 +56,9 @@ type CreateDeviceDefinitionCommandHandler struct {
 	identity              gateways.IdentityAPI
 }
 
-func NewCreateDeviceDefinitionCommandHandler(onChainSvc gateways.DeviceDefinitionOnChainService, dbs func() *db.ReaderWriter,
+func NewCreateDeviceDefinitionCommandHandler(catalogSvc gateways.DeviceDefinitionCatalogService, dbs func() *db.ReaderWriter,
 	powerTrainTypeService services.PowerTrainTypeService, fuelAPI gateways.FuelAPIService, logger *zerolog.Logger, identity gateways.IdentityAPI) CreateDeviceDefinitionCommandHandler {
-	return CreateDeviceDefinitionCommandHandler{onChainSvc: onChainSvc, dbs: dbs,
+	return CreateDeviceDefinitionCommandHandler{catalogSvc: catalogSvc, dbs: dbs,
 		powerTrainTypeService: powerTrainTypeService,
 		fuelAPI:               fuelAPI, logger: logger,
 		identity: identity}
@@ -128,8 +128,20 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		ch.logger.Warn().Err(err).Msgf("failed to get images for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
+	// An id definitions-worker can never hold is a bad request, not a server
+	// fault: the worker answers the create with 422, that error propagated as
+	// a plain error, and fiber reported the service as broken with a 500 for
+	// what is a make/model the caller has to correct. A ValidationError is the
+	// 4xx both the HTTP and gRPC layers already translate.
+	definitionID, err := common.DeviceDefinitionSlug(stringutils.SlugString(dm.Name), stringutils.SlugString(command.Model), int16(command.Year))
+	if err != nil {
+		return nil, &exceptions.ValidationError{
+			Err: fmt.Errorf("no device definition id can be built for %d %s %s: %w", command.Year, dm.Name, command.Model, err),
+		}
+	}
+
 	ddTbl := coremodels.DeviceDefinitionTablelandModel{
-		ID:         common.DeviceDefinitionSlug(stringutils.SlugString(dm.Name), stringutils.SlugString(command.Model), int16(command.Year)),
+		ID:         definitionID,
 		KSUID:      ksuid.New().String(),
 		Model:      command.Model,
 		Year:       command.Year,
@@ -138,7 +150,11 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		Metadata:   common.ConvertDeviceTypeAttrsToDefinitionMetadata(command.DeviceAttributes),
 	}
 
-	create, err := ch.onChainSvc.Create(ctx, command.Make, ddTbl)
+	// The stored template is not used here: this command already answers with
+	// the id, which is the value Create used to return and the value
+	// TransactionID has carried since definitions stopped being written
+	// on-chain.
+	_, err = ch.catalogSvc.Create(ctx, command.Make, ddTbl)
 	if err != nil {
 		return nil, err // todo does mediator eat this error?
 	}
@@ -147,7 +163,7 @@ func (ch CreateDeviceDefinitionCommandHandler) Handle(ctx context.Context, query
 		ch.logger.Err(err).Msgf("failed to add images to database for: %s %d %s", command.Make, command.Year, command.Model)
 	}
 
-	return CreateDeviceDefinitionCommandResult{ID: ddTbl.ID, NameSlug: ddTbl.ID, TransactionID: create}, nil
+	return CreateDeviceDefinitionCommandResult{ID: ddTbl.ID, NameSlug: ddTbl.ID, TransactionID: &ddTbl.ID}, nil
 }
 
 func (ch CreateDeviceDefinitionCommandHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID string, img gateways.FuelDeviceImages) error {

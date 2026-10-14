@@ -16,7 +16,6 @@ import (
 	vinutil "github.com/DIMO-Network/shared/pkg/vin"
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/goccy/go-json"
 
@@ -181,7 +180,16 @@ func (p *decodeVINCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interf
 				dbVin.ManufacturerName = vinInfo.Make
 			}
 			dbVin.DatgroupData = null.JSONFrom(vinInfo.Raw)
-			dbVin.DefinitionID = common.DeviceDefinitionSlug(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+			definitionID, errID := common.DeviceDefinitionSlug(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+			if errID != nil {
+				// Inserting the row anyway is what the validator's contract
+				// forbids: every later DecodeVIN of this VIN would read the
+				// cached row, look its definition up in the catalog, 404
+				// forever, and answer with an empty trim and match quality.
+				fmt.Println("skipping, no definition id can be built: " + errID.Error())
+				continue
+			}
+			dbVin.DefinitionID = definitionID
 			dbVin.DecodeProvider = null.StringFrom(string(vinInfo.Source))
 			// todo future change to add field with StyleName
 
@@ -254,7 +262,7 @@ func readVINFile(filename string) ([]string, error) {
 	return values, nil
 }
 
-func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
+func instantiateVINDecodingSvc(_ context.Context, settings *config.Settings, logger *zerolog.Logger, pdb db.Store) services.VINDecodingService {
 	datAPI := gateways.NewDATGroupAPIService(settings, logger)
 	drivlyAPI := gateways.NewDrivlyAPIService(settings)
 	vincarioAPI := gateways.NewVincarioAPIService(settings, logger)
@@ -265,21 +273,7 @@ func instantiateVINDecodingSvc(ctx context.Context, settings *config.Settings, l
 		return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, nil, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 	}
 
-	send, err := createSender(ctx, settings, logger)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create sender.")
-	}
+	deviceDefinitionCatalogService := gateways.NewDeviceDefinitionCatalogService(settings, logger)
 
-	ethClient, err := ethclient.Dial(settings.EthereumRPCURL.String())
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create Ethereum client.")
-	}
-
-	chainID, err := ethClient.ChainID(ctx)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Couldn't retrieve chain id.")
-	}
-	deviceDefinitionOnChainService := gateways.NewDeviceDefinitionOnChainService(settings, logger, ethClient, chainID, send, pdb.DBS)
-
-	return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionOnChainService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
+	return services.NewVINDecodingService(drivlyAPI, vincarioAPI, nil, logger, deviceDefinitionCatalogService, datAPI, pdb.DBS, jp17vinAPI, carvxAPI, elevaAPI)
 }

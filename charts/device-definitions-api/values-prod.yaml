@@ -20,10 +20,13 @@ env:
   REDIS_CLUSTER_MODE: true
   REDIS_TLS: true
   KAFKA_BROKERS: kafka-prod-dimo-kafka-kafka-brokers:9092
-  ETHEREUM_SEND_TRANSACTION: true
-  TABLELAND_API_GATEWAY: http://tableland-node-prod.prod.svc.cluster.local:8080/
-  ETHEREUM_REGISTRY_ADDRESS: '0xFA8beC73cebB9D88FF88a2f75E7D7312f2Fd39EC'
-  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_prod
+  # One hostname on purpose: definitions-worker is what serves
+  # definitions.dimo.org, so there is no separate origin to read through.
+  # A read that must not be served from the edge cache misses it by cache
+  # key instead -- see fetchTemplateDocFresh's cache-busting parameter.
+  DEFINITIONS_CATALOG_URL: https://definitions.dimo.org
+  DEFINITIONS_WORKER_URL: https://definitions.dimo.org
+  SEARCH_SERVICE_DEVICE_DEFINITION_INDEX: definitions_v2_prod
   IDENTITY_API_URL: https://identity-api.dimo.zone/query
 ingress:
   enabled: true
@@ -58,9 +61,4 @@ tolerations: []
 affinity: {}
 podDisruptionBudget:
   minAvailable: 1
-jobs:
-  - name: device-definitions-search-sync
-    schedule: 0 13 * * *
-    args:
-      - '-c'
-      - /device-definitions-api sync-device-definitions-search; CODE=$?; echo "daily device definitions typesense search sync completed"; wget -q --post-data "hello=shutdown" http://localhost:4191/shutdown &> /dev/null; exit $CODE;
+jobs: []

@@ -99,8 +99,16 @@ func getCompatibilityR1SheetData(ctx context.Context, settings *config.Settings)
 			yr, _ := strconv.Atoi(fmt.Sprintf("%v", row[2]))
 			compat := fmt.Sprintf("%v", row[3])
 
+			definitionID, err := common.DeviceDefinitionSlug(stringutils.SlugString(mk), stringutils.SlugString(model), int16(yr))
+			if err != nil {
+				// A row whose make/model yields an id no template can exist
+				// at describes a definition the catalog can never hold, so
+				// serving it would only send the caller to look one up that
+				// 404s forever. Skip the row and keep the rest of the sheet.
+				continue
+			}
 			rows = append(rows, CompatibilitySheetRow{
-				DefinitionID: common.DeviceDefinitionSlug(stringutils.SlugString(mk), stringutils.SlugString(model), int16(yr)),
+				DefinitionID: definitionID,
 				Make:         mk,
 				Model:        model,
 				Year:         yr,

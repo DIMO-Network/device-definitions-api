@@ -10,6 +10,7 @@ import (
 
 	"github.com/DIMO-Network/shared/pkg/logfields"
 
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/metrics"
@@ -33,6 +34,11 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+// failedDecodeTTL is how long a recorded decode failure suppresses a retry for
+// the same VIN. See the gate in Handle for why this is bounded rather than
+// permanent.
+const failedDecodeTTL = 14 * 24 * time.Hour
+
 type DecodeVINQueryHandler struct {
 	dbs                            func() *db.ReaderWriter
 	vinDecodingService             services.VINDecodingService
@@ -40,7 +46,7 @@ type DecodeVINQueryHandler struct {
 	vinRepository                  repositories.VINRepository
 	fuelAPIService                 gateways.FuelAPIService
 	powerTrainTypeService          services.PowerTrainTypeService
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService
 	identity                       gateways.IdentityAPI
 }
 
@@ -58,7 +64,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 	logger *zerolog.Logger,
 	fuelAPIService gateways.FuelAPIService,
 	powerTrainTypeService services.PowerTrainTypeService,
-	deviceDefinitionOnChainService gateways.DeviceDefinitionOnChainService,
+	deviceDefinitionCatalogService gateways.DeviceDefinitionCatalogService,
 	identity gateways.IdentityAPI) DecodeVINQueryHandler {
 	return DecodeVINQueryHandler{
 		dbs:                            dbs,
@@ -67,7 +73,7 @@ func NewDecodeVINQueryHandler(dbs func() *db.ReaderWriter, vinDecodingService se
 		vinRepository:                  vinRepository,
 		fuelAPIService:                 fuelAPIService,
 		powerTrainTypeService:          powerTrainTypeService,
-		deviceDefinitionOnChainService: deviceDefinitionOnChainService,
+		deviceDefinitionCatalogService: deviceDefinitionCatalogService,
 		identity:                       identity,
 	}
 }
@@ -106,25 +112,40 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	)
 
 	metrics.Success.With(prometheus.Labels{"method": VinRequests}).Inc()
-	txVinNumbers, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	// The transaction opens and closes inside this call. Everything below it
+	// is slow -- hydrateResponseFromVinNumber alone makes a catalog request
+	// and a reader query -- and none of it may run while a writer connection
+	// and a serializable snapshot are held.
+	vinDecodeNumber, err := dc.readCachedVinNumber(ctx, vinObj.String())
 	if err != nil {
-		return nil, errors.Wrap(err, "error when beginning transaction")
-	}
-	defer txVinNumbers.Rollback() //nolint
-	vinDecodeNumber, err := models.VinNumbers(
-		models.VinNumberWhere.Vin.EQ(vinObj.String())).
-		One(ctx, txVinNumbers)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-		return nil, errors.Wrap(err, "error when querying for existing VIN number")
+		return nil, err
 	}
 	// if database vin_number match found, just return it here
-	if r := dc.hydrateResponseFromVinNumber(vinDecodeNumber); r != nil {
-		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
-		return r, nil
+	cached, errCached := dc.hydrateResponseFromVinNumber(ctx, vinDecodeNumber)
+	if errCached != nil {
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		return nil, errCached
 	}
-	// check if vin has failed in the past, and if it has just fail now
-	vinAlreadyFailed, _ := models.FailedVinDecodes(models.FailedVinDecodeWhere.Vin.EQ(vinObj.String())).Exists(ctx, dc.dbs().Writer)
+	if cached != nil {
+		metrics.Success.With(prometheus.Labels{"method": VinExists}).Inc()
+		return cached, nil
+	}
+	// Check whether this VIN failed recently, and if so fail fast rather than
+	// paying for the whole vendor fan-out again.
+	//
+	// The window matters. A row here means every vendor we tried had nothing for
+	// this VIN, which is worth remembering for a while: the fan-out is slow and
+	// billed per call. It is not worth remembering forever. Decoding coverage
+	// only ever grows -- a new provider, a new country branch, a fixed
+	// model-name extractor -- and an unbounded gate converts every historical
+	// miss into a permanent one that no amount of decoder improvement can
+	// recover, only a manual DELETE. Ageing the row out means each improvement
+	// picks up the backlog on its own.
+	vinAlreadyFailed, _ := models.FailedVinDecodes(
+		models.FailedVinDecodeWhere.Vin.EQ(vinObj.String()),
+		models.FailedVinDecodeWhere.CreatedAt.GT(time.Now().Add(-failedDecodeTTL)),
+	).Exists(ctx, dc.dbs().Writer)
 	if vinAlreadyFailed {
 		return nil, fmt.Errorf("vin %s failed decoding already", vinObj.String())
 	}
@@ -155,13 +176,23 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	if vinInfo == nil || vinInfo.Model == "" {
 		vinInfo, vinExtra, err = dc.vinDecodingService.GetVIN(ctx, vinObj.String(), coremodels.AllProviders, query.Country) // this will try drivly first unless of japan
 	}
+	// GetVIN overwrites the initialiser above, and reports no vendor extra at
+	// all on the paths that fail before any vendor is tried: the invalid-VIN
+	// guard, and the 0SC test-VIN branch, which now reads a template from the
+	// catalog and hands back that read's error. The failure branch below reads
+	// six fields off this pointer, so a nil here panicked the decode instead of
+	// recording the failure -- and a decode that records nothing repeats the
+	// whole vendor fan-out, and the same panic, on every retry forever.
+	if vinExtra == nil {
+		vinExtra = &coremodels.VINDecodingVendorExtra{}
+	}
 
 	// if no luck decoding VIN, try buildingVinInfo from known data passed in, typically smartcar or software connections
 	if err != nil {
 		if len(query.KnownModel) > 0 && query.KnownYear > 0 {
 			// note if this is successful, err gets set to nil
 			// todo: the knownModel should correspond with the Make
-			vinInfo, err = dc.vinInfoFromKnown(vinObj, query.KnownModel, query.KnownYear)
+			vinInfo, err = dc.vinInfoFromKnown(ctx, vinObj, query.KnownModel, query.KnownYear)
 		}
 	}
 
@@ -187,7 +218,27 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 			CountryCode:      null.StringFrom(query.Country),
 			ManufacturerName: null.StringFrom(resp.Manufacturer),
 		}
-		errFailedVin := failedVinDecode.Insert(ctx, dc.dbs().Writer, boil.Infer())
+		// Upsert, not Insert: vin is the primary key, so once a row has aged past
+		// failedDecodeTTL and the retry fails again, an Insert collides and the
+		// row keeps its original created_at. That would leave the VIN
+		// permanently past the window -- re-running the full vendor fan-out on
+		// every single request -- which is the opposite of what the gate is for.
+		// Writing created_at forward restarts the window.
+		failedVinDecode.CreatedAt = time.Now()
+		errFailedVin := failedVinDecode.Upsert(ctx, dc.dbs().Writer, true,
+			[]string{models.FailedVinDecodeColumns.Vin},
+			boil.Whitelist(
+				models.FailedVinDecodeColumns.VendorsTried,
+				models.FailedVinDecodeColumns.VincarioData,
+				models.FailedVinDecodeColumns.DrivlyData,
+				models.FailedVinDecodeColumns.AutoisoData,
+				models.FailedVinDecodeColumns.DatgroupData,
+				models.FailedVinDecodeColumns.Vin17Data,
+				models.FailedVinDecodeColumns.CountryCode,
+				models.FailedVinDecodeColumns.ManufacturerName,
+				models.FailedVinDecodeColumns.CreatedAt,
+			),
+			boil.Infer())
 		if errFailedVin != nil {
 			localLog.Err(errFailedVin).Msgf("failed to save failed vin decode to database")
 		}
@@ -207,17 +258,39 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 	resp.Year = vinInfo.Year
 	resp.Model = vinInfo.Model
 
-	modelSlug := stringutils.SlugString(vinInfo.Model)
-	tid := common.DeviceDefinitionSlug(stringutils.SlugString(vinInfo.Make), modelSlug, int16(vinInfo.Year))
+	tid, errID := definitionIDForDecode(vinInfo.Make, vinInfo.Model, int16(vinInfo.Year))
+	if errID != nil {
+		// Nothing below this can succeed: the catalog cannot hold a template
+		// at this id, so the read 404s and the create 422s -- identically, on
+		// every retry, for every VIN of this model-year. Stop here, with the
+		// same answer the low-confidence gate gives, so the client falls back
+		// to the manual make/model/year picker instead of being told the
+		// service is broken.
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		localLog.Warn().Err(errID).Str("decode_source", string(vinInfo.Source)).
+			Msg("decoded model yields an id definitions-worker can never accept; returning not found so the client opens the manual picker")
+		return nil, errID
+	}
 	resp.DefinitionId = tid
 
-	tblDef, _, errTbl := dc.deviceDefinitionOnChainService.GetDefinitionByID(ctx, tid)
+	tblDef, _, errTbl := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, tid)
+	if errTbl != nil && !errors.Is(errTbl, gateways.ErrTemplateNotFound) {
+		// A catalog outage (5xx, timeout, decode failure) is not the same as
+		// the definition not existing. Falling through here would read
+		// tblDef as nil and run Create() below -- writing a duplicate
+		// definition for a vehicle that may already exist, on the VIN-decode
+		// hot path, at decode volume, during the worst possible moment for
+		// it. Abort the decode instead of continuing with a nil template.
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		return nil, errors.Wrapf(errTbl, "failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
+	}
 	if errTbl != nil {
-		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
+		// Genuinely not found (ErrTemplateNotFound): fall through and create it below.
+		dc.logger.Warn().Err(errTbl).Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else if tblDef == nil {
-		dc.logger.Warn().Msgf("failed to get definition from tableland for vinObj: %s, id: %s", vinObj.String(), tid)
+		dc.logger.Warn().Msgf("failed to get definition from catalog for vinObj: %s, id: %s", vinObj.String(), tid)
 	} else {
-		dc.logger.Info().Str(logfields.VIN, vinObj.String()).Msgf("found definition from tableland %s: %+v", tid, tblDef)
+		dc.logger.Info().Str(logfields.VIN, vinObj.String()).Msgf("found definition from catalog %s: %+v", tid, tblDef)
 	}
 
 	// add images if we don't have any for this definition_id
@@ -236,7 +309,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		}
 	}
 
-	// figure out powertrain
+	// figure out powertrain for the style write further down. This is the
+	// old heuristic derivation, kept alive because processDeviceStyle stamps
+	// its result onto device_styles -- the table the extraction pipeline
+	// reads to build templates in the first place. Changing what gets
+	// written there is a separate decision; pt is passed to
+	// processDeviceStyle explicitly below so this stays true regardless of
+	// what resp.Powertrain ends up holding for the response.
 	pt := dc.powerTrainTypeService.ResolvePowerTrainFromVinInfo(vinInfo.StyleName, vinInfo.FuelType)
 	if pt == "" {
 		// try a different way
@@ -246,16 +325,31 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		resp.Powertrain = pt
 	}
 
-	// if dd not found in tableland, we want to create it
-	if tblDef != nil {
-		resp.DefinitionId = tblDef.ID
-	} else {
+	// Not in the catalog yet. A low-confidence decoder is not trusted to name a
+	// new template: the Japanese chassis decoders have returned body-style codes
+	// such as "4D" as the model, which became garbage definitions like
+	// toyota_4d_2017. Answer not found instead, so the client falls back to the
+	// manual make/model/year picker.
+	if tblDef == nil && isLowConfidenceSource(vinInfo.Source) {
+		metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
+		localLog.Warn().Str("decode_source", string(vinInfo.Source)).Msg("low-confidence decode and catalog miss; returning not found so the client opens the manual picker")
+		return nil, &exceptions.NotFoundError{Err: fmt.Errorf("device definition %s is not in the catalog and decode source %s is low-confidence; manual selection required", tid, vinInfo.Source)}
+	}
+
+	// Every other source creates it. Create is create-only: if another writer
+	// stored the template after the read above, the decode continues with their
+	// template instead of overwriting it.
+	if tblDef == nil {
 		// if any images were added above, they will be in the database
 		latestImages, _ := models.Images(models.ImageWhere.DefinitionID.EQ(resp.DefinitionId)).All(ctx, dc.dbs().Reader)
 		// todo load up some metadata from what was decoded. Powertrain too
 		md := resolveMetadataFromInfo(resp.Powertrain, vinInfo)
 
-		trx, err := dc.deviceDefinitionOnChainService.Create(ctx, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
+		// The id comes back in DefinitionId; NewTrxHash stays empty because
+		// definitions are no longer written on-chain and there is no
+		// transaction. Putting the slug here would hand a "0x..." consumer a
+		// value that is not a hash.
+		tblDef, err = createOrAdoptTemplate(ctx, dc.deviceDefinitionCatalogService, resp.Manufacturer, coremodels.DeviceDefinitionTablelandModel{
 			ID:         tid,
 			KSUID:      ksuid.New().String(),
 			Model:      resp.Model,
@@ -266,9 +360,62 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		})
 		if err != nil {
 			metrics.InternalError.With(prometheus.Labels{"method": VinErrors}).Inc()
-			return nil, errors.Wrap(err, "error creating new device definition on-chain from decoded vinObj")
+			return nil, errors.Wrap(err, "error creating new device definition from decoded vinObj")
 		}
-		resp.NewTrxHash = *trx
+	}
+
+	if tblDef != nil {
+		resp.DefinitionId = tblDef.ID
+
+		// The model is the template's, not the provider's. resp.Model still
+		// holds vinInfo.Model here, which is whatever casing and spelling the
+		// decoder handed back ("LAND CRUISER PRADO", "CROWN"), while every
+		// cached decode of the same VIN answers tblDef.Model ("Land Cruiser
+		// Prado"). Leaving that in place means the first decode of a VIN and
+		// all of its repeats disagree about the model -- the same divergence
+		// hydrateResponseFromVinNumber was fixed for on the other side. It
+		// matters most on the adopt path, where the template already existed
+		// under a different spelling than this decoder produced.
+		resp.Model = tblDef.Model
+
+		// Narrow the template to the trim this VIN decoded to. ManufacturerCode
+		// only ever arrives via drivly (VINDecodingInfoData.ManufacturerCode,
+		// populated in vin_decoding_service.go's buildFromDrivly from
+		// DrivlyVINResponse.ManufacturerCode); every other provider leaves it
+		// empty, so a manufacturerCode-keyed selector simply can't match for
+		// those decodes -- not an error, just a signal that isn't there.
+		resolved := services.MatchTrim(tblDef, services.MatchSignals{
+			ManufacturerCode: vinInfo.ManufacturerCode,
+			StyleName:        vinInfo.StyleName,
+			VIN:              vinObj.String(),
+		})
+		resp.Trim = resolved.Trim
+		resp.TemplateVersion = int32(resolved.TemplateVersion)
+		resp.MatchQuality = string(resolved.Quality)
+		resp.MatchCandidates = resolved.Candidates
+		// MatchBy and HardwareTemplateId are resolved by MatchTrim and were
+		// previously dropped here. match.by is how a consumer -- and our own
+		// dashboards -- can tell whether trim matching is firing on
+		// manufacturerCode or on styleName, and hardwareTemplateId is the
+		// template-default-with-trim-override resolution the contract
+		// requires be settled here "so callers never reimplement the
+		// fallback". Computing both and emitting neither left the only
+		// evidence of that work inside the matcher's own unit tests.
+		resp.MatchBy = resolved.MatchedBy
+		resp.HardwareTemplateId = resolved.HardwareTemplateID
+
+		observeTrimMatch(resolved, resp.Source)
+
+		// The response's powertrain comes from the resolved template/trim
+		// attributes now, not from the pt heuristic above -- that heuristic
+		// is what produced the ICE/hybrid-attributes mismatch this migration
+		// exists to fix. If the template carries no powertrain_type at all
+		// (template or matched trim), the response reports none rather than
+		// falling back to a guess.
+		resp.Powertrain = ""
+		if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
+			resp.Powertrain = v
+		}
 	}
 
 	// match style - only process style if name is longer than 1
@@ -276,7 +423,10 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 		localLog.Warn().Msgf("decoded style name too short: %s must have a minimum of 2 characters.", vinInfo.StyleName)
 	} else {
 		var styleErr error
-		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, resp.Powertrain)
+		// pt, not resp.Powertrain: processDeviceStyle writes to device_styles,
+		// the extraction pipeline's input, and that write path is unchanged
+		// by this migration -- see the comment on pt's declaration above.
+		resp.DeviceStyleId, styleErr = dc.processDeviceStyle(ctx, vinInfo, tid, pt)
 		if styleErr != nil {
 			dc.logger.Error().Err(styleErr).Msgf("error processing device style for vinObj: %s. continuing", vinObj.String())
 		}
@@ -290,6 +440,13 @@ func (dc DecodeVINQueryHandler) Handle(ctx context.Context, query *DecodeVINQuer
 
 	localLog.Info().Str("device_definition_id", resp.DefinitionId).
 		Str("style_id", resp.DeviceStyleId).
+		// How the trim resolved, on the line that already records a
+		// successful decode: without these, "how often does a decode fail to
+		// narrow, and on which provider" is unanswerable from logs.
+		Str("match_quality", resp.MatchQuality).
+		Str("trim", resp.Trim).
+		Strs("match_by", resp.MatchBy).
+		Str("manufacturer_code", vinInfo.ManufacturerCode).
 		Str("wmi", wmi).
 		Str("vds", vinObj.VDS()).
 		Str("vis", vinObj.VIS()).
@@ -312,31 +469,131 @@ func resolveMetadataFromInfo(powertrain string, _ *coremodels.VINDecodingInfoDat
 	return &md
 }
 
-// hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response
-func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumber) *p_grpc.DecodeVinResponse {
-	if vn == nil {
-		return nil
+// readCachedVinNumber reads the vin_numbers row for a VIN, or nil when this
+// VIN has not been decoded before.
+//
+// The transaction holds nothing but this one read, and it is closed before the
+// function returns -- on every path, including a failed query and a failed
+// begin. Handle used to open it and keep it open across
+// hydrateResponseFromVinNumber, which was pure in-memory when that was
+// written. It now issues a catalog GET through a client with a 30 second
+// timeout and a device_styles query against the reader, and returns early on a
+// cache hit, so the path the code itself calls "the one most decodes take"
+// held a writer connection and a SERIALIZABLE snapshot across a full CDN round
+// trip -- and took a reader connection while holding it. A two second catalog
+// stall pinned every writer connection for two seconds per decode; a thirty
+// second stall exhausted the pool while unrelated writes queued behind it.
+//
+// The isolation level is unchanged: what this row is read at is a separate
+// decision from how long the read is held.
+func (dc DecodeVINQueryHandler) readCachedVinNumber(ctx context.Context, vinStr string) (*models.VinNumber, error) {
+	tx, err := dc.dbs().Writer.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, errors.Wrap(err, "error when beginning transaction")
 	}
-	// call on-chain svc to get the DD and pull out the powertrain
-	powertrain := "" // this is what we're trying to resolve in part
-	trx := ""
-	tblDef, manufID, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), vn.DefinitionID)
-	if err == nil && tblDef != nil {
-		if tblDef.Metadata != nil {
-			for _, attribute := range tblDef.Metadata.DeviceAttributes {
-				if attribute.Name == common.PowerTrainType {
-					powertrain = attribute.Value
-					break
-				}
-			}
+	// Nothing is written here, so Rollback is how this transaction ends, and
+	// deferring it closes the error paths too rather than only the happy one.
+	defer tx.Rollback() //nolint:errcheck
+	vn, err := models.VinNumbers(models.VinNumberWhere.Vin.EQ(vinStr)).One(ctx, tx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "error when querying for existing VIN number")
+	}
+	return vn, nil
+}
+
+// definitionIDForDecode builds the template id for a decoded make/model/year,
+// and refuses one definitions-worker can never hold.
+//
+// common.DeviceDefinitionSlug repairs an id by dropping characters outside the
+// worker's class, and does not re-check what it produced. A model written in a
+// script with no character in that class -- ハイエース, Нива, reachable through
+// vinInfoFromKnown's KnownModel, whose source is not low-confidence -- comes
+// back as toyota__2020, whose empty middle segment ID_RE refuses. Writing that
+// id would 422 the create and fail every retry of every VIN of that
+// model-year, so the failure belongs here, before the id is used for anything.
+//
+// The error is *exceptions.NotFoundError, the same type the low-confidence
+// gate returns: the remedy is the same one, a manual make/model/year pick, and
+// both the HTTP and gRPC layers already translate it (404, codes.NotFound)
+// rather than reporting the decoder as broken. It wraps
+// common.ErrUnmintableDefinitionID so a caller can tell this apart from a
+// vehicle that merely has no template yet.
+func definitionIDForDecode(makeName, modelName string, year int16) (string, error) {
+	id, err := common.DeviceDefinitionSlug(stringutils.SlugString(makeName), stringutils.SlugString(modelName), year)
+	if err != nil {
+		return "", &exceptions.NotFoundError{
+			Err: fmt.Errorf("no device definition id can be built for %d %s %s: %w", year, makeName, modelName, err),
 		}
-		if powertrain == "" {
-			makeName, _ := dc.deviceDefinitionOnChainService.GetManufacturerNameByID(context.Background(), manufID)
-			powertrain, _ = dc.powerTrainTypeService.ResolvePowerTrainType(stringutils.SlugString(makeName), stringutils.SlugString(tblDef.Model), null.JSON{}, null.JSON{})
+	}
+	return id, nil
+}
+
+// createOrAdoptTemplate creates the template for the first decode of a
+// make/model/year and always returns the stored template, whoever wrote it.
+//
+// Both outcomes have to hand one back. A decode that returned nothing on the
+// path where its own create landed skipped trim matching entirely: the first
+// decode of a definition answered trim "", template_version 0 and
+// match_quality "", while the next decode of the same VIN read the stored Base
+// trim and answered "Base" with quality "exact". Two calls a second apart
+// disagreeing about one VIN is the defect hydrateResponseFromVinNumber's doc
+// comment forbids, and the trim-match counter under-reported every new
+// definition on top of it. Create answers with the document the worker stored,
+// so this costs no extra request.
+//
+// Create is create-only. When another writer -- a Console curator saving trims,
+// or a concurrent first decode -- stored the template between the decode's
+// catalog read and this write, Create returns ErrTemplateExists instead of
+// replacing their version with a single Base trim. That is success by someone
+// else: their template is read back with a cache-busting read, since the CDN
+// may still be serving the 404 the decode just saw, and returned so the decode
+// narrows it like any template it found.
+func createOrAdoptTemplate(ctx context.Context, catalog gateways.DeviceDefinitionCatalogService, manufacturer string, dd coremodels.DeviceDefinitionTablelandModel) (*coremodels.Template, error) {
+	created, err := catalog.Create(ctx, manufacturer, dd)
+	switch {
+	case err == nil && created != nil:
+		return created, nil
+	case err == nil:
+		// The write landed but its response was not readable as this
+		// template. Rare, and not a reason to answer with no match data:
+		// read the document back instead.
+		stored, _, errRead := catalog.GetTemplateByIDFresh(ctx, dd.ID)
+		if errRead != nil {
+			return nil, errors.Wrapf(errRead, "template %s was created but could not be read back", dd.ID)
 		}
-	} else {
-		// this is not good, somehow it got decoded in past without it being created on tableland
-		dc.logger.Warn().Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
+		return stored, nil
+	case !errors.Is(err, gateways.ErrTemplateExists):
+		return nil, err
+	}
+	stored, _, err := catalog.GetTemplateByIDFresh(ctx, dd.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "template %s was created by another writer but could not be read back", dd.ID)
+	}
+	return stored, nil
+}
+
+// hydrateResponseFromVinNumber pass in a vin_number database object and converts to vin decode response.
+//
+// This is the cached path, and it is the one most decodes take: every VIN that
+// has been decoded once is answered from vin_numbers thereafter. It therefore
+// has to give the SAME answer a fresh decode of the same VIN would -- same
+// trim, same match quality, same powertrain. Leaving the match fields unset
+// here would emit an undocumented fourth match_quality ("") on the majority of
+// production traffic, and sourcing powertrain from template-level attributes
+// alone would silently miss it on exactly the multi-trim templates this
+// migration exists for (a template only carries powertrain_type at the top
+// level when every trim agrees on it), falling through to a make/model
+// heuristic -- the blended answer we are replacing.
+//
+// It returns an error only when the catalog could not be read at all. A
+// template that is genuinely absent is answered, as before, with the fields
+// the matcher never got to compute left empty.
+func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(ctx context.Context, vn *models.VinNumber) (*p_grpc.DecodeVinResponse, error) {
+	if vn == nil {
+		return nil, nil
 	}
 
 	resp := &p_grpc.DecodeVinResponse{
@@ -345,14 +602,110 @@ func (dc DecodeVINQueryHandler) hydrateResponseFromVinNumber(vn *models.VinNumbe
 		DeviceStyleId: vn.StyleID.String,
 		Source:        vn.DecodeProvider.String,
 		DefinitionId:  vn.DefinitionID,
-		Powertrain:    powertrain,
-		NewTrxHash:    trx,
 	}
 
-	return resp
+	tblDef, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, vn.DefinitionID)
+	if err != nil && !errors.Is(err, gateways.ErrTemplateNotFound) {
+		// A catalog outage (5xx, timeout, decode failure) is not the same as
+		// the template not existing, and this is the path most decodes take.
+		// Answering OK with empty trim, match quality, candidates, powertrain
+		// and hardware template id would make an outage indistinguishable
+		// from a genuinely template-less definition -- and would emit the
+		// undocumented fourth match_quality ("") on the majority of
+		// production traffic. The live path checks the same sentinel the same
+		// way; fail the decode instead.
+		return nil, errors.Wrapf(err, "failed to read template %s from catalog for cached decode of vin %s", vn.DefinitionID, vn.Vin)
+	}
+	if err != nil || tblDef == nil {
+		// Genuinely not found (ErrTemplateNotFound): this is not good, somehow
+		// it got decoded in past without a template existing for it.
+		// MatchQuality stays empty rather than "model-only": the matcher did
+		// not run at all, and claiming a quality it never computed would be
+		// the kind of authoritative-looking wrong answer this migration exists
+		// to stop.
+		dc.logger.Warn().Err(err).Msgf("vin decoded for unexistent device definition: %s, vin: %s", vn.DefinitionID, vn.Vin)
+		return resp, nil
+	}
+
+	// The model is the template's, not the vin_numbers row's: vin_numbers
+	// stores the manufacturer name and the definition id but never the model,
+	// and a response without it answered "" for every decode after the first
+	// while a fresh decode of the same VIN answered the model.
+	resp.Model = tblDef.Model
+
+	resolved := services.MatchTrim(tblDef, dc.matchSignalsFromVinNumber(ctx, vn))
+	resp.Trim = resolved.Trim
+	resp.TemplateVersion = int32(resolved.TemplateVersion)
+	resp.MatchQuality = string(resolved.Quality)
+	resp.MatchCandidates = resolved.Candidates
+	resp.MatchBy = resolved.MatchedBy
+	resp.HardwareTemplateId = resolved.HardwareTemplateID
+	// No heuristic fallback, deliberately: the live path in Handle reports no
+	// powertrain when the resolved attributes carry none, and these two paths
+	// answering the same VIN differently is the defect this function is
+	// fixing, not a behaviour worth keeping on one side of it.
+	if v, ok := resolved.Attributes[common.PowerTrainType].(string); ok {
+		resp.Powertrain = v
+	}
+
+	observeTrimMatch(resolved, resp.Source)
+
+	return resp, nil
+}
+
+// matchSignalsFromVinNumber rebuilds the signals a fresh decode of this VIN
+// would have produced, out of what saveVinDecodeNumber persisted. Every source
+// here is the same value the live path fed the matcher: drivly_data is the
+// marshalled DrivlyVINResponse vinInfo.ManufacturerCode was read from, and the
+// style row's name is the vinInfo.StyleName processDeviceStyle stored. A
+// signal that was never persisted stays empty, which the matcher treats as
+// "not available" rather than as a non-match.
+func (dc DecodeVINQueryHandler) matchSignalsFromVinNumber(ctx context.Context, vn *models.VinNumber) services.MatchSignals {
+	sig := services.MatchSignals{VIN: vn.Vin}
+
+	if vn.DrivlyData.Valid {
+		sig.ManufacturerCode = gjson.GetBytes(vn.DrivlyData.JSON, "manufacturerCode").String()
+	}
+
+	if vn.StyleID.Valid && vn.StyleID.String != "" {
+		style, err := models.DeviceStyles(models.DeviceStyleWhere.ID.EQ(vn.StyleID.String)).One(ctx, dc.dbs().Reader)
+		if err != nil {
+			// Best effort: a missing style row costs us one selector, which
+			// shows up as a lower match quality rather than as a wrong trim.
+			dc.logger.Debug().Err(err).Msgf("could not load style %s for cached decode of vin %s", vn.StyleID.String, vn.Vin)
+		} else {
+			sig.StyleName = style.Name
+		}
+	}
+
+	return sig
+}
+
+// observeTrimMatch records how a decode resolved, so the rate of exact vs
+// ambiguous vs model-only is answerable from production rather than from
+// inspection. The plan's riskiest assumption is that manufacturerCode reaches
+// a decode as a usable signal at all -- it only ever arrives via drivly -- and
+// this counter, broken down by decode source, is what makes that measurable
+// instead of merely asserted.
+func observeTrimMatch(resolved services.Resolved, source string) {
+	if source == "" {
+		source = "unknown"
+	}
+	metrics.TrimMatchQuality.With(prometheus.Labels{
+		"quality": string(resolved.Quality),
+		"source":  source,
+	}).Inc()
 }
 
 // processDeviceStyle saves new styles if needed to db and returns the style database ID
+//
+// Every read here is checked for a failure that is not no-rows. sqlboiler's
+// One() answers such a failure with a nil row and a wrapped error, so a reader
+// that is merely unavailable for a moment -- a pool blip, a reset connection,
+// the caller's context deadline expiring right after the catalog round trip
+// above -- used to fall through both no-rows branches and nil-dereference the
+// style on the way out, panicking the decode hot path. Handle already treats
+// an error from here as "continue without a style id"; it just never got one.
 func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo *coremodels.VINDecodingInfoData, definitionID, powertrain string) (string, error) {
 	externalStyleID := stringutils.SlugString(vinInfo.StyleName)
 
@@ -362,6 +715,9 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 		models.DeviceStyleWhere.Source.EQ(string(vinInfo.Source)),
 		models.DeviceStyleWhere.ExternalStyleID.EQ(externalStyleID),
 	).One(ctx, dc.dbs().Reader)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", errors.Wrapf(err, "error querying device_styles for definition %s by external style id %s", definitionID, externalStyleID)
+	}
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// Step 2: If not found, try searching by name
@@ -369,6 +725,9 @@ func (dc DecodeVINQueryHandler) processDeviceStyle(ctx context.Context, vinInfo 
 			models.DeviceStyleWhere.DefinitionID.EQ(definitionID),
 			models.DeviceStyleWhere.Name.EQ(vinInfo.StyleName),
 		).One(ctx, dc.dbs().Reader)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return "", errors.Wrapf(err, "error querying device_styles for definition %s by name %s", definitionID, vinInfo.StyleName)
+		}
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -454,31 +813,16 @@ func (dc DecodeVINQueryHandler) saveVinDecodeNumber(ctx context.Context, vinObj 
 }
 
 // vinInfoFromKnown builds a vininfo object based on one passed in with Make from vin WMI, and passed in model and year set
-func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
+func (dc DecodeVINQueryHandler) vinInfoFromKnown(ctx context.Context, vin vin.VIN, knownModel string, knownYear int32) (*coremodels.VINDecodingInfoData, error) {
 	vinInfo := &coremodels.VINDecodingInfoData{}
 	vinInfo.VIN = vin.String()
-	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(context.Background(), dc.dbs().Reader)
+	wmis, err := models.Wmis(models.WmiWhere.Wmi.EQ(vin.Wmi())).All(ctx, dc.dbs().Reader)
 	if err != nil {
-		return nil, errors.Wrap(err, "vinInfoFromKnown: unknown WMI "+vin.Wmi())
+		return nil, errors.Wrap(err, "vinInfoFromKnown: failed to read wmis for "+vin.Wmi())
 	}
-	if len(wmis) > 1 {
-		// see if we can find an existing device definition for this WMI
-		makeNamesForError := ""
-		for _, wmi := range wmis {
-			makeNamesForError += wmi.ManufacturerName + ", "
-			definitionID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
-			deviceDefinitionTablelandModel, _, err := dc.deviceDefinitionOnChainService.GetDefinitionByID(context.Background(), definitionID)
-			if err == nil && deviceDefinitionTablelandModel != nil {
-				vinInfo.Make = wmi.ManufacturerName
-				break
-			}
-		}
-		// if make is blank means no matching DD's found. We don't have a good way to determine the right Make / OEM
-		if vinInfo.Make == "" {
-			return nil, fmt.Errorf("vinInfoFromKnown: unable to determine the right OEM between %sfor WMI %s", makeNamesForError, vin.Wmi())
-		}
-	} else {
-		vinInfo.Make = wmis[0].ManufacturerName
+	vinInfo.Make, err = dc.makeFromWMIRows(ctx, vin.Wmi(), wmis, knownModel, knownYear)
+	if err != nil {
+		return nil, err
 	}
 	vinInfo.Year = knownYear
 	vinInfo.Model = knownModel
@@ -489,6 +833,42 @@ func (dc DecodeVINQueryHandler) vinInfoFromKnown(vin vin.VIN, knownModel string,
 	}
 
 	return vinInfo, nil
+}
+
+// makeFromWMIRows names the manufacturer for a VIN whose wmis rows have
+// already been read. A WMI can be shared by several marques of the same parent
+// OEM, in which case the one that already has a template for this model-year
+// is the right answer.
+func (dc DecodeVINQueryHandler) makeFromWMIRows(ctx context.Context, wmiCode string, wmis models.WmiSlice, knownModel string, knownYear int32) (string, error) {
+	if len(wmis) == 0 {
+		// .All() reports an unknown WMI as an empty slice with a nil error --
+		// unlike .One(), which returns sql.ErrNoRows -- so this has to be
+		// checked explicitly. Indexing element zero here panicked the decode
+		// handler for exactly the VINs this fallback exists to serve.
+		return "", &exceptions.NotFoundError{Err: fmt.Errorf("vinInfoFromKnown: unknown WMI %s", wmiCode)}
+	}
+	if len(wmis) > 1 {
+		// see if we can find an existing device definition for this WMI
+		makeNamesForError := ""
+		for _, wmi := range wmis {
+			makeNamesForError += wmi.ManufacturerName + ", "
+			definitionID, errID := common.DeviceDefinitionSlug(stringutils.SlugString(wmi.ManufacturerName), stringutils.SlugString(knownModel), int16(knownYear))
+			if errID != nil {
+				// No template can be stored at an id the worker refuses, so
+				// this marque cannot be the one with a definition for the
+				// model-year. Skipping it costs a catalog request that would
+				// 404 anyway; the loop still reports every marque it weighed.
+				continue
+			}
+			tmpl, _, err := dc.deviceDefinitionCatalogService.GetTemplateByID(ctx, definitionID)
+			if err == nil && tmpl != nil {
+				return wmi.ManufacturerName, nil
+			}
+		}
+		// no matching DD's found. We don't have a good way to determine the right Make / OEM
+		return "", fmt.Errorf("vinInfoFromKnown: unable to determine the right OEM between %sfor WMI %s", makeNamesForError, wmiCode)
+	}
+	return wmis[0].ManufacturerName, nil
 }
 
 func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Context, definitionID, mk, model string, year int, prodID int, prodFormat int) error {
@@ -521,4 +901,18 @@ func (dc DecodeVINQueryHandler) associateImagesToDeviceDefinition(ctx context.Co
 	}
 
 	return nil
+}
+
+// isLowConfidenceSource returns true for decode providers whose output has historically
+// produced bad device definitions (e.g., Japanese chassis decoders returning body-style
+// codes as model names). For these sources a decode refuses to create a template on a
+// catalog miss and surfaces a NotFoundError so the client can fall back to manual
+// make/model/year selection. High-confidence Western providers (Drivly, Vincario, DATGroup,
+// Tesla) keep creating the template.
+func isLowConfidenceSource(src coremodels.DecodeProviderEnum) bool {
+	switch src {
+	case coremodels.Japan17VIN, coremodels.CarVXVIN, coremodels.AutoIsoProvider, coremodels.ElevaKaufmannProvider:
+		return true
+	}
+	return false
 }

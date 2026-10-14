@@ -33,6 +33,18 @@ var (
 		Help: "Total execution",
 	}, []string{"method"})
 
+	// TrimMatchQuality counts VIN decodes by how well the decode narrowed its
+	// template to a single trim, broken down by which provider decoded it.
+	// Trim selectors are keyed on manufacturerCode, which only drivly
+	// supplies, so the share of decodes landing on "model-only" -- and which
+	// sources they come from -- is the measurement that says whether trim
+	// matching is actually reaching production traffic. Without it the answer
+	// is only inferable from the response of one decode at a time.
+	TrimMatchQuality = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: serviceName + "vin_trim_match_quality_total",
+		Help: "VIN decodes by trim match quality (exact, ambiguous, model-only) and decode source",
+	}, []string{"quality", "source"})
+
 	GRPCRequestCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: serviceName + "grpc_request_count",

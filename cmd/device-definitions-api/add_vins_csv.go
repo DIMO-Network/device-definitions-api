@@ -13,7 +13,6 @@ import (
 	"github.com/DIMO-Network/device-definitions-api/internal/config"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/db/models"
 	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/gateways"
-	"github.com/DIMO-Network/device-definitions-api/internal/infrastructure/sender"
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/shared/pkg/logfields"
 	vinutils "github.com/DIMO-Network/shared/pkg/vin"
@@ -28,7 +27,6 @@ type addVINsCSVCmd struct {
 	logger   zerolog.Logger
 	settings config.Settings
 
-	sender   sender.Sender
 	identity gateways.IdentityAPI
 }
 
